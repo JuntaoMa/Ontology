@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>制造设计变更切换成本分析 Demo</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Ontology x Agent Demo</p>
+          <h1>制造设计变更切换成本分析</h1>
+          <p class="hero-copy">
+            演示一个顶尖 Agent 如何基于本体 schema、能力层 Function/Action 与伪造运行数据，完成设计变更切换成本分析，并把整条推理链路可追溯地展示出来。
+          </p>
+        </div>
+        <div class="hero-callout">
+          <span>运行方式</span>
+          <strong>语义对齐 -> 能力发现 -> 仿真计算 -> 报告生成</strong>
+        </div>
+      </header>
+
+      <section class="control-bar">
+        <label class="field">
+          <span>案例</span>
+          <select id="scenario-select"></select>
+        </label>
+        <label class="field question-field">
+          <span>用户问题</span>
+          <textarea id="question-input" rows="3"></textarea>
+        </label>
+        <div class="actions">
+          <button id="run-button" type="button">运行 Agent</button>
+          <button id="reset-button" type="button" class="ghost">恢复案例默认问题</button>
+        </div>
+      </section>
+
+      <section class="scenario-strip">
+        <article class="scenario-card">
+          <h2>当前案例摘要</h2>
+          <p id="scenario-overview"></p>
+        </article>
+        <article class="scenario-card">
+          <h2>运行时快照</h2>
+          <div id="runtime-snapshot"></div>
+        </article>
+      </section>
+
+      <section class="demo-grid">
+        <article class="panel">
+          <header class="panel-head">
+            <p class="panel-kicker">Left</p>
+            <h2>问题与意图</h2>
+          </header>
+          <div class="panel-body">
+            <section>
+              <h3>BusinessIntent</h3>
+              <div id="intent-view" class="code-card"></div>
+            </section>
+            <section>
+              <h3>案例假设</h3>
+              <ul id="assumptions-view" class="bullet-list"></ul>
+            </section>
+            <section>
+              <h3>Agent 回答</h3>
+              <pre id="answer-view" class="answer-block"></pre>
+            </section>
+          </div>
+        </article>
+
+        <article class="panel emphasis">
+          <header class="panel-head">
+            <p class="panel-kicker">Center</p>
+            <h2>本体与推理链路</h2>
+          </header>
+          <div class="panel-body">
+            <section>
+              <h3>命中的本体对象</h3>
+              <div id="object-type-view" class="tag-grid"></div>
+            </section>
+            <section>
+              <h3>能力链</h3>
+              <div id="capability-graph" class="flow-lane"></div>
+            </section>
+            <section>
+              <h3>推理步骤</h3>
+              <ol id="trace-view" class="trace-list"></ol>
+            </section>
+            <section>
+              <h3>证据链</h3>
+              <div id="evidence-view" class="evidence-grid"></div>
+            </section>
+          </div>
+        </article>
+
+        <article class="panel">
+          <header class="panel-head">
+            <p class="panel-kicker">Right</p>
+            <h2>报告与结果</h2>
+          </header>
+          <div class="panel-body">
+            <section>
+              <h3>推荐结果</h3>
+              <div id="report-summary" class="summary-card"></div>
+            </section>
+            <section>
+              <h3>候选批次成本对比</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>批次</th>
+                      <th>等待小时</th>
+                      <th>等待成本</th>
+                      <th>报废成本</th>
+                      <th>返工成本</th>
+                      <th>加急成本</th>
+                      <th>总成本</th>
+                    </tr>
+                  </thead>
+                  <tbody id="report-options"></tbody>
+                </table>
+              </div>
+            </section>
+            <section>
+              <h3>原始报告数据</h3>
+              <pre id="report-json" class="code-card"></pre>
+            </section>
+          </div>
+        </article>
+      </section>
+    </div>
+
+    <script type="module" src="./main.mjs"></script>
+  </body>
+</html>
