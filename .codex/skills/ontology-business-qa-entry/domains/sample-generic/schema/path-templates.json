@@ -1,0 +1,27 @@
+{
+  "sampleOnly": true,
+  "domain": "sample-generic",
+  "templates": [
+    {
+      "id": "object-to-context",
+      "goal": "从样例对象找到关联上下文",
+      "path": [
+        "SampleObject -RELATED_TO-> SampleContext"
+      ]
+    },
+    {
+      "id": "event-to-object",
+      "goal": "从样例事件找到关联对象",
+      "path": [
+        "SampleEvent -OBSERVED_IN-> SampleObject"
+      ]
+    },
+    {
+      "id": "context-to-event",
+      "goal": "从样例上下文找到来源事件",
+      "path": [
+        "SampleContext -DERIVED_FROM-> SampleEvent"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "id": "design-change-material-readiness",
+  "name": "设计变更物料可用周期 Domain",
+  "businessAgnostic": false,
+  "summary": "分析在指定生产批次切换设计变更单时，受影响新物料和上层装配件的可用周期，并输出结构化报告。",
+  "entryActions": [
+    "create_change_switch_material_readiness_report"
+  ],
+  "questionPatterns": [
+    "某个设计变更单在某个生产批次切换时，新物料什么时候可用？",
+    "从指定批次切换设计变更时，哪些新件会成为物料准备瓶颈？",
+    "设计变更涉及的新物料和装配件可用周期分别是多少？"
+  ],
+  "schema": {
+    "dataModel": "domains/design-change-material-readiness/schema/data-model.json",
+    "functions": "domains/design-change-material-readiness/schema/functions.json",
+    "actions": "domains/design-change-material-readiness/schema/actions.json",
+    "pathTemplates": "domains/design-change-material-readiness/schema/path-templates.json"
+  },
+  "logic": {
+    "functionDir": "domains/design-change-material-readiness/logic/functions",
+    "actionDir": "domains/design-change-material-readiness/logic/actions"
+  }
+}

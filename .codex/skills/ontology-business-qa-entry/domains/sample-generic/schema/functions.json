@@ -1,0 +1,35 @@
+{
+  "sampleOnly": true,
+  "functions": [
+    {
+      "id": "sample_normalize_context",
+      "name": "归一化样例上下文",
+      "summary": "把查询得到的样例对象与上下文数据整理成统一结构。",
+      "requiredInputs": ["SampleObject", "SampleContext"],
+      "outputs": ["normalized_context"],
+      "notResponsibleFor": ["查询样例对象", "决定业务结论"],
+      "logicRef": "domains/sample-generic/logic/functions/sample_normalize_context.md",
+      "logicStatus": "draft"
+    },
+    {
+      "id": "sample_assess_condition",
+      "name": "评估样例条件",
+      "summary": "根据显式输入评估某个条件是否成立，并返回结构化结果。",
+      "requiredInputs": ["normalized_context", "SampleEvent"],
+      "outputs": ["condition_assessment"],
+      "notResponsibleFor": ["查询事件数据", "发起流程编排"],
+      "logicRef": "domains/sample-generic/logic/functions/sample_assess_condition.md",
+      "logicStatus": "draft"
+    },
+    {
+      "id": "sample_build_summary",
+      "name": "生成样例摘要",
+      "summary": "把函数结果整理成可展示的摘要结构。",
+      "requiredInputs": ["condition_assessment"],
+      "outputs": ["summary_report"],
+      "notResponsibleFor": ["重新读取数据", "生成新能力元数据"],
+      "logicRef": "domains/sample-generic/logic/functions/sample_build_summary.md",
+      "logicStatus": "draft"
+    }
+  ]
+}

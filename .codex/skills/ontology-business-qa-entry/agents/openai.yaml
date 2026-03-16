@@ -1,0 +1,7 @@
+interface:
+  display_name: "Ontology Business QA Entry"
+  short_description: "本体驱动业务问答统一入口"
+  default_prompt: "Use $ontology-business-qa-entry to classify an ontology-grounded business question, inspect schema and capability metadata, and route it into query, known-flow, gap-planning, or capability-authoring mode."
+
+policy:
+  allow_implicit_invocation: true

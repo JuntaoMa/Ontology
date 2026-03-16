@@ -1,0 +1,186 @@
+{
+  "sampleOnly": false,
+  "domain": "design-change-material-readiness",
+  "templates": [
+    {
+      "id": "change-to-impact-items",
+      "startType": "DesignChangeOrder",
+      "targetType": "ChangeImpactItem",
+      "goal": "从设计变更单找到所有受影响对象",
+      "path": ["DesignChangeOrder -HAS_IMPACT_ITEM-> ChangeImpactItem"],
+      "returns": [
+        "ChangeImpactItem.id",
+        "ChangeImpactItem.impactType",
+        "ChangeImpactItem.targetEffectivity",
+        "ChangeImpactItem.oldPartDisposition",
+        "ChangeImpactItem.replacementStrategy"
+      ]
+    },
+    {
+      "id": "change-to-relevant-impact-items-for-batch",
+      "startType": "DesignChangeOrder",
+      "targetType": "ChangeImpactItem",
+      "goal": "从设计变更单中筛出与目标生产批次所属产品型号相关的受影响对象",
+      "path": [
+        "DesignChangeOrder -HAS_IMPACT_ITEM-> ChangeImpactItem",
+        "ChangeImpactItem -AFFECTS_EBOM_NODE-> EBOMNode",
+        "EBOMNode -BELONGS_TO_MODEL-> ProductModel",
+        "ProductModel <-FOR_MODEL- ProductionBatch"
+      ],
+      "returns": [
+        "ChangeImpactItem.id",
+        "ChangeImpactItem.targetEffectivity",
+        "EBOMNode.id",
+        "ProductModel.id",
+        "ProductionBatch.id"
+      ]
+    },
+    {
+      "id": "impact-item-to-new-mparts",
+      "startType": "ChangeImpactItem",
+      "targetType": "MPart",
+      "goal": "从受影响对象找到新设计零件版本及对应制造零件",
+      "path": [
+        "ChangeImpactItem -INTRODUCES_NEW_EPART_VERSION-> EPartVersion",
+        "EPartVersion -MAPPED_TO_MBOM_NODE-> MBOMNode",
+        "EPartVersion -REALIZED_AS_MPART-> MPart"
+      ],
+      "returns": [
+        "ChangeImpactItem.id",
+        "EPartVersion.id",
+        "MBOMNode.id",
+        "MBOMNode.quantityPerParent",
+        "MPart.id",
+        "MPart.partNumber",
+        "MPart.partKind"
+      ]
+    },
+    {
+      "id": "change-to-batch-relevance",
+      "startType": "DesignChangeOrder",
+      "targetType": "ProductionBatch",
+      "goal": "从设计变更单找到与目标批次相关的受影响模型范围",
+      "path": [
+        "DesignChangeOrder -HAS_IMPACT_ITEM-> ChangeImpactItem",
+        "ChangeImpactItem -AFFECTS_EBOM_NODE-> EBOMNode",
+        "EBOMNode -BELONGS_TO_MODEL-> ProductModel",
+        "ProductModel <-FOR_MODEL- ProductionBatch"
+      ],
+      "returns": [
+        "ChangeImpactItem.id",
+        "EBOMNode.id",
+        "ProductModel.id",
+        "ProductionBatch.id"
+      ]
+    },
+    {
+      "id": "mpart-to-mbom-subtree",
+      "startType": "MPart",
+      "targetType": "MPart",
+      "goal": "从某个制造零件定位其 MBOM 子树及子制造零件",
+      "expansionMode": "include_anchor_and_descendants",
+      "path": [
+        "MPart <-USES_MPART- MBOMNode",
+        "MBOMNode <-CHILD_OF_MBOM- MBOMNode",
+        "MBOMNode -USES_MPART-> MPart"
+      ],
+      "returns": [
+        "MBOMNode.id",
+        "MBOMNode.parentNodeId",
+        "MBOMNode.depth",
+        "MBOMNode.cumulativeQtyPerTop",
+        "MBOMNode.quantityPerParent",
+        "MPart.id",
+        "MPart.partKind",
+        "MPart.sourceType"
+      ]
+    },
+    {
+      "id": "mpart-to-inventory",
+      "startType": "MPart",
+      "targetType": "InventoryLot",
+      "goal": "从制造零件找到库存聚合和库存批次",
+      "path": [
+        "MPart <-FOR_MPART- InventoryPosition",
+        "MPart <-FOR_MPART_LOT- InventoryLot",
+        "InventoryLot -LOCATED_IN-> InventoryPosition"
+      ],
+      "returns": [
+        "MPart.id",
+        "InventoryPosition.id",
+        "InventoryPosition.onHandQty",
+        "InventoryPosition.reservedQty",
+        "InventoryPosition.safeStockQty",
+        "InventoryLot.id",
+        "InventoryLot.availableQty",
+        "InventoryLot.bookUnitCost"
+      ]
+    },
+    {
+      "id": "mpart-to-purchase-and-certification",
+      "startType": "MPart",
+      "targetType": "PurchaseOrder",
+      "goal": "从制造零件找到采购订单和采购认证状态",
+      "path": [
+        "MPart <-ORDERS_MPART- PurchaseOrder",
+        "PurchaseOrder -FOR_SUPPLIER-> Supplier",
+        "Supplier <-QUALIFIES_SUPPLIER- ProcurementCertification",
+        "MPart <-QUALIFIES_MPART- ProcurementCertification"
+      ],
+      "returns": [
+        "MPart.id",
+        "PurchaseOrder.id",
+        "PurchaseOrder.remainingQty",
+        "PurchaseOrder.promisedAt",
+        "Supplier.id",
+        "ProcurementCertification.id",
+        "ProcurementCertification.status",
+        "ProcurementCertification.remainingLeadHours"
+      ]
+    },
+    {
+      "id": "batch-to-line-state",
+      "startType": "ProductionBatch",
+      "targetType": "ProductionLineState",
+      "goal": "从目标批次找到生产线状态",
+      "path": ["ProductionBatch -RUNS_ON-> ProductionLineState"],
+      "returns": [
+        "ProductionBatch.id",
+        "ProductionLineState.id",
+        "ProductionLineState.lineCode",
+        "ProductionLineState.status",
+        "ProductionLineState.nextAvailableAt"
+      ]
+    },
+    {
+      "id": "impact-item-to-old-part-disposition",
+      "startType": "ChangeImpactItem",
+      "targetType": "EPartVersion",
+      "goal": "从受影响对象找到旧零件版本及处理意见",
+      "path": ["ChangeImpactItem -REPLACES_OLD_EPART_VERSION-> EPartVersion"],
+      "returns": [
+        "ChangeImpactItem.id",
+        "ChangeImpactItem.oldPartDisposition",
+        "ChangeImpactItem.oldPartDispositionRemark",
+        "EPartVersion.id"
+      ]
+    },
+    {
+      "id": "impact-item-to-old-mparts",
+      "startType": "ChangeImpactItem",
+      "targetType": "MPart",
+      "goal": "从受影响对象找到被替换旧零件对应的制造零件，用于后续报废或返工成本场景的数据读取",
+      "path": [
+        "ChangeImpactItem -REPLACES_OLD_EPART_VERSION-> EPartVersion",
+        "EPartVersion -REALIZED_AS_MPART-> MPart"
+      ],
+      "returns": [
+        "ChangeImpactItem.id",
+        "ChangeImpactItem.oldPartDisposition",
+        "EPartVersion.id",
+        "MPart.id",
+        "MPart.standardUnitCost"
+      ]
+    }
+  ]
+}

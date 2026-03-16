@@ -1,0 +1,164 @@
+{
+  "sampleOnly": false,
+  "domain": "design-change-material-readiness",
+  "nodeTypes": [
+    {
+      "id": "DesignChangeOrder",
+      "name": "设计变更单",
+      "summary": "表达一次设计变更的业务单据及其生效信息。",
+      "identityFields": ["id"],
+      "queryableFields": ["id", "title", "status", "effectiveAt", "reason"]
+    },
+    {
+      "id": "ChangeImpactItem",
+      "name": "设计变更受影响对象",
+      "summary": "表达设计变更针对某个对象的替换关系、处理意见和生效范围。",
+      "identityFields": ["id"],
+      "queryableFields": [
+        "id",
+        "impactType",
+        "targetEffectivity",
+        "oldPartDisposition",
+        "oldPartDispositionRemark",
+        "replacementStrategy"
+      ]
+    },
+    {
+      "id": "ProductModel",
+      "name": "产品型号",
+      "summary": "表达设计域和制造域共同引用的产品型号。",
+      "identityFields": ["id"],
+      "queryableFields": ["id", "modelCode", "plantCode"]
+    },
+    {
+      "id": "EBOMNode",
+      "name": "EBOM 节点",
+      "summary": "表达设计领域的零件树节点。",
+      "identityFields": ["id"],
+      "queryableFields": ["id", "nodeCode", "quantityPerParent", "isLeaf"]
+    },
+    {
+      "id": "EPart",
+      "name": "设计零件",
+      "summary": "表达设计域中的零件主对象。",
+      "identityFields": ["id"],
+      "queryableFields": ["id", "partNumber", "partName", "partCategory"]
+    },
+    {
+      "id": "EPartVersion",
+      "name": "设计零件版本",
+      "summary": "表达设计零件的具体版本。",
+      "identityFields": ["id"],
+      "queryableFields": ["id", "versionCode", "lifecycleState"]
+    },
+    {
+      "id": "MBOMNode",
+      "name": "MBOM 节点",
+      "summary": "表达制造领域的装配结构节点。",
+      "identityFields": ["id"],
+      "queryableFields": [
+        "id",
+        "nodeCode",
+        "parentNodeId",
+        "depth",
+        "cumulativeQtyPerTop",
+        "quantityPerParent",
+        "isLeaf",
+        "operationCode"
+      ]
+    },
+    {
+      "id": "MPart",
+      "name": "制造零件",
+      "summary": "表达制造域中的自制件、采购件和装配件。",
+      "identityFields": ["id"],
+      "queryableFields": [
+        "id",
+        "partNumber",
+        "partName",
+        "sourceType",
+        "partKind",
+        "makeLeadHours",
+        "procurementLeadHours",
+        "procurementCertificationRequired",
+        "certificationLeadHours",
+        "assemblyLeadHours",
+        "standardUnitCost"
+      ]
+    },
+    {
+      "id": "Supplier",
+      "name": "供应商",
+      "summary": "表达采购件的供应商主数据。",
+      "identityFields": ["id"],
+      "queryableFields": ["id", "supplierCode", "name", "status"]
+    },
+    {
+      "id": "InventoryPosition",
+      "name": "库存位置",
+      "summary": "表达某个制造零件在某库存位置上的聚合库存。",
+      "identityFields": ["id"],
+      "queryableFields": ["id", "plantCode", "warehouseCode", "onHandQty", "reservedQty", "safeStockQty"]
+    },
+    {
+      "id": "InventoryLot",
+      "name": "库存批次",
+      "summary": "表达库存位置下的批次级可用量。",
+      "identityFields": ["id"],
+      "queryableFields": ["id", "lotCode", "status", "availableQty", "receivedAt", "bookUnitCost"]
+    },
+    {
+      "id": "PurchaseOrder",
+      "name": "采购订单",
+      "summary": "表达采购件在途和承诺到货信息。",
+      "identityFields": ["id"],
+      "queryableFields": ["id", "poNumber", "status", "orderedQty", "remainingQty", "promisedAt"]
+    },
+    {
+      "id": "ProcurementCertification",
+      "name": "采购认证",
+      "summary": "表达公司内部供应商/物料采购认证流程状态。",
+      "identityFields": ["id"],
+      "queryableFields": ["id", "status", "remainingLeadHours", "approvedAt", "validUntil"]
+    },
+    {
+      "id": "ProductionBatch",
+      "name": "生产批次",
+      "summary": "表达准备切换设计变更的目标批次。",
+      "identityFields": ["id"],
+      "queryableFields": ["id", "batchCode", "status", "plannedQty", "plannedStartAt", "switchDecisionAt"]
+    },
+    {
+      "id": "ProductionLineState",
+      "name": "生产线状态",
+      "summary": "表达目标批次所在生产线的当前运行状态。",
+      "identityFields": ["id"],
+      "queryableFields": ["id", "lineCode", "status", "currentShift", "nextAvailableAt"]
+    }
+  ],
+  "edgeTypes": [
+    { "id": "HAS_IMPACT_ITEM", "from": "DesignChangeOrder", "to": "ChangeImpactItem", "summary": "设计变更单包含多个受影响对象。" },
+    { "id": "AFFECTS_EBOM_NODE", "from": "ChangeImpactItem", "to": "EBOMNode", "summary": "受影响对象定位到具体设计 BOM 节点。" },
+    { "id": "REPLACES_OLD_EPART_VERSION", "from": "ChangeImpactItem", "to": "EPartVersion", "summary": "受影响对象指向被替换的旧设计零件版本。" },
+    { "id": "INTRODUCES_NEW_EPART_VERSION", "from": "ChangeImpactItem", "to": "EPartVersion", "summary": "受影响对象指向引入的新设计零件版本。" },
+    { "id": "VERSION_OF", "from": "EPartVersion", "to": "EPart", "summary": "设计零件版本属于某个设计零件。" },
+    { "id": "USES_EPART_VERSION", "from": "EBOMNode", "to": "EPartVersion", "summary": "EBOM 节点使用某个设计零件版本。" },
+    { "id": "CHILD_OF", "from": "EBOMNode", "to": "EBOMNode", "summary": "EBOM 节点之间的父子关系。" },
+    { "id": "BELONGS_TO_MODEL", "from": "EBOMNode", "to": "ProductModel", "summary": "EBOM 节点属于某个产品型号。" },
+    { "id": "REALIZED_AS_MPART", "from": "EPartVersion", "to": "MPart", "summary": "设计零件版本在制造域落为某个制造零件。" },
+    { "id": "MAPPED_TO_MBOM_NODE", "from": "EPartVersion", "to": "MBOMNode", "summary": "设计零件版本映射到制造 BOM 节点。" },
+    { "id": "USES_MPART", "from": "MBOMNode", "to": "MPart", "summary": "MBOM 节点使用某个制造零件。" },
+    { "id": "CHILD_OF_MBOM", "from": "MBOMNode", "to": "MBOMNode", "summary": "MBOM 节点之间的父子关系。" },
+    { "id": "BELONGS_TO_MODEL_MBOM", "from": "MBOMNode", "to": "ProductModel", "summary": "MBOM 节点属于某个产品型号。" },
+    { "id": "FOR_MPART", "from": "InventoryPosition", "to": "MPart", "summary": "库存位置对应某个制造零件。" },
+    { "id": "FOR_MPART_LOT", "from": "InventoryLot", "to": "MPart", "summary": "库存批次对应某个制造零件。" },
+    { "id": "LOCATED_IN", "from": "InventoryLot", "to": "InventoryPosition", "summary": "库存批次位于某个库存位置。" },
+    { "id": "ORDERS_MPART", "from": "PurchaseOrder", "to": "MPart", "summary": "采购订单采购某个制造零件。" },
+    { "id": "FOR_SUPPLIER", "from": "PurchaseOrder", "to": "Supplier", "summary": "采购订单对应某个供应商。" },
+    { "id": "SUPPLIED_BY", "from": "MPart", "to": "Supplier", "summary": "制造零件由某个供应商供货。" },
+    { "id": "QUALIFIES_SUPPLIER", "from": "ProcurementCertification", "to": "Supplier", "summary": "采购认证作用于某个供应商。" },
+    { "id": "QUALIFIES_MPART", "from": "ProcurementCertification", "to": "MPart", "summary": "采购认证作用于某个制造零件。" },
+    { "id": "FOR_MODEL", "from": "ProductionBatch", "to": "ProductModel", "summary": "生产批次对应某个产品型号。" },
+    { "id": "RUNS_ON", "from": "ProductionBatch", "to": "ProductionLineState", "summary": "生产批次运行在某个生产线状态上下文中。" }
+  ]
+}

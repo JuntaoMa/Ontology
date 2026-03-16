@@ -1,0 +1,168 @@
+{
+  "sampleOnly": false,
+  "functions": [
+    {
+      "id": "normalize_change_batch_scope",
+      "name": "归一化变更切换范围",
+      "summary": "把设计变更、受影响对象、目标批次和生产线状态整理成统一的切换范围。",
+      "requiredInputs": [
+        "DesignChangeOrder.id",
+        "ChangeImpactItem.id",
+        "ChangeImpactItem.targetEffectivity",
+        "ChangeImpactItem.replacementStrategy",
+        "MPart.id",
+        "MBOMNode.id",
+        "MBOMNode.quantityPerParent",
+        "ProductionBatch.id",
+        "ProductionBatch.plannedQty",
+        "ProductionBatch.plannedStartAt",
+        "ProductionBatch.switchDecisionAt",
+        "ProductionLineState.lineCode"
+      ],
+      "outputs": [
+        "switch_scope.changeId",
+        "switch_scope.batchId",
+        "switch_scope.lineCode",
+        "switch_scope.switchPointAt",
+        "switch_scope.batchQty",
+        "switch_scope.impactedItems[]",
+        "switch_scope.newMaterialTargets[]"
+      ],
+      "notResponsibleFor": ["查询设计变更单", "扩展 MBOM 子树", "计算零件可用周期"],
+      "logicRef": "domains/design-change-material-readiness/logic/functions/normalize_change_batch_scope.md",
+      "logicStatus": "defined"
+    },
+    {
+      "id": "assess_mpart_inventory_coverage",
+      "name": "评估制造零件库存覆盖",
+      "summary": "基于库存聚合和库存批次数据，判断当前批次切换需求是否已被库存覆盖。",
+      "requiredInputs": [
+        "required_qty",
+        "InventoryPosition.onHandQty",
+        "InventoryPosition.reservedQty",
+        "InventoryPosition.safeStockQty",
+        "InventoryLot.availableQty"
+      ],
+      "outputs": [
+        "inventory_coverage.availableQty",
+        "inventory_coverage.uncoveredQty",
+        "inventory_coverage.enough"
+      ],
+      "notResponsibleFor": ["查询库存数据", "计算外购或自制周期"],
+      "logicRef": "domains/design-change-material-readiness/logic/functions/assess_mpart_inventory_coverage.md",
+      "logicStatus": "defined"
+    },
+    {
+      "id": "calculate_leaf_mpart_ready_cycle",
+      "name": "计算底层制造零件可用周期",
+      "summary": "对底层自制件或采购件计算准备完成所需周期，并考虑库存、采购订单和采购认证。",
+      "requiredInputs": [
+        "MPart.id",
+        "MPart.sourceType",
+        "MPart.partKind",
+        "MPart.makeLeadHours",
+        "MPart.procurementLeadHours",
+        "MPart.procurementCertificationRequired",
+        "MPart.certificationLeadHours",
+        "inventory_coverage.uncoveredQty",
+        "PurchaseOrder.remainingQty",
+        "PurchaseOrder.promisedAt",
+        "ProcurementCertification.status",
+        "ProcurementCertification.remainingLeadHours",
+        "Context.now"
+      ],
+      "outputs": [
+        "leaf_ready_cycle.mpartId",
+        "leaf_ready_cycle.readyCycleHours",
+        "leaf_ready_cycle.readyAt",
+        "leaf_ready_cycle.reason"
+      ],
+      "notResponsibleFor": ["扩展子件树", "汇总上层装配件周期"],
+      "logicRef": "domains/design-change-material-readiness/logic/functions/calculate_leaf_mpart_ready_cycle.md",
+      "logicStatus": "defined"
+    },
+    {
+      "id": "roll_up_assembly_ready_cycle",
+      "name": "汇总装配件可用周期",
+      "summary": "对上层装配件按 max(下层零件准备周期) + 装配周期 规则计算可用周期，并考虑现有库存覆盖。",
+      "requiredInputs": [
+        "MPart.id",
+        "MPart.partKind",
+        "MPart.assemblyLeadHours",
+        "MPart.makeLeadHours",
+        "inventory_coverage.uncoveredQty",
+        "child_ready_cycles.readyCycleHours",
+        "Context.now"
+      ],
+      "outputs": [
+        "assembly_ready_cycle.mpartId",
+        "assembly_ready_cycle.readyCycleHours",
+        "assembly_ready_cycle.readyAt",
+        "assembly_ready_cycle.reason"
+      ],
+      "notResponsibleFor": ["查询子零件", "计算底层采购认证周期"],
+      "logicRef": "domains/design-change-material-readiness/logic/functions/roll_up_assembly_ready_cycle.md",
+      "logicStatus": "defined"
+    },
+    {
+      "id": "calculate_impacted_mpart_ready_cycles",
+      "name": "计算受影响制造零件可用周期",
+      "summary": "对设计变更涉及的新制造零件按 MBOM 自底向上计算每个零件的可用周期。",
+      "requiredInputs": [
+        "switch_scope.batchQty",
+        "expanded_mpart_tree[].MBOMNode.id",
+        "expanded_mpart_tree[].MBOMNode.parentNodeId",
+        "expanded_mpart_tree[].MBOMNode.depth",
+        "expanded_mpart_tree[].MBOMNode.cumulativeQtyPerTop",
+        "expanded_mpart_tree[].MBOMNode.quantityPerParent",
+        "expanded_mpart_tree[].MPart.id",
+        "expanded_mpart_tree[].MPart.partKind",
+        "inventory_bindings",
+        "purchase_order_bindings",
+        "certification_bindings",
+        "Context.now"
+      ],
+      "outputs": [
+        "impacted_mpart_ready_cycles[].mpartId",
+        "impacted_mpart_ready_cycles[].mbomNodeId",
+        "impacted_mpart_ready_cycles[].parentMbomNodeId",
+        "impacted_mpart_ready_cycles[].requiredQty",
+        "impacted_mpart_ready_cycles[].readyCycleHours",
+        "impacted_mpart_ready_cycles[].readyAt",
+        "impacted_mpart_ready_cycles[].inventoryCoverage"
+      ],
+      "notResponsibleFor": ["查询 MBOM 子树", "生成最终报告"],
+      "logicRef": "domains/design-change-material-readiness/logic/functions/calculate_impacted_mpart_ready_cycles.md",
+      "logicStatus": "defined"
+    },
+    {
+      "id": "build_change_material_readiness_report",
+      "name": "生成设计变更物料可用周期报告",
+      "summary": "把每个受影响新物料的可用周期、瓶颈和证据整理成结构化报告。",
+      "requiredInputs": [
+        "DesignChangeOrder.id",
+        "ProductionBatch.id",
+        "switch_scope.lineCode",
+        "switch_scope.switchPointAt",
+        "impacted_mpart_ready_cycles[].readyCycleHours",
+        "impacted_mpart_ready_cycles[].readyAt",
+        "assumptions",
+        "evidence_bindings"
+      ],
+      "outputs": [
+        "change_material_readiness_report.changeId",
+        "change_material_readiness_report.batchId",
+        "change_material_readiness_report.switchPointAt",
+        "change_material_readiness_report.lineCode",
+        "change_material_readiness_report.overallReadyCycleHours",
+        "change_material_readiness_report.blockingParts",
+        "change_material_readiness_report.partCycles",
+        "change_material_readiness_report.assumptions",
+        "change_material_readiness_report.evidenceBindings"
+      ],
+      "notResponsibleFor": ["重新查询数据", "新增报废成本计算"],
+      "logicRef": "domains/design-change-material-readiness/logic/functions/build_change_material_readiness_report.md",
+      "logicStatus": "defined"
+    }
+  ]
+}

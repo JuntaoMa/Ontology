@@ -1,0 +1,16 @@
+{
+  "id": "sample-generic",
+  "name": "通用样例 Domain",
+  "businessAgnostic": true,
+  "summary": "用于展示 domain 内部如何统一组织数据模型、能力元数据、路径模板和逻辑层。",
+  "schema": {
+    "dataModel": "domains/sample-generic/schema/data-model.json",
+    "functions": "domains/sample-generic/schema/functions.json",
+    "actions": "domains/sample-generic/schema/actions.json",
+    "pathTemplates": "domains/sample-generic/schema/path-templates.json"
+  },
+  "logic": {
+    "functionDir": "domains/sample-generic/logic/functions",
+    "actionDir": "domains/sample-generic/logic/actions"
+  }
+}
