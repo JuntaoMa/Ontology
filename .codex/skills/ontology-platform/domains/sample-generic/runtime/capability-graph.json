@@ -1,0 +1,42 @@
+{
+  "sampleOnly": true,
+  "domain": "sample-generic",
+  "generatedFrom": {
+    "objects": "domains/sample-generic/ontology/objects.json",
+    "links": "domains/sample-generic/ontology/links.json",
+    "functions": "domains/sample-generic/ontology/functions.json",
+    "actions": "domains/sample-generic/ontology/actions.json"
+  },
+  "nodes": [
+    { "id": "Object:SampleObject", "resourceType": "Object", "ref": "SampleObject", "name": "样例对象" },
+    { "id": "Object:SampleContext", "resourceType": "Object", "ref": "SampleContext", "name": "样例上下文" },
+    { "id": "Object:SampleEvent", "resourceType": "Object", "ref": "SampleEvent", "name": "样例事件" },
+    { "id": "Link:RELATED_TO", "resourceType": "Link", "ref": "RELATED_TO", "name": "关联到" },
+    { "id": "Link:OBSERVED_IN", "resourceType": "Link", "ref": "OBSERVED_IN", "name": "发生于" },
+    { "id": "Link:DERIVED_FROM", "resourceType": "Link", "ref": "DERIVED_FROM", "name": "来源于" },
+    { "id": "Function:normalize", "resourceType": "Function", "ref": "normalize", "name": "归一化样例上下文" },
+    { "id": "Function:assess", "resourceType": "Function", "ref": "assess", "name": "评估样例条件" },
+    { "id": "Function:summarize", "resourceType": "Function", "ref": "summarize", "name": "生成样例摘要" },
+    { "id": "Action:resolve", "resourceType": "Action", "ref": "resolve", "name": "解析样例业务问题" }
+  ],
+  "edges": [
+    { "from": "Object:SampleObject", "to": "Object:SampleContext", "type": "LINK", "via": "RELATED_TO" },
+    { "from": "Object:SampleEvent", "to": "Object:SampleObject", "type": "LINK", "via": "OBSERVED_IN" },
+    { "from": "Object:SampleContext", "to": "Object:SampleEvent", "type": "LINK", "via": "DERIVED_FROM" },
+    { "from": "Function:normalize", "to": "Object:SampleObject", "type": "READS" },
+    { "from": "Function:normalize", "to": "Object:SampleContext", "type": "READS" },
+    { "from": "Function:assess", "to": "Object:SampleContext", "type": "READS" },
+    { "from": "Function:assess", "to": "Object:SampleEvent", "type": "READS" },
+    { "from": "Function:assess", "to": "Function:normalize", "type": "CALLS" },
+    { "from": "Function:summarize", "to": "Function:assess", "type": "CALLS" },
+    { "from": "Action:resolve", "to": "Object:SampleObject", "type": "ANCHORS_ON" },
+    { "from": "Action:resolve", "to": "Object:SampleContext", "type": "READS" },
+    { "from": "Action:resolve", "to": "Object:SampleEvent", "type": "READS" },
+    { "from": "Action:resolve", "to": "Link:RELATED_TO", "type": "TRAVERSES" },
+    { "from": "Action:resolve", "to": "Link:OBSERVED_IN", "type": "TRAVERSES" },
+    { "from": "Action:resolve", "to": "Link:DERIVED_FROM", "type": "TRAVERSES" },
+    { "from": "Action:resolve", "to": "Function:normalize", "type": "USES" },
+    { "from": "Action:resolve", "to": "Function:assess", "type": "USES" },
+    { "from": "Action:resolve", "to": "Function:summarize", "type": "USES" }
+  ]
+}

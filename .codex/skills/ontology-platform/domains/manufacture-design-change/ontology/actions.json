@@ -1,0 +1,76 @@
+{
+  "sampleOnly": false,
+  "actions": [
+    {
+      "id": "create_report",
+      "name": "生成切换报告",
+      "summary": "围绕一个设计变更单和一个目标生产批次，查询受影响新物料、展开 MBOM、计算各层级零件准备周期并生成报告。",
+      "inputs": ["DesignChangeOrder.id", "ProductionBatch.id", "Context.now"],
+      "outputs": [
+        "ChangeMaterialReadinessReport.changeId",
+        "ChangeMaterialReadinessReport.batchId",
+        "ChangeMaterialReadinessReport.switchPointAt",
+        "ChangeMaterialReadinessReport.lineCode",
+        "ChangeMaterialReadinessReport.overallReadyCycleHours",
+        "ChangeMaterialReadinessReport.blockingParts",
+        "ChangeMaterialReadinessReport.partCycles"
+      ],
+      "anchorObjects": ["DesignChangeOrder", "ProductionBatch"],
+      "readsObjects": [
+        "DesignChangeOrder",
+        "ChangeImpactItem",
+        "EBOMNode",
+        "ProductModel",
+        "EPartVersion",
+        "MBOMNode",
+        "MPart",
+        "InventoryPosition",
+        "InventoryLot",
+        "PurchaseOrder",
+        "ProcurementCertification",
+        "ProductionBatch",
+        "ProductionLineState"
+      ],
+      "traversesLinks": [
+        "HAS_IMPACT_ITEM",
+        "AFFECTS_EBOM_NODE",
+        "BELONGS_TO_MODEL",
+        "FOR_MODEL",
+        "INTRODUCES_NEW_EPART_VERSION",
+        "MAPPED_TO_MBOM_NODE",
+        "REALIZED_AS_MPART",
+        "RUNS_ON",
+        "USES_MPART",
+        "CHILD_OF_MBOM",
+        "FOR_MPART",
+        "FOR_MPART_LOT",
+        "LOCATED_IN",
+        "ORDERS_MPART",
+        "FOR_SUPPLIER",
+        "QUALIFIES_SUPPLIER",
+        "QUALIFIES_MPART"
+      ],
+      "writesObjects": [],
+      "dependsOnFunctions": [
+        "build_scope",
+        "check_inventory",
+        "calc_leaf_ready",
+        "calc_assembly_ready",
+        "calc_ready",
+        "build_report"
+      ],
+      "dependsOnActions": [],
+      "capabilityBoundary": {
+        "responsibleFor": ["组织设计变更切换物料可用周期分析链路", "生成结构化报告"],
+        "notResponsibleFor": [
+          "执行真实切换",
+          "写回生产系统",
+          "计算旧件报废成本",
+          "替代缺失的采购认证或库存事实"
+        ]
+      },
+      "logicRef": "domains/manufacture-design-change/logic/actions/create_report.md",
+      "logicStatus": "defined"
+    }
+  ]
+}

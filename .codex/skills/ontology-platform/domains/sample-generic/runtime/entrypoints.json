@@ -1,0 +1,76 @@
+{
+  "sampleOnly": true,
+  "domain": "sample-generic",
+  "entrypoints": [
+    {
+      "id": "get_object_catalog",
+      "kind": "discovery",
+      "summary": "读取当前 domain 内全部 Object 的目录。"
+    },
+    {
+      "id": "get_link_catalog",
+      "kind": "discovery",
+      "summary": "读取当前 domain 内全部 Link 的目录。"
+    },
+    {
+      "id": "get_object_detail",
+      "kind": "discovery",
+      "summary": "读取单个 Object 的属性、标识字段和直接相连的 Link。"
+    },
+    {
+      "id": "get_link_detail",
+      "kind": "discovery",
+      "summary": "读取单个 Link 的起点对象、终点对象和关系说明。"
+    },
+    {
+      "id": "get_function_catalog",
+      "kind": "discovery",
+      "summary": "读取当前 domain 内全部 Function 的目录。"
+    },
+    {
+      "id": "get_action_catalog",
+      "kind": "discovery",
+      "summary": "读取当前 domain 内全部 Action 的目录。"
+    },
+    {
+      "id": "get_function_detail",
+      "kind": "discovery",
+      "summary": "读取单个 Function 的输入、输出、边界和依赖对象。"
+    },
+    {
+      "id": "get_action_detail",
+      "kind": "discovery",
+      "summary": "读取单个 Action 的入口对象、边界和依赖能力。"
+    },
+    {
+      "id": "get_capability_graph",
+      "kind": "discovery",
+      "summary": "围绕对象或能力查看异构发现图。"
+    },
+    {
+      "id": "get_path_templates",
+      "kind": "query-planning",
+      "summary": "获取从某类 Object 到目标对象或目标事实的推荐路径模板。"
+    },
+    {
+      "id": "query_instances_by_type",
+      "kind": "query",
+      "summary": "按对象类型和过滤条件读取实例数据。"
+    },
+    {
+      "id": "query_instances_by_path",
+      "kind": "query",
+      "summary": "按路径模板读取实例数据并保留中间绑定。"
+    },
+    {
+      "id": "assess_problem_capability_fit",
+      "kind": "assessment",
+      "summary": "判断当前问题是否可被现有 Function / Action 覆盖。"
+    },
+    {
+      "id": "draft_new_capability",
+      "kind": "drafting",
+      "summary": "为缺失能力生成新的 FunctionSpec / ActionSpec 草案。"
+    }
+  ]
+}

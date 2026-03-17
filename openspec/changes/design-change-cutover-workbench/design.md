@@ -2,10 +2,10 @@
 
 当前实现已经完成了以下结构：
 
-- 一个通用入口 skill：`.codex/skills/ontology-business-qa-entry/`
+- 一个通用入口 skill：`.codex/skills/ontology-platform/`
 - 一个 domain 注册表：`domains/index.json`
 - 一个通用样例 domain：`sample-generic`
-- 一个真实业务 domain：`design-change-material-readiness`
+- 一个真实业务 domain：`manufacture-design-change`
 - 一组根目录下的业务 agent 报告示例：
   - 第三批次切换新物料可用周期
   - 第三批次切换旧物料报废成本
@@ -30,7 +30,7 @@
 - 让 OpenSpec 准确描述当前已经落地的通用 skill + domain pack 架构。
 - 固化 domain pack 的目录组织和加载规则。
 - 固化 schema 与 logic 分层，以及结构化中文逻辑体规范。
-- 固化 design-change-material-readiness 作为首个已落地 domain 的能力边界。
+- 固化 manufacture-design-change 作为首个已落地 domain 的能力边界。
 - 固化已知业务流程与能力缺口业务流程两种处理模式。
 - 固化最终业务 agent 报告的精简输出格式。
 
@@ -44,7 +44,7 @@
 
 ### 1. 采用“通用入口 skill + domain pack”架构
 
-当前实现不再为单一业务场景单独设计一个 skill，而是采用一个通用的 `ontology-business-qa-entry` 作为主入口。具体业务域通过 domain pack 接入。
+当前实现不再为单一业务场景单独设计一个 skill，而是采用一个通用的 `ontology-platform` 作为主入口。具体业务域通过 domain pack 接入。
 
 每个 domain pack 统一放在：
 
@@ -124,7 +124,7 @@ domains/<domain-id>/
 - 能保持逻辑可审计；
 - 仍然具备后续向机器可执行表示迁移的可能。
 
-### 5. design-change-material-readiness 是首个已落地 domain
+### 5. manufacture-design-change 是首个已落地 domain
 
 该 domain 目前覆盖两类业务问题：
 
@@ -172,7 +172,7 @@ domains/<domain-id>/
 1. 用通用入口 skill 替代旧的单场景 cutover 叙述。
 2. 用 domain pack 组织方式替代外层统一 `assets/` / `logic/` 结构。
 3. 用统一入口和路径模板替代 Query IR-first 的主规范。
-4. 保留 design-change-material-readiness 作为首个真实 domain。
+4. 保留 manufacture-design-change 作为首个真实 domain。
 5. 用两份业务 agent 报告作为当前实现的验证样本。
 
 ## Open Questions

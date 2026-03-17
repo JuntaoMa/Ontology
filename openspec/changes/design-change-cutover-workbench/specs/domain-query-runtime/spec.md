@@ -4,15 +4,15 @@
 系统 MUST 将每个业务域的查询相关资产放在同一个 domain pack 内，并通过 manifest 统一声明其位置。
 
 #### Scenario: 加载设计变更 domain
-- **WHEN** agent 读取 `design-change-material-readiness` 的 manifest
-- **THEN** 可以定位到 `data-model.json`、`functions.json`、`actions.json`、`path-templates.json` 和对应的 `logic/` 目录
+- **WHEN** agent 读取 `manufacture-design-change` 的 manifest
+- **THEN** 可以定位到 `ontology/objects.json`、`ontology/links.json`、`ontology/functions.json`、`ontology/actions.json`、`runtime/path-templates.json` 和对应的 `logic/` 目录
 
 ### Requirement: schema 必须拆分为数据模型、函数元数据、动作元数据和路径模板
-系统 MUST 将 schema 明确拆成 `data-model.json`、`functions.json`、`actions.json` 和 `path-templates.json`，不得将逻辑体直接写进 schema JSON。
+系统 MUST 将 ontology 与 runtime 明确拆分为 `ontology/objects.json`、`ontology/links.json`、`ontology/functions.json`、`ontology/actions.json` 和 `runtime/path-templates.json`，不得将逻辑体直接写进这些 JSON。
 
 #### Scenario: 查看旧物料报废成本所需数据路径
 - **WHEN** agent 需要定位旧物料处置意见、旧制造件和库存事实
-- **THEN** 可以分别从数据模型和路径模板中找到所需对象、边和路径，而不是在 schema 中读取混杂的计算逻辑
+- **THEN** 可以分别从语义资源和路径模板中找到所需对象、边和路径，而不是在 ontology 元数据中读取混杂的计算逻辑
 
 ### Requirement: 查询入口必须以统一高层操作语义呈现
 系统 MUST 提供统一入口来完成 domain 发现、schema 查看、路径模板查看、按类型查实例、按路径查实例、能力匹配和新能力草案生成。
@@ -40,4 +40,4 @@
 
 #### Scenario: 为报废成本函数准备输入
 - **WHEN** agent 已查询到旧件处置意见、旧制造件和库存批次
-- **THEN** 查询结果可直接作为 `calculate_old_material_scrap_cost(...)` 的输入证据
+- **THEN** 查询结果可直接作为 `calc_scrap_cost(...)` 的输入证据

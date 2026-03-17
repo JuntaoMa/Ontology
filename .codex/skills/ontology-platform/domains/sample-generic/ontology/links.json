@@ -1,0 +1,29 @@
+{
+  "sampleOnly": true,
+  "links": [
+    {
+      "id": "RELATED_TO",
+      "name": "关联到",
+      "summary": "展示对象与上下文之间的一般关联。",
+      "fromObject": "SampleObject",
+      "toObject": "SampleContext",
+      "cardinality": "many-to-one"
+    },
+    {
+      "id": "OBSERVED_IN",
+      "name": "发生于",
+      "summary": "展示事件与对象之间的一般关联。",
+      "fromObject": "SampleEvent",
+      "toObject": "SampleObject",
+      "cardinality": "many-to-one"
+    },
+    {
+      "id": "DERIVED_FROM",
+      "name": "来源于",
+      "summary": "展示上下文信息可能来源于某个事件。",
+      "fromObject": "SampleContext",
+      "toObject": "SampleEvent",
+      "cardinality": "many-to-one"
+    }
+  ]
+}

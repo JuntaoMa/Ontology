@@ -1,0 +1,228 @@
+{
+  "sampleOnly": false,
+  "functions": [
+    {
+      "id": "build_scope",
+      "name": "构建切换范围",
+      "summary": "把设计变更、受影响对象、目标批次和生产线状态整理成统一的切换范围。",
+      "inputs": [
+        "DesignChangeOrder.id",
+        "ChangeImpactItem.id",
+        "ChangeImpactItem.targetEffectivity",
+        "ChangeImpactItem.replacementStrategy",
+        "MPart.id",
+        "MBOMNode.id",
+        "MBOMNode.quantityPerParent",
+        "ProductionBatch.id",
+        "ProductionBatch.plannedQty",
+        "ProductionBatch.plannedStartAt",
+        "ProductionBatch.switchDecisionAt",
+        "ProductionLineState.lineCode"
+      ],
+      "outputs": [
+        "switch_scope.changeId",
+        "switch_scope.batchId",
+        "switch_scope.lineCode",
+        "switch_scope.switchPointAt",
+        "switch_scope.batchQty",
+        "switch_scope.impactedItems[]",
+        "switch_scope.newMaterialTargets[]"
+      ],
+      "readsObjects": [
+        "DesignChangeOrder",
+        "ChangeImpactItem",
+        "MPart",
+        "MBOMNode",
+        "ProductionBatch",
+        "ProductionLineState"
+      ],
+      "traversesLinks": [],
+      "writesObjects": [],
+      "callsFunctions": [],
+      "capabilityBoundary": {
+        "responsibleFor": ["归一化切换范围", "整理受影响新物料目标集合"],
+        "notResponsibleFor": ["查询设计变更单", "扩展 MBOM 子树", "计算零件可用周期"]
+      },
+      "logicRef": "domains/manufacture-design-change/logic/functions/build_scope.md",
+      "logicStatus": "defined"
+    },
+    {
+      "id": "check_inventory",
+      "name": "检查库存覆盖",
+      "summary": "基于库存聚合和库存批次数据，判断当前批次切换需求是否已被库存覆盖。",
+      "inputs": [
+        "required_qty",
+        "InventoryPosition.onHandQty",
+        "InventoryPosition.reservedQty",
+        "InventoryPosition.safeStockQty",
+        "InventoryLot.availableQty"
+      ],
+      "outputs": [
+        "inventory_coverage.availableQty",
+        "inventory_coverage.uncoveredQty",
+        "inventory_coverage.enough"
+      ],
+      "readsObjects": ["InventoryPosition", "InventoryLot"],
+      "traversesLinks": [],
+      "writesObjects": [],
+      "callsFunctions": [],
+      "capabilityBoundary": {
+        "responsibleFor": ["计算库存可覆盖量", "输出缺口量和覆盖结论"],
+        "notResponsibleFor": ["查询库存数据", "计算外购或自制周期"]
+      },
+      "logicRef": "domains/manufacture-design-change/logic/functions/check_inventory.md",
+      "logicStatus": "defined"
+    },
+    {
+      "id": "calc_leaf_ready",
+      "name": "计算底层准备周期",
+      "summary": "对底层自制件或采购件计算准备完成所需周期，并考虑库存、采购订单和采购认证。",
+      "inputs": [
+        "MPart.id",
+        "MPart.sourceType",
+        "MPart.partKind",
+        "MPart.makeLeadHours",
+        "MPart.procurementLeadHours",
+        "MPart.procurementCertificationRequired",
+        "MPart.certificationLeadHours",
+        "inventory_coverage.uncoveredQty",
+        "PurchaseOrder.remainingQty",
+        "PurchaseOrder.promisedAt",
+        "ProcurementCertification.status",
+        "ProcurementCertification.remainingLeadHours",
+        "Context.now"
+      ],
+      "outputs": [
+        "leaf_ready_cycle.mpartId",
+        "leaf_ready_cycle.readyCycleHours",
+        "leaf_ready_cycle.readyAt",
+        "leaf_ready_cycle.reason"
+      ],
+      "readsObjects": ["MPart", "InventoryPosition", "InventoryLot", "PurchaseOrder", "ProcurementCertification"],
+      "traversesLinks": [],
+      "writesObjects": [],
+      "callsFunctions": ["check_inventory"],
+      "capabilityBoundary": {
+        "responsibleFor": ["计算底层自制件或采购件的准备周期", "考虑库存、采购订单和采购认证"],
+        "notResponsibleFor": ["扩展子件树", "汇总上层装配件周期"]
+      },
+      "logicRef": "domains/manufacture-design-change/logic/functions/calc_leaf_ready.md",
+      "logicStatus": "defined"
+    },
+    {
+      "id": "calc_assembly_ready",
+      "name": "计算装配准备周期",
+      "summary": "对上层装配件按 max(下层零件准备周期) + 装配周期规则计算可用周期，并考虑现有库存覆盖。",
+      "inputs": [
+        "MPart.id",
+        "MPart.partKind",
+        "MPart.assemblyLeadHours",
+        "MPart.makeLeadHours",
+        "inventory_coverage.uncoveredQty",
+        "child_ready_cycles.readyCycleHours",
+        "Context.now"
+      ],
+      "outputs": [
+        "assembly_ready_cycle.mpartId",
+        "assembly_ready_cycle.readyCycleHours",
+        "assembly_ready_cycle.readyAt",
+        "assembly_ready_cycle.reason"
+      ],
+      "readsObjects": ["MPart", "InventoryPosition", "InventoryLot"],
+      "traversesLinks": [],
+      "writesObjects": [],
+      "callsFunctions": ["check_inventory"],
+      "capabilityBoundary": {
+        "responsibleFor": ["汇总上层装配件准备周期", "按子件最大完成时间加装配周期计算结果"],
+        "notResponsibleFor": ["查询子零件", "计算底层采购认证周期"]
+      },
+      "logicRef": "domains/manufacture-design-change/logic/functions/calc_assembly_ready.md",
+      "logicStatus": "defined"
+    },
+    {
+      "id": "calc_ready",
+      "name": "计算准备周期",
+      "summary": "对设计变更涉及的新制造零件按 MBOM 自底向上计算每个零件的可用周期。",
+      "inputs": [
+        "switch_scope.batchQty",
+        "expanded_mpart_tree[].MBOMNode.id",
+        "expanded_mpart_tree[].MBOMNode.parentNodeId",
+        "expanded_mpart_tree[].MBOMNode.depth",
+        "expanded_mpart_tree[].MBOMNode.cumulativeQtyPerTop",
+        "expanded_mpart_tree[].MBOMNode.quantityPerParent",
+        "expanded_mpart_tree[].MPart.id",
+        "expanded_mpart_tree[].MPart.partKind",
+        "inventory_bindings",
+        "purchase_order_bindings",
+        "certification_bindings",
+        "Context.now"
+      ],
+      "outputs": [
+        "impacted_mpart_ready_cycles[].mpartId",
+        "impacted_mpart_ready_cycles[].mbomNodeId",
+        "impacted_mpart_ready_cycles[].parentMbomNodeId",
+        "impacted_mpart_ready_cycles[].requiredQty",
+        "impacted_mpart_ready_cycles[].readyCycleHours",
+        "impacted_mpart_ready_cycles[].readyAt",
+        "impacted_mpart_ready_cycles[].inventoryCoverage"
+      ],
+      "readsObjects": [
+        "MBOMNode",
+        "MPart",
+        "InventoryPosition",
+        "InventoryLot",
+        "PurchaseOrder",
+        "ProcurementCertification"
+      ],
+      "traversesLinks": [],
+      "writesObjects": [],
+      "callsFunctions": [
+        "check_inventory",
+        "calc_leaf_ready",
+        "calc_assembly_ready"
+      ],
+      "capabilityBoundary": {
+        "responsibleFor": ["按 MBOM 自底向上计算受影响制造零件的准备周期", "汇总每个节点的需求量、准备时间和库存覆盖结果"],
+        "notResponsibleFor": ["查询 MBOM 子树", "生成最终报告"]
+      },
+      "logicRef": "domains/manufacture-design-change/logic/functions/calc_ready.md",
+      "logicStatus": "defined"
+    },
+    {
+      "id": "build_report",
+      "name": "生成报告",
+      "summary": "把每个受影响新物料的可用周期、瓶颈和证据整理成结构化报告。",
+      "inputs": [
+        "DesignChangeOrder.id",
+        "ProductionBatch.id",
+        "switch_scope.lineCode",
+        "switch_scope.switchPointAt",
+        "impacted_mpart_ready_cycles[].readyCycleHours",
+        "impacted_mpart_ready_cycles[].readyAt",
+        "assumptions",
+        "evidence_bindings"
+      ],
+      "outputs": [
+        "change_material_readiness_report.changeId",
+        "change_material_readiness_report.batchId",
+        "change_material_readiness_report.switchPointAt",
+        "change_material_readiness_report.lineCode",
+        "change_material_readiness_report.overallReadyCycleHours",
+        "change_material_readiness_report.blockingParts",
+        "change_material_readiness_report.partCycles",
+        "change_material_readiness_report.assumptions",
+        "change_material_readiness_report.evidenceBindings"
+      ],
+      "readsObjects": ["DesignChangeOrder", "ProductionBatch", "MPart"],
+      "traversesLinks": [],
+      "writesObjects": [],
+      "callsFunctions": ["calc_ready"],
+      "capabilityBoundary": {
+        "responsibleFor": ["汇总各零件准备周期", "输出报告、瓶颈和证据绑定"],
+        "notResponsibleFor": ["重新查询数据", "新增报废成本计算"]
+      },
+      "logicRef": "domains/manufacture-design-change/logic/functions/build_report.md",
+      "logicStatus": "defined"
+    }
+  ]
+}

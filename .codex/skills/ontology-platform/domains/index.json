@@ -1,0 +1,20 @@
+{
+  "domains": [
+    {
+      "id": "manufacture-design-change",
+      "name": "制造设计变更",
+      "summary": "用于分析在某个生产批次切换设计变更单时，新物料和上层装配件的可用周期。",
+      "manifest": "domains/manufacture-design-change/manifest.json",
+      "resourceLayout": "ontology-runtime-logic/v1",
+      "status": "active"
+    },
+    {
+      "id": "sample-generic",
+      "name": "通用样例 Domain",
+      "summary": "业务无关的样例 domain，用于展示如何在一个 domain 文件夹下统一组织 ontology、runtime 和 logic。",
+      "manifest": "domains/sample-generic/manifest.json",
+      "resourceLayout": "ontology-runtime-logic/v1",
+      "status": "sample"
+    }
+  ]
+}

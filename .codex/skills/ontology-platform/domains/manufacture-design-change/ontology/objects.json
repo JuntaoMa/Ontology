@@ -1,0 +1,153 @@
+{
+  "sampleOnly": false,
+  "objects": [
+    {
+      "id": "DesignChangeOrder",
+      "name": "设计变更单",
+      "summary": "表达一次设计变更的业务单据及其生效信息。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "title", "status", "effectiveAt"],
+      "properties": ["id", "title", "status", "effectiveAt", "reason"]
+    },
+    {
+      "id": "ChangeImpactItem",
+      "name": "设计变更受影响对象",
+      "summary": "表达设计变更针对某个对象的替换关系、处理意见和生效范围。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "impactType", "targetEffectivity", "oldPartDisposition"],
+      "properties": [
+        "id",
+        "impactType",
+        "targetEffectivity",
+        "oldPartDisposition",
+        "oldPartDispositionRemark",
+        "replacementStrategy"
+      ]
+    },
+    {
+      "id": "ProductModel",
+      "name": "产品型号",
+      "summary": "表达设计域和制造域共同引用的产品型号。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "modelCode", "plantCode"],
+      "properties": ["id", "modelCode", "plantCode"]
+    },
+    {
+      "id": "EBOMNode",
+      "name": "EBOM 节点",
+      "summary": "表达设计领域的零件树节点。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "nodeCode", "quantityPerParent", "isLeaf"],
+      "properties": ["id", "nodeCode", "quantityPerParent", "isLeaf"]
+    },
+    {
+      "id": "EPart",
+      "name": "设计零件",
+      "summary": "表达设计域中的零件主对象。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "partNumber", "partName"],
+      "properties": ["id", "partNumber", "partName", "partCategory"]
+    },
+    {
+      "id": "EPartVersion",
+      "name": "设计零件版本",
+      "summary": "表达设计零件的具体版本。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "versionCode", "lifecycleState"],
+      "properties": ["id", "versionCode", "lifecycleState"]
+    },
+    {
+      "id": "MBOMNode",
+      "name": "MBOM 节点",
+      "summary": "表达制造领域的装配结构节点。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "nodeCode", "depth", "cumulativeQtyPerTop"],
+      "properties": [
+        "id",
+        "nodeCode",
+        "parentNodeId",
+        "depth",
+        "cumulativeQtyPerTop",
+        "quantityPerParent",
+        "isLeaf",
+        "operationCode"
+      ]
+    },
+    {
+      "id": "MPart",
+      "name": "制造零件",
+      "summary": "表达制造域中的自制件、采购件和装配件。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "partNumber", "partName", "sourceType", "partKind"],
+      "properties": [
+        "id",
+        "partNumber",
+        "partName",
+        "sourceType",
+        "partKind",
+        "makeLeadHours",
+        "procurementLeadHours",
+        "procurementCertificationRequired",
+        "certificationLeadHours",
+        "assemblyLeadHours",
+        "standardUnitCost"
+      ]
+    },
+    {
+      "id": "Supplier",
+      "name": "供应商",
+      "summary": "表达采购件的供应商主数据。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "supplierCode", "name", "status"],
+      "properties": ["id", "supplierCode", "name", "status"]
+    },
+    {
+      "id": "InventoryPosition",
+      "name": "库存位置",
+      "summary": "表达某个制造零件在某库存位置上的聚合库存。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "plantCode", "warehouseCode", "onHandQty"],
+      "properties": ["id", "plantCode", "warehouseCode", "onHandQty", "reservedQty", "safeStockQty"]
+    },
+    {
+      "id": "InventoryLot",
+      "name": "库存批次",
+      "summary": "表达库存位置下的批次级可用量。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "lotCode", "status", "availableQty"],
+      "properties": ["id", "lotCode", "status", "availableQty", "receivedAt", "bookUnitCost"]
+    },
+    {
+      "id": "PurchaseOrder",
+      "name": "采购订单",
+      "summary": "表达采购件在途和承诺到货信息。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "poNumber", "status", "promisedAt"],
+      "properties": ["id", "poNumber", "status", "orderedQty", "remainingQty", "promisedAt"]
+    },
+    {
+      "id": "ProcurementCertification",
+      "name": "采购认证",
+      "summary": "表达公司内部供应商/物料采购认证流程状态。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "status", "remainingLeadHours", "approvedAt"],
+      "properties": ["id", "status", "remainingLeadHours", "approvedAt", "validUntil"]
+    },
+    {
+      "id": "ProductionBatch",
+      "name": "生产批次",
+      "summary": "表达准备切换设计变更的目标批次。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "batchCode", "status", "plannedQty", "switchDecisionAt"],
+      "properties": ["id", "batchCode", "status", "plannedQty", "plannedStartAt", "switchDecisionAt"]
+    },
+    {
+      "id": "ProductionLineState",
+      "name": "生产线状态",
+      "summary": "表达目标批次所在生产线的当前运行状态。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "lineCode", "status", "nextAvailableAt"],
+      "properties": ["id", "lineCode", "status", "currentShift", "nextAvailableAt"]
+    }
+  ]
+}

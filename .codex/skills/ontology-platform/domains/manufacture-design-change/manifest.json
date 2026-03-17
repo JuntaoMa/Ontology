@@ -1,0 +1,30 @@
+{
+  "id": "manufacture-design-change",
+  "name": "制造设计变更",
+  "businessAgnostic": false,
+  "resourceLayout": "ontology-runtime-logic/v1",
+  "summary": "分析在指定生产批次切换设计变更单时，受影响新物料和上层装配件的可用周期，并输出结构化报告。",
+  "entryActions": [
+    "create_report"
+  ],
+  "questionPatterns": [
+    "某个设计变更单在某个生产批次切换时，新物料什么时候可用？",
+    "从指定批次切换设计变更时，哪些新件会成为物料准备瓶颈？",
+    "设计变更涉及的新物料和装配件可用周期分别是多少？"
+  ],
+  "ontology": {
+    "objects": "domains/manufacture-design-change/ontology/objects.json",
+    "links": "domains/manufacture-design-change/ontology/links.json",
+    "functions": "domains/manufacture-design-change/ontology/functions.json",
+    "actions": "domains/manufacture-design-change/ontology/actions.json"
+  },
+  "runtime": {
+    "entrypoints": "domains/manufacture-design-change/runtime/entrypoints.json",
+    "pathTemplates": "domains/manufacture-design-change/runtime/path-templates.json",
+    "capabilityGraph": "domains/manufacture-design-change/runtime/capability-graph.json"
+  },
+  "logic": {
+    "functionDir": "domains/manufacture-design-change/logic/functions",
+    "actionDir": "domains/manufacture-design-change/logic/actions"
+  }
+}

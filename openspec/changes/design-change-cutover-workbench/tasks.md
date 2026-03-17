@@ -1,6 +1,6 @@
 ## 1. 通用入口 Skill
 
-- [x] 1.1 在 `.codex/skills/` 下创建 `ontology-business-qa-entry` 通用入口 skill
+- [x] 1.1 在 `.codex/skills/` 下创建 `ontology-platform` 通用入口 skill
 - [x] 1.2 编写 `SKILL.md`，定义问题分类、domain 发现、统一入口和输出规范
 - [x] 1.3 生成或编写 `agents/openai.yaml`，补齐界面元数据
 
@@ -12,13 +12,13 @@
 
 ## 3. 设计变更 Domain
 
-- [x] 3.1 创建 `design-change-material-readiness` domain，并补齐 `data-model.json`、`functions.json`、`actions.json`、`path-templates.json`
-- [x] 3.2 为 design-change-material-readiness 补齐核心 function 逻辑体和已知业务 action 逻辑体
+- [x] 3.1 创建 `manufacture-design-change` domain，并补齐 `data-model.json`、`functions.json`、`actions.json`、`path-templates.json`
+- [x] 3.2 为 manufacture-design-change 补齐核心 function 逻辑体和已知业务 action 逻辑体
 - [x] 3.3 在数据模型中覆盖旧件处置意见、旧件制造件映射和库存事实，为报废成本场景预留查询基础
 
 ## 4. 报告与示例
 
-- [x] 4.1 构造 design-change-material-readiness 的样例实例数据
+- [x] 4.1 构造 manufacture-design-change 的样例实例数据
 - [x] 4.2 输出“第三批次切换新物料可用周期”的业务 agent 报告
 - [x] 4.3 输出“第三批次切换旧物料报废成本”的业务 agent 报告，并显式展示能力缺口与新增 capability 草案
 

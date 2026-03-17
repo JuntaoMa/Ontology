@@ -1,0 +1,22 @@
+{
+  "id": "sample-generic",
+  "name": "通用样例 Domain",
+  "businessAgnostic": true,
+  "resourceLayout": "ontology-runtime-logic/v1",
+  "summary": "用于展示 domain 内部如何统一组织语义资源、能力资源、运行时辅助层和逻辑层。",
+  "ontology": {
+    "objects": "domains/sample-generic/ontology/objects.json",
+    "links": "domains/sample-generic/ontology/links.json",
+    "functions": "domains/sample-generic/ontology/functions.json",
+    "actions": "domains/sample-generic/ontology/actions.json"
+  },
+  "runtime": {
+    "entrypoints": "domains/sample-generic/runtime/entrypoints.json",
+    "pathTemplates": "domains/sample-generic/runtime/path-templates.json",
+    "capabilityGraph": "domains/sample-generic/runtime/capability-graph.json"
+  },
+  "logic": {
+    "functionDir": "domains/sample-generic/logic/functions",
+    "actionDir": "domains/sample-generic/logic/actions"
+  }
+}

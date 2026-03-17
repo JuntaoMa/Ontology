@@ -1,0 +1,28 @@
+{
+  "sampleOnly": true,
+  "actions": [
+    {
+      "id": "resolve",
+      "name": "解析样例业务问题",
+      "summary": "围绕样例对象整理上下文、评估条件并输出摘要报告。",
+      "inputs": ["SampleObject.id"],
+      "outputs": ["SampleReport"],
+      "anchorObjects": ["SampleObject"],
+      "readsObjects": ["SampleObject", "SampleContext", "SampleEvent"],
+      "traversesLinks": ["RELATED_TO", "OBSERVED_IN", "DERIVED_FROM"],
+      "writesObjects": [],
+      "dependsOnFunctions": [
+        "normalize",
+        "assess",
+        "summarize"
+      ],
+      "dependsOnActions": [],
+      "capabilityBoundary": {
+        "responsibleFor": ["组织样例问题的查询、评估和摘要生成流程"],
+        "notResponsibleFor": ["绑定任何具体业务域", "写回外部业务系统", "伪造不存在的能力"]
+      },
+      "logicRef": "domains/sample-generic/logic/actions/resolve.md",
+      "logicStatus": "draft"
+    }
+  ]
+}

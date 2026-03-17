@@ -1,0 +1,29 @@
+{
+  "sampleOnly": true,
+  "objects": [
+    {
+      "id": "SampleObject",
+      "name": "样例对象",
+      "summary": "用于展示一个可被查询和引用的业务对象样例。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "name", "status"],
+      "properties": ["id", "name", "status", "ownerId"]
+    },
+    {
+      "id": "SampleContext",
+      "name": "样例上下文",
+      "summary": "用于展示一个可作为关联上下文的业务对象样例。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "category", "priority"],
+      "properties": ["id", "category", "priority", "effectiveAt"]
+    },
+    {
+      "id": "SampleEvent",
+      "name": "样例事件",
+      "summary": "用于展示一个事件型业务对象的样例。",
+      "identityFields": ["id"],
+      "mainDisplayFields": ["id", "eventType", "createdAt"],
+      "properties": ["id", "eventType", "createdAt", "relatedObjectId"]
+    }
+  ]
+}

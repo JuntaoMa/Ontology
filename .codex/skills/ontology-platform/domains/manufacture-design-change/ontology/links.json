@@ -1,0 +1,28 @@
+{
+  "sampleOnly": false,
+  "links": [
+    { "id": "HAS_IMPACT_ITEM", "name": "包含受影响对象", "summary": "设计变更单包含多个受影响对象。", "fromObject": "DesignChangeOrder", "toObject": "ChangeImpactItem", "cardinality": "one-to-many" },
+    { "id": "AFFECTS_EBOM_NODE", "name": "影响 EBOM 节点", "summary": "受影响对象定位到具体设计 BOM 节点。", "fromObject": "ChangeImpactItem", "toObject": "EBOMNode", "cardinality": "many-to-one" },
+    { "id": "REPLACES_OLD_EPART_VERSION", "name": "替换旧设计版本", "summary": "受影响对象指向被替换的旧设计零件版本。", "fromObject": "ChangeImpactItem", "toObject": "EPartVersion", "cardinality": "many-to-one" },
+    { "id": "INTRODUCES_NEW_EPART_VERSION", "name": "引入新设计版本", "summary": "受影响对象指向引入的新设计零件版本。", "fromObject": "ChangeImpactItem", "toObject": "EPartVersion", "cardinality": "many-to-one" },
+    { "id": "VERSION_OF", "name": "属于设计零件", "summary": "设计零件版本属于某个设计零件。", "fromObject": "EPartVersion", "toObject": "EPart", "cardinality": "many-to-one" },
+    { "id": "USES_EPART_VERSION", "name": "使用设计零件版本", "summary": "EBOM 节点使用某个设计零件版本。", "fromObject": "EBOMNode", "toObject": "EPartVersion", "cardinality": "many-to-one" },
+    { "id": "CHILD_OF", "name": "属于父 EBOM 节点", "summary": "EBOM 节点之间的父子关系。", "fromObject": "EBOMNode", "toObject": "EBOMNode", "cardinality": "many-to-one" },
+    { "id": "BELONGS_TO_MODEL", "name": "属于产品型号", "summary": "EBOM 节点属于某个产品型号。", "fromObject": "EBOMNode", "toObject": "ProductModel", "cardinality": "many-to-one" },
+    { "id": "REALIZED_AS_MPART", "name": "落为制造零件", "summary": "设计零件版本在制造域落为某个制造零件。", "fromObject": "EPartVersion", "toObject": "MPart", "cardinality": "many-to-one" },
+    { "id": "MAPPED_TO_MBOM_NODE", "name": "映射到 MBOM 节点", "summary": "设计零件版本映射到制造 BOM 节点。", "fromObject": "EPartVersion", "toObject": "MBOMNode", "cardinality": "many-to-one" },
+    { "id": "USES_MPART", "name": "使用制造零件", "summary": "MBOM 节点使用某个制造零件。", "fromObject": "MBOMNode", "toObject": "MPart", "cardinality": "many-to-one" },
+    { "id": "CHILD_OF_MBOM", "name": "属于父 MBOM 节点", "summary": "MBOM 节点之间的父子关系。", "fromObject": "MBOMNode", "toObject": "MBOMNode", "cardinality": "many-to-one" },
+    { "id": "BELONGS_TO_MODEL_MBOM", "name": "属于制造产品型号", "summary": "MBOM 节点属于某个产品型号。", "fromObject": "MBOMNode", "toObject": "ProductModel", "cardinality": "many-to-one" },
+    { "id": "FOR_MPART", "name": "对应制造零件", "summary": "库存位置对应某个制造零件。", "fromObject": "InventoryPosition", "toObject": "MPart", "cardinality": "many-to-one" },
+    { "id": "FOR_MPART_LOT", "name": "库存批次对应制造零件", "summary": "库存批次对应某个制造零件。", "fromObject": "InventoryLot", "toObject": "MPart", "cardinality": "many-to-one" },
+    { "id": "LOCATED_IN", "name": "位于库存位置", "summary": "库存批次位于某个库存位置。", "fromObject": "InventoryLot", "toObject": "InventoryPosition", "cardinality": "many-to-one" },
+    { "id": "ORDERS_MPART", "name": "采购制造零件", "summary": "采购订单采购某个制造零件。", "fromObject": "PurchaseOrder", "toObject": "MPart", "cardinality": "many-to-one" },
+    { "id": "FOR_SUPPLIER", "name": "对应供应商", "summary": "采购订单对应某个供应商。", "fromObject": "PurchaseOrder", "toObject": "Supplier", "cardinality": "many-to-one" },
+    { "id": "SUPPLIED_BY", "name": "由供应商供货", "summary": "制造零件由某个供应商供货。", "fromObject": "MPart", "toObject": "Supplier", "cardinality": "many-to-one" },
+    { "id": "QUALIFIES_SUPPLIER", "name": "认证供应商", "summary": "采购认证作用于某个供应商。", "fromObject": "ProcurementCertification", "toObject": "Supplier", "cardinality": "many-to-one" },
+    { "id": "QUALIFIES_MPART", "name": "认证制造零件", "summary": "采购认证作用于某个制造零件。", "fromObject": "ProcurementCertification", "toObject": "MPart", "cardinality": "many-to-one" },
+    { "id": "FOR_MODEL", "name": "对应产品型号", "summary": "生产批次对应某个产品型号。", "fromObject": "ProductionBatch", "toObject": "ProductModel", "cardinality": "many-to-one" },
+    { "id": "RUNS_ON", "name": "运行于生产线状态", "summary": "生产批次运行在某个生产线状态上下文中。", "fromObject": "ProductionBatch", "toObject": "ProductionLineState", "cardinality": "many-to-one" }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "sampleOnly": true,
+  "functions": [
+    {
+      "id": "normalize",
+      "name": "归一化样例上下文",
+      "summary": "把查询得到的样例对象与上下文数据整理成统一结构。",
+      "inputs": ["SampleObject", "SampleContext"],
+      "outputs": ["normalized_context"],
+      "readsObjects": ["SampleObject", "SampleContext"],
+      "traversesLinks": [],
+      "writesObjects": [],
+      "callsFunctions": [],
+      "capabilityBoundary": {
+        "responsibleFor": ["整理样例对象与上下文字段", "输出统一上下文结构"],
+        "notResponsibleFor": ["查询样例对象", "决定业务结论"]
+      },
+      "logicRef": "domains/sample-generic/logic/functions/normalize.md",
+      "logicStatus": "draft"
+    },
+    {
+      "id": "assess",
+      "name": "评估样例条件",
+      "summary": "根据显式输入评估某个条件是否成立，并返回结构化结果。",
+      "inputs": ["normalized_context", "SampleEvent"],
+      "outputs": ["condition_assessment"],
+      "readsObjects": ["SampleContext", "SampleEvent"],
+      "traversesLinks": [],
+      "writesObjects": [],
+      "callsFunctions": ["normalize"],
+      "capabilityBoundary": {
+        "responsibleFor": ["根据显式输入评估条件", "输出结构化评估结果"],
+        "notResponsibleFor": ["查询事件数据", "发起流程编排"]
+      },
+      "logicRef": "domains/sample-generic/logic/functions/assess.md",
+      "logicStatus": "draft"
+    },
+    {
+      "id": "summarize",
+      "name": "生成样例摘要",
+      "summary": "把函数结果整理成可展示的摘要结构。",
+      "inputs": ["condition_assessment"],
+      "outputs": ["summary_report"],
+      "readsObjects": [],
+      "traversesLinks": [],
+      "writesObjects": [],
+      "callsFunctions": ["assess"],
+      "capabilityBoundary": {
+        "responsibleFor": ["汇总评估结果", "生成面向展示的摘要"],
+        "notResponsibleFor": ["重新读取数据", "生成新能力元数据"]
+      },
+      "logicRef": "domains/sample-generic/logic/functions/summarize.md",
+      "logicStatus": "draft"
+    }
+  ]
+}
