@@ -4,6 +4,8 @@ from __future__ import annotations
 from .orchestrator import Registry, ValidatorSpec
 from .validators.instance import validate_shacl_minimal, validate_shacl_trusted
 from .validators.schema_layer import validate_consistency, validate_cqs, validate_pitfalls
+from .validators.process import (validate_cross, validate_process_formal,
+                                 validate_process_simulation)
 from .validators.rules import validate_rules
 from .validators.structural import validate_structure
 
@@ -34,4 +36,17 @@ def build_registry() -> Registry:
         "v3.rules", "V3", "score", validate_rules,
         depends_on=["v0.structure"],
         applicable=lambda b: b.rules is not None))
+    # V4 流程层
+    reg.register(ValidatorSpec(
+        "v4.formal", "V4", "score", validate_process_formal,
+        depends_on=["v0.structure"],
+        applicable=lambda b: bool(b.processes)))
+    reg.register(ValidatorSpec(
+        "v4.simulation", "V4", "score", validate_process_simulation,
+        depends_on=["v4.formal"],
+        applicable=lambda b: bool(b.processes) and b.rules is not None))
+    reg.register(ValidatorSpec(
+        "v4.cross", "V4", "score", validate_cross,
+        depends_on=["v3.rules", "v4.simulation"],
+        applicable=lambda b: bool(b.processes) and b.rules is not None))
     return reg
