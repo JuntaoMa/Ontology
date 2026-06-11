@@ -22,17 +22,17 @@
     },
     {
       "rule_id": "R2",
-      "guard": "monthly_income >= 5000 && loan_amount <= 100000",
+      "guard": "age >= 18 && age <= 65 && monthly_income >= 5000 && loan_amount <= 100000",
       "conclusion": {"action": "approve", "polarity": "require"},
       "tier": "hard",
-      "evidence": [{"quote": "月收入5000元以上且申请金额不超过10万元的，可予直批", "source": "信贷手册§3.2"}]
+      "evidence": [{"quote": "受理范围（18至65周岁）内月收入5000元以上且申请金额不超过10万元的，可予直批", "source": "信贷手册§3.2"}]
     },
     {
       "rule_id": "R3",
-      "guard": "credit_score >= 700 && loan_amount <= 50000",
+      "guard": "age >= 18 && age <= 65 && monthly_income >= 3000 && credit_score >= 700 && loan_amount <= 50000",
       "conclusion": {"action": "approve", "polarity": "require"},
       "tier": "hard",
-      "evidence": [{"quote": "信用分700以上的小额申请（5万元以内）可予直批", "source": "信贷手册§3.3"}]
+      "evidence": [{"quote": "受理范围内、收入达标且信用分700以上的小额申请（5万元以内）可予直批", "source": "信贷手册§3.3"}]
     },
     {
       "rule_id": "R4",

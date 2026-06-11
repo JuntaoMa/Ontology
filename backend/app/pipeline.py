@@ -4,6 +4,7 @@ from __future__ import annotations
 from .orchestrator import Registry, ValidatorSpec
 from .validators.instance import validate_shacl_minimal, validate_shacl_trusted
 from .validators.schema_layer import validate_consistency, validate_cqs, validate_pitfalls
+from .validators.rules import validate_rules
 from .validators.structural import validate_structure
 
 
@@ -28,4 +29,9 @@ def build_registry() -> Registry:
         "v1.cq", "V1", "score", validate_cqs,
         depends_on=["v2.shacl_minimal"],
         applicable=lambda b: b.cqs is not None))
+    # V3 规则层
+    reg.register(ValidatorSpec(
+        "v3.rules", "V3", "score", validate_rules,
+        depends_on=["v0.structure"],
+        applicable=lambda b: b.rules is not None))
     return reg
