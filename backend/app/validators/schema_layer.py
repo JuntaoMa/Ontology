@@ -116,13 +116,23 @@ def validate_pitfalls(ctx: Context) -> ValidationResult:
     for n in list(edges):
         if color.get(n, WHITE) == WHITE:
             dfs(n, [n])
+    seen_cycles: set[frozenset] = set()
     for cyc in cycles:
+        nodes = cyc[:-1] if len(cyc) > 1 and cyc[-1] == cyc[0] else cyc
+        key = frozenset(nodes)
+        if key in seen_cycles:
+            continue
+        seen_cycles.add(key)
+        # 规范化：从字典序最小节点起始（rdflib 图遍历顺序跨实例不稳定，
+        # 不规范化会导致环报告漂移、污染变异矩阵的 diff）
+        i = nodes.index(min(nodes))
+        rotated = nodes[i:] + nodes[:i] + [min(nodes)]
         findings.append(Finding(
             validator_id="v1.pitfalls", severity="warning",
-            object_type="ontology", object_id=cyc[0],
+            object_type="ontology", object_id=rotated[0],
             finding_type="subclass_cycle",
-            message="subClassOf 存在环：" + " → ".join(c.split('#')[-1] for c in cyc),
-            locus={"cycle": cyc}))
+            message="subClassOf 存在环：" + " → ".join(c.split('#')[-1] for c in rotated),
+            locus={"cycle": rotated}))
 
     return ValidationResult(
         verdict="fail" if any(f.severity != "info" for f in findings) else "pass",

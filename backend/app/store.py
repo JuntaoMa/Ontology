@@ -47,7 +47,9 @@ def now_iso() -> str:
 
 
 def connect(db_path: str | Path = ":memory:") -> sqlite3.Connection:
-    conn = sqlite3.connect(str(db_path))
+    # check_same_thread=False：FastAPI 同步端点跑在线程池；demo 单用户场景下
+    # 由 SQLite 自身的串行化保证安全
+    conn = sqlite3.connect(str(db_path), check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
     return conn
