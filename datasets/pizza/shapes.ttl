@@ -1,0 +1,15 @@
+@prefix pizza: <http://www.co-ode.org/ontologies/pizza/pizza.owl#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+# pizza 数据集的演示 shape（trusted 层，score）：
+# 个体应有 label；披萨个体应有至少一个 topping
+pizza:IndividualLabelShape
+    a sh:NodeShape ;
+    sh:targetClass pizza:DeepPanBase ;
+    sh:property [
+        sh:path rdfs:label ;
+        sh:minCount 1 ;
+        sh:message "个体应有 rdfs:label" ;
+    ] .

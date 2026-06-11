@@ -1,0 +1,113 @@
+{
+  "ruleset_id": "loan_approval_v1",
+  "description": "贷款审批决策规则（demo，含预埋缺陷，见 specs/00-master-spec.md AC-R 系列）",
+  "variables": {
+    "age":            {"type": "int",  "min": 0,   "max": 120},
+    "monthly_income": {"type": "real", "min": 0,   "max": null},
+    "loan_amount":    {"type": "real", "min": 0,   "max": null, "min_exclusive": true},
+    "credit_score":   {"type": "int",  "min": 300, "max": 850}
+  },
+  "incompatible_actions": [
+    ["approve", "reject"],
+    ["approve", "manual_review"],
+    ["online_interview", "offline_interview"]
+  ],
+  "rules": [
+    {
+      "rule_id": "R1",
+      "guard": "age < 18",
+      "conclusion": {"action": "reject", "polarity": "require"},
+      "tier": "hard",
+      "evidence": [{"quote": "未满18周岁不得申请贷款", "source": "信贷手册§2.1"}]
+    },
+    {
+      "rule_id": "R2",
+      "guard": "monthly_income >= 5000 && loan_amount <= 100000",
+      "conclusion": {"action": "approve", "polarity": "require"},
+      "tier": "hard",
+      "evidence": [{"quote": "月收入5000元以上且申请金额不超过10万元的，可予直批", "source": "信贷手册§3.2"}]
+    },
+    {
+      "rule_id": "R3",
+      "guard": "credit_score >= 700 && loan_amount <= 50000",
+      "conclusion": {"action": "approve", "polarity": "require"},
+      "tier": "hard",
+      "evidence": [{"quote": "信用分700以上的小额申请（5万元以内）可予直批", "source": "信贷手册§3.3"}]
+    },
+    {
+      "rule_id": "R4",
+      "guard": "credit_score < 600",
+      "conclusion": {"action": "reject", "polarity": "require"},
+      "tier": "hard",
+      "evidence": [{"quote": "信用分低于600的一律拒绝", "source": "信贷手册§2.4"}],
+      "_seeded_defect": "AC-R-CONFLICT：与 R2 在 income>=5000 ∧ amount<=10万 ∧ credit<600 区域冲突（approve vs reject）"
+    },
+    {
+      "rule_id": "R5",
+      "guard": "age < 18 && age > 65",
+      "conclusion": {"action": "reject", "polarity": "require"},
+      "tier": "hard",
+      "evidence": [{"quote": "年龄不在18至65岁区间的予以拒绝", "source": "信贷手册§2.2（抽取时把『或』错写为『且』）"}],
+      "_seeded_defect": "AC-R-DEAD：guard 永假（dead rule）——原文是『或』，抽取成『且』"
+    },
+    {
+      "rule_id": "R6",
+      "guard": "age < 16",
+      "conclusion": {"action": "reject", "polarity": "require"},
+      "tier": "hard",
+      "evidence": [{"quote": "未满16周岁不具备完全民事行为能力，不得申请", "source": "信贷手册§2.1 注"}],
+      "_seeded_defect": "AC-R-SUBSUME：被 R1（age<18→reject）蕴含且结论一致"
+    },
+    {
+      "rule_id": "R7",
+      "guard": "monthly_income < 3000",
+      "conclusion": {"action": "reject", "polarity": "require"},
+      "tier": "hard",
+      "evidence": [{"quote": "月收入低于3000元的不予受理", "source": "信贷手册§2.3"}]
+    },
+    {
+      "rule_id": "R8",
+      "guard": "loan_amount < 300000",
+      "conclusion": {"action": "online_interview", "polarity": "recommend"},
+      "tier": "heuristic",
+      "evidence": [{"quote": "30万元以下的申请建议优先采用线上面签，提升时效", "source": "运营备忘2024-08"}],
+      "_seeded_defect": "AC-R-COMPETE：与 R9 guard 重叠且建议互斥——heuristic 竞争，不是冲突"
+    },
+    {
+      "rule_id": "R9",
+      "guard": "monthly_income >= 8000",
+      "conclusion": {"action": "offline_interview", "polarity": "recommend"},
+      "tier": "heuristic",
+      "evidence": [{"quote": "优质客户（月收入8000元以上）建议安排线下面签，便于交叉销售", "source": "运营备忘2024-11"}]
+    },
+    {
+      "rule_id": "R10",
+      "guard": "loan_amount > 500000",
+      "conclusion": {"action": "manual_review", "polarity": "require"},
+      "tier": "hard",
+      "evidence": [{"quote": "申请金额超过50万元的必须进入人工复核", "source": "信贷手册§4.1"}]
+    },
+    {
+      "rule_id": "R11",
+      "guard": "monthly_income >= 5000",
+      "conclusion": {"action": "fast_track", "polarity": "recommend"},
+      "tier": "heuristic",
+      "evidence": [{"quote": "月收入五万元以上的高净值客户方可进入快速通道", "source": "信贷手册§3.5"}],
+      "_seeded_defect": "AC-R-FAITH：guard 写 5000，evidence 原文是『五万』（数量级抽错）——逻辑自洽，仅 J2 忠实性 judge 能抓"
+    },
+    {
+      "rule_id": "R12",
+      "guard": "loan_amount > 100000",
+      "conclusion": {"action": "collect_payslip", "polarity": "recommend"},
+      "tier": "heuristic",
+      "evidence": [{"quote": "10万元以上的申请建议补充收入流水", "source": "运营备忘2025-02"}]
+    },
+    {
+      "rule_id": "R13",
+      "guard": "age > 65",
+      "conclusion": {"action": "reject", "polarity": "require"},
+      "tier": "hard",
+      "evidence": [{"quote": "超过65周岁的不予受理", "source": "信贷手册§2.2"}]
+    }
+  ]
+}
