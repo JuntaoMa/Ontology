@@ -84,11 +84,15 @@ def run_pipeline(bundle: Bundle, registry: Registry, conn,
     ctx = Context(bundle=bundle, conn=conn, run_id=run_id or f"run_{uuid.uuid4().hex[:8]}",
                   config=config or {})
     executed: set[str] = set()
+    inapplicable: set[str] = set()
 
     for spec in registry.topo_order():
         if not spec.applicable(bundle):
+            inapplicable.add(spec.validator_id)
             continue
-        missing = [d for d in spec.depends_on if d not in executed]
+        # 对该数据集不适用的依赖视为已满足（如 pizza 无 minimal shapes）
+        missing = [d for d in spec.depends_on
+                   if d not in executed and d not in inapplicable]
         if missing:   # 依赖未执行（如对该数据集不适用）→ 跳过但不报错
             store.record_run(conn, run_id=ctx.run_id, dataset=bundle.dataset_id,
                              validator_id=spec.validator_id, authority=spec.authority,
