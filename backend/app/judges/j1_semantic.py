@@ -65,6 +65,9 @@ def judge_semantic(ctx: Context) -> ValidationResult:
 
     if not items:
         return ValidationResult("pass")
+    # rdflib 集合遍历顺序跨进程不稳定（hash 随机化），必须排序，
+    # 否则 prompt 顺序漂移 → judge 缓存键漂移 → cassette 永不命中
+    items.sort(key=lambda x: x["item_id"])
     items = items[:80]                          # 批量上限
 
     import json

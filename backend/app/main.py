@@ -59,7 +59,7 @@ def run_summary(run_id: str):
         "SELECT severity, COUNT(*) n FROM findings WHERE run_id=? AND status='open' "
         "GROUP BY severity", (run_id,)).fetchall()
     quarantined = conn.execute(
-        "SELECT object_id, reason FROM quarantine WHERE run_id=? AND restored=0",
+        "SELECT id AS qid, object_id, reason FROM quarantine WHERE run_id=? AND restored=0",
         (run_id,)).fetchall()
     cost = conn.execute(
         "SELECT COUNT(*) n, SUM(judge_verdict IS NOT NULL) reviewed, "

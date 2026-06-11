@@ -123,6 +123,9 @@ def run_pipeline(bundle: Bundle, registry: Registry, conn,
 
         # 对象粒度短路：过滤已 quarantine 对象的 finding（AC-ORCH-1）
         kept = _filter_quarantined(result.findings, ctx.quarantined)
+        # 稳定排序后入库：pySHACL/rdflib 的图遍历顺序跨进程不稳定，
+        # 不排序则 finding 行 id 漂移 → j3 复判输入漂移 → cassette 失配
+        kept.sort(key=lambda f: (f.object_id, f.finding_type, f.message))
         store.record_findings(conn, ctx.run_id, kept)
 
         if spec.authority == "veto" and result.quarantined:

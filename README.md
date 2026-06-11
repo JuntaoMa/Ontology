@@ -34,7 +34,8 @@ cd ../frontend && npm install && npm run build
 ## 看什么（demo 剧本）
 
 1. **总览仪表盘**：registry+DAG 执行表（veto/score/advise 三级权限徽章）、
-   quarantine 数、**人工成本节约卡**（真实录制：judge 复判折叠 10/29 条，省 34.5%）。
+   quarantine 数、**人工成本节约卡**（cassette 定格的真实复判：折叠 6/30 条省 20%；
+   多次实录在 20–38% 区间，取决于 judge 当轮的保守程度）。
 2. **本体校验**：O1 缺必填进 quarantine（veto)；O2–O7 SHACL/推理违例（score）；
    O9「临时雇员⊑材料文档」逻辑自洽、确定性层全 miss，**只有 J1 语义 judge 抓到**（紫色高亮）。
 3. **规则校验**：R2×R4 冲突给出 Z3 具体反例；R5 dead rule；R8×R9 是「竞争建议」而非冲突
@@ -67,3 +68,6 @@ cd ../frontend && npm install && npm run build
   solver 衍生样例，否则缓存键漂移（`j3_review._VOLATILE_LOCUS`）；
   环检测等图遍历产物需规范化（最小节点起始）。
 - rdflib 对「全常量三元组模式 + 未用 SELECT 变量」返回 0 行：CQ 写法须绑定变量。
+- **cassette 可复现性三连修**：j1 条目排序（rdflib 集合遍历跨进程不稳）、
+  环报告规范化（最小节点起始）、findings 入库前稳定排序（行 id 进 j3 输入）——
+  离线回放已用三个不同 PYTHONHASHSEED 验证稳定命中。

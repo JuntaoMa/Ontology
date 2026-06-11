@@ -41,11 +41,11 @@ export default function ReviewQueue({ run, findings, refreshFindings, dataset }:
         <div className="panel">
           <h3>Quarantine（veto 拒收：可见、可审、可恢复）</h3>
           <table><tbody>
-            {run.quarantine.map((q: any, i: number) => (
-              <tr key={i}>
+            {run.quarantine.map((q: any) => (
+              <tr key={q.qid}>
                 <td className="mono">{q.object_id.split("#").pop()}</td>
                 <td className="muted">拒收原因：{q.reason}</td>
-                <td><button className="btn small" onClick={() => restore(i + 1)}>恢复</button></td>
+                <td><button className="btn small" onClick={() => restore(q.qid)}>恢复</button></td>
               </tr>))}
           </tbody></table>
         </div>)}
