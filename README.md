@@ -2,7 +2,12 @@
 
 业务场景下本体 / 规则 / 流程的混合校验工作台：**确定性引擎做形式判定（veto/score），
 LLM judge 做语义判定与复判（advise），人工在写入闸门终审**。
-设计文档：`../docs/validation-demo-plan.md`（v2.1）；验收规格：`specs/00-master-spec.md`。
+设计文档：`../docs/validation-demo-plan.md`（v2.1）；功能验收：`specs/00-master-spec.md`；
+前端重设计规格：`specs/10-frontend-redesign-spec.md`。
+
+前端为**亮色企业风 + 左侧栏 + 统一 findings 收件箱**（Tailwind v4 + 手写 shadcn 风格原语 +
+Cytoscape + ECharts）。核心设计约束:**双语义轴分通道**——严重度用填充色、权限(veto/score/advise)
+用图标+边框，永不抢同一视觉通道（常驻图例）。
 
 ## 快速开始
 
@@ -51,11 +56,19 @@ cd ../frontend && npm install && npm run build
    （accept_repair 记入 review_actions）、quarantine 可恢复、可信图谱导出
    （仅含通过闸门的对象）。
 
+## 信息架构（左侧栏）
+
+总览 / **收件箱(findings)** / 本体 / 规则 / 流程 / 错误注入 / 写入闸门。
+findings 的逐条 triage 统一在**收件箱**完成(Sentry 式:按类型/对象/层分组、severity 筛选、
+judge 高置信项默认折叠、详情抽屉看 judge 复判与修复建议、accept/dismiss/accept_repair 落库);
+**写入闸门**只管 quarantine 恢复与可信图谱导出。
+
 ## 与设计文档的两处实现偏差
 
 - 流程图用 **cytoscape 渲染 IR**（而非 bpmn-js）：pm4py 生成的 BPMN XML 缺布局 DI 时
   bpmn-js 无法渲染，方案文档已列 fallback；IR 直渲更稳且能标注数据不可达活动。
-- 前端未引入 antd（纯 CSS）：组件量小，省一份重依赖。
+- 前端用 **Tailwind v4 + 手写 shadcn 风格原语**（cva + Radix），不跑 shadcn CLI——
+  离线可复现，与 cassette 哲学一致；不引 antd。
 
 ## 实施中验证过的关键技术结论
 
