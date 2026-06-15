@@ -7,22 +7,30 @@ export async function api(path: string, opts: RequestInit = {}) {
   return res.json();
 }
 
-export const SEV_COLOR: Record<string, string> = {
-  violation: "#d4380d",
-  warning: "#d48806",
-  info: "#1677ff",
-};
+export interface Finding {
+  id: number;
+  run_id: string;
+  validator_id: string;
+  severity: "violation" | "warning" | "info";
+  object_type: string;
+  object_id: string;
+  finding_type: string;
+  message: string;
+  status: "open" | "accepted" | "dismissed";
+  locus: any;
+  evidence: any;
+  judge_verdict: string | null;
+  judge_confidence: number | null;
+  judge_rationale: string | null;
+  repair: { suggestion?: string | null; classification?: string | null } | null;
+}
 
-export const LAYER_NAME: Record<string, string> = {
-  V0: "V0 结构",
-  V1: "V1 Schema",
-  V2: "V2 实例",
-  V3: "V3 规则",
-  V4: "V4 流程",
-  V5: "V5 LLM Judge",
-};
-
-export function layerOf(validatorId: string): string {
-  const m = validatorId.match(/^v(\d)/);
-  return m ? `V${m[1]}` : "V0";
+export interface RunSummary {
+  run_id: string;
+  dataset: string;
+  validators: { validator_id: string; authority: string; verdict: string; cached: boolean; duration_ms: number }[];
+  findings_by_severity: Record<string, number>;
+  quarantine: { qid: number; object_id: string; reason: string }[];
+  cost_card: { n_before: number; reviewed: number; folded: number; n_after: number; saving_pct: number };
+  judge_stats: { cached_responses: number; tokens_in: number; tokens_out: number };
 }
