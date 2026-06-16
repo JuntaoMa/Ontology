@@ -184,32 +184,48 @@ def source(dataset: str, object_type: str, object_id: str):
 
 @app.get("/api/ontology/{dataset}/graph")
 def ontology_graph(dataset: str):
+    """TBox（类 + subClassOf + 对象属性 domain→range）+ ABox（实例 rdf:type）。
+    节点/边带 kind，前端据此分色并可切换显示实例。"""
+    from rdflib.namespace import OWL
     bundle = load_bundle(dataset)
     g = bundle.data
-    nodes, edges, seen = [], [], set()
+    nodes, edges = [], {}
+    classes: set = set()
 
     def add_node(uri, kind):
-        if uri in seen:
+        if str(uri) in {n["data"]["id"] for n in nodes}:
             return
-        seen.add(uri)
         label = g.value(uri, RDFS.label)
-        nodes.append({"data": {"id": str(uri), "label": str(label) if label
-                               else str(uri).split("#")[-1], "kind": kind}})
+        nodes.append({"data": {"id": str(uri), "kind": kind,
+                               "label": str(label) if label else _local(uri)}})
 
-    from rdflib.namespace import OWL
+    def add_edge(s, t, label, kind):
+        edges[(str(s), str(t), kind, label)] = {"data": {
+            "source": str(s), "target": str(t), "label": label, "kind": kind}}
+
     for cls in set(g.subjects(RDF.type, OWL.Class)):
-        if isinstance(cls, str) or "#" in str(cls):
+        if isinstance(cls, URIRef):
+            classes.add(cls)
             add_node(cls, "class")
+
+    # 分类层级
     for sub, sup in g.subject_objects(RDFS.subClassOf):
-        if str(sub) in seen and str(sup) in seen:
-            edges.append({"data": {"source": str(sub), "target": str(sup),
-                                   "label": "subClassOf"}})
-    # 实例（仅 loan 规模可全显）
-    for s, _, o in g.triples((None, RDF.type, None)):
-        if str(o) in seen and "#" in str(s):
+        if sub in classes and sup in classes:
+            add_edge(sub, sup, "subClassOf", "subclass")
+
+    # 对象属性：domain → range（关系结构，此前缺失，是孤立节点的根因）
+    for prop in set(g.subjects(RDF.type, OWL.ObjectProperty)):
+        dom, rng = g.value(prop, RDFS.domain), g.value(prop, RDFS.range)
+        if dom in classes and rng in classes:
+            add_edge(dom, rng, _local(prop), "property")
+
+    # 实例（ABox），前端默认折叠
+    for s, _p, o in g.triples((None, RDF.type, None)):
+        if o in classes and isinstance(s, URIRef):
             add_node(s, "individual")
-            edges.append({"data": {"source": str(s), "target": str(o), "label": "a"}})
-    return {"nodes": nodes, "edges": edges}
+            add_edge(s, o, "a", "type")
+
+    return {"nodes": nodes, "edges": list(edges.values())}
 
 
 @app.get("/api/rules/{dataset}")
