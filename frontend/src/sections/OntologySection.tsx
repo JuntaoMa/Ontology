@@ -7,31 +7,17 @@ import { Card, CardHeader, CardBody } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { FindingList } from "../components/FindingList";
 
-/** 确定性 preset 排布：类按 id 排在固定圆周上，实例在所属类下方网格聚簇。
- *  纯 preset（无力导向随机）→ 刷新/切换实例时类的位置完全不变。 */
-function layoutPositions(nodes: any[], edges: any[]) {
-  const classes = nodes.filter((n) => n.data.kind === "class")
-    .sort((a, b) => a.data.id.localeCompare(b.data.id));
-  const inds = nodes.filter((n) => n.data.kind === "individual");
-  const N = Math.max(classes.length, 1);
-  const R = Math.max(170, N * 30);
-  const cx = R + 80, cy = R + 60;
-  const classPos: Record<string, { x: number; y: number }> = {};
-  classes.forEach((n, i) => {
-    const a = -Math.PI / 2 + (2 * Math.PI * i) / N;
-    const p = { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
-    classPos[n.data.id] = p;
-    n.position = p;
-  });
-  const classOf: Record<string, string> = {};
-  edges.filter((e) => e.data.kind === "type").forEach((e) => { classOf[e.data.source] = e.data.target; });
-  const seen: Record<string, number> = {};
-  inds.forEach((n) => {
-    const c = classOf[n.data.id];
-    const base = classPos[c] || { x: cx, y: cy };
-    const k = (seen[c] = (seen[c] || 0) + 1) - 1;
-    const col = k % 6, row = Math.floor(k / 6);
-    n.position = { x: base.x + (col - 2.5) * 15, y: base.y + 36 + row * 14 };
+/** 确定性力导向：按 id 哈希给每个节点一个固定的初始位置（种子），再跑 cose 的
+ *  randomize:false（力导向但不引入随机）。结果是力导向的自然散布，且同一视图每次刷新一致。 */
+function seedPositions(nodes: any[]) {
+  const sorted = [...nodes].sort((a, b) => a.data.id.localeCompare(b.data.id));
+  const n = Math.max(sorted.length, 1);
+  const R = 60 + n * 14;
+  sorted.forEach((node, i) => {
+    // 黄金角螺旋铺开（确定性），给 cose 一个均匀的起点，避免初始重叠
+    const a = i * 2.399963;            // 黄金角
+    const r = R * Math.sqrt((i + 0.5) / n);
+    node.position = { x: 400 + r * Math.cos(a), y: 320 + r * Math.sin(a) };
   });
 }
 
@@ -69,12 +55,16 @@ export function OntologySection() {
       const edges = g.edges.filter((e: any) =>
         (showInstances || e.data.kind !== "type") &&
         visibleIds.has(e.data.source) && visibleIds.has(e.data.target));
-      layoutPositions(nodes, edges);
+      seedPositions(nodes);
 
       cy = cytoscape({
         container: ref.current,
         elements: [...nodes, ...edges],
-        layout: { name: "preset", fit: true, padding: 28 },     // 固定排布，不随机
+        // 确定性力导向：种子初始位置 + randomize:false → 刷新结果一致
+        layout: { name: "cose", randomize: false, animate: false, fit: true, padding: 28,
+                  nodeRepulsion: 9000, idealEdgeLength: 80, edgeElasticity: 120,
+                  gravity: 0.3, componentSpacing: 90, numIter: 1200,
+                  nodeDimensionsIncludeLabels: true },
         style: [
           { selector: 'node[kind="class"]', style: { label: "data(label)", shape: "round-rectangle",
               width: 70, height: 28, "background-color": "#f1f5f9", "border-width": 1,

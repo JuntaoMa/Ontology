@@ -36,9 +36,9 @@ function Body() {
 export default function App() {
   return (
     <StoreProvider>
-      <div className="flex h-screen w-screen overflow-hidden">
-        <Sidebar />
+      <div className="relative flex h-screen w-screen overflow-hidden">
         <Body />
+        <Sidebar />
       </div>
     </StoreProvider>
   );

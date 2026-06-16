@@ -9,6 +9,8 @@ interface Store {
   setDataset: (d: string) => void;
   section: Section;
   setSection: (s: Section) => void;
+  navOpen: boolean;
+  setNavOpen: (v: boolean) => void;
   run: RunSummary | null;
   findings: Finding[];
   running: boolean;
@@ -30,6 +32,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [datasets, setDatasets] = useState<string[]>([]);
   const [dataset, setDataset] = useState("loan");
   const [section, setSection] = useState<Section>("overview");
+  const [navOpen, setNavOpen] = useState(false);
   const [run, setRun] = useState<RunSummary | null>(null);
   const [findings, setFindings] = useState<Finding[]>([]);
   const [running, setRunning] = useState(false);
@@ -81,7 +84,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider value={{ datasets, dataset, setDataset, section, setSection,
-      run, findings, running, judgeBackend, error, triggerRun, refresh }}>
+      navOpen, setNavOpen, run, findings, running, judgeBackend, error, triggerRun, refresh }}>
       {children}
     </Ctx.Provider>
   );

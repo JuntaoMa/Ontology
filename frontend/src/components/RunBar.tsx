@@ -1,15 +1,27 @@
-import { Play, Loader2, Database, Cpu } from "lucide-react";
-import { useStore } from "../store";
+import { Play, Loader2, Database, Cpu, PanelLeft } from "lucide-react";
+import { useStore, type Section } from "../store";
 import { Button } from "./ui/Button";
 import { Select } from "./ui/Select";
 import { Pill } from "./ui/Badge";
 import { Legend } from "./Legend";
 
+const SECTION_NAME: Record<Section, string> = {
+  overview: "总览", inbox: "收件箱", ontology: "本体校验", rules: "规则校验",
+  process: "流程校验", lab: "错误注入", gate: "写入闸门",
+};
+
 export function RunBar() {
-  const { datasets, dataset, setDataset, run, running, triggerRun, judgeBackend, error } = useStore();
+  const { datasets, dataset, setDataset, run, running, triggerRun, judgeBackend, error,
+          section, setNavOpen } = useStore();
   return (
     <header className="flex flex-col gap-2 border-b border-[var(--border)] bg-[var(--surface)] px-5 py-2.5">
       <div className="flex items-center gap-3">
+        <button onClick={() => setNavOpen(true)} title="菜单"
+          className="-ml-1 flex items-center gap-2 rounded-[var(--radius-sm)] px-2 py-1.5 text-[var(--fg-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--fg)]">
+          <PanelLeft size={17} />
+          <span className="text-sm font-semibold">{SECTION_NAME[section]}</span>
+        </button>
+        <div className="h-4 w-px bg-[var(--border)]" />
         <div className="flex items-center gap-1.5 text-[var(--fg-subtle)]">
           <Database size={14} />
           <Select value={dataset} onChange={(e) => setDataset(e.target.value)} disabled={running}>
