@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import cytoscape from "cytoscape";
-import { api } from "../api";
+import { ListChecks } from "lucide-react";
+import { api, type Finding } from "../api";
 import { useStore } from "../store";
 import { EmptyRun } from "../components/EmptyRun";
 import { Card, CardHeader, CardBody } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { FindingList } from "../components/FindingList";
+import { ValidatorCatalog } from "../components/ValidatorCatalog";
 
 /** 确定性力导向：按 id 哈希给每个节点一个固定的初始位置（种子），再跑 cose 的
  *  randomize:false（力导向但不引入随机）。结果是力导向的自然散布，且同一视图每次刷新一致。 */
@@ -30,13 +32,39 @@ const LINES = [
   { c: "#cbd5e1", t: "实例", d: true },
 ];
 
+function GroupCard({ title, vids, dataset, findings, specs }: {
+  title: string; vids: string[]; dataset: string; findings: Finding[]; specs: Record<string, any> | null;
+}) {
+  const [showCatalog, setShowCatalog] = useState(false);
+  const mine = findings.filter((f) => vids.includes(f.validator_id));
+  const total = specs ? vids.reduce((acc, id) =>
+    acc + (specs[id]?.shacl?.length || specs[id]?.checks?.length || 0), 0) : 0;
+  return (
+    <Card>
+      <CardHeader title={title} right={total > 0 && (
+        <Button size="sm" variant={showCatalog ? "primary" : "ghost"} onClick={() => setShowCatalog((v) => !v)}>
+          <ListChecks size={14} /> 全部检查项 {total}
+        </Button>
+      )} />
+      <CardBody className="flex flex-col gap-3 pt-0">
+        {showCatalog && <ValidatorCatalog specs={specs} validatorIds={vids} findings={findings} />}
+        <div>
+          <div className="mb-1 text-[11px] font-medium text-[var(--fg-subtle)]">本次违例</div>
+          <FindingList findings={mine} dataset={dataset} />
+        </div>
+      </CardBody>
+    </Card>
+  );
+}
+
 export function OntologySection() {
   const { dataset, run, findings } = useStore();
   const ref = useRef<HTMLDivElement>(null);
   const cyRef = useRef<any>(null);
   const [showInstances, setShowInstances] = useState(false);
+  const [specs, setSpecs] = useState<Record<string, any> | null>(null);
 
-  const mine = (vids: string[]) => findings.filter((f) => vids.includes(f.validator_id));
+  useEffect(() => { api(`/api/validators/${dataset}`).then(setSpecs).catch(() => setSpecs(null)); }, [dataset]);
 
   // 容器尺寸变化（侧栏开合、窗口缩放）→ 重新适配图谱
   useEffect(() => {
@@ -153,13 +181,11 @@ export function OntologySection() {
           </CardBody>
         </Card>
       </div>
-      {/* 右：校验结果，独立滚动 */}
-      <div className="flex w-[380px] shrink-0 flex-col gap-4 overflow-auto pr-1">
+      {/* 右：校验结果 + 全部检查项，独立滚动 */}
+      <div className="flex w-[400px] shrink-0 flex-col gap-4 overflow-auto pr-1">
         {groups.map(([title, vids]) => (
-          <Card key={title}>
-            <CardHeader title={title} />
-            <CardBody className="pt-0"><FindingList findings={mine(vids)} dataset={dataset} /></CardBody>
-          </Card>
+          <GroupCard key={title} title={title} vids={vids}
+                     dataset={dataset} findings={findings} specs={specs} />
         ))}
       </div>
     </div>

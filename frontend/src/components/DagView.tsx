@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import cytoscape from "cytoscape";
 import { api, type RunSummary } from "../api";
+import { useStore } from "../store";
 import { LAYER_NAME } from "../lib/semantics";
+import { ValidatorCatalog } from "./ValidatorCatalog";
 
 const LABEL: Record<string, string> = {
   "v0.structure": "结构校验", "v2.shacl_minimal": "最低 shape", "v2.shacl_trusted": "可信 shape",
@@ -18,15 +20,18 @@ const TEXT: Record<string, string> = {
 const AUTH_BORDER: Record<string, string> = { veto: "#b91c1c", score: "#cbd5e1", advise: "#7c3aed" };
 
 export function DagView({ run }: { run: RunSummary | null }) {
+  const { dataset, findings } = useStore();
   const ref = useRef<HTMLDivElement>(null);
   const cyRef = useRef<any>(null);
   const [dag, setDag] = useState<any>(null);
+  const [specs, setSpecs] = useState<Record<string, any> | null>(null);
   const [err, setErr] = useState(false);
   const [sel, setSel] = useState<any>(null);
 
   useEffect(() => {
     api("/api/pipeline/dag").then(setDag).catch(() => setErr(true));
   }, []);
+  useEffect(() => { api(`/api/validators/${dataset}`).then(setSpecs).catch(() => {}); }, [dataset]);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -145,9 +150,14 @@ export function DagView({ run }: { run: RunSummary | null }) {
         </span>
       </div>
       {sel && (
-        <div className="mt-2 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-1.5 text-xs">
-          <span className="mono font-semibold">{sel.id}</span> · {sel.label} · {sel.layer} · 权限 {sel.auth}
-          {sel.v && <> · verdict <b>{sel.v.verdict}</b>{sel.v.cached ? "（缓存）" : ""} · {sel.v.duration_ms}ms</>}
+        <div className="mt-2 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-xs">
+          <div>
+            <span className="mono font-semibold">{sel.id}</span> · {sel.label} · {sel.layer} · 权限 {sel.auth}
+            {sel.v && <> · verdict <b>{sel.v.verdict}</b>{sel.v.cached ? "（缓存）" : ""} · {sel.v.duration_ms}ms</>}
+          </div>
+          <div className="mt-2 border-t border-[var(--border)] pt-2">
+            <ValidatorCatalog specs={specs} validatorIds={[sel.id]} findings={findings} />
+          </div>
         </div>
       )}
     </div>

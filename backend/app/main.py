@@ -9,7 +9,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from rdflib import Literal, URIRef
-from rdflib.namespace import RDF, RDFS
+from rdflib.collection import Collection
+from rdflib.namespace import OWL, RDF, RDFS, SH
 
 from . import store
 from .datasets import DATASETS_DIR, list_datasets, load_bundle
@@ -49,6 +50,101 @@ def pipeline_dag():
         {"id": s.validator_id, "layer": s.layer, "authority": s.authority,
          "depends_on": list(s.depends_on)}
         for s in registry.all()]}
+
+
+def _shacl_catalog(shapes) -> list[dict]:
+    """把 SHACL shapes 图解析成「目标类 × 属性路径 × 约束」的完整清单。"""
+    out = []
+    comps = [(SH.minCount, "minCount"), (SH.maxCount, "maxCount"), (SH.datatype, "datatype"),
+             (SH["class"], "class"), (SH.minInclusive, "minInclusive"), (SH.maxInclusive, "maxInclusive"),
+             (SH.minExclusive, "minExclusive"), (SH.maxExclusive, "maxExclusive"),
+             (SH.pattern, "pattern"), (SH.nodeKind, "nodeKind")]
+    for shape in set(shapes.subjects(SH.targetClass, None)):
+        tc = shapes.value(shape, SH.targetClass)
+        for prop in shapes.objects(shape, SH.property):
+            path = shapes.value(prop, SH.path)
+            msg = shapes.value(prop, SH.message)
+            cons = []
+            for pred, label in comps:
+                v = shapes.value(prop, pred)
+                if v is not None:
+                    cons.append(f"{label} = {_local(v)}")
+            inlist = shapes.value(prop, SH["in"])
+            if inlist is not None:
+                cons.append("in = [" + ", ".join(str(_local(x)) for x in Collection(shapes, inlist)) + "]")
+            out.append({"target_class": _local(tc), "path": _local(path),
+                        "constraints": cons, "message": str(msg) if msg else ""})
+    out.sort(key=lambda c: (c["target_class"], c["path"]))
+    return out
+
+
+@app.get("/api/validators/{dataset}")
+def validator_specs(dataset: str):
+    """每个校验器的完整检查清单（不只违例项）——SHACL 解析为具体约束，其余给检查类型/公理。"""
+    b = load_bundle(dataset)
+    specs: dict[str, dict] = {}
+
+    if b.shapes_minimal is not None:
+        specs["v2.shacl_minimal"] = {"title": "最低入库 shape", "kind": "shacl",
+            "desc": "blocking 门禁：三元组完整性 / 必填 / 类型可解析（违反进 quarantine）",
+            "shacl": _shacl_catalog(b.shapes_minimal)}
+    if b.shapes_trusted is not None:
+        specs["v2.shacl_trusted"] = {"title": "可信层 shape", "kind": "shacl",
+            "desc": "advisory：datatype / 枚举 / 数值范围 / 关系 range / 基数（违反=负证据）",
+            "shacl": _shacl_catalog(b.shapes_trusted)}
+
+    # V1 推理一致性：把驱动它的本体公理列出来（disjoint 对 + functional 属性）
+    cons = []
+    for a, c in b.ontology.subject_objects(OWL.disjointWith):
+        if isinstance(a, URIRef) and isinstance(c, URIRef):
+            cons.append({"label": "disjoint（互斥类不可共有个体）",
+                         "detail": f"{_local(a)} ⊥ {_local(c)}"})
+    for p in set(b.ontology.subjects(RDF.type, OWL.FunctionalProperty)):
+        cons.append({"label": "functional（至多一个值）", "detail": _local(p)})
+    cons.append({"label": "owl:Nothing 成员（不可满足）", "detail": "推理后扫描"})
+    specs["v1.consistency"] = {"title": "推理一致性", "kind": "checks",
+        "desc": "owlrl 物化后扫描矛盾；下列为本体声明的、驱动检查的公理", "checks": cons}
+
+    specs["v1.pitfalls"] = {"title": "pitfall 扫描", "kind": "checks",
+        "desc": "OOPS! 清单的本地可跑子集（结构卫生）", "checks": [
+            {"label": "缺 label", "detail": "每个 owl:Class 应有 rdfs:label"},
+            {"label": "缺 domain/range", "detail": "每个属性应声明 domain 与 range"},
+            {"label": "subClassOf 环", "detail": "类层级不得成环"}]}
+
+    if b.cqs:
+        specs["v1.cq"] = {"title": "CQ 回归", "kind": "checks",
+            "desc": "本体功能性闸门：每条 CQ 是一个 SPARQL 期望", "checks": [
+                {"label": cq["cq_id"], "detail": f'{cq["nl_question"]}（期望 {cq["expected"]["mode"]}）'}
+                for cq in b.cqs["cqs"]]}
+
+    specs["v3.rules"] = {"title": "规则缺陷检测", "kind": "checks",
+        "desc": "Z3 对业务规则集做的缺陷检查（业务规则 R1–R13 见「规则校验」页）", "checks": [
+            {"label": "conflict", "detail": "两条 hard 规则在同一输入下结论互斥"},
+            {"label": "dead rule", "detail": "guard 在定义域内永假，永不触发"},
+            {"label": "subsumption", "detail": "规则被另一条更宽且同结论的规则蕴含（冗余）"},
+            {"label": "coverage gap", "detail": "存在无任何 hard 规则覆盖的输入区域"},
+            {"label": "competing（heuristic）", "detail": "heuristic 建议互斥=竞争，非错误"}]}
+
+    specs["v4.formal"] = {"title": "流程形式化", "kind": "checks", "desc": "PM4Py 结构检查", "checks": [
+        {"label": "soundness", "detail": "无死锁 / 不可达 / 不当终止（check_soundness）"},
+        {"label": "结构", "detail": "start/end 合法、无悬空边、无孤立节点"}]}
+    specs["v4.simulation"] = {"title": "数据感知仿真", "kind": "checks", "desc": "合成 trace 覆盖率", "checks": [
+        {"label": "活动覆盖率", "detail": "每个活动至少被一条数据 trace 触达（=100%）"},
+        {"label": "控制流对照", "detail": "play-out 可达 vs 数据可达的差异（暴露数据死分支）"}]}
+    specs["v4.cross"] = {"title": "规则×流程交叉环", "kind": "checks", "desc": "规则派生约束 × 仿真 trace", "checks": [
+        {"label": "conditional-occurrence", "detail": "hard 规则派生 Declare 约束（如 amount>50万 ⇒ ManualReview）跑在 trace 上"}]}
+
+    specs["v5.j1"] = {"title": "J1 语义合理性", "kind": "criteria", "desc": "LLM 判定（advise）", "checks": [
+        {"label": "is-a 合理性", "detail": "subClassOf 是否满足『X 是一种 Y』常识"},
+        {"label": "属性签名语义", "detail": "domain/range 是否说得通"}]}
+    specs["v5.j2"] = {"title": "J2 抽取忠实性", "kind": "criteria", "desc": "形式化 vs evidence 原文", "checks": [
+        {"label": "数值/数量级", "detail": "如『五万』vs 50000"},
+        {"label": "方向/顺序/边界", "detail": "流程边方向、比较算子、以上/以下"}]}
+    specs["v5.j3"] = {"title": "J3 复判 + 修复", "kind": "criteria", "desc": "复判 ambiguous 带并起草修复", "checks": [
+        {"label": "confirm / likely_false_positive / uncertain", "detail": "对 warning/竞争/CQ/数值枚举类 finding 复判"},
+        {"label": "修复建议 + CQ 三分类", "detail": "本体缺口 / 数据缺口 / CQ 过时"}]}
+
+    return specs
 
 
 @app.get("/api/datasets")
