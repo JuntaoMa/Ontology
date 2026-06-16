@@ -23,10 +23,16 @@ DB_PATH = Path(__file__).resolve().parents[1] / "demo.db"
 CASSETTE_DIR = Path(__file__).resolve().parents[2] / "cassettes"
 FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 
+import threading
+
 app = FastAPI(title="知识校验系统 Demo")
 conn = store.connect(DB_PATH)
+db_lock = threading.RLock()        # 单连接跨线程：串行化写入，避免竞态/锁死
 registry = build_registry()
-judge_config: dict = {"enabled": True, "tau": 0.85, "model": "claude-opus-4-8"}
+# 默认 backend=cassette：服务器只用录制响应，cache miss 即弃权（绝不在请求里起 live CLI
+# 而挂起）。需要真实 judge 时 PUT /api/judge/config {"backend":"cli"} 显式开启。
+judge_config: dict = {"enabled": True, "tau": 0.85, "model": "claude-opus-4-8",
+                      "backend": "cassette"}
 
 for cassette in CASSETTE_DIR.glob("*.json") if CASSETTE_DIR.exists() else []:
     load_cassette(conn, cassette)
@@ -47,8 +53,22 @@ def datasets():
 @app.post("/api/runs")
 def trigger_run(dataset: str = "loan"):
     bundle = load_bundle(dataset)
-    ctx = run_pipeline(bundle, registry, conn, config=_cfg())
-    return run_summary(ctx.run_id)
+    with db_lock:
+        ctx = run_pipeline(bundle, registry, conn, config=_cfg())
+        return run_summary(ctx.run_id)
+
+
+@app.get("/api/runs/latest")
+def latest_run(dataset: str | None = None):
+    """最近一次 run 的汇总（前端刷新后恢复结果用）。"""
+    if dataset:
+        row = conn.execute("SELECT run_id FROM validation_runs WHERE dataset=? "
+                           "ORDER BY id DESC LIMIT 1", (dataset,)).fetchone()
+    else:
+        row = conn.execute("SELECT run_id FROM validation_runs ORDER BY id DESC LIMIT 1").fetchone()
+    if row is None:
+        return {"run_id": None}
+    return run_summary(row["run_id"])
 
 
 @app.get("/api/runs/{run_id}")
@@ -252,8 +272,9 @@ def process_ir(dataset: str, process_id: str):
 @app.post("/api/mutations/run")
 def mutations(ops: list[str] | None = None, dataset: str = "loan"):
     bundle = load_bundle(dataset)
-    results = run_mutation_lab(bundle, registry, conn, ops=ops,
-                               judge_config=dict(judge_config))
+    with db_lock:
+        results = run_mutation_lab(bundle, registry, conn, ops=ops,
+                                   judge_config=dict(judge_config))
     return matrix_json(results)
 
 

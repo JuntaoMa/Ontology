@@ -6,7 +6,7 @@ import { Pill } from "./ui/Badge";
 import { Legend } from "./Legend";
 
 export function RunBar() {
-  const { datasets, dataset, setDataset, run, running, triggerRun, judgeBackend } = useStore();
+  const { datasets, dataset, setDataset, run, running, triggerRun, judgeBackend, error } = useStore();
   return (
     <header className="flex flex-col gap-2 border-b border-[var(--border)] bg-[var(--surface)] px-5 py-2.5">
       <div className="flex items-center gap-3">
@@ -28,6 +28,13 @@ export function RunBar() {
           </Pill>
         </div>
       </div>
+      {error && (
+        <div className="rounded-[var(--radius-sm)] border px-3 py-1.5 text-xs"
+             style={{ borderColor: "var(--sev-violation)", background: "var(--sev-violation-soft)",
+                      color: "var(--sev-violation)" }}>
+          {error}
+        </div>
+      )}
       <Legend />
     </header>
   );

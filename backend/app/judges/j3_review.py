@@ -53,7 +53,7 @@ def judge_review(ctx: Context) -> ValidationResult:
     tau = float(cfg.get("tau", 0.85))
 
     rows = ctx.conn.execute(
-        "SELECT * FROM findings WHERE run_id=? AND status='open'", (ctx.run_id,)).fetchall()
+        "SELECT * FROM findings WHERE run_id=? AND status='open' ORDER BY id", (ctx.run_id,)).fetchall()
     n_before = len(rows)
     routed = [r for r in rows if routable(r)]
 
@@ -65,9 +65,14 @@ def judge_review(ctx: Context) -> ValidationResult:
     # （否则 input_hash 漂移导致 cassette 永不命中）
     _VOLATILE_LOCUS = {"uncovered_sample", "counterexample", "overlap_example"}
 
+    # item_id 用稳定序号（routed 内位置），而非 SQLite rowid——rowid 随 demo.db 里
+    # 既有行数漂移，会让 j3 prompt 跨运行变化、cassette 永远失配（曾导致 HTTP 服务
+    # 第二次运行起触发 live CLI 而挂起）。by_idx 把序号映射回真实 rowid 供 UPDATE。
+    by_idx: dict[str, int] = {}
     items, material = [], {}
-    for r in routed:
-        item_id = str(r["id"])
+    for idx, r in enumerate(routed):
+        item_id = str(idx)
+        by_idx[item_id] = r["id"]
         locus = {k: v for k, v in json.loads(r["locus_json"] or "{}").items()
                  if k not in _VOLATILE_LOCUS}
         text = (f"[{r['validator_id']}/{r['finding_type']}/{r['severity']}] "
@@ -86,9 +91,8 @@ def judge_review(ctx: Context) -> ValidationResult:
     folded = 0
     if out is not None:
         for item in out.items:
-            try:
-                fid = int(item.item_id)
-            except ValueError:
+            fid = by_idx.get(item.item_id)
+            if fid is None:
                 continue
             # advise 权限边界：只写 judge_* 与 repair 列（AC-ORCH-3）
             repair = (json.dumps({"suggestion": item.repair_suggestion,

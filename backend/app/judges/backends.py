@@ -13,6 +13,9 @@ from dataclasses import dataclass
 from typing import Protocol
 
 DEFAULT_MODEL = "claude-opus-4-8"
+# CLI 仅在录制 cassette 时调用（服务器默认 cassette 模式不调 CLI）。超时给足以完成
+# opus 大批量复判，可用 JUDGE_CLI_TIMEOUT 覆盖。run_judge 已对异常/超时优雅弃权。
+CLI_TIMEOUT = int(os.environ.get("JUDGE_CLI_TIMEOUT", "300"))
 
 _DISALLOWED_TOOLS = ("Bash,Edit,Write,Read,Glob,Grep,WebSearch,WebFetch,"
                      "Task,NotebookEdit,TodoWrite")
@@ -34,7 +37,7 @@ class CliBackend:
     """claude -p headless：走 Claude Code 订阅认证，无需 API key。"""
     name = "cli"
 
-    def __init__(self, binary: str = "claude", timeout: int = 300):
+    def __init__(self, binary: str = "claude", timeout: int = CLI_TIMEOUT):
         self.binary = binary
         self.timeout = timeout
 

@@ -120,7 +120,11 @@ def run_judge(*, judge_id: str, system: str, prompt: str,
 
     meta = JudgeRunMeta(judge_id, model, cached=False, backend=backend.name)
     full_prompt = prompt + "\n\n" + OUTPUT_SCHEMA_NOTE
-    resp: BackendResponse = backend.complete(system, full_prompt, model)
+    try:
+        resp: BackendResponse = backend.complete(system, full_prompt, model)
+    except Exception:
+        # 后端报错/超时（如 CLI 挂起被 kill）→ 整批弃权，绝不让一次 judge 卡死整条管线
+        return None, meta
     meta.tokens_in += resp.tokens_in
     meta.tokens_out += resp.tokens_out
 

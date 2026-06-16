@@ -13,12 +13,18 @@ interface Store {
   findings: Finding[];
   running: boolean;
   judgeBackend: string;
+  error: string | null;
   triggerRun: () => Promise<void>;
   refresh: () => Promise<void>;
 }
 
 const Ctx = createContext<Store | null>(null);
 export const useStore = () => useContext(Ctx)!;
+
+async function loadFindings(runId: string) {
+  const f = await api(`/api/runs/${runId}/findings`);
+  return f.findings as Finding[];
+}
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [datasets, setDatasets] = useState<string[]>([]);
@@ -28,20 +34,37 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [findings, setFindings] = useState<Finding[]>([]);
   const [running, setRunning] = useState(false);
   const [judgeBackend, setJudgeBackend] = useState("—");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api("/api/datasets").then((d) => setDatasets(d.datasets)).catch(() => {});
     api("/api/judge/config").then((c) => setJudgeBackend(c.active_backend)).catch(() => {});
+    // 刷新后恢复最近一次 run（结果存后端，不随页面刷新丢失）
+    api("/api/runs/latest").then(async (s) => {
+      if (s && s.run_id) {
+        setRun(s);
+        setDataset(s.dataset);
+        setFindings(await loadFindings(s.run_id));
+      }
+    }).catch(() => {});
   }, []);
 
   async function triggerRun() {
     setRunning(true);
+    setError(null);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 120_000);
     try {
-      const summary: RunSummary = await api(`/api/runs?dataset=${dataset}`, { method: "POST" });
+      const summary: RunSummary = await api(
+        `/api/runs?dataset=${dataset}`, { method: "POST", signal: ctrl.signal });
       setRun(summary);
-      const f = await api(`/api/runs/${summary.run_id}/findings`);
-      setFindings(f.findings);
+      setFindings(await loadFindings(summary.run_id));
+    } catch (e: any) {
+      setError(e?.name === "AbortError"
+        ? "运行超时（>120s）。请确认前端访问的端口就是后端端口（同源）；若用 npm run dev，需把 vite 代理指向后端端口。"
+        : `运行失败：${e?.message || e}`);
     } finally {
+      clearTimeout(timer);
       setRunning(false);
     }
   }
@@ -49,16 +72,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   async function refresh() {
     if (!run) return;
     const [f, s] = await Promise.all([
-      api(`/api/runs/${run.run_id}/findings`),
+      loadFindings(run.run_id),
       api(`/api/runs/${run.run_id}`),
     ]);
-    setFindings(f.findings);
+    setFindings(f);
     setRun(s);
   }
 
   return (
     <Ctx.Provider value={{ datasets, dataset, setDataset, section, setSection,
-      run, findings, running, judgeBackend, triggerRun, refresh }}>
+      run, findings, running, judgeBackend, error, triggerRun, refresh }}>
       {children}
     </Ctx.Provider>
   );
