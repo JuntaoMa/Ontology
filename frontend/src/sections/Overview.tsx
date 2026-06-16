@@ -3,6 +3,7 @@ import { Card, CardHeader, CardBody, Stat } from "../components/ui/Card";
 import { Table, Th, Td } from "../components/ui/Table";
 import { AuthorityBadge } from "../components/ui/Badge";
 import { EmptyRun } from "../components/EmptyRun";
+import { DagView } from "../components/DagView";
 import { layerOf, LAYER_NAME, type Authority } from "../lib/semantics";
 
 export function Overview() {
@@ -27,7 +28,13 @@ export function Overview() {
       </div>
 
       <Card>
-        <CardHeader title="校验器执行" sub="registry + DAG + 三级权限（veto / score / advise）" />
+        <CardHeader title="校验流水线 DAG"
+          sub="节点=校验器（拓扑序调度）· 边=依赖（depends_on）· 蓝粗框=汇聚节点（v4.cross 规则×流程 / v5.j3 复判收口）" />
+        <CardBody><DagView run={run} /></CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="校验器执行" sub="registry + DAG + 三级权限（veto / score / advise）的拓扑线性化" />
         <CardBody className="px-0 pb-0">
           <Table>
             <thead>

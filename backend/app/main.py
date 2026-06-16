@@ -42,6 +42,15 @@ def _cfg() -> dict:
     return {"judge": dict(judge_config)}
 
 
+@app.get("/api/pipeline/dag")
+def pipeline_dag():
+    """校验器注册表的依赖 DAG（节点=校验器，边=depends_on）。"""
+    return {"nodes": [
+        {"id": s.validator_id, "layer": s.layer, "authority": s.authority,
+         "depends_on": list(s.depends_on)}
+        for s in registry.all()]}
+
+
 @app.get("/api/datasets")
 def datasets():
     return {"datasets": list_datasets(), "operators": [
