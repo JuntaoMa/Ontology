@@ -43,7 +43,9 @@ export function LabSection() {
     });
     const onResize = () => chart.resize();
     window.addEventListener("resize", onResize);
-    return () => { window.removeEventListener("resize", onResize); chart.dispose(); };
+    const ro = new ResizeObserver(() => chart.resize());   // 侧栏开合等容器宽度变化
+    ro.observe(chartRef.current);
+    return () => { window.removeEventListener("resize", onResize); ro.disconnect(); chart.dispose(); };
   }, [matrix]);
 
   async function run() {

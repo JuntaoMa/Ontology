@@ -15,9 +15,20 @@ export function ProcessSection() {
   const [pid, setPid] = useState(VARIANTS[0]);
   const [desc, setDesc] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+  const cyRef = useRef<any>(null);
 
   const mine = (vid: string) => findings.filter((f) => f.validator_id === vid && f.object_id === pid);
   const deadActs = new Set(mine("v4.simulation").map((f) => f.locus.activity));
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const ro = new ResizeObserver(() => {
+      const cy = cyRef.current;
+      if (cy) requestAnimationFrame(() => { cy.resize(); cy.fit(undefined, 24); });
+    });
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     if (dataset !== "loan") return;
@@ -41,8 +52,9 @@ export function ProcessSection() {
         layout: { name: "breadthfirst", directed: true, spacingFactor: 1.1, animate: false },
       });
       cy.nodes().forEach((n: any) => { if (deadActs.has(n.id())) n.style({ "background-color": "#94a3b8" }); });
+      cyRef.current = cy;
     }).catch(() => {});
-    return () => cy && cy.destroy();
+    return () => { if (cy) { cy.destroy(); cyRef.current = null; } };
   }, [dataset, pid, findings]);
 
   if (!run) return <EmptyRun />;

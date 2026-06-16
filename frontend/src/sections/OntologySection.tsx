@@ -33,9 +33,21 @@ const LINES = [
 export function OntologySection() {
   const { dataset, run, findings } = useStore();
   const ref = useRef<HTMLDivElement>(null);
+  const cyRef = useRef<any>(null);
   const [showInstances, setShowInstances] = useState(false);
 
   const mine = (vids: string[]) => findings.filter((f) => vids.includes(f.validator_id));
+
+  // 容器尺寸变化（侧栏开合、窗口缩放）→ 重新适配图谱
+  useEffect(() => {
+    if (!ref.current) return;
+    const ro = new ResizeObserver(() => {
+      const cy = cyRef.current;
+      if (cy) requestAnimationFrame(() => { cy.resize(); cy.fit(undefined, 28); });
+    });
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     let cy: any;
@@ -92,9 +104,10 @@ export function OntologySection() {
         else if (j1Locals.has(local)) flag("#7c3aed");
         else if (pitfallIds.has(id)) flag("#d97706");
       });
+      cyRef.current = cy;
       requestAnimationFrame(() => { cy.resize(); cy.fit(undefined, 28); });
     }).catch(() => {});
-    return () => cy && cy.destroy();
+    return () => { if (cy) { cy.destroy(); cyRef.current = null; } };
   }, [dataset, findings, showInstances]);
 
   if (!run) return <EmptyRun />;
