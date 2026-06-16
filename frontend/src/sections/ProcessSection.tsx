@@ -64,8 +64,8 @@ export function ProcessSection() {
           <CardBody><div ref={ref} className="h-[480px] rounded-[var(--radius-sm)] border border-[var(--border)]" /></CardBody>
         </Card>
         <div className="flex flex-col gap-4">
-          <Card><CardHeader title="V4 形式化（soundness）" /><CardBody className="pt-0"><FindingList findings={mine("v4.formal")} empty="健全，无问题" /></CardBody></Card>
-          <Card><CardHeader title="V4 仿真（数据感知覆盖率）" /><CardBody className="pt-0"><FindingList findings={mine("v4.simulation")} empty="活动全覆盖" /></CardBody></Card>
+          <Card><CardHeader title="V4 形式化（soundness）" /><CardBody className="pt-0"><FindingList findings={mine("v4.formal")} empty="健全，无问题" dataset={dataset} /></CardBody></Card>
+          <Card><CardHeader title="V4 仿真（数据感知覆盖率）" /><CardBody className="pt-0"><FindingList findings={mine("v4.simulation")} empty="活动全覆盖" dataset={dataset} /></CardBody></Card>
           <Card>
             <CardHeader title="V3×V4 交叉验证环" sub="违例回链来源规则" />
             <CardBody className="flex flex-col gap-2 pt-0">
@@ -82,7 +82,7 @@ export function ProcessSection() {
           </Card>
           <Card>
             <CardHeader title="V5 J2 边忠实性" sub="IR 方向 vs 原文" right={<Pill tone="accent">advise</Pill>} />
-            <CardBody className="pt-0"><FindingList findings={findings.filter((f) => f.validator_id === "v5.j2" && f.object_id === pid)} empty="无忠实性问题" /></CardBody>
+            <CardBody className="pt-0"><FindingList findings={findings.filter((f) => f.validator_id === "v5.j2" && f.object_id === pid)} empty="无忠实性问题" dataset={dataset} /></CardBody>
           </Card>
         </div>
       </div>

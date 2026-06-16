@@ -65,7 +65,7 @@ export function OntologySection() {
         {groups.map(([title, vids]) => (
           <Card key={title}>
             <CardHeader title={title} />
-            <CardBody className="pt-0"><FindingList findings={mine(vids)} /></CardBody>
+            <CardBody className="pt-0"><FindingList findings={mine(vids)} dataset={dataset} /></CardBody>
           </Card>
         ))}
       </div>

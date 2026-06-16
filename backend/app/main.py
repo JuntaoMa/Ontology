@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
+from rdflib import Literal, URIRef
 from rdflib.namespace import RDF, RDFS
 
 from . import store
@@ -102,6 +104,82 @@ def run_findings(run_id: str, validator: str | None = None):
         r["evidence"] = json.loads(r.pop("evidence_json") or "null")
         r["repair"] = json.loads(r.pop("repair_json") or "null")
     return {"findings": rows}
+
+
+# ---------------- 原始输入条目（finding 详情用） ----------------
+
+def _local(term) -> str:
+    s = str(term)
+    return s.split("#")[-1].split("/")[-1] if isinstance(term, URIRef) else s
+
+
+def _resolve_uri(bundle, name: str) -> URIRef | None:
+    """按 localname 在数据图中找一个主语 URI（J1 的 axiom:/prop: 用）。"""
+    for s in set(bundle.data.subjects()):
+        if isinstance(s, URIRef) and _local(s) == name:
+            return s
+    return None
+
+
+def _subject_triples(bundle, subj: URIRef) -> list[dict]:
+    out = []
+    for p, o in bundle.data.predicate_objects(subj):
+        out.append({
+            "p": _local(p),
+            "o": _local(o),
+            "o_is_uri": isinstance(o, URIRef),
+            "datatype": _local(o.datatype) if isinstance(o, Literal) and o.datatype else None,
+        })
+    out.sort(key=lambda t: (t["p"] != "type", t["p"]))   # rdf:type 置顶
+    return out
+
+
+@app.get("/api/source/{dataset}")
+def source(dataset: str, object_type: str, object_id: str):
+    """返回某 finding 所指对象的原始输入条目：rdf 三元组 / 规则 IR / 流程 IR / CQ。"""
+    bundle = load_bundle(dataset)
+    rules = (bundle.rules or {}).get("rules", [])
+
+    # 规则（R5 / R2×R4 / ruleset_id）
+    rule_ids = re.split(r"[×x]", object_id) if object_type == "rule" else []
+    if rule_ids and all(any(r["rule_id"] == rid for r in rules) for rid in rule_ids):
+        picked = [r for r in rules if r["rule_id"] in rule_ids]
+        return {"kind": "rule", "object_id": object_id, "rules": picked}
+    if object_type == "rule":   # 整个规则集（覆盖 gap）
+        return {"kind": "rule", "object_id": object_id, "rules": rules,
+                "note": "覆盖缺口针对整个规则集；下列为全部规则"}
+
+    # 流程
+    if object_type == "process" and object_id in bundle.processes:
+        return {"kind": "process", "object_id": object_id, "process": bundle.processes[object_id]}
+
+    # CQ
+    if object_type == "cq" and bundle.cqs:
+        cq = next((c for c in bundle.cqs["cqs"] if c["cq_id"] == object_id), None)
+        if cq:
+            return {"kind": "cq", "object_id": object_id, "cq": cq}
+
+    # J1 语义：axiom:A⊑B / prop:name → 解析出实体再走 rdf
+    subj: URIRef | None = None
+    if object_id.startswith("axiom:"):
+        head = re.split(r"[⊑<]", object_id[len("axiom:"):])[0].strip()
+        subj = _resolve_uri(bundle, head)
+    elif object_id.startswith("prop:"):
+        subj = _resolve_uri(bundle, object_id[len("prop:"):])
+    elif object_id.startswith("http"):
+        subj = URIRef(object_id)
+    else:
+        subj = _resolve_uri(bundle, object_id)
+
+    if subj is not None:
+        triples = _subject_triples(bundle, subj)
+        if triples:
+            label = bundle.data.value(subj, RDFS.label)
+            return {"kind": "rdf", "object_id": str(subj), "local": _local(subj),
+                    "label": str(label) if label else None, "triples": triples}
+
+    return {"kind": "unknown", "object_id": object_id,
+            "note": "该 finding 针对的是跨对象判定（如 reasoner 全局），无单一原始条目"}
 
 
 @app.get("/api/ontology/{dataset}/graph")

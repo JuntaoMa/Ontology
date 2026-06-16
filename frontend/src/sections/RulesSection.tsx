@@ -55,17 +55,17 @@ export function RulesSection() {
               </div>
             ))}
             <div className="mt-1 text-xs font-semibold text-[var(--fg-muted)]">其他缺陷（dead / subsumed / gap）</div>
-            <FindingList findings={others} />
+            <FindingList findings={others} dataset={dataset} />
           </CardBody>
         </Card>
         <div className="flex flex-col gap-4">
           <Card>
             <CardHeader title="竞争建议分区" sub="heuristic 常态，非错误" />
-            <CardBody className="pt-0"><FindingList findings={competing} empty="无竞争建议" /></CardBody>
+            <CardBody className="pt-0"><FindingList findings={competing} empty="无竞争建议" dataset={dataset} /></CardBody>
           </Card>
           <Card>
             <CardHeader title="V5 J2 抽取忠实性" sub="guard vs evidence 原文" right={<Pill tone="accent">advise</Pill>} />
-            <CardBody className="pt-0"><FindingList findings={j2} empty="无忠实性问题" /></CardBody>
+            <CardBody className="pt-0"><FindingList findings={j2} empty="无忠实性问题" dataset={dataset} /></CardBody>
           </Card>
         </div>
       </div>

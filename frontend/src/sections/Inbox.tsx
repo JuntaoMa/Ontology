@@ -9,6 +9,7 @@ import { Select } from "../components/ui/Select";
 import { SeverityBadge, AuthorityBadge, Pill } from "../components/ui/Badge";
 import { Sheet } from "../components/ui/Sheet";
 import { JudgeBox } from "../components/ui/JudgeBox";
+import { SourceBlock } from "../components/SourceBlock";
 import { authorityOf, layerOf, LAYER_NAME, type Severity } from "../lib/semantics";
 
 const TAU = 0.85;
@@ -19,7 +20,7 @@ const isFolded = (f: Finding) =>
 type GroupBy = "type" | "object" | "layer" | "none";
 
 export function Inbox() {
-  const { run, findings, refresh } = useStore();
+  const { run, findings, refresh, dataset } = useStore();
   const [sevFilter, setSevFilter] = useState<Set<Severity>>(new Set());
   const [groupBy, setGroupBy] = useState<GroupBy>("type");
   const [showFolded, setShowFolded] = useState(false);
@@ -127,7 +128,7 @@ export function Inbox() {
         {!groups.length && <div className="py-12 text-center text-sm text-[var(--fg-subtle)]">当前筛选下无 finding</div>}
       </div>
 
-      <DetailSheet f={selected} onClose={() => setSelected(null)} act={act} />
+      <DetailSheet f={selected} onClose={() => setSelected(null)} act={act} dataset={dataset} />
     </div>
   );
 }
@@ -150,8 +151,8 @@ function Row({ f, onClick }: { f: Finding; onClick: () => void }) {
   );
 }
 
-function DetailSheet({ f, onClose, act }: {
-  f: Finding | null; onClose: () => void; act: (id: number, action: string) => void;
+function DetailSheet({ f, onClose, act, dataset }: {
+  f: Finding | null; onClose: () => void; act: (id: number, action: string) => void; dataset: string;
 }) {
   return (
     <Sheet open={!!f} onClose={onClose} title={f && <span className="mono">{f.finding_type}</span>}>
@@ -165,10 +166,11 @@ function DetailSheet({ f, onClose, act }: {
           </div>
           <div>
             <div className="text-xs text-[var(--fg-subtle)]">对象</div>
-            <div className="mono">{f.object_id}</div>
+            <div className="mono break-all">{f.object_id}</div>
           </div>
+          <SourceBlock dataset={dataset} objectType={f.object_type} objectId={f.object_id} />
           <div>
-            <div className="text-xs text-[var(--fg-subtle)]">消息</div>
+            <div className="text-xs text-[var(--fg-subtle)]">校验结论</div>
             <div>{f.message}</div>
           </div>
           {f.locus && Object.keys(f.locus).length > 0 && (
