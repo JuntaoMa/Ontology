@@ -7,6 +7,43 @@ import { Card, CardHeader, CardBody } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { FindingList } from "../components/FindingList";
 
+/** 确定性 preset 排布：类按 id 排在固定圆周上，实例在所属类下方网格聚簇。
+ *  纯 preset（无力导向随机）→ 刷新/切换实例时类的位置完全不变。 */
+function layoutPositions(nodes: any[], edges: any[]) {
+  const classes = nodes.filter((n) => n.data.kind === "class")
+    .sort((a, b) => a.data.id.localeCompare(b.data.id));
+  const inds = nodes.filter((n) => n.data.kind === "individual");
+  const N = Math.max(classes.length, 1);
+  const R = Math.max(170, N * 30);
+  const cx = R + 80, cy = R + 60;
+  const classPos: Record<string, { x: number; y: number }> = {};
+  classes.forEach((n, i) => {
+    const a = -Math.PI / 2 + (2 * Math.PI * i) / N;
+    const p = { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
+    classPos[n.data.id] = p;
+    n.position = p;
+  });
+  const classOf: Record<string, string> = {};
+  edges.filter((e) => e.data.kind === "type").forEach((e) => { classOf[e.data.source] = e.data.target; });
+  const seen: Record<string, number> = {};
+  inds.forEach((n) => {
+    const c = classOf[n.data.id];
+    const base = classPos[c] || { x: cx, y: cy };
+    const k = (seen[c] = (seen[c] || 0) + 1) - 1;
+    const col = k % 6, row = Math.floor(k / 6);
+    n.position = { x: base.x + (col - 2.5) * 15, y: base.y + 36 + row * 14 };
+  });
+}
+
+const SWATCH = [
+  { c: "#94a3b8", t: "正常" }, { c: "#e11d48", t: "违例" },
+  { c: "#d97706", t: "结构 pitfall" }, { c: "#7c3aed", t: "J1 语义可疑" },
+];
+const LINES = [
+  { c: "#6366f1", t: "对象属性", d: false }, { c: "#94a3b8", t: "subClassOf", d: false },
+  { c: "#cbd5e1", t: "实例", d: true },
+];
+
 export function OntologySection() {
   const { dataset, run, findings } = useStore();
   const ref = useRef<HTMLDivElement>(null);
@@ -26,37 +63,37 @@ export function OntologySection() {
       const j1Locals = new Set(findings.filter((f) => f.validator_id === "v5.j1")
         .flatMap((f) => { const m = String(f.object_id).match(/^axiom:(.+?)[⊑<]/); return m ? [m[1].trim()] : []; }));
 
-      const nodes = g.nodes.filter((n: any) => showInstances || n.data.kind !== "individual");
+      const nodes = g.nodes.filter((n: any) => showInstances || n.data.kind !== "individual")
+        .map((n: any) => ({ data: n.data }));
       const visibleIds = new Set(nodes.map((n: any) => n.data.id));
       const edges = g.edges.filter((e: any) =>
         (showInstances || e.data.kind !== "type") &&
         visibleIds.has(e.data.source) && visibleIds.has(e.data.target));
+      layoutPositions(nodes, edges);
 
       cy = cytoscape({
         container: ref.current,
         elements: [...nodes, ...edges],
+        layout: { name: "preset", fit: true, padding: 28 },     // 固定排布，不随机
         style: [
-          // 节点：中性灰打底，标记色才饱和（违例红 > J1紫 > pitfall琥珀）
           { selector: 'node[kind="class"]', style: { label: "data(label)", shape: "round-rectangle",
               width: 70, height: 28, "background-color": "#f1f5f9", "border-width": 1,
               "border-color": "#cbd5e1", color: "#334155", "text-valign": "center",
               "text-halign": "center", "font-size": 10, "text-wrap": "wrap", "text-max-width": "66px" } },
           { selector: 'node[kind="individual"]', style: { label: "data(label)", shape: "ellipse",
-              width: 12, height: 12, "background-color": "#cbd5e1", color: "#64748b",
-              "font-size": 8, "text-margin-y": -2 } },
-          // 边按 kind 分色：蓝实线=对象属性、灰实线=subClassOf、灰点线=rdf:type
+              width: 11, height: 11, "background-color": "#cbd5e1", color: "#94a3b8",
+              "font-size": 7, "text-margin-y": -1 } },
           { selector: 'edge[kind="property"]', style: { width: 2, "curve-style": "bezier",
               "target-arrow-shape": "triangle", "line-color": "#6366f1", "target-arrow-color": "#6366f1",
               label: "data(label)", "font-size": 9, color: "#6366f1", "text-rotation": "autorotate",
               "text-background-color": "#fff", "text-background-opacity": 1, "text-background-padding": "1px" } },
           { selector: 'edge[kind="subclass"]', style: { width: 1.5, "curve-style": "bezier",
-              "target-arrow-shape": "triangle", "arrow-scale": 0.8, "line-style": "solid",
-              "line-color": "#94a3b8", "target-arrow-color": "#94a3b8",
-              label: "subClassOf", "font-size": 8, color: "#94a3b8", "text-rotation": "autorotate" } },
+              "target-arrow-shape": "triangle", "arrow-scale": 0.8, "line-color": "#94a3b8",
+              "target-arrow-color": "#94a3b8", label: "subClassOf", "font-size": 8, color: "#94a3b8",
+              "text-rotation": "autorotate" } },
           { selector: 'edge[kind="type"]', style: { width: 1, "curve-style": "bezier",
               "line-style": "dotted", "line-color": "#e2e8f0", "target-arrow-shape": "none" } },
         ],
-        layout: { name: "cose", animate: false, padding: 20, nodeRepulsion: 9000, idealEdgeLength: 90 },
       });
       cy.nodes().forEach((n: any) => {
         const id = n.id(); const local = id.split("#").pop();
@@ -65,6 +102,7 @@ export function OntologySection() {
         else if (j1Locals.has(local)) flag("#7c3aed");
         else if (pitfallIds.has(id)) flag("#d97706");
       });
+      requestAnimationFrame(() => { cy.resize(); cy.fit(undefined, 28); });
     }).catch(() => {});
     return () => cy && cy.destroy();
   }, [dataset, findings, showInstances]);
@@ -79,20 +117,41 @@ export function OntologySection() {
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-      <Card>
-        <CardHeader
-          title="本体图谱"
-          sub="蓝边=对象属性 · 灰边=subClassOf · 灰点线=实例。节点：灰=正常 · 红=违例 · 琥珀=结构pitfall · 紫=J1语义可疑"
-          right={
+    <div className="flex h-full gap-4 p-5">
+      {/* 左：图谱，高度填满、不随页面滚动 */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <Card className="flex h-full flex-col">
+          <CardHeader title="本体图谱" right={
             <Button size="sm" variant={showInstances ? "primary" : "outline"}
                     onClick={() => setShowInstances((v) => !v)}>
               {showInstances ? "隐藏实例" : "显示实例"}
             </Button>
           } />
-        <CardBody><div ref={ref} className="h-[520px] rounded-[var(--radius-sm)] border border-[var(--border)]" /></CardBody>
-      </Card>
-      <div className="flex flex-col gap-4">
+          <CardBody className="relative min-h-0 flex-1 pb-4">
+            <div ref={ref} className="h-full w-full rounded-[var(--radius-sm)] border border-[var(--border)]" />
+            {/* 画布内嵌图例：色块本身就是图例，不用文字描述颜色 */}
+            <div className="absolute bottom-6 left-6 z-10 rounded-md border border-[var(--border)] bg-white/90 px-2.5 py-1.5 backdrop-blur-sm">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[var(--fg-muted)]">
+                {SWATCH.map((s) => (
+                  <span key={s.t} className="inline-flex items-center gap-1">
+                    <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: s.c }} /> {s.t}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 text-[10px] text-[var(--fg-muted)]">
+                {LINES.map((l) => (
+                  <span key={l.t} className="inline-flex items-center gap-1">
+                    <span className="inline-block h-0 w-4"
+                          style={{ borderTop: `2px ${l.d ? "dotted" : "solid"} ${l.c}` }} /> {l.t}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+      {/* 右：校验结果，独立滚动 */}
+      <div className="flex w-[380px] shrink-0 flex-col gap-4 overflow-auto pr-1">
         {groups.map(([title, vids]) => (
           <Card key={title}>
             <CardHeader title={title} />

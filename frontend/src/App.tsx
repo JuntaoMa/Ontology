@@ -11,17 +11,23 @@ import { GateSection } from "./sections/GateSection";
 
 function Body() {
   const { section } = useStore();
+  // 本体页自管理高度（图谱固定、右侧独立滚动）；其余页统一在滚动容器里加内边距
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col">
       <RunBar />
-      <main className="min-h-0 flex-1 overflow-auto p-5">
-        {section === "overview" && <Overview />}
-        {section === "inbox" && <Inbox />}
-        {section === "ontology" && <OntologySection />}
-        {section === "rules" && <RulesSection />}
-        {section === "process" && <ProcessSection />}
-        {section === "lab" && <LabSection />}
-        {section === "gate" && <GateSection />}
+      <main className="min-h-0 flex-1 overflow-hidden">
+        {section === "ontology" ? (
+          <OntologySection />
+        ) : (
+          <div className="h-full overflow-auto p-5">
+            {section === "overview" && <Overview />}
+            {section === "inbox" && <Inbox />}
+            {section === "rules" && <RulesSection />}
+            {section === "process" && <ProcessSection />}
+            {section === "lab" && <LabSection />}
+            {section === "gate" && <GateSection />}
+          </div>
+        )}
       </main>
     </div>
   );

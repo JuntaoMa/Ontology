@@ -245,7 +245,11 @@ def ontology_graph(dataset: str):
             add_node(s, "individual")
             add_edge(s, o, "a", "type")
 
-    return {"nodes": nodes, "edges": list(edges.values())}
+    # 稳定排序：类在前、按 id；边按 (kind, source, target)。让前端的固定排布可复现
+    nodes.sort(key=lambda n: (n["data"]["kind"] != "class", n["data"]["id"]))
+    edge_list = sorted(edges.values(), key=lambda e: (
+        e["data"]["kind"], e["data"]["source"], e["data"]["target"], e["data"]["label"]))
+    return {"nodes": nodes, "edges": edge_list}
 
 
 @app.get("/api/rules/{dataset}")
