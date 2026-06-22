@@ -24,7 +24,7 @@ def validate_structure(ctx: Context) -> ValidationResult:
                 except ValidationError as e:
                     quarantined.add(rid)
                     findings.append(Finding(
-                        validator_id="v0.structure", severity="violation",
+                        validator_id="intake.structure", severity="violation",
                         object_type="rule", object_id=rid,
                         finding_type="structural_invalid",
                         message=f"规则 IR 结构校验失败：{e.errors()[0]['msg']}",
@@ -39,7 +39,7 @@ def validate_structure(ctx: Context) -> ValidationResult:
             if bad_refs:
                 quarantined.add(pid)
                 findings.append(Finding(
-                    validator_id="v0.structure", severity="violation",
+                    validator_id="intake.structure", severity="violation",
                     object_type="process", object_id=pid,
                     finding_type="dangling_edge",
                     message=f"流程存在悬空边：{[(e.from_, e.to) for e in bad_refs]}",
@@ -47,7 +47,7 @@ def validate_structure(ctx: Context) -> ValidationResult:
         except ValidationError as e:
             quarantined.add(pid)
             findings.append(Finding(
-                validator_id="v0.structure", severity="violation",
+                validator_id="intake.structure", severity="violation",
                 object_type="process", object_id=pid,
                 finding_type="structural_invalid",
                 message=f"流程 IR 结构校验失败：{e.errors()[0]['msg']}",

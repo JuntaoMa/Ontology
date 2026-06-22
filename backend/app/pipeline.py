@@ -14,56 +14,75 @@ from .validators.structural import validate_structure
 
 
 def build_registry() -> Registry:
+    """校验器=DAG 节点，按目的命名(category.purpose)、按作用对象(scope)归类（spec 20）。"""
     reg = Registry()
-    # V0 结构（veto）
+    # 句法入口（veto）：结构完整性
     reg.register(ValidatorSpec(
-        "v0.structure", "V0", "veto", validate_structure,
+        "intake.structure", "intake", frozenset({"rule", "process"}), "结构完整性",
+        "veto", validate_structure,
         applicable=lambda b: b.rules is not None or bool(b.processes)))
-    # V2 实例层（SHACL 双轨）
+    # 实例（SHACL 双轨）
     reg.register(ValidatorSpec(
-        "v2.shacl_minimal", "V2", "veto", validate_shacl_minimal,
+        "instance.required-fields", "instance", frozenset({"instance"}), "必填底线",
+        "veto", validate_shacl_minimal,
         applicable=lambda b: b.shapes_minimal is not None))
     reg.register(ValidatorSpec(
-        "v2.shacl_trusted", "V2", "score", validate_shacl_trusted,
-        depends_on=["v2.shacl_minimal"],
+        "instance.data-quality", "instance", frozenset({"instance"}), "数据质量",
+        "score", validate_shacl_trusted,
+        depends_on=["instance.required-fields"],
         applicable=lambda b: b.shapes_trusted is not None))
-    # V1 Schema 层
-    reg.register(ValidatorSpec("v1.consistency", "V1", "score", validate_consistency))
-    reg.register(ValidatorSpec("v1.pitfalls", "V1", "score", validate_pitfalls))
+    # 本体 schema
     reg.register(ValidatorSpec(
-        "v1.cq", "V1", "score", validate_cqs,
-        depends_on=["v2.shacl_minimal"],
+        "schema.consistency", "schema", frozenset({"schema"}), "逻辑一致性",
+        "score", validate_consistency))
+    reg.register(ValidatorSpec(
+        "schema.pitfalls", "schema", frozenset({"schema"}), "建模坏味道",
+        "score", validate_pitfalls))
+    # 能力问题：查询同时触及 schema 与 instance（多 scope → 本体+实例两组重复展示）
+    reg.register(ValidatorSpec(
+        "instance.competency", "instance", frozenset({"schema", "instance"}), "能力问题",
+        "score", validate_cqs,
+        depends_on=["instance.required-fields"],
         applicable=lambda b: b.cqs is not None))
-    # V3 规则层
+    # 规则
     reg.register(ValidatorSpec(
-        "v3.rules", "V3", "score", validate_rules,
-        depends_on=["v0.structure"],
+        "rule.defects", "rule", frozenset({"rule"}), "规则集缺陷",
+        "score", validate_rules,
+        depends_on=["intake.structure"],
         applicable=lambda b: b.rules is not None))
-    # V4 流程层
+    # 流程
     reg.register(ValidatorSpec(
-        "v4.formal", "V4", "score", validate_process_formal,
-        depends_on=["v0.structure"],
+        "process.soundness", "process", frozenset({"process"}), "流程健全性",
+        "score", validate_process_formal,
+        depends_on=["intake.structure"],
         applicable=lambda b: bool(b.processes)))
+    # 数据感知仿真：跑真实 case 数据需读规则 guard（多 scope → 规则+流程）
     reg.register(ValidatorSpec(
-        "v4.simulation", "V4", "score", validate_process_simulation,
-        depends_on=["v4.formal"],
+        "process.simulation", "process", frozenset({"process", "rule"}), "数据感知仿真",
+        "score", validate_process_simulation,
+        depends_on=["process.soundness"],
         applicable=lambda b: bool(b.processes) and b.rules is not None))
+    # 跨域：规则×流程一致（cross 仅作 id 命名空间，展示落在规则+流程两组）
     reg.register(ValidatorSpec(
-        "v4.cross", "V4", "score", validate_cross,
-        depends_on=["v3.rules", "v4.simulation"],
+        "cross.rule-process", "cross", frozenset({"rule", "process"}), "规则×流程一致",
+        "score", validate_cross,
+        depends_on=["rule.defects", "process.simulation"],
         applicable=lambda b: bool(b.processes) and b.rules is not None))
-    # V5 LLM Judge 层（advise；config["judge"]["enabled"]=True 才真正执行；
-    # 有自己的 judge_cache，编排器层不缓存）
+    # LLM Judge（advise；config["judge"]["enabled"]=True 才真正执行；自带 judge_cache，不走编排缓存）
     reg.register(ValidatorSpec(
-        "v5.j1", "V5", "advise", judge_semantic, cacheable=False))
+        "schema.semantic", "schema", frozenset({"schema"}), "语义合理性",
+        "advise", judge_semantic, cacheable=False))
     reg.register(ValidatorSpec(
-        "v5.j2", "V5", "advise", judge_faithfulness,
-        depends_on=["v0.structure"],
+        "cross.faithfulness", "cross", frozenset({"rule", "process"}), "抽取忠实性",
+        "advise", judge_faithfulness,
+        depends_on=["intake.structure"],
         applicable=lambda b: b.rules is not None or bool(b.processes),
         cacheable=False))
     reg.register(ValidatorSpec(
-        "v5.j3", "V5", "advise", judge_review,
-        depends_on=["v2.shacl_trusted", "v1.consistency", "v1.pitfalls", "v1.cq",
-                    "v3.rules", "v4.cross", "v5.j1", "v5.j2"],
+        "meta.review", "meta", frozenset(), "复判收口",
+        "advise", judge_review,
+        depends_on=["instance.data-quality", "schema.consistency", "schema.pitfalls",
+                    "instance.competency", "rule.defects", "cross.rule-process",
+                    "schema.semantic", "cross.faithfulness"],
         cacheable=False))
     return reg

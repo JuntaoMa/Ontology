@@ -57,8 +57,10 @@ def _mk_registry():
               for o in ("objA", "objB")]
         return ValidationResult(verdict="fail", findings=fs)
 
-    reg.register(ValidatorSpec("t.veto", "V0", "veto", veto_fn))
-    reg.register(ValidatorSpec("t.adv", "V2", "score", advisory_fn, depends_on=["t.veto"]))
+    reg.register(ValidatorSpec("t.veto", "intake", frozenset({"instance"}), "测试veto",
+                               "veto", veto_fn))
+    reg.register(ValidatorSpec("t.adv", "instance", frozenset({"instance"}), "测试advisory",
+                               "score", advisory_fn, depends_on=["t.veto"]))
     return reg
 
 
@@ -76,12 +78,12 @@ def test_veto_short_circuit_quarantines_and_filters(loan, conn):
 def test_topo_order_respects_depends_on(loan, conn):
     order: list[str] = []
     reg = Registry()
-    reg.register(ValidatorSpec("c", "V2", "score",
+    reg.register(ValidatorSpec("c", "instance", frozenset({"instance"}), "c", "score",
                                lambda ctx: (order.append("c"), ValidationResult("pass"))[1],
                                depends_on=["b"]))
-    reg.register(ValidatorSpec("a", "V0", "veto",
+    reg.register(ValidatorSpec("a", "intake", frozenset({"instance"}), "a", "veto",
                                lambda ctx: (order.append("a"), ValidationResult("pass"))[1]))
-    reg.register(ValidatorSpec("b", "V1", "score",
+    reg.register(ValidatorSpec("b", "schema", frozenset({"instance"}), "b", "score",
                                lambda ctx: (order.append("b"), ValidationResult("pass"))[1],
                                depends_on=["a"]))
     run_pipeline(loan, reg, conn, config={"no_cache": True})
@@ -100,7 +102,7 @@ def test_second_run_hits_cache(loan, conn):
             validator_id="t.c", severity="info", object_type="instance",
             object_id="x", finding_type="t", message="m")])
 
-    reg.register(ValidatorSpec("t.c", "V2", "score", fn))
+    reg.register(ValidatorSpec("t.c", "instance", frozenset({"instance"}), "t.c", "score", fn))
     run_pipeline(loan, reg, conn)
     ctx2 = run_pipeline(loan, reg, conn)
     assert calls["n"] == 1                                        # 第二次未真实执行

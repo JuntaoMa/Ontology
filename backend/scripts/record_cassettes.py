@@ -28,7 +28,7 @@ def record(dataset: str) -> None:
     print(f"== {dataset}: 真实 judge 运行中（claude CLI / claude-opus-4-8）==")
     ctx = run_pipeline(load_bundle(dataset), build_registry(), conn, config=cfg)
 
-    for vid in ("v5.j1", "v5.j2", "v5.j3"):
+    for vid in ("schema.semantic", "cross.faithfulness", "meta.review"):
         if vid in ctx.results:
             m = ctx.results[vid].metrics
             n = len(ctx.results[vid].findings)
@@ -40,8 +40,8 @@ def record(dataset: str) -> None:
     print(f"  cassette → {out}（{n} 条）")
 
     if dataset == "loan":                                # 真实 judge 的 gold 自检
-        j1 = ctx.results["v5.j1"].findings
-        j2 = ctx.results["v5.j2"].findings
+        j1 = ctx.results["schema.semantic"].findings
+        j2 = ctx.results["cross.faithfulness"].findings
         checks = {
             "O9 (J1 语义)": any("TemporaryEmployee" in f.object_id for f in j1),
             "R11 (J2 忠实性)": any(f.object_id == "R11" for f in j2),

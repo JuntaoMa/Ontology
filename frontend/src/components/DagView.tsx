@@ -2,20 +2,22 @@ import { useEffect, useRef, useState } from "react";
 import cytoscape from "cytoscape";
 import { api, type RunSummary } from "../api";
 import { useStore } from "../store";
-import { LAYER_NAME } from "../lib/semantics";
+import { CATEGORY_NAME } from "../lib/semantics";
 import { ValidatorCatalog } from "./ValidatorCatalog";
 
 const LABEL: Record<string, string> = {
-  "v0.structure": "结构校验", "v2.shacl_minimal": "最低 shape", "v2.shacl_trusted": "可信 shape",
-  "v1.consistency": "推理一致性", "v1.pitfalls": "pitfall 扫描", "v1.cq": "CQ 回归",
-  "v3.rules": "规则缺陷", "v4.formal": "soundness", "v4.simulation": "数据仿真",
-  "v4.cross": "规则×流程环", "v5.j1": "J1 语义", "v5.j2": "J2 忠实性", "v5.j3": "J3 复判",
+  "intake.structure": "结构完整性", "instance.required-fields": "必填底线", "instance.data-quality": "数据质量",
+  "schema.consistency": "逻辑一致性", "schema.pitfalls": "建模坏味道", "instance.competency": "能力问题",
+  "rule.defects": "规则集缺陷", "process.soundness": "流程健全性", "process.simulation": "数据仿真",
+  "cross.rule-process": "规则×流程", "schema.semantic": "语义合理性", "cross.faithfulness": "抽取忠实性", "meta.review": "复判收口",
 };
 const FILL: Record<string, string> = {
-  pass: "#ecfdf5", fail: "#fff1f2", ambiguous: "#fffbeb", skip: "#f1f5f9", none: "#f8fafc",
+  pass: "#ecfdf5", fail: "#fff1f2", ambiguous: "#fffbeb", skip: "#f1f5f9",
+  scope_skip: "#f8fafc", none: "#f8fafc",
 };
 const TEXT: Record<string, string> = {
-  pass: "#047857", fail: "#be123c", ambiguous: "#b45309", skip: "#94a3b8", none: "#475569",
+  pass: "#047857", fail: "#be123c", ambiguous: "#b45309", skip: "#94a3b8",
+  scope_skip: "#cbd5e1", none: "#475569",
 };
 const AUTH_BORDER: Record<string, string> = { veto: "#b91c1c", score: "#cbd5e1", advise: "#7c3aed" };
 
@@ -100,20 +102,23 @@ export function DagView({ run }: { run: RunSummary | null }) {
       const n = nodes.find((x) => x.id === node.id())!;
       const v = run ? (verdict[n.id] || "skip") : "none";
       const conv = n.depends_on.length >= 2;
+      const pruned = v === "scope_skip";   // change-set 之外：作用对象未变更，本次未触发
       const label = (LABEL[n.id] || n.id) + (quar[n.id] ? `\n⊘${quar[n.id]}` : "");
       node.style({
         label,
         "background-color": FILL[v], color: TEXT[v],
+        opacity: pruned ? 0.4 : 1,
         "border-width": conv ? 3 : n.authority === "veto" ? 2.5 : n.authority === "advise" ? 2 : 1,
-        "border-color": conv ? "#4f46e5" : AUTH_BORDER[n.authority],
-        "border-style": n.authority === "advise" && !conv ? "dashed" : "solid",
+        "border-color": pruned ? "#e2e8f0" : conv ? "#4f46e5" : AUTH_BORDER[n.authority],
+        "border-style": pruned ? "dashed" : n.authority === "advise" && !conv ? "dashed" : "solid",
       });
     });
 
     cy.on("tap", "node", (e: any) => {
       const id = e.target.id();
       const n = nodes.find((x) => x.id === id)!;
-      setSel({ id, label: LABEL[id] || id, layer: LAYER_NAME[n.layer], auth: n.authority,
+      setSel({ id, label: LABEL[id] || id, layer: CATEGORY_NAME[n.category] || n.category,
+               scope: n.scope, auth: n.authority,
                v: run?.validators.find((x) => x.validator_id === id) });
     });
     cy.on("tap", (e: any) => { if (e.target === cy) setSel(null); });
@@ -148,11 +153,15 @@ export function DagView({ run }: { run: RunSummary | null }) {
         <span className="inline-flex items-center gap-1">
           <span className="inline-block h-3 w-4 rounded" style={{ border: "3px solid #4f46e5" }} /> 汇聚节点
         </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="inline-block h-3 w-4 rounded opacity-40" style={{ border: "1px dashed #94a3b8", background: "#f8fafc" }} /> 作用对象未变更（本次未触发）
+        </span>
       </div>
       {sel && (
         <div className="mt-2 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-xs">
           <div>
             <span className="mono font-semibold">{sel.id}</span> · {sel.label} · {sel.layer} · 权限 {sel.auth}
+            {sel.scope?.length ? <> · 作用对象 <span className="mono">{sel.scope.join("/")}</span></> : null}
             {sel.v && <> · verdict <b>{sel.v.verdict}</b>{sel.v.cached ? "（缓存）" : ""} · {sel.v.duration_ms}ms</>}
           </div>
           <div className="mt-2 border-t border-[var(--border)] pt-2">

@@ -46,27 +46,27 @@ def lab():
     return {r.op_id: r for r in results}, matrix_json(results)
 
 
-# AC-MUT-DET：形式型变异被确定性层捕获
-@pytest.mark.parametrize("op,layer", [
-    ("mut_remove_required", "V2"), ("mut_enum_invalid", "V2"),
-    ("mut_negative_value", "V2"), ("mut_subclass_cycle", "V1"),
-    ("mut_flip_operator", "V3"), ("mut_drop_guard_clause", "V3"),
-    ("mut_xor_to_and", "V4"), ("mut_drop_edge", "V4"),
-    ("mut_gateway_threshold", "V4"),
+# AC-MUT-DET：形式型变异被确定性泳道捕获（句法/本体/实例/规则/流程）
+@pytest.mark.parametrize("op,lane", [
+    ("mut_remove_required", "实例"), ("mut_enum_invalid", "实例"),
+    ("mut_negative_value", "实例"), ("mut_subclass_cycle", "本体"),
+    ("mut_flip_operator", "规则"), ("mut_drop_guard_clause", "规则"),
+    ("mut_xor_to_and", "流程"), ("mut_drop_edge", "流程"),
+    ("mut_gateway_threshold", "流程"),
 ])
-def test_deterministic_mutations_captured(lab, op, layer):
+def test_deterministic_mutations_captured(lab, op, lane):
     results, _ = lab
-    assert layer in results[op].captured_layers, \
-        f"{op} 应被 {layer} 捕获，实际 {results[op].captured_layers}：{results[op].new_findings}"
+    assert lane in results[op].captured_layers, \
+        f"{op} 应被 {lane} 捕获，实际 {results[op].captured_layers}：{results[op].new_findings}"
 
 
-# AC-MUT-LLM：语义/忠实性变异确定性层全 miss、仅 V5 捕获
+# AC-MUT-LLM：语义/忠实性变异确定性层全 miss、仅 LLM 泳道捕获
 @pytest.mark.parametrize("op", [
     "mut_wrong_parent", "mut_guard_vs_evidence", "mut_edge_evidence_reverse"])
 def test_llm_only_mutations(lab, op):
     results, _ = lab
-    assert results[op].captured_layers == ["V5"], \
-        f"{op} 应仅被 V5 捕获，实际 {results[op].captured_layers}：{results[op].new_findings}"
+    assert results[op].captured_layers == ["LLM"], \
+        f"{op} 应仅被 LLM 捕获，实际 {results[op].captured_layers}：{results[op].new_findings}"
 
 
 # AC-MUT-BLIND：删 disjointness 全层 miss（矩阵如实呈现盲区）
@@ -80,6 +80,6 @@ def test_remove_disjoint_is_blind_spot(lab):
 def test_matrix_shape(lab):
     _, matrix = lab
     assert len(matrix["rows"]) == 13
-    assert matrix["layers"] == ["V0", "V1", "V2", "V3", "V4", "V5"]
+    assert matrix["layers"] == ["句法", "本体", "实例", "规则", "流程", "LLM"]
     assert all(r["as_expected"] for r in matrix["rows"]), \
         [r for r in matrix["rows"] if not r["as_expected"]]

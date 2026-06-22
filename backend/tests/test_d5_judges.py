@@ -99,14 +99,14 @@ def judged():
 
 def test_j1_catches_o9(judged):
     ctx, _ = judged
-    fs = ctx.results["v5.j1"].findings
+    fs = ctx.results["schema.semantic"].findings
     assert any(f.object_id == O9_ITEM and f.finding_type == "semantic_implausible"
                for f in fs)
 
 
 def test_j2_catches_r11_and_unfaithful_edge(judged):
     ctx, _ = judged
-    fs = ctx.results["v5.j2"].findings
+    fs = ctx.results["cross.faithfulness"].findings
     assert any(f.object_id == "R11" for f in fs)
     assert any(f.object_id == "loan_edge_unfaithful" for f in fs)
 
@@ -143,7 +143,7 @@ def test_j3_repair_and_classification(judged):
 
 def test_cost_card_metrics(judged):
     ctx, _ = judged
-    m = ctx.results["v5.j3"].metrics
+    m = ctx.results["meta.review"].metrics
     assert m["n_before"] > m["n_after"] and m["folded"] >= 3
     assert 0 < m["saving_pct"] < 100
 
@@ -157,8 +157,8 @@ def test_evidence_enforcement_downgrades():
     backend = ScriptedBackend(j1=fake_cite, j2=json.dumps({"items": []}),
                               j3=json.dumps({"items": []}))
     ctx, _ = _run(backend)
-    assert ctx.results["v5.j1"].metrics["downgraded"] == 1
-    assert not ctx.results["v5.j1"].findings          # 降级后不产出 finding
+    assert ctx.results["schema.semantic"].metrics["downgraded"] == 1
+    assert not ctx.results["schema.semantic"].findings          # 降级后不产出 finding
 
 
 # ---------- AC-J-SCHEMA：解析失败重试一次，再失败弃权 ----------
@@ -174,15 +174,15 @@ def test_parse_retry_then_succeed():
                               j3=json.dumps({"items": []}))
     ctx, _ = _run(backend)
     assert state["n"] == 2
-    assert any(f.object_id == O9_ITEM for f in ctx.results["v5.j1"].findings)
+    assert any(f.object_id == O9_ITEM for f in ctx.results["schema.semantic"].findings)
 
 
 def test_parse_fail_twice_abstains():
     backend = ScriptedBackend(j1="不是json", j2=json.dumps({"items": []}),
                               j3=json.dumps({"items": []}))
     ctx, _ = _run(backend)
-    assert ctx.results["v5.j1"].metrics["abstained"] is True
-    assert not ctx.results["v5.j1"].findings
+    assert ctx.results["schema.semantic"].metrics["abstained"] is True
+    assert not ctx.results["schema.semantic"].findings
 
 
 # ---------- AC-J-BACKEND：选择顺序 ----------
@@ -210,7 +210,7 @@ def test_cassette_replay_without_backend(judged, tmp_path):
     cfg = {"no_cache": True, "judge": {"enabled": True, "backend": "cassette"}}
     ctx2 = run_pipeline(load_bundle("loan"), build_registry(), conn2, config=cfg)
 
-    assert ctx2.results["v5.j1"].metrics["cached"] is True
-    assert any(f.object_id == O9_ITEM for f in ctx2.results["v5.j1"].findings)
-    assert any(f.object_id == "R11" for f in ctx2.results["v5.j2"].findings)
-    assert ctx2.results["v5.j3"].metrics["folded"] >= 3
+    assert ctx2.results["schema.semantic"].metrics["cached"] is True
+    assert any(f.object_id == O9_ITEM for f in ctx2.results["schema.semantic"].findings)
+    assert any(f.object_id == "R11" for f in ctx2.results["cross.faithfulness"].findings)
+    assert ctx2.results["meta.review"].metrics["folded"] >= 3

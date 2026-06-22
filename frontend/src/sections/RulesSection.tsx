@@ -13,11 +13,11 @@ export function RulesSection() {
   useEffect(() => { api(`/api/rules/${dataset}`).then((d) => setRules(d.rules)).catch(() => setRules([])); }, [dataset]);
 
   if (!run) return <EmptyRun />;
-  const v3 = findings.filter((f) => f.validator_id === "v3.rules");
+  const v3 = findings.filter((f) => f.validator_id === "rule.defects");
   const conflicts = v3.filter((f) => f.finding_type === "rule_conflict");
   const competing = v3.filter((f) => f.finding_type === "competing_suggestion");
   const others = v3.filter((f) => !["rule_conflict", "competing_suggestion"].includes(f.finding_type));
-  const j2 = findings.filter((f) => f.validator_id === "v5.j2" && f.object_type === "rule");
+  const j2 = findings.filter((f) => f.validator_id === "cross.faithfulness" && f.object_type === "rule");
 
   return (
     <div className="flex flex-col gap-4">
@@ -44,7 +44,7 @@ export function RulesSection() {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Card>
-          <CardHeader title="V3 hard 冲突（Z3 具体反例）" />
+          <CardHeader title="规则集缺陷 · hard 冲突（Z3 具体反例）" sub="rule.defects · score" />
           <CardBody className="flex flex-col gap-3 pt-0">
             {conflicts.length === 0 && <div className="text-xs text-[var(--fg-subtle)]">无冲突</div>}
             {conflicts.map((f) => (
@@ -64,7 +64,7 @@ export function RulesSection() {
             <CardBody className="pt-0"><FindingList findings={competing} empty="无竞争建议" dataset={dataset} /></CardBody>
           </Card>
           <Card>
-            <CardHeader title="V5 J2 抽取忠实性" sub="guard vs evidence 原文" right={<Pill tone="accent">advise</Pill>} />
+            <CardHeader title="抽取忠实性（guard vs 原文）" sub="cross.faithfulness · advise" right={<Pill tone="accent">advise</Pill>} />
             <CardBody className="pt-0"><FindingList findings={j2} empty="无忠实性问题" dataset={dataset} /></CardBody>
           </Card>
         </div>

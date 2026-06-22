@@ -59,7 +59,7 @@ def validate_shacl_minimal(ctx: Context) -> ValidationResult:
     if b.shapes_minimal is None:
         return ValidationResult("pass")
     findings = _parse_report(_run_shacl(b.data, b.shapes_minimal),
-                             "v2.shacl_minimal", "violation")
+                             "instance.required-fields", "violation")
     return ValidationResult(
         verdict="fail" if findings else "pass",
         findings=findings,
@@ -72,6 +72,6 @@ def validate_shacl_trusted(ctx: Context) -> ValidationResult:
     if b.shapes_trusted is None:
         return ValidationResult("pass")
     findings = _parse_report(_run_shacl(b.data, b.shapes_trusted),
-                             "v2.shacl_trusted", "violation")
+                             "instance.data-quality", "violation")
     return ValidationResult(
         verdict="fail" if findings else "pass", findings=findings)

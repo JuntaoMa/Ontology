@@ -4,7 +4,7 @@ import { Table, Th, Td } from "../components/ui/Table";
 import { AuthorityBadge } from "../components/ui/Badge";
 import { EmptyRun } from "../components/EmptyRun";
 import { DagView } from "../components/DagView";
-import { layerOf, LAYER_NAME, type Authority } from "../lib/semantics";
+import { categoryOf, CATEGORY_NAME, LABEL, type Authority } from "../lib/semantics";
 
 export function Overview() {
   const { run, findings } = useStore();
@@ -29,7 +29,7 @@ export function Overview() {
 
       <Card>
         <CardHeader title="校验流水线 DAG"
-          sub="节点=校验器（拓扑序调度）· 边=依赖（depends_on）· 蓝粗框=汇聚节点（v4.cross 规则×流程 / v5.j3 复判收口）" />
+          sub="节点=校验器（按目的命名·拓扑序调度）· 边=依赖（depends_on）· 蓝粗框=汇聚节点（cross.rule-process 规则×流程 / meta.review 复判收口）· 半透明虚线=作用对象未变更未触发" />
         <CardBody><DagView run={run} /></CardBody>
       </Card>
 
@@ -38,20 +38,24 @@ export function Overview() {
         <CardBody className="px-0 pb-0">
           <Table>
             <thead>
-              <tr><Th>层</Th><Th>校验器</Th><Th>权限</Th><Th>verdict</Th><Th>缓存</Th><Th>耗时</Th><Th>findings</Th></tr>
+              <tr><Th>类别</Th><Th>校验器</Th><Th>权限</Th><Th>verdict</Th><Th>缓存</Th><Th>耗时</Th><Th>findings</Th></tr>
             </thead>
             <tbody>
-              {run.validators.map((v) => (
-                <tr key={v.validator_id} className="hover:bg-[var(--surface-2)]">
-                  <Td className="text-[var(--fg-muted)]">{LAYER_NAME[layerOf(v.validator_id)]}</Td>
-                  <Td className="mono">{v.validator_id}</Td>
+              {run.validators.map((v) => {
+                const pruned = v.verdict === "scope_skip";
+                return (
+                <tr key={v.validator_id} className="hover:bg-[var(--surface-2)]" style={pruned ? { opacity: 0.5 } : undefined}>
+                  <Td className="text-[var(--fg-muted)]">{CATEGORY_NAME[categoryOf(v.validator_id)] || categoryOf(v.validator_id)}</Td>
+                  <Td><span className="mono">{v.validator_id}</span>
+                      <span className="ml-1.5 text-[var(--fg-subtle)]">{LABEL[v.validator_id] || ""}</span></Td>
                   <Td><AuthorityBadge authority={v.authority as Authority} /></Td>
-                  <Td>{v.verdict}</Td>
+                  <Td>{pruned ? <span className="text-[var(--fg-subtle)]">未触发（作用对象未变更）</span> : v.verdict}</Td>
                   <Td className="text-[var(--fg-subtle)]">{v.cached ? "✓" : ""}</Td>
-                  <Td className="text-[var(--fg-subtle)] tabular-nums">{v.duration_ms}ms</Td>
+                  <Td className="text-[var(--fg-subtle)] tabular-nums">{pruned ? "" : `${v.duration_ms}ms`}</Td>
                   <Td className="tabular-nums">{findings.filter((f) => f.validator_id === v.validator_id).length}</Td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </Table>
         </CardBody>

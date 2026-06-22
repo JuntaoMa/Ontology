@@ -47,9 +47,34 @@ def _cfg() -> dict:
 def pipeline_dag():
     """校验器注册表的依赖 DAG（节点=校验器，边=depends_on）。"""
     return {"nodes": [
-        {"id": s.validator_id, "layer": s.layer, "authority": s.authority,
-         "depends_on": list(s.depends_on)}
+        {"id": s.validator_id, "category": s.category, "scope": sorted(s.scope),
+         "title": s.title, "authority": s.authority, "depends_on": list(s.depends_on)}
         for s in registry.all()]}
+
+
+# change-set 场景预设（spec 20 §4）：作用对象 → 触发哪些校验器
+SCOPE_SCENARIOS = [
+    {"id": "full", "label": "全量校验", "change_set": None,
+     "desc": "跑全部适用校验器"},
+    {"id": "schema", "label": "改本体 schema", "change_set": ["schema"],
+     "desc": "新增/改类·属性·公理 → 只跑本体相关 + 复判"},
+    {"id": "instance", "label": "改实例数据", "change_set": ["instance"],
+     "desc": "新增/改个体 → 只跑实例相关 + 复判（不跑规则/流程）"},
+    {"id": "rule", "label": "改规则", "change_set": ["rule"],
+     "desc": "改业务规则 → 规则缺陷 + 规则×流程 + 仿真 + 忠实性 + 复判"},
+    {"id": "process", "label": "改流程", "change_set": ["process"],
+     "desc": "改流程 → 健全性 + 仿真 + 规则×流程 + 忠实性 + 复判"},
+]
+
+
+@app.get("/api/pipeline/scopes")
+def pipeline_scopes():
+    """可选的 change-set 场景 + 每个校验器的作用对象（前端选择性触发用）。"""
+    return {"scenarios": SCOPE_SCENARIOS,
+            "validators": {s.validator_id: {"category": s.category,
+                                            "scope": sorted(s.scope),
+                                            "title": s.title, "authority": s.authority}
+                           for s in registry.all()}}
 
 
 def _shacl_catalog(shapes) -> list[dict]:
@@ -85,11 +110,11 @@ def validator_specs(dataset: str):
     specs: dict[str, dict] = {}
 
     if b.shapes_minimal is not None:
-        specs["v2.shacl_minimal"] = {"title": "最低入库 shape", "kind": "shacl",
+        specs["instance.required-fields"] = {"title": "最低入库 shape", "kind": "shacl",
             "desc": "blocking 门禁：三元组完整性 / 必填 / 类型可解析（违反进 quarantine）",
             "shacl": _shacl_catalog(b.shapes_minimal)}
     if b.shapes_trusted is not None:
-        specs["v2.shacl_trusted"] = {"title": "可信层 shape", "kind": "shacl",
+        specs["instance.data-quality"] = {"title": "可信层 shape", "kind": "shacl",
             "desc": "advisory：datatype / 枚举 / 数值范围 / 关系 range / 基数（违反=负证据）",
             "shacl": _shacl_catalog(b.shapes_trusted)}
 
@@ -102,22 +127,22 @@ def validator_specs(dataset: str):
     for p in set(b.ontology.subjects(RDF.type, OWL.FunctionalProperty)):
         cons.append({"label": "functional（至多一个值）", "detail": _local(p)})
     cons.append({"label": "owl:Nothing 成员（不可满足）", "detail": "推理后扫描"})
-    specs["v1.consistency"] = {"title": "推理一致性", "kind": "checks",
+    specs["schema.consistency"] = {"title": "推理一致性", "kind": "checks",
         "desc": "owlrl 物化后扫描矛盾；下列为本体声明的、驱动检查的公理", "checks": cons}
 
-    specs["v1.pitfalls"] = {"title": "pitfall 扫描", "kind": "checks",
+    specs["schema.pitfalls"] = {"title": "pitfall 扫描", "kind": "checks",
         "desc": "OOPS! 清单的本地可跑子集（结构卫生）", "checks": [
             {"label": "缺 label", "detail": "每个 owl:Class 应有 rdfs:label"},
             {"label": "缺 domain/range", "detail": "每个属性应声明 domain 与 range"},
             {"label": "subClassOf 环", "detail": "类层级不得成环"}]}
 
     if b.cqs:
-        specs["v1.cq"] = {"title": "CQ 回归", "kind": "checks",
+        specs["instance.competency"] = {"title": "CQ 回归", "kind": "checks",
             "desc": "本体功能性闸门：每条 CQ 是一个 SPARQL 期望", "checks": [
                 {"label": cq["cq_id"], "detail": f'{cq["nl_question"]}（期望 {cq["expected"]["mode"]}）'}
                 for cq in b.cqs["cqs"]]}
 
-    specs["v3.rules"] = {"title": "规则缺陷检测", "kind": "checks",
+    specs["rule.defects"] = {"title": "规则缺陷检测", "kind": "checks",
         "desc": "Z3 对业务规则集做的缺陷检查（业务规则 R1–R13 见「规则校验」页）", "checks": [
             {"label": "conflict", "detail": "两条 hard 规则在同一输入下结论互斥"},
             {"label": "dead rule", "detail": "guard 在定义域内永假，永不触发"},
@@ -125,25 +150,39 @@ def validator_specs(dataset: str):
             {"label": "coverage gap", "detail": "存在无任何 hard 规则覆盖的输入区域"},
             {"label": "competing（heuristic）", "detail": "heuristic 建议互斥=竞争，非错误"}]}
 
-    specs["v4.formal"] = {"title": "流程形式化", "kind": "checks", "desc": "PM4Py 结构检查", "checks": [
+    specs["process.soundness"] = {"title": "流程形式化", "kind": "checks", "desc": "PM4Py 结构检查", "checks": [
         {"label": "soundness", "detail": "无死锁 / 不可达 / 不当终止（check_soundness）"},
         {"label": "结构", "detail": "start/end 合法、无悬空边、无孤立节点"}]}
-    specs["v4.simulation"] = {"title": "数据感知仿真", "kind": "checks", "desc": "合成 trace 覆盖率", "checks": [
+    specs["process.simulation"] = {"title": "数据感知仿真", "kind": "checks", "desc": "合成 trace 覆盖率", "checks": [
         {"label": "活动覆盖率", "detail": "每个活动至少被一条数据 trace 触达（=100%）"},
         {"label": "控制流对照", "detail": "play-out 可达 vs 数据可达的差异（暴露数据死分支）"}]}
-    specs["v4.cross"] = {"title": "规则×流程交叉环", "kind": "checks", "desc": "规则派生约束 × 仿真 trace", "checks": [
+    specs["cross.rule-process"] = {"title": "规则×流程交叉环", "kind": "checks", "desc": "规则派生约束 × 仿真 trace", "checks": [
         {"label": "conditional-occurrence", "detail": "hard 规则派生 Declare 约束（如 amount>50万 ⇒ ManualReview）跑在 trace 上"}]}
 
-    specs["v5.j1"] = {"title": "J1 语义合理性", "kind": "criteria", "desc": "LLM 判定（advise）", "checks": [
+    specs["schema.semantic"] = {"title": "J1 语义合理性", "kind": "criteria", "desc": "LLM 判定（advise）", "checks": [
         {"label": "is-a 合理性", "detail": "subClassOf 是否满足『X 是一种 Y』常识"},
         {"label": "属性签名语义", "detail": "domain/range 是否说得通"}]}
-    specs["v5.j2"] = {"title": "J2 抽取忠实性", "kind": "criteria", "desc": "形式化 vs evidence 原文", "checks": [
+    specs["cross.faithfulness"] = {"title": "J2 抽取忠实性", "kind": "criteria", "desc": "形式化 vs evidence 原文", "checks": [
         {"label": "数值/数量级", "detail": "如『五万』vs 50000"},
         {"label": "方向/顺序/边界", "detail": "流程边方向、比较算子、以上/以下"}]}
-    specs["v5.j3"] = {"title": "J3 复判 + 修复", "kind": "criteria", "desc": "复判 ambiguous 带并起草修复", "checks": [
+    specs["meta.review"] = {"title": "J3 复判 + 修复", "kind": "criteria", "desc": "复判 ambiguous 带并起草修复", "checks": [
         {"label": "confirm / likely_false_positive / uncertain", "detail": "对 warning/竞争/CQ/数值枚举类 finding 复判"},
         {"label": "修复建议 + CQ 三分类", "detail": "本体缺口 / 数据缺口 / CQ 过时"}]}
 
+    specs["intake.structure"] = {"title": "结构完整性", "kind": "checks",
+        "desc": "句法入口闸门：规则/流程 IR 的结构与引用完整性（违反进 quarantine）", "checks": [
+            {"label": "IR schema", "detail": "规则/流程 IR 通过 Pydantic 结构校验"},
+            {"label": "引用完整", "detail": "流程边两端必须是已声明节点（无悬空边）"}]}
+
+    # 用 registry 元数据增强每个条目：作用对象(scope) / 类别(category) / 权限(authority)
+    for vid, meta in specs.items():
+        try:
+            rs = registry.get(vid)
+        except KeyError:
+            continue
+        meta["category"] = rs.category
+        meta["scope"] = sorted(rs.scope)
+        meta["authority"] = rs.authority
     return specs
 
 
@@ -156,10 +195,15 @@ def datasets():
 
 
 @app.post("/api/runs")
-def trigger_run(dataset: str = "loan"):
+def trigger_run(dataset: str = "loan", scope: str | None = None):
+    """scope 缺省=全量；否则按作用对象选择性触发（逗号分隔，如 scope=instance
+    或 scope=rule,process）——spec 20 §4。"""
     bundle = load_bundle(dataset)
+    change_set = ({s.strip() for s in scope.split(",") if s.strip()}
+                  if scope else None)
     with db_lock:
-        ctx = run_pipeline(bundle, registry, conn, config=_cfg())
+        ctx = run_pipeline(bundle, registry, conn, config=_cfg(),
+                           change_set=change_set)
         return run_summary(ctx.run_id)
 
 

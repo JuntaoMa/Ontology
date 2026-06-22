@@ -12,7 +12,7 @@ def rules_findings():
     bundle = load_bundle("loan")
     ctx = run_pipeline(bundle, build_registry(), store.connect(":memory:"),
                        config={"no_cache": True})
-    return ctx.results["v3.rules"].findings
+    return ctx.results["rule.defects"].findings
 
 
 def _by_type(findings, t):

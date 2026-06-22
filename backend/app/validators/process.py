@@ -37,14 +37,14 @@ def validate_process_formal(ctx: Context) -> ValidationResult:
         isolated = [n for n in kinds if n not in referenced]
         if kinds.get(ir.start) != "step" or any(kinds.get(e) != "step" for e in ir.ends):
             findings.append(Finding(
-                validator_id="v4.formal", severity="violation",
+                validator_id="process.soundness", severity="violation",
                 object_type="process", object_id=ir.process_id,
                 finding_type="bad_start_end",
                 message="start/ends 必须是步骤节点", locus={}))
             continue
         for n in isolated:
             findings.append(Finding(
-                validator_id="v4.formal", severity="warning",
+                validator_id="process.soundness", severity="warning",
                 object_type="process", object_id=ir.process_id,
                 finding_type="isolated_node",
                 message=f"节点 {n} 未被任何边引用", locus={"node": n}))
@@ -63,7 +63,7 @@ def validate_process_formal(ctx: Context) -> ValidationResult:
             diag_keys = ([k for k, v in diagnostics.items() if _truthy(v)]
                          if isinstance(diagnostics, dict) else [])
             findings.append(Finding(
-                validator_id="v4.formal", severity="violation",
+                validator_id="process.soundness", severity="violation",
                 object_type="process", object_id=ir.process_id,
                 finding_type="process_unsound",
                 message=f"流程不满足 soundness（存在死锁/不可达/不当终止），诊断项：{diag_keys[:6]}",
@@ -80,7 +80,7 @@ def validate_process_simulation(ctx: Context) -> ValidationResult:
     if ctx.bundle.rules is None:
         return ValidationResult("pass")
     ruleset = RuleSet.model_validate(ctx.bundle.rules)
-    n_cases = int(ctx.config.get("v4.simulation", {}).get("n_cases", 300))
+    n_cases = int(ctx.config.get("process.simulation", {}).get("n_cases", 300))
 
     findings: list[Finding] = []
     metrics: dict = {}
@@ -91,8 +91,8 @@ def validate_process_simulation(ctx: Context) -> ValidationResult:
         zero_data = sorted(a for a, n in cov.items() if n == 0)
 
         # 控制流 play-out（仅对 sound 流程，作对照指标）
-        sound = (ctx.results.get("v4.formal") and
-                 ctx.results["v4.formal"].metrics.get(ir.process_id, {}).get("sound"))
+        sound = (ctx.results.get("process.soundness") and
+                 ctx.results["process.soundness"].metrics.get(ir.process_id, {}).get("sound"))
         cf_covered: set[str] = set()
         if sound:
             try:
@@ -118,7 +118,7 @@ def validate_process_simulation(ctx: Context) -> ValidationResult:
         for act in zero_data:
             cf_reachable = act in cf_covered
             findings.append(Finding(
-                validator_id="v4.simulation", severity="warning",
+                validator_id="process.simulation", severity="warning",
                 object_type="process", object_id=ir.process_id,
                 finding_type="dead_activity_data",
                 message=(f"活动「{act}」在 {len(completed)} 条数据感知 trace 中 0 次执行"
@@ -134,7 +134,7 @@ def validate_cross(ctx: Context) -> ValidationResult:
     if ctx.bundle.rules is None:
         return ValidationResult("pass")
     ruleset = RuleSet.model_validate(ctx.bundle.rules)
-    n_cases = int(ctx.config.get("v4.simulation", {}).get("n_cases", 300))
+    n_cases = int(ctx.config.get("process.simulation", {}).get("n_cases", 300))
 
     findings: list[Finding] = []
     for ir in _active_processes(ctx):
@@ -148,7 +148,7 @@ def validate_cross(ctx: Context) -> ValidationResult:
             rule = next(r for r in ruleset.rules if r.rule_id == c.source_rule)
             sample = bad[0]
             findings.append(Finding(
-                validator_id="v4.cross", severity="violation",
+                validator_id="cross.rule-process", severity="violation",
                 object_type="process", object_id=ir.process_id,
                 finding_type="cross_validation_violation",
                 message=(f"流程与规则 {c.source_rule} 矛盾：{len(bad)} 条 trace 满足"

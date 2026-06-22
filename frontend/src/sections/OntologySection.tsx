@@ -82,11 +82,11 @@ export function OntologySection() {
     api(`/api/ontology/${dataset}/graph`).then((g) => {
       if (!ref.current) return;
       const violationIds = new Set(findings.filter((f) =>
-        ["v2.shacl_minimal", "v2.shacl_trusted", "v1.consistency"].includes(f.validator_id))
+        ["instance.required-fields", "instance.data-quality", "schema.consistency"].includes(f.validator_id))
         .map((f) => f.object_id));
-      const pitfallIds = new Set(findings.filter((f) => f.validator_id === "v1.pitfalls")
+      const pitfallIds = new Set(findings.filter((f) => f.validator_id === "schema.pitfalls")
         .map((f) => f.object_id));
-      const j1Locals = new Set(findings.filter((f) => f.validator_id === "v5.j1")
+      const j1Locals = new Set(findings.filter((f) => f.validator_id === "schema.semantic")
         .flatMap((f) => { const m = String(f.object_id).match(/^axiom:(.+?)[⊑<]/); return m ? [m[1].trim()] : []; }));
 
       const nodes = g.nodes.filter((n: any) => showInstances || n.data.kind !== "individual")
@@ -140,11 +140,12 @@ export function OntologySection() {
 
   if (!run) return <EmptyRun />;
 
+  // 按作用对象分组（spec 20）；能力问题 scope={schema,instance}，在本体+实例两组重复出现（决策①）
   const groups: [string, string[]][] = [
-    ["V2 SHACL（minimal=veto / trusted=score）", ["v2.shacl_minimal", "v2.shacl_trusted"]],
-    ["V1 推理一致性 + pitfall", ["v1.consistency", "v1.pitfalls"]],
-    ["V1 CQ 回归（J3 提议分类待人工确认）", ["v1.cq"]],
-    ["V5 J1 语义合理性（advise · 紫色高亮）", ["v5.j1"]],
+    ["本体 schema · 逻辑一致性 / 建模坏味道 / 语义合理性 / 能力问题",
+      ["schema.consistency", "schema.pitfalls", "schema.semantic", "instance.competency"]],
+    ["实例 instance · 必填底线 / 数据质量 / 能力问题",
+      ["instance.required-fields", "instance.data-quality", "instance.competency"]],
   ];
 
   return (

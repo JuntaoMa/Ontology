@@ -18,7 +18,7 @@ export function ProcessSection() {
   const cyRef = useRef<any>(null);
 
   const mine = (vid: string) => findings.filter((f) => f.validator_id === vid && f.object_id === pid);
-  const deadActs = new Set(mine("v4.simulation").map((f) => f.locus.activity));
+  const deadActs = new Set(mine("process.simulation").map((f) => f.locus.activity));
 
   useEffect(() => {
     if (!ref.current) return;
@@ -76,13 +76,13 @@ export function ProcessSection() {
           <CardBody><div ref={ref} className="h-[480px] rounded-[var(--radius-sm)] border border-[var(--border)]" /></CardBody>
         </Card>
         <div className="flex flex-col gap-4">
-          <Card><CardHeader title="V4 形式化（soundness）" /><CardBody className="pt-0"><FindingList findings={mine("v4.formal")} empty="健全，无问题" dataset={dataset} /></CardBody></Card>
-          <Card><CardHeader title="V4 仿真（数据感知覆盖率）" /><CardBody className="pt-0"><FindingList findings={mine("v4.simulation")} empty="活动全覆盖" dataset={dataset} /></CardBody></Card>
+          <Card><CardHeader title="流程健全性（soundness）" sub="process.soundness · score" /><CardBody className="pt-0"><FindingList findings={mine("process.soundness")} empty="健全，无问题" dataset={dataset} /></CardBody></Card>
+          <Card><CardHeader title="数据感知仿真（覆盖率）" sub="process.simulation · score" /><CardBody className="pt-0"><FindingList findings={mine("process.simulation")} empty="活动全覆盖" dataset={dataset} /></CardBody></Card>
           <Card>
-            <CardHeader title="V3×V4 交叉验证环" sub="违例回链来源规则" />
+            <CardHeader title="规则×流程一致（交叉验证环）" sub="cross.rule-process · 违例回链来源规则" />
             <CardBody className="flex flex-col gap-2 pt-0">
-              {mine("v4.cross").length === 0 && <div className="text-xs text-[var(--fg-subtle)]">无交叉违例</div>}
-              {mine("v4.cross").map((f) => (
+              {mine("cross.rule-process").length === 0 && <div className="text-xs text-[var(--fg-subtle)]">无交叉违例</div>}
+              {mine("cross.rule-process").map((f) => (
                 <div key={f.id} className="rounded-[var(--radius-sm)] border border-[var(--border)] p-2.5 text-[13px]">
                   <div>{f.message}</div>
                   <div className="mono mt-1 text-xs text-[var(--fg-subtle)]">样例 case：{JSON.stringify(f.locus.sample_case?.data)}</div>
@@ -93,8 +93,8 @@ export function ProcessSection() {
             </CardBody>
           </Card>
           <Card>
-            <CardHeader title="V5 J2 边忠实性" sub="IR 方向 vs 原文" right={<Pill tone="accent">advise</Pill>} />
-            <CardBody className="pt-0"><FindingList findings={findings.filter((f) => f.validator_id === "v5.j2" && f.object_id === pid)} empty="无忠实性问题" dataset={dataset} /></CardBody>
+            <CardHeader title="抽取忠实性（边方向）" sub="cross.faithfulness · IR 方向 vs 原文" right={<Pill tone="accent">advise</Pill>} />
+            <CardBody className="pt-0"><FindingList findings={findings.filter((f) => f.validator_id === "cross.faithfulness" && f.object_id === pid)} empty="无忠实性问题" dataset={dataset} /></CardBody>
           </Card>
         </div>
       </div>

@@ -39,8 +39,10 @@ class ValidatorFn(Protocol):
 
 @dataclass
 class ValidatorSpec:
-    validator_id: str
-    layer: str                    # V0..V5
+    validator_id: str             # 命名空间.目的，如 instance.required-fields（取代 V 编号）
+    category: str                 # intake/schema/instance/rule/process/cross/meta（id 前缀=此）
+    scope: frozenset[str]         # {schema,instance,rule,process} 子集；驱动分组展示+change-set 触发
+    title: str                    # 界面用目的名（中文）
     authority: Authority
     fn: ValidatorFn
     depends_on: list[str] = field(default_factory=list)
@@ -67,6 +69,27 @@ class Registry:
     def all(self) -> list[ValidatorSpec]:
         return list(self._specs.values())
 
+    def scoped_run_set(self, change_set: set[str]) -> set[str]:
+        """change-set 触发集（spec §4）：scope 命中 change_set 的直接触发。
+
+        每个校验器的 scope 已诚实列出它（含读取的）全部制品类型，所以直接命中即可
+        正确级联（如 process.simulation 读规则 guard，scope 含 rule，改规则会直接触发）。
+        额外只对**纯聚合节点**（scope 为空，如 meta.review 复判所有 findings）做下游闭包：
+        任一输入被触发就纳入复判。不做全量下游闭包——否则 intake.structure 因含 rule 被触发，
+        会把它下游的 process.soundness 等无关节点一并拉起（改规则不该重跑流程健全性）。"""
+        run_set = {s.validator_id for s in self._specs.values()
+                   if s.scope & change_set}
+        changed = True
+        while changed:
+            changed = False
+            for s in self._specs.values():
+                if s.validator_id in run_set or s.scope:   # 仅空 scope 的聚合节点做闭包
+                    continue
+                if any(d in run_set for d in s.depends_on):
+                    run_set.add(s.validator_id)
+                    changed = True
+        return run_set
+
 
 def _input_hash(bundle: Bundle, spec: ValidatorSpec, config: dict) -> str:
     raw = json.dumps({"content": bundle.content_hash, "validator": spec.validator_id,
@@ -79,16 +102,31 @@ def _filter_quarantined(findings: list[Finding], quarantined: set[str]) -> list[
 
 
 def run_pipeline(bundle: Bundle, registry: Registry, conn,
-                 config: dict | None = None, run_id: str | None = None) -> Context:
-    """跑全管线，返回带结果的 Context。"""
+                 config: dict | None = None, run_id: str | None = None,
+                 change_set: set[str] | None = None) -> Context:
+    """跑全管线，返回带结果的 Context。
+
+    change_set 不为 None 时按作用对象选择性触发（spec §4）：只跑 scope 命中
+    change_set 的校验器及其 DAG 下游；其余记 verdict='scope_skip'、视作已满足依赖。
+    """
     ctx = Context(bundle=bundle, conn=conn, run_id=run_id or f"run_{uuid.uuid4().hex[:8]}",
                   config=config or {})
     executed: set[str] = set()
     inapplicable: set[str] = set()
+    run_set = registry.scoped_run_set(change_set) if change_set is not None else None
 
     for spec in registry.topo_order():
         if not spec.applicable(bundle):
             inapplicable.add(spec.validator_id)
+            continue
+        # change-set 之外的校验器：记 scope_skip，并视作已满足依赖（同 inapplicable），
+        # 让被触发的下游（如仅实例变更时的 meta.review）不被卡（spec §4）
+        if run_set is not None and spec.validator_id not in run_set:
+            inapplicable.add(spec.validator_id)
+            store.record_run(conn, run_id=ctx.run_id, dataset=bundle.dataset_id,
+                             validator_id=spec.validator_id, authority=spec.authority,
+                             verdict="scope_skip", input_hash=None, cached=False,
+                             started_at=store.now_iso(), duration_ms=0)
             continue
         # 对该数据集不适用的依赖视为已满足（如 pizza 无 minimal shapes）
         missing = [d for d in spec.depends_on

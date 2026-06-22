@@ -36,7 +36,7 @@ def validate_consistency(ctx: Context) -> ValidationResult:
                 continue
             seen.add(key)
             findings.append(Finding(
-                validator_id="v1.consistency", severity="violation",
+                validator_id="schema.consistency", severity="violation",
                 object_type="instance", object_id=str(ind),
                 finding_type="disjoint_violation",
                 message=f"个体同时属于互斥类 {a.split('#')[-1]} 与 {b.split('#')[-1]}",
@@ -48,12 +48,12 @@ def validate_consistency(ctx: Context) -> ValidationResult:
         if "Disjoint classes" in msg and findings:
             continue        # 已被结构化扫描覆盖
         findings.append(Finding(
-            validator_id="v1.consistency", severity="violation",
+            validator_id="schema.consistency", severity="violation",
             object_type="ontology", object_id="<reasoner>",
             finding_type="reasoner_inconsistency", message=msg, locus={}))
     for ind in g.subjects(RDF.type, OWL.Nothing):
         findings.append(Finding(
-            validator_id="v1.consistency", severity="violation",
+            validator_id="schema.consistency", severity="violation",
             object_type="instance", object_id=str(ind),
             finding_type="member_of_nothing",
             message="个体被推入 owl:Nothing（不可满足）", locus={}))
@@ -74,7 +74,7 @@ def validate_pitfalls(ctx: Context) -> ValidationResult:
             continue
         if g.value(cls, RDFS.label) is None:
             findings.append(Finding(
-                validator_id="v1.pitfalls", severity="info",
+                validator_id="schema.pitfalls", severity="info",
                 object_type="ontology", object_id=str(cls),
                 finding_type="missing_label",
                 message=f"类 {cls.split('#')[-1]} 缺少 rdfs:label", locus={}))
@@ -87,7 +87,7 @@ def validate_pitfalls(ctx: Context) -> ValidationResult:
                        if g.value(prop, pred) is None]
             if missing:
                 findings.append(Finding(
-                    validator_id="v1.pitfalls", severity="info",
+                    validator_id="schema.pitfalls", severity="info",
                     object_type="ontology", object_id=str(prop),
                     finding_type="missing_domain_range",
                     message=f"属性 {prop.split('#')[-1]} 缺少 {'/'.join(missing)}",
@@ -128,7 +128,7 @@ def validate_pitfalls(ctx: Context) -> ValidationResult:
         i = nodes.index(min(nodes))
         rotated = nodes[i:] + nodes[:i] + [min(nodes)]
         findings.append(Finding(
-            validator_id="v1.pitfalls", severity="warning",
+            validator_id="schema.pitfalls", severity="warning",
             object_type="ontology", object_id=rotated[0],
             finding_type="subclass_cycle",
             message="subClassOf 存在环：" + " → ".join(c.split('#')[-1] for c in rotated),
@@ -168,7 +168,7 @@ def validate_cqs(ctx: Context) -> ValidationResult:
             passed += 1
             continue
         findings.append(Finding(
-            validator_id="v1.cq", severity="warning",
+            validator_id="instance.competency", severity="warning",
             object_type="cq", object_id=cq["cq_id"],
             finding_type="cq_failed",
             message=f"CQ 未通过：{cq['nl_question']}（期望 {mode}，得到 {len(rows)} 行）"

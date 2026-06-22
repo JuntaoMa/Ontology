@@ -10,7 +10,7 @@ import { SeverityBadge, AuthorityBadge, Pill } from "../components/ui/Badge";
 import { Sheet } from "../components/ui/Sheet";
 import { JudgeBox } from "../components/ui/JudgeBox";
 import { SourceBlock } from "../components/SourceBlock";
-import { authorityOf, layerOf, LAYER_NAME, type Severity } from "../lib/semantics";
+import { authorityOf, categoryOf, CATEGORY_NAME, type Severity } from "../lib/semantics";
 
 const TAU = 0.85;
 const isFolded = (f: Finding) =>
@@ -38,7 +38,7 @@ export function Inbox() {
     const key = (f: Finding) =>
       groupBy === "type" ? f.finding_type
       : groupBy === "object" ? String(f.object_id).split("#").pop()!
-      : groupBy === "layer" ? LAYER_NAME[layerOf(f.validator_id)]
+      : groupBy === "layer" ? (CATEGORY_NAME[categoryOf(f.validator_id)] || categoryOf(f.validator_id))
       : "全部";
     const m = new Map<string, Finding[]>();
     visible.forEach((f) => {
@@ -99,7 +99,7 @@ export function Inbox() {
         <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value as GroupBy)} className="h-8 text-xs">
           <option value="type">按类型</option>
           <option value="object">按对象</option>
-          <option value="layer">按层</option>
+          <option value="layer">按类别</option>
           <option value="none">不分组</option>
         </Select>
         <label className="ml-2 flex items-center gap-1.5 text-xs text-[var(--fg-muted)]">
@@ -161,7 +161,7 @@ function DetailSheet({ f, onClose, act, dataset }: {
           <div className="flex flex-wrap items-center gap-2">
             <SeverityBadge severity={f.severity as Severity} />
             <AuthorityBadge authority={authorityOf(f.validator_id)} />
-            <Pill>{LAYER_NAME[layerOf(f.validator_id)]}</Pill>
+            <Pill>{CATEGORY_NAME[categoryOf(f.validator_id)] || categoryOf(f.validator_id)}</Pill>
             <span className="mono text-xs text-[var(--fg-subtle)]">{f.validator_id}</span>
           </div>
           <div>

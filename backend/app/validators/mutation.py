@@ -20,7 +20,11 @@ from ..datasets import Bundle
 from ..orchestrator import Registry, run_pipeline
 
 EX = Namespace("http://example.org/loan#")
-LAYERS = ["V0", "V1", "V2", "V3", "V4", "V5"]
+# 捕获泳道（spec 20 §5）：保住「形式型→确定性 / 语义型→仅 LLM」对比。
+# lane = 'LLM' if authority==advise else fold(category)；cross 折进流程。
+LANES = ["句法", "本体", "实例", "规则", "流程", "LLM"]
+_CATEGORY_LANE = {"intake": "句法", "schema": "本体", "instance": "实例",
+                  "rule": "规则", "process": "流程", "cross": "流程", "meta": "复判"}
 
 
 @dataclass
@@ -64,36 +68,36 @@ def _rule(bundle: Bundle, rid: str) -> dict:
 
 
 OPERATORS: list[MutationOp] = [
-    # ---- 实例数据（形式型 → V2） ----
+    # ---- 实例数据（形式型 → 实例） ----
     MutationOp("mut_remove_required", "删除 app010 的 hasApplicant（必填缺失）",
-               "instance", ["V2"]),
+               "instance", ["实例"]),
     MutationOp("mut_enum_invalid", "app010 风险等级改为 URGENT（枚举越界）",
-               "instance", ["V2"]),
+               "instance", ["实例"]),
     MutationOp("mut_negative_value", "p010 年龄改为 -7（范围违例）",
-               "instance", ["V2"]),
+               "instance", ["实例"]),
     # ---- 本体 ----
     MutationOp("mut_remove_disjoint", "删除 Applicant⊥Organization 公理（预期盲区）",
                "ontology", []),
     MutationOp("mut_subclass_cycle", "添加 Document⊑TemporaryEmployee（构成环）",
-               "ontology", ["V1"]),
+               "ontology", ["本体"]),
     MutationOp("mut_wrong_parent", "添加 RiskAssessment⊑Employee（语义荒谬、逻辑自洽）",
-               "ontology", ["V5"], needs_judge=True),
+               "ontology", ["LLM"], needs_judge=True),
     # ---- 规则 ----
     MutationOp("mut_flip_operator", "R10 比较算子翻转（>50万 改 <50万）",
-               "rule", ["V3", "V4"]),
+               "rule", ["规则", "流程"]),
     MutationOp("mut_drop_guard_clause", "R2 删除受理范围条件（与 R1/R13 产生冲突）",
-               "rule", ["V3"]),
+               "rule", ["规则"]),
     MutationOp("mut_guard_vs_evidence", "R12 金额阈值 10万 改 1万（原文是10万，忠实性）",
-               "rule", ["V5"], needs_judge=True),
+               "rule", ["LLM"], needs_judge=True),
     # ---- 流程 ----
     MutationOp("mut_xor_to_and", "正常流程 g1 由 XOR 改 AND（结构性 unsound）",
-               "process", ["V4"]),
+               "process", ["流程"]),
     MutationOp("mut_drop_edge", "删除 auto_approve→notify 边（token 死端）",
-               "process", ["V4"]),
+               "process", ["流程"]),
     MutationOp("mut_gateway_threshold", "正常流程人工复核阈值 50万 改 90万（违反 R10）",
-               "process", ["V4"]),
+               "process", ["流程"]),
     MutationOp("mut_edge_evidence_reverse", "完整性检查→风险评估的 evidence 改为相反顺序",
-               "process", ["V5"], needs_judge=True),
+               "process", ["LLM"], needs_judge=True),
 ]
 
 
@@ -155,11 +159,15 @@ def _signature(conn, run_id: str) -> set[tuple]:
     return sig
 
 
-def _layer_of(validator_id: str, registry: Registry) -> str:
+def _lane_of(validator_id: str, registry: Registry) -> str:
+    """捕获泳道：advise（LLM judge）→ 'LLM'，否则按 category 折叠。"""
     try:
-        return registry.get(validator_id).layer
+        spec = registry.get(validator_id)
     except KeyError:
-        return "V0"
+        return "句法"
+    if spec.authority == "advise":
+        return "LLM"
+    return _CATEGORY_LANE.get(spec.category, "句法")
 
 
 def run_mutation_lab(bundle: Bundle, registry: Registry, conn,
@@ -193,13 +201,14 @@ def run_mutation_lab(bundle: Bundle, registry: Registry, conn,
 
         res = MutationResult(op_id=op.op_id, expected_layers=op.expected_layers)
         for vid, ftype, oid in sorted(new):
-            layer = _layer_of(vid, registry)
-            if layer not in res.captured_layers:
-                res.captured_layers.append(layer)
+            lane = _lane_of(vid, registry)
+            if lane not in res.captured_layers:
+                res.captured_layers.append(lane)
             res.new_findings.append({"validator": vid, "type": ftype, "object": oid})
-        res.captured_layers.sort()
+        res.captured_layers.sort(key=lambda l: LANES.index(l) if l in LANES else 99)
         if op.needs_judge:
-            j_metrics = [ctx.results[v].metrics for v in ("v5.j1", "v5.j2")
+            j_metrics = [ctx.results[v].metrics
+                         for v in ("schema.semantic", "cross.faithfulness")
                          if v in ctx.results]
             res.judge_available = not all(m.get("abstained") for m in j_metrics)
         results.append(res)
@@ -220,5 +229,5 @@ def matrix_json(results: list[MutationResult]) -> dict:
     per_layer = {
         ly: {"expected": sum(1 for r in rows if ly in r["expected"]),
              "captured": sum(1 for r in rows if ly in r["captured"])}
-        for ly in LAYERS}
-    return {"rows": rows, "layers": LAYERS, "per_layer": per_layer}
+        for ly in LANES}
+    return {"rows": rows, "layers": LANES, "per_layer": per_layer}

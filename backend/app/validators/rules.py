@@ -56,7 +56,7 @@ def validate_rules(ctx: Context) -> ValidationResult:
         if res == "unsat":
             dead.add(r.rule_id)
             findings.append(Finding(
-                validator_id="v3.rules", severity="violation",
+                validator_id="rule.defects", severity="violation",
                 object_type="rule", object_id=r.rule_id,
                 finding_type="dead_rule",
                 message=f"规则 {r.rule_id} 的 guard 在变量定义域内永假（永不触发）",
@@ -77,7 +77,7 @@ def validate_rules(ctx: Context) -> ValidationResult:
             both_hard = ra.tier == "hard" and rb.tier == "hard"
             if both_hard:
                 findings.append(Finding(
-                    validator_id="v3.rules", severity="violation",
+                    validator_id="rule.defects", severity="violation",
                     object_type="rule", object_id=f"{ra.rule_id}×{rb.rule_id}",
                     finding_type="rule_conflict",
                     message=(f"hard 规则冲突：{ra.rule_id}({ra.conclusion.action}) 与 "
@@ -88,7 +88,7 @@ def validate_rules(ctx: Context) -> ValidationResult:
                               "quote_b": rb.evidence[0].quote}))
             else:
                 findings.append(Finding(
-                    validator_id="v3.rules", severity="info",
+                    validator_id="rule.defects", severity="info",
                     object_type="rule", object_id=f"{ra.rule_id}×{rb.rule_id}",
                     finding_type="competing_suggestion",
                     message=(f"竞争建议（heuristic 常态，非错误）：{ra.rule_id} 建议 "
@@ -107,7 +107,7 @@ def validate_rules(ctx: Context) -> ValidationResult:
             res, _ = check(guards[ra.rule_id], z3.Not(guards[rb.rule_id]))
             if res == "unsat":
                 findings.append(Finding(
-                    validator_id="v3.rules", severity="warning",
+                    validator_id="rule.defects", severity="warning",
                     object_type="rule", object_id=ra.rule_id,
                     finding_type="rule_subsumed",
                     message=f"规则 {ra.rule_id} 被 {rb.rule_id} 蕴含（guard 更窄、结论相同），冗余",
@@ -119,7 +119,7 @@ def validate_rules(ctx: Context) -> ValidationResult:
         res, model = check(z3.Not(z3.Or(*hard_guards)))
         if res == "sat":
             findings.append(Finding(
-                validator_id="v3.rules", severity="warning",
+                validator_id="rule.defects", severity="warning",
                 object_type="rule", object_id=ruleset.ruleset_id,
                 finding_type="coverage_gap",
                 message="存在 hard 规则未覆盖的输入区域（该区域内无任何决策规则触发）",

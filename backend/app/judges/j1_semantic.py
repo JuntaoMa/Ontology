@@ -82,7 +82,7 @@ def judge_semantic(ctx: Context) -> ValidationResult:
             if item.verdict != "issue_found":
                 continue
             findings.append(Finding(
-                validator_id="v5.j1", severity="warning",
+                validator_id="schema.semantic", severity="warning",
                 object_type="ontology", object_id=item.item_id,
                 finding_type="semantic_implausible",
                 message=f"语义可疑：{item.rationale}",

@@ -6,7 +6,6 @@ import { useStore } from "../store";
 import { Card, CardHeader, CardBody } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Table, Th, Td } from "../components/ui/Table";
-import { LAYER_NAME } from "../lib/semantics";
 
 export function LabSection() {
   const { dataset } = useStore();
@@ -34,7 +33,7 @@ export function LabSection() {
           (p.value[2] === 2 ? "✓ 捕获" : p.value[2] === 1 ? "✗ 期望但漏报" : "—");
       } },
       grid: { left: 300, top: 8, right: 40, bottom: 36 },
-      xAxis: { type: "category", data: layers.map((l: string) => LAYER_NAME[l]),
+      xAxis: { type: "category", data: layers,
                axisLabel: { color: "#475569", fontSize: 11 }, axisLine: { lineStyle: { color: "#cbd5e1" } } },
       yAxis: { type: "category", inverse: true, data: rows.map((r: any) => r.description),
                axisLabel: { fontSize: 11, color: "#475569" }, axisLine: { lineStyle: { color: "#cbd5e1" } } },

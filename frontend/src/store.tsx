@@ -1,7 +1,14 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { api, type Finding, type RunSummary } from "./api";
 
-export type Section = "overview" | "inbox" | "ontology" | "rules" | "process" | "lab" | "gate";
+export type Section = "overview" | "inbox" | "ontology" | "rules" | "process" | "lab" | "gate" | "about";
+
+export interface Scenario {
+  id: string;
+  label: string;
+  change_set: string[] | null;
+  desc: string;
+}
 
 interface Store {
   datasets: string[];
@@ -14,6 +21,9 @@ interface Store {
   running: boolean;
   judgeBackend: string;
   error: string | null;
+  scenarios: Scenario[];
+  scenario: string;            // 选中的 change-set 场景 id（默认 full）
+  setScenario: (s: string) => void;
   triggerRun: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -35,10 +45,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [running, setRunning] = useState(false);
   const [judgeBackend, setJudgeBackend] = useState("—");
   const [error, setError] = useState<string | null>(null);
+  const [scenarios, setScenarios] = useState<Scenario[]>([]);
+  const [scenario, setScenario] = useState("full");
 
   useEffect(() => {
     api("/api/datasets").then((d) => setDatasets(d.datasets)).catch(() => {});
     api("/api/judge/config").then((c) => setJudgeBackend(c.active_backend)).catch(() => {});
+    api("/api/pipeline/scopes").then((d) => setScenarios(d.scenarios)).catch(() => {});
     // 刷新后恢复最近一次 run（结果存后端，不随页面刷新丢失）
     api("/api/runs/latest").then(async (s) => {
       if (s && s.run_id) {
@@ -55,8 +68,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 120_000);
     try {
+      const cs = scenarios.find((s) => s.id === scenario)?.change_set;
+      const scopeQ = cs && cs.length ? `&scope=${cs.join(",")}` : "";
       const summary: RunSummary = await api(
-        `/api/runs?dataset=${dataset}`, { method: "POST", signal: ctrl.signal });
+        `/api/runs?dataset=${dataset}${scopeQ}`, { method: "POST", signal: ctrl.signal });
       setRun(summary);
       setFindings(await loadFindings(summary.run_id));
     } catch (e: any) {
@@ -81,7 +96,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider value={{ datasets, dataset, setDataset, section, setSection,
-      run, findings, running, judgeBackend, error, triggerRun, refresh }}>
+      run, findings, running, judgeBackend, error,
+      scenarios, scenario, setScenario, triggerRun, refresh }}>
       {children}
     </Ctx.Provider>
   );

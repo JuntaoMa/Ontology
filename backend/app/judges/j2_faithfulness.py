@@ -75,7 +75,7 @@ def judge_faithfulness(ctx: Context) -> ValidationResult:
                 _, pid, edge = item.item_id.split(":", 2)
                 otype, oid = "process", pid
             findings.append(Finding(
-                validator_id="v5.j2", severity="warning",
+                validator_id="cross.faithfulness", severity="warning",
                 object_type=otype, object_id=oid,
                 finding_type="unfaithful_extraction",
                 message=f"形式化与原文不符：{item.rationale}",
