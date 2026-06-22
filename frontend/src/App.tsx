@@ -8,6 +8,7 @@ import { RulesSection } from "./sections/RulesSection";
 import { ProcessSection } from "./sections/ProcessSection";
 import { LabSection } from "./sections/LabSection";
 import { GateSection } from "./sections/GateSection";
+import { AboutSection } from "./sections/AboutSection";
 
 function Body() {
   const { section } = useStore();
@@ -26,6 +27,7 @@ function Body() {
             {section === "process" && <ProcessSection />}
             {section === "lab" && <LabSection />}
             {section === "gate" && <GateSection />}
+            {section === "about" && <AboutSection />}
           </div>
         )}
       </main>

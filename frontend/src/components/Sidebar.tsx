@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { LayoutDashboard, Inbox, Network, Scale, GitBranch, FlaskConical, DoorOpen,
-         PanelLeftClose, PanelLeftOpen } from "lucide-react";
+         BookOpen, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useStore, type Section } from "../store";
 import { cn } from "../lib/cn";
 
@@ -12,6 +12,7 @@ const NAV: { id: Section; label: string; Icon: any }[] = [
   { id: "process", label: "流程校验", Icon: GitBranch },
   { id: "lab", label: "错误注入", Icon: FlaskConical },
   { id: "gate", label: "写入闸门", Icon: DoorOpen },
+  { id: "about", label: "关于设计", Icon: BookOpen },
 ];
 
 /** claude.ai 风格常驻侧栏：收起=窄图标列，展开=完整。内容区在流内，自动重排。 */
