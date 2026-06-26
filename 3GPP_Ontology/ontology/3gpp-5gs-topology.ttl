@@ -1,0 +1,615 @@
+@prefix :        <http://3gpp-ontology.org/ns/5gs#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix vann:    <http://purl.org/vocab/vann/> .
+
+#################################################################
+#  3GPP 5G System (5G SA) — Network Topology Ontology (TBox)
+#
+#  Scope    : 5G Standalone — NG-RAN + 5G Core (5GC)
+#  Baseline : 3GPP Release 19 (v*.j-series specs), see specs/INDEX.md
+#  Purpose  : A schema-level (TBox) model of network entities, the
+#             reference points (interfaces) that connect them, and the
+#             end-to-end service path. Designed as the foundation for a
+#             quality-degradation propagation ontology (KPI/QoE layer is
+#             a separate module: 3gpp-pm-qoe-scaffold.ttl).
+#
+#  NOTE     : The base IRI http://3gpp-ontology.org/ns/5gs# is a working
+#             placeholder; rename to your own namespace before publishing.
+#################################################################
+
+<http://3gpp-ontology.org/ns/5gs> a owl:Ontology ;
+    dcterms:title "3GPP 5G System Network Topology Ontology"@en ;
+    dcterms:title "3GPP 5G系统网络拓扑本体"@zh ;
+    dcterms:description """TBox/Schema describing the connection topology of a 5G Standalone network: User Equipment, NG-RAN (incl. CU/DU split), the 5G Core service-based architecture, the transport network segments, the data network and the service provider endpoint. Connectivity is modelled both as convenience 'shortcut' object properties (one per 3GPP reference point) and as reified Link individuals so that KPIs and degradation can be attached to a connection. Grounded in 3GPP TS 23.501, TS 38.300 and TS 38.401 (Release 19)."""@en ;
+    dcterms:source "3GPP TS 23.501 (5GS architecture); TS 38.300 (NR/NG-RAN overall); TS 38.401 (NG-RAN architecture)" ;
+    vann:preferredNamespacePrefix "fgs" ;
+    vann:preferredNamespaceUri "http://3gpp-ontology.org/ns/5gs#" ;
+    owl:versionInfo "0.1.0 — Release-19 baseline, topology + KPI/QoE mount points" .
+
+#################################################################
+#  Annotation properties — spec provenance
+#################################################################
+
+:specRef a owl:AnnotationProperty ;
+    rdfs:label "3GPP spec reference"@en ;
+    rdfs:comment "The 3GPP Technical Specification a term is grounded in, e.g. 'TS 23.501'."@en ;
+    rdfs:subPropertyOf dcterms:source .
+
+:specClause a owl:AnnotationProperty ;
+    rdfs:label "3GPP spec clause"@en ;
+    rdfs:comment "The clause / figure / table within the spec, e.g. 'clause 4.2.3, Figure 4.2.3-1'."@en .
+
+:abbreviation a owl:AnnotationProperty ;
+    rdfs:label "abbreviation"@en ;
+    rdfs:subPropertyOf skos:altLabel .
+
+#################################################################
+#  SECTION 1 — Network domains / segments
+#  The end-to-end partitioning the propagation model reasons over:
+#  Terminal -> Radio access -> Transport -> Core -> Service.
+#################################################################
+
+:NetworkDomain a owl:Class ;
+    rdfs:label "Network Domain"@en , "网络域"@zh ;
+    rdfs:comment "A coarse segment of the end-to-end path. Used to group network entities for quality-degradation propagation across domain boundaries."@en .
+
+:TerminalDomain        a owl:Class ; rdfs:subClassOf :NetworkDomain ;
+    rdfs:label "Terminal Domain"@en , "终端域"@zh ;
+    rdfs:comment "The user-side terminal segment (UE)."@en .
+:RadioAccessDomain     a owl:Class ; rdfs:subClassOf :NetworkDomain ;
+    rdfs:label "Radio Access Domain"@en , "无线接入域"@zh ;
+    rdfs:comment "The air interface and NG-RAN segment (RU/DU/CU, Uu)."@en .
+:TransportDomain       a owl:Class ; rdfs:subClassOf :NetworkDomain ;
+    rdfs:label "Transport Domain"@en , "传输网域"@zh ;
+    rdfs:comment "The IP/optical bearer network carrying fronthaul, midhaul and backhaul. Largely transport-layer (TNL); out of normative 3GPP scope but modelled here as first-class for fault propagation."@en .
+:CoreNetworkDomain     a owl:Class ; rdfs:subClassOf :NetworkDomain ;
+    rdfs:label "Core Network Domain"@en , "核心网域"@zh ;
+    rdfs:comment "The 5G Core (5GC) service-based architecture and user-plane functions."@en .
+:ServiceDomain         a owl:Class ; rdfs:subClassOf :NetworkDomain ;
+    rdfs:label "Service Domain"@en , "服务域"@zh ;
+    rdfs:comment "The data network and service provider / application server endpoint."@en .
+
+#################################################################
+#  SECTION 2 — Network entity class hierarchy (the nodes)
+#################################################################
+
+:NetworkEntity a owl:Class ;
+    rdfs:label "Network Entity"@en , "网元"@zh ;
+    rdfs:comment "Any logical node on the end-to-end service path: a terminal, a RAN node, a core network function, a transport element, the data network, or a service endpoint."@en .
+
+############  2.1 Terminal  ############
+
+:UserEquipment a owl:Class ;
+    rdfs:subClassOf :NetworkEntity ;
+    rdfs:label "User Equipment"@en , "用户终端"@zh ;
+    :abbreviation "UE" ;
+    rdfs:comment "The terminal device. Origin of the service flow and the place where user experience (QoE) is ultimately felt."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 3.1, 5" .
+
+############  2.2 NG-RAN (radio access)  ############
+
+:NgRanNode a owl:Class ;
+    rdfs:subClassOf :NetworkEntity ;
+    rdfs:label "NG-RAN Node"@en , "NG-RAN节点"@zh ;
+    rdfs:comment "A radio access node connected to the 5GC via the NG interface. Either a gNB (NR) or an ng-eNB (LTE connected to 5GC)."@en ;
+    :specRef "TS 38.300" ; :specClause "clause 3, 4" .
+
+:GNB a owl:Class ;
+    rdfs:subClassOf :NgRanNode ;
+    rdfs:label "gNB"@en , "5G基站"@zh ;
+    :abbreviation "gNB" ;
+    rdfs:comment "A node providing NR user-plane and control-plane protocol terminations towards the UE, connected to the 5GC. May be deployed as a single node or split into gNB-CU and gNB-DU(s)."@en ;
+    :specRef "TS 38.300, TS 38.401" ; :specClause "TS 38.401 clause 6.1" .
+
+:NgENB a owl:Class ;
+    rdfs:subClassOf :NgRanNode ;
+    rdfs:label "ng-eNB"@en ;
+    :abbreviation "ng-eNB" ;
+    rdfs:comment "An LTE eNB connected to the 5GC, providing E-UTRA terminations towards the UE. Part of NG-RAN."@en ;
+    :specRef "TS 38.300" ; :specClause "clause 3.1" .
+
+# --- gNB functional split (TS 38.401 clause 6.1) ---
+
+:GNB_CU a owl:Class ;
+    rdfs:subClassOf :NetworkEntity ;
+    rdfs:label "gNB-CU (Central Unit)"@en , "集中单元"@zh ;
+    :abbreviation "gNB-CU" ;
+    rdfs:comment "Logical node hosting RRC, SDAP and PDCP of the gNB, controlling one or more gNB-DUs over F1. Comprises a CU-CP and one or more CU-UP."@en ;
+    :specRef "TS 38.401" ; :specClause "clause 6.1" .
+
+:GNB_CU_CP a owl:Class ;
+    rdfs:subClassOf :GNB_CU ;
+    rdfs:label "gNB-CU-CP (Control Plane)"@en ;
+    :abbreviation "gNB-CU-CP" ;
+    rdfs:comment "Control-plane part of the gNB-CU hosting RRC and the control-plane part of PDCP. Terminates F1-C towards the gNB-DU and E1 towards the gNB-CU-UP."@en ;
+    :specRef "TS 38.401" ; :specClause "clause 6.1.1" .
+
+:GNB_CU_UP a owl:Class ;
+    rdfs:subClassOf :GNB_CU ;
+    rdfs:label "gNB-CU-UP (User Plane)"@en ;
+    :abbreviation "gNB-CU-UP" ;
+    rdfs:comment "User-plane part of the gNB-CU hosting SDAP and the user-plane part of PDCP. Terminates F1-U towards the gNB-DU and E1 towards the gNB-CU-CP."@en ;
+    :specRef "TS 38.401" ; :specClause "clause 6.1.2" .
+
+:GNB_DU a owl:Class ;
+    rdfs:subClassOf :NetworkEntity ;
+    rdfs:label "gNB-DU (Distributed Unit)"@en , "分布单元"@zh ;
+    :abbreviation "gNB-DU" ;
+    rdfs:comment "Logical node hosting RLC, MAC and PHY of the gNB, controlled by a gNB-CU over F1. One gNB-DU supports one or more cells."@en ;
+    :specRef "TS 38.401" ; :specClause "clause 6.1" .
+
+:RadioUnit a owl:Class ;
+    rdfs:subClassOf :NetworkEntity ;
+    rdfs:label "Radio Unit / RU"@en , "射频单元"@zh ;
+    :abbreviation "RU/RRU/AAU" ;
+    rdfs:comment "The radio/antenna unit terminating the lower PHY and RF towards the air interface. NOTE: the DU–RU lower-layer split (fronthaul) is not specified by 3GPP (cf. O-RAN/eCPRI); included here as a deployment-reality extension for fault propagation."@en ;
+    skos:scopeNote "Non-normative w.r.t. 3GPP (deployment extension)."@en .
+
+############  2.3 5G Core network functions  ############
+
+:CoreNetworkFunction a owl:Class ;
+    rdfs:subClassOf :NetworkEntity ;
+    rdfs:label "5GC Network Function"@en , "核心网网络功能"@zh ;
+    :abbreviation "NF" ;
+    rdfs:comment "A 3GPP 5G Core network function. Control-plane NFs interact over the Service-Based Interface (SBI); the user plane is carried by the UPF."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 4.2.2, 6.2" .
+
+:ControlPlaneFunction a owl:Class ; rdfs:subClassOf :CoreNetworkFunction ;
+    rdfs:label "Control-Plane NF"@en .
+:UserPlaneFunctionClass a owl:Class ; rdfs:subClassOf :CoreNetworkFunction ;
+    rdfs:label "User-Plane NF"@en .
+
+# Control-plane functions
+:AMF a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "Access and Mobility Management Function"@en , "接入与移动性管理功能"@zh ; :abbreviation "AMF" ;
+    rdfs:comment "Terminates N1 (NAS) and N2; handles registration, connection, reachability and mobility management."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 6.2.1" .
+:SMF a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "Session Management Function"@en , "会话管理功能"@zh ; :abbreviation "SMF" ;
+    rdfs:comment "Manages PDU sessions, allocates UE IP addresses and controls the UPF over N4."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 6.2.2" .
+:PCF a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "Policy Control Function"@en , "策略控制功能"@zh ; :abbreviation "PCF" ;
+    rdfs:comment "Provides policy rules (QoS, charging) to control-plane functions; interacts with the AF."@en ;
+    :specRef "TS 23.501, TS 23.503" ; :specClause "TS 23.501 clause 6.2.4" .
+:UDM a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "Unified Data Management"@en ; :abbreviation "UDM" ;
+    rdfs:comment "Manages subscription data, authentication credentials and user identification."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 6.2.7" .
+:AUSF a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "Authentication Server Function"@en ; :abbreviation "AUSF" ;
+    rdfs:comment "Supports authentication for 3GPP and untrusted non-3GPP access."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 6.2.8" .
+:NRF a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "Network Repository Function"@en ; :abbreviation "NRF" ;
+    rdfs:comment "Supports NF service registration, discovery and authorisation within the SBA."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 6.2.6" .
+:NSSF a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "Network Slice Selection Function"@en ; :abbreviation "NSSF" ;
+    rdfs:comment "Selects the set of network slice instances and the AMF set serving the UE."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 6.2.14" .
+:NEF a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "Network Exposure Function"@en ; :abbreviation "NEF" ;
+    rdfs:comment "Securely exposes 5GC capabilities and events to external AFs."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 6.2.5" .
+:AF a owl:Class ; rdfs:subClassOf :CoreNetworkFunction ;
+    rdfs:label "Application Function"@en , "应用功能"@zh ; :abbreviation "AF" ;
+    rdfs:comment "Interacts with the 5GC to influence traffic routing and policy. A trusted AF reaches the PCF over N5; an external AF reaches the NEF over N33. The 3GPP-side representative of the service provider."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 6.2.10" .
+:UDR a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "Unified Data Repository"@en ; :abbreviation "UDR" ;
+    rdfs:comment "Stores subscription, policy and exposure data accessed by UDM/PCF/NEF."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 6.2.11" .
+:UDSF a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "Unstructured Data Storage Function"@en ; :abbreviation "UDSF" ;
+    rdfs:comment "Stores unstructured data on behalf of any NF."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 6.2.13" .
+:NWDAF a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "Network Data Analytics Function"@en , "网络数据分析功能"@zh ; :abbreviation "NWDAF" ;
+    rdfs:comment "Collects data and provides analytics to other NFs. Relevant to data-driven quality-degradation detection."@en ;
+    :specRef "TS 23.501, TS 23.288" ; :specClause "TS 23.501 clause 6.2.18" .
+:CHF a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "Charging Function"@en ; :abbreviation "CHF" ;
+    rdfs:comment "Provides converged charging; reached by SMF over N40."@en ;
+    :specRef "TS 23.501, TS 32.240" .
+:SCP a owl:Class ; rdfs:subClassOf :CoreNetworkFunction ;
+    rdfs:label "Service Communication Proxy"@en ; :abbreviation "SCP" ;
+    rdfs:comment "Indirect-communication proxy for SBI message routing, load balancing and delegated discovery."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 6.2.19" .
+:SEPP a owl:Class ; rdfs:subClassOf :CoreNetworkFunction ;
+    rdfs:label "Security Edge Protection Proxy"@en ; :abbreviation "SEPP" ;
+    rdfs:comment "Protects control-plane signalling on the inter-PLMN (roaming) interface N32."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 6.2.17" .
+:BSF a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "Binding Support Function"@en ; :abbreviation "BSF" ;
+    rdfs:comment "Stores and provides the binding between a PDU session and the serving PCF."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 6.2.16" .
+:LMF a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "Location Management Function"@en ; :abbreviation "LMF" ;
+    rdfs:comment "Supports UE positioning."@en ;
+    :specRef "TS 23.501, TS 23.273" .
+:SMSF a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "SMS Function"@en ; :abbreviation "SMSF" ;
+    rdfs:comment "Supports SMS over NAS."@en ;
+    :specRef "TS 23.501" .
+:EASDF a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "Edge Application Server Discovery Function"@en ; :abbreviation "EASDF" ;
+    rdfs:comment "Handles DNS for edge computing, assisting discovery of Edge Application Servers."@en ;
+    :specRef "TS 23.501, TS 23.548" .
+:NSACF a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
+    rdfs:label "Network Slice Admission Control Function"@en ; :abbreviation "NSACF" ;
+    rdfs:comment "Monitors and controls the number of registrations / PDU sessions per network slice."@en ;
+    :specRef "TS 23.501" .
+:N3IWF a owl:Class ; rdfs:subClassOf :NetworkEntity ;
+    rdfs:label "Non-3GPP InterWorking Function"@en ; :abbreviation "N3IWF" ;
+    rdfs:comment "Connects untrusted non-3GPP access to the 5GC (terminates N2/N3 on behalf of such access)."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 4.2.8" .
+
+# User-plane function
+:UPF a owl:Class ; rdfs:subClassOf :UserPlaneFunctionClass ;
+    rdfs:label "User Plane Function"@en , "用户面功能"@zh ; :abbreviation "UPF" ;
+    rdfs:comment "Packet routing and forwarding anchor for the user plane: terminates N3 from NG-RAN, N9 between UPFs and N6 towards the data network; enforces QoS and traffic policy from the SMF over N4. The central node of the user-plane data path."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 6.2.3" .
+
+############  2.4 Transport network  ############
+
+:TransportNetworkElement a owl:Class ;
+    rdfs:subClassOf :NetworkEntity ;
+    rdfs:label "Transport Network Element"@en , "传输网元"@zh ;
+    rdfs:comment "A node of the transport (bearer) network — e.g. an IP router, switch or optical transport node — carrying the lower transport layers of 3GPP interfaces. Not specified by 3GPP but essential to end-to-end fault propagation."@en ;
+    skos:scopeNote "Non-normative w.r.t. 3GPP."@en .
+
+############  2.5 Data network & service provider  ############
+
+:DataNetwork a owl:Class ;
+    rdfs:subClassOf :NetworkEntity ;
+    rdfs:label "Data Network"@en , "数据网络"@zh ; :abbreviation "DN" ;
+    rdfs:comment "The external data network (e.g. the Internet or an operator service network) reached over N6. Identified by a DNN."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 5.6.1" .
+
+:ServiceProvider a owl:Class ;
+    rdfs:subClassOf :NetworkEntity ;
+    rdfs:label "Service Provider / Application Server"@en , "服务提供方/应用服务器"@zh ; :abbreviation "SP/AS" ;
+    rdfs:comment "The application server or content/service endpoint reached through the data network — the far end of the user service flow. Modelled as a network entity so end-to-end QoE can be attributed across the whole path. Its 3GPP-side control representative is the AF."@en ;
+    skos:scopeNote "Endpoint outside 3GPP scope; its 3GPP control-plane proxy is the Application Function (AF)."@en .
+
+:EdgeApplicationServer a owl:Class ;
+    rdfs:subClassOf :ServiceProvider ;
+    rdfs:label "Edge Application Server"@en ; :abbreviation "EAS" ;
+    rdfs:comment "An application server deployed at the network edge (local DN), discovered via the EASDF."@en ;
+    :specRef "TS 23.548" .
+
+#################################################################
+#  SECTION 3 — Reference points (interface types)
+#  Modelled as individuals of :ReferencePoint so each is a first-class,
+#  citable concept that a reified :Link can realise.
+#################################################################
+
+:ReferencePoint a owl:Class ;
+    rdfs:label "Reference Point / Interface"@en , "参考点/接口"@zh ;
+    rdfs:comment "A 3GPP-defined interface between two network entities (e.g. N2, N3, F1, Xn, Uu). The 'edge type' of the topology."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 4.2.3" .
+
+:ControlPlaneReferencePoint a owl:Class ; rdfs:subClassOf :ReferencePoint ;
+    rdfs:label "Control-Plane Reference Point"@en .
+:UserPlaneReferencePoint a owl:Class ; rdfs:subClassOf :ReferencePoint ;
+    rdfs:label "User-Plane Reference Point"@en .
+:RadioReferencePoint a owl:Class ; rdfs:subClassOf :ReferencePoint ;
+    rdfs:label "Radio / RAN-internal Reference Point"@en .
+:ServiceBasedInterface a owl:Class ; rdfs:subClassOf :ReferencePoint ;
+    rdfs:label "Service-Based Interface"@en , "基于服务的接口"@zh ; :abbreviation "SBI" ;
+    rdfs:comment "An interface exhibited by an NF within the Service-Based Architecture (e.g. Namf, Nsmf)."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 7.2" .
+
+# Property used to declare the canonical endpoints of a reference point.
+:connectsEntityType a owl:AnnotationProperty ;
+    rdfs:label "connects entity type"@en ;
+    rdfs:comment "Documents the two network-entity classes a reference point connects (informative)."@en .
+
+# --- Radio / RAN-internal ---
+:Uu a :RadioReferencePoint ;
+    rdfs:label "Uu (air interface)"@en , "空口"@zh ;
+    rdfs:comment "The radio interface between the UE and the NG-RAN node."@en ;
+    :connectsEntityType "UserEquipment <-> NgRanNode" ; :specRef "TS 38.300" .
+:F1 a :RadioReferencePoint ;
+    rdfs:label "F1"@en ;
+    rdfs:comment "Interface between gNB-CU and gNB-DU. Split into F1-C (control) and F1-U (user)."@en ;
+    :connectsEntityType "GNB_CU <-> GNB_DU" ; :specRef "TS 38.401, TS 38.470" ; :specClause "TS 38.401 clause 6.1" .
+:F1_C a :ControlPlaneReferencePoint ; rdfs:subClassOf :ReferencePoint ;
+    rdfs:label "F1-C"@en ; rdfs:comment "Control-plane part of F1 (gNB-CU-CP <-> gNB-DU)."@en ; :specRef "TS 38.470" .
+:F1_U a :UserPlaneReferencePoint ; rdfs:subClassOf :ReferencePoint ;
+    rdfs:label "F1-U"@en ; rdfs:comment "User-plane part of F1 (gNB-CU-UP <-> gNB-DU)."@en ; :specRef "TS 38.474" .
+:E1 a :RadioReferencePoint ;
+    rdfs:label "E1"@en ;
+    rdfs:comment "Control interface between gNB-CU-CP and gNB-CU-UP."@en ;
+    :connectsEntityType "GNB_CU_CP <-> GNB_CU_UP" ; :specRef "TS 38.401, TS 38.460" .
+:Xn a :RadioReferencePoint ;
+    rdfs:label "Xn"@en ;
+    rdfs:comment "Interface between two NG-RAN nodes (Xn-C control, Xn-U user). Supports handover and dual connectivity."@en ;
+    :connectsEntityType "NgRanNode <-> NgRanNode" ; :specRef "TS 38.300, TS 38.420" .
+:Fronthaul a :RadioReferencePoint ;
+    rdfs:label "Fronthaul (DU–RU)"@en , "前传"@zh ;
+    rdfs:comment "Lower-layer-split interface between gNB-DU and Radio Unit. NOT specified by 3GPP (see O-RAN/eCPRI); included for deployment-reality propagation."@en ;
+    :connectsEntityType "GNB_DU <-> RadioUnit" ; skos:scopeNote "Non-normative."@en .
+
+# --- NG (NG-RAN <-> 5GC) ---
+:NG a :ReferencePoint ;
+    rdfs:label "NG"@en ;
+    rdfs:comment "Interface between NG-RAN and the 5GC. NG-C is the control-plane part (= N2 towards AMF); NG-U is the user-plane part (= N3 towards UPF)."@en ;
+    :specRef "TS 38.300, TS 38.410" .
+
+# --- Core / 5GS reference points (TS 23.501 clause 4.2.3) ---
+:N1 a :ControlPlaneReferencePoint ; rdfs:label "N1"@en ;
+    rdfs:comment "NAS signalling between UE and AMF."@en ; :connectsEntityType "UserEquipment <-> AMF" ; :specRef "TS 23.501" .
+:N2 a :ControlPlaneReferencePoint ; rdfs:label "N2"@en ;
+    rdfs:comment "Control plane between NG-RAN (or N3IWF) and AMF."@en ; :connectsEntityType "NgRanNode <-> AMF" ; :specRef "TS 23.501, TS 38.413" .
+:N3 a :UserPlaneReferencePoint ; rdfs:label "N3"@en ;
+    rdfs:comment "User plane between NG-RAN (or N3IWF) and UPF."@en ; :connectsEntityType "NgRanNode <-> UPF" ; :specRef "TS 23.501, TS 29.281" .
+:N4 a :ControlPlaneReferencePoint ; rdfs:label "N4"@en ;
+    rdfs:comment "Between SMF and UPF (PFCP)."@en ; :connectsEntityType "SMF <-> UPF" ; :specRef "TS 23.501, TS 29.244" .
+:N5 a :ControlPlaneReferencePoint ; rdfs:label "N5"@en ;
+    rdfs:comment "Between PCF and a trusted AF."@en ; :connectsEntityType "PCF <-> AF" ; :specRef "TS 23.501" .
+:N6 a :UserPlaneReferencePoint ; rdfs:label "N6"@en ;
+    rdfs:comment "Between UPF and the data network."@en ; :connectsEntityType "UPF <-> DataNetwork" ; :specRef "TS 23.501" .
+:N7 a :ControlPlaneReferencePoint ; rdfs:label "N7"@en ;
+    rdfs:comment "Between SMF and PCF."@en ; :connectsEntityType "SMF <-> PCF" ; :specRef "TS 23.501" .
+:N8 a :ControlPlaneReferencePoint ; rdfs:label "N8"@en ;
+    rdfs:comment "Between AMF and UDM."@en ; :connectsEntityType "AMF <-> UDM" ; :specRef "TS 23.501" .
+:N9 a :UserPlaneReferencePoint ; rdfs:label "N9"@en ;
+    rdfs:comment "Between two UPFs (intermediate and anchor)."@en ; :connectsEntityType "UPF <-> UPF" ; :specRef "TS 23.501" .
+:N10 a :ControlPlaneReferencePoint ; rdfs:label "N10"@en ;
+    rdfs:comment "Between SMF and UDM."@en ; :connectsEntityType "SMF <-> UDM" ; :specRef "TS 23.501" .
+:N11 a :ControlPlaneReferencePoint ; rdfs:label "N11"@en ;
+    rdfs:comment "Between AMF and SMF."@en ; :connectsEntityType "AMF <-> SMF" ; :specRef "TS 23.501" .
+:N12 a :ControlPlaneReferencePoint ; rdfs:label "N12"@en ;
+    rdfs:comment "Between AMF and AUSF."@en ; :connectsEntityType "AMF <-> AUSF" ; :specRef "TS 23.501" .
+:N13 a :ControlPlaneReferencePoint ; rdfs:label "N13"@en ;
+    rdfs:comment "Between AUSF and UDM."@en ; :connectsEntityType "AUSF <-> UDM" ; :specRef "TS 23.501" .
+:N14 a :ControlPlaneReferencePoint ; rdfs:label "N14"@en ;
+    rdfs:comment "Between two AMFs."@en ; :connectsEntityType "AMF <-> AMF" ; :specRef "TS 23.501" .
+:N15 a :ControlPlaneReferencePoint ; rdfs:label "N15"@en ;
+    rdfs:comment "Between AMF and PCF (non-roaming)."@en ; :connectsEntityType "AMF <-> PCF" ; :specRef "TS 23.501" .
+:N16 a :ControlPlaneReferencePoint ; rdfs:label "N16"@en ;
+    rdfs:comment "Between two SMFs."@en ; :connectsEntityType "SMF <-> SMF" ; :specRef "TS 23.501" .
+:N22 a :ControlPlaneReferencePoint ; rdfs:label "N22"@en ;
+    rdfs:comment "Between AMF and NSSF."@en ; :connectsEntityType "AMF <-> NSSF" ; :specRef "TS 23.501" .
+:N33 a :ControlPlaneReferencePoint ; rdfs:label "N33"@en ;
+    rdfs:comment "Between NEF and an external AF."@en ; :connectsEntityType "NEF <-> AF" ; :specRef "TS 23.501" .
+:N40 a :ControlPlaneReferencePoint ; rdfs:label "N40"@en ;
+    rdfs:comment "Between SMF and CHF (charging)."@en ; :connectsEntityType "SMF <-> CHF" ; :specRef "TS 23.501" .
+:N23 a :ControlPlaneReferencePoint ; rdfs:label "N23"@en ;
+    rdfs:comment "Between PCF and NWDAF."@en ; :connectsEntityType "PCF <-> NWDAF" ; :specRef "TS 23.501" .
+:N28 a :ControlPlaneReferencePoint ; rdfs:label "N28"@en ;
+    rdfs:comment "Between PCF and CHF."@en ; :connectsEntityType "PCF <-> CHF" ; :specRef "TS 23.501" .
+:N35 a :ControlPlaneReferencePoint ; rdfs:label "N35"@en ;
+    rdfs:comment "Between UDM and UDR."@en ; :connectsEntityType "UDM <-> UDR" ; :specRef "TS 23.501" .
+:N36 a :ControlPlaneReferencePoint ; rdfs:label "N36"@en ;
+    rdfs:comment "Between PCF and UDR."@en ; :connectsEntityType "PCF <-> UDR" ; :specRef "TS 23.501" .
+:N37 a :ControlPlaneReferencePoint ; rdfs:label "N37"@en ;
+    rdfs:comment "Between NEF and UDR."@en ; :connectsEntityType "NEF <-> UDR" ; :specRef "TS 23.501" .
+
+# --- Service-based interfaces (representative set) ---
+:Namf  a :ServiceBasedInterface ; rdfs:label "Namf"@en  ; rdfs:comment "SBI exhibited by the AMF."@en ;  :specRef "TS 23.501" .
+:Nsmf  a :ServiceBasedInterface ; rdfs:label "Nsmf"@en  ; rdfs:comment "SBI exhibited by the SMF."@en ;  :specRef "TS 23.501" .
+:Npcf  a :ServiceBasedInterface ; rdfs:label "Npcf"@en  ; rdfs:comment "SBI exhibited by the PCF."@en ;  :specRef "TS 23.501" .
+:Nudm  a :ServiceBasedInterface ; rdfs:label "Nudm"@en  ; rdfs:comment "SBI exhibited by the UDM."@en ;  :specRef "TS 23.501" .
+:Nnrf  a :ServiceBasedInterface ; rdfs:label "Nnrf"@en  ; rdfs:comment "SBI exhibited by the NRF."@en ;  :specRef "TS 23.501" .
+:Nnssf a :ServiceBasedInterface ; rdfs:label "Nnssf"@en ; rdfs:comment "SBI exhibited by the NSSF."@en ; :specRef "TS 23.501" .
+:Nausf a :ServiceBasedInterface ; rdfs:label "Nausf"@en ; rdfs:comment "SBI exhibited by the AUSF."@en ; :specRef "TS 23.501" .
+:Nnef  a :ServiceBasedInterface ; rdfs:label "Nnef"@en  ; rdfs:comment "SBI exhibited by the NEF."@en ;  :specRef "TS 23.501" .
+:Nnwdaf a :ServiceBasedInterface ; rdfs:label "Nnwdaf"@en ; rdfs:comment "SBI exhibited by the NWDAF."@en ; :specRef "TS 23.501" .
+:Nudr  a :ServiceBasedInterface ; rdfs:label "Nudr"@en  ; rdfs:comment "SBI exhibited by the UDR."@en ;  :specRef "TS 23.501" .
+:Nchf  a :ServiceBasedInterface ; rdfs:label "Nchf"@en  ; rdfs:comment "SBI exhibited by the CHF."@en ;  :specRef "TS 23.501" .
+:Naf   a :ServiceBasedInterface ; rdfs:label "Naf"@en   ; rdfs:comment "SBI exhibited by the AF."@en ;   :specRef "TS 23.501" .
+
+#################################################################
+#  SECTION 4 — Reified connection (Link) — KPI/fault mount point
+#################################################################
+
+:Link a owl:Class ;
+    rdfs:label "Link / Connection"@en , "连接"@zh ;
+    rdfs:comment "A reified connection between two network entities that realises a reference point. Reified so that KPIs, capacity, latency and degradation events can be attached to the connection itself (essential for quality-degradation propagation)."@en .
+
+:linkEndpoint a owl:ObjectProperty ;
+    rdfs:label "link endpoint"@en ;
+    rdfs:domain :Link ; rdfs:range :NetworkEntity ;
+    rdfs:comment "A network entity terminating this link (a link has exactly two endpoints)."@en .
+:linkSource a owl:ObjectProperty ; rdfs:subPropertyOf :linkEndpoint ;
+    rdfs:label "link source"@en ; rdfs:domain :Link ; rdfs:range :NetworkEntity ;
+    rdfs:comment "The upstream / initiating endpoint (data-path source side)."@en .
+:linkTarget a owl:ObjectProperty ; rdfs:subPropertyOf :linkEndpoint ;
+    rdfs:label "link target"@en ; rdfs:domain :Link ; rdfs:range :NetworkEntity ;
+    rdfs:comment "The downstream / terminating endpoint (data-path sink side)."@en .
+:realizesReferencePoint a owl:ObjectProperty ;
+    rdfs:label "realizes reference point"@en ;
+    rdfs:domain :Link ; rdfs:range :ReferencePoint ;
+    rdfs:comment "The reference point (interface type) that this link realises."@en .
+
+:Link rdfs:subClassOf
+    [ a owl:Restriction ; owl:onProperty :linkEndpoint ; owl:cardinality "2"^^xsd:nonNegativeInteger ] ,
+    [ a owl:Restriction ; owl:onProperty :realizesReferencePoint ; owl:someValuesFrom :ReferencePoint ] .
+
+#################################################################
+#  SECTION 5 — Connectivity object properties (shortcut layer)
+#  Each is a sub-property of :connectedTo; the symmetric closure is
+#  inferred at the :connectedTo level. Domain/range encode the standard
+#  5G SA topology so the schema constrains which entity types may connect.
+#################################################################
+
+:connectedTo a owl:ObjectProperty , owl:SymmetricObjectProperty ;
+    rdfs:label "connected to"@en , "连接至"@zh ;
+    rdfs:domain :NetworkEntity ; rdfs:range :NetworkEntity ;
+    rdfs:comment "Generic physical/logical adjacency between two network entities. Super-property of all reference-point shortcut properties; symmetric."@en .
+
+# Radio / RAN-internal
+:hasUu a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has Uu (radio link to)"@en ; rdfs:domain :UserEquipment ; rdfs:range :NgRanNode ;
+    rdfs:comment "UE attaches to an NG-RAN node over the Uu air interface."@en ; :specRef "TS 38.300" .
+:hasFronthaul a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has fronthaul to"@en ; rdfs:domain :GNB_DU ; rdfs:range :RadioUnit ;
+    rdfs:comment "gNB-DU to Radio Unit (non-normative, deployment extension)."@en .
+:hasF1 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has F1 to"@en ; rdfs:domain :GNB_CU ; rdfs:range :GNB_DU ;
+    rdfs:comment "gNB-CU controls a gNB-DU over F1 (midhaul)."@en ; :specRef "TS 38.401" .
+:hasE1 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has E1 to"@en ; rdfs:domain :GNB_CU_CP ; rdfs:range :GNB_CU_UP ;
+    rdfs:comment "gNB-CU-CP to gNB-CU-UP over E1."@en ; :specRef "TS 38.460" .
+:hasXn a owl:ObjectProperty , owl:SymmetricObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has Xn to"@en ; rdfs:domain :NgRanNode ; rdfs:range :NgRanNode ;
+    rdfs:comment "Xn between two NG-RAN nodes (handover, dual connectivity). Symmetric."@en ; :specRef "TS 38.420" .
+
+# NG-RAN <-> 5GC
+:hasN2 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N2 to (served by AMF)"@en ; rdfs:domain :NgRanNode ; rdfs:range :AMF ;
+    rdfs:comment "NG-RAN control-plane connection to the AMF (NG-C)."@en ; :specRef "TS 23.501, TS 38.413" .
+:hasN3 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N3 to"@en ; rdfs:domain :NgRanNode ; rdfs:range :UPF ;
+    rdfs:comment "NG-RAN user-plane connection to the UPF (NG-U, backhaul)."@en ; :specRef "TS 23.501" .
+
+# Core user plane
+:hasN4 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N4 to"@en ; rdfs:domain :SMF ; rdfs:range :UPF ;
+    rdfs:comment "SMF controls a UPF over N4."@en ; :specRef "TS 23.501" .
+:hasN6 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N6 to"@en ; rdfs:domain :UPF ; rdfs:range :DataNetwork ;
+    rdfs:comment "UPF connects to the data network over N6."@en ; :specRef "TS 23.501" .
+:hasN9 a owl:ObjectProperty , owl:SymmetricObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N9 to"@en ; rdfs:domain :UPF ; rdfs:range :UPF ;
+    rdfs:comment "UPF-to-UPF over N9 (e.g. intermediate to anchor UPF). Symmetric."@en ; :specRef "TS 23.501" .
+
+# Core control plane (representative)
+:hasN1 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N1 to"@en ; rdfs:domain :UserEquipment ; rdfs:range :AMF ;
+    rdfs:comment "UE NAS signalling association with the AMF (N1)."@en ; :specRef "TS 23.501" .
+:hasN11 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N11 to"@en ; rdfs:domain :AMF ; rdfs:range :SMF ; :specRef "TS 23.501" .
+:hasN7 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N7 to"@en ; rdfs:domain :SMF ; rdfs:range :PCF ; :specRef "TS 23.501" .
+:hasN8 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N8 to"@en ; rdfs:domain :AMF ; rdfs:range :UDM ; :specRef "TS 23.501" .
+:hasN10 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N10 to"@en ; rdfs:domain :SMF ; rdfs:range :UDM ; :specRef "TS 23.501" .
+:hasN12 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N12 to"@en ; rdfs:domain :AMF ; rdfs:range :AUSF ; :specRef "TS 23.501" .
+:hasN15 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N15 to"@en ; rdfs:domain :AMF ; rdfs:range :PCF ; :specRef "TS 23.501" .
+:hasN22 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N22 to"@en ; rdfs:domain :AMF ; rdfs:range :NSSF ; :specRef "TS 23.501" .
+:hasN5 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N5 to"@en ; rdfs:domain :AF ; rdfs:range :PCF ; :specRef "TS 23.501" .
+:hasN33 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N33 to"@en ; rdfs:domain :AF ; rdfs:range :NEF ; :specRef "TS 23.501" .
+:hasN40 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N40 to"@en ; rdfs:domain :SMF ; rdfs:range :CHF ; :specRef "TS 23.501" .
+:hasN23 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N23 to"@en ; rdfs:domain :PCF ; rdfs:range :NWDAF ; :specRef "TS 23.501" .
+:hasN28 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N28 to"@en ; rdfs:domain :PCF ; rdfs:range :CHF ; :specRef "TS 23.501" .
+:hasN35 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N35 to"@en ; rdfs:domain :UDM ; rdfs:range :UDR ; :specRef "TS 23.501" .
+:hasN36 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N36 to"@en ; rdfs:domain :PCF ; rdfs:range :UDR ; :specRef "TS 23.501" .
+:hasN37 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "has N37 to"@en ; rdfs:domain :NEF ; rdfs:range :UDR ; :specRef "TS 23.501" .
+
+# Service-based architecture relations
+:registersWith a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "registers with"@en ; rdfs:domain :CoreNetworkFunction ; rdfs:range :NRF ;
+    rdfs:comment "An NF registers its profile and discovers peers via the NRF (SBA)."@en ; :specRef "TS 23.501" .
+
+# Data network -> service endpoint
+:reachesService a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
+    rdfs:label "reaches service"@en ; rdfs:domain :DataNetwork ; rdfs:range :ServiceProvider ;
+    rdfs:comment "The data network reaches the service provider / application server."@en .
+
+#################################################################
+#  SECTION 6 — Domain membership & data-path direction
+#################################################################
+
+:belongsToDomain a owl:ObjectProperty ;
+    rdfs:label "belongs to domain"@en , "属于网络域"@zh ;
+    rdfs:domain :NetworkEntity ; rdfs:range :NetworkDomain ;
+    rdfs:comment "Assigns a network entity to an end-to-end domain/segment."@en .
+
+# Default domain membership (schema-level: every instance of the class is in the domain)
+:UserEquipment           rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :belongsToDomain ; owl:hasValue :TerminalDomainInd ] .
+:NgRanNode               rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :belongsToDomain ; owl:hasValue :RadioAccessDomainInd ] .
+:GNB_CU                  rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :belongsToDomain ; owl:hasValue :RadioAccessDomainInd ] .
+:GNB_DU                  rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :belongsToDomain ; owl:hasValue :RadioAccessDomainInd ] .
+:RadioUnit               rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :belongsToDomain ; owl:hasValue :RadioAccessDomainInd ] .
+:TransportNetworkElement rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :belongsToDomain ; owl:hasValue :TransportDomainInd ] .
+:CoreNetworkFunction     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :belongsToDomain ; owl:hasValue :CoreNetworkDomainInd ] .
+:DataNetwork             rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :belongsToDomain ; owl:hasValue :ServiceDomainInd ] .
+:ServiceProvider         rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :belongsToDomain ; owl:hasValue :ServiceDomainInd ] .
+
+:TerminalDomainInd     a :TerminalDomain ,     owl:NamedIndividual ; rdfs:label "Terminal domain"@en .
+:RadioAccessDomainInd  a :RadioAccessDomain ,  owl:NamedIndividual ; rdfs:label "Radio access domain"@en .
+:TransportDomainInd    a :TransportDomain ,    owl:NamedIndividual ; rdfs:label "Transport domain"@en .
+:CoreNetworkDomainInd  a :CoreNetworkDomain ,  owl:NamedIndividual ; rdfs:label "Core network domain"@en .
+:ServiceDomainInd      a :ServiceDomain ,      owl:NamedIndividual ; rdfs:label "Service domain"@en .
+
+# Data-path direction — enables quality-degradation propagation reasoning.
+:downstreamOf a owl:ObjectProperty , owl:TransitiveProperty ;
+    rdfs:label "downstream of"@en , "下游于"@zh ;
+    rdfs:domain :NetworkEntity ; rdfs:range :NetworkEntity ;
+    rdfs:comment "X downstreamOf Y means X is later than Y on the UE->Application-Server user-plane data path (i.e. Y forwards user traffic toward X). Transitive."@en .
+:upstreamOf a owl:ObjectProperty , owl:TransitiveProperty ;
+    owl:inverseOf :downstreamOf ;
+    rdfs:label "upstream of"@en , "上游于"@zh ;
+    rdfs:domain :NetworkEntity ; rdfs:range :NetworkEntity ;
+    rdfs:comment "Inverse of downstreamOf. Transitive."@en .
+
+#################################################################
+#  SECTION 7 — End-to-end service path
+#  "All network entities traversed during a service" (业务接续).
+#################################################################
+
+:Service a owl:Class ;
+    rdfs:label "Service"@en , "业务"@zh ;
+    rdfs:comment "A business/application service consumed by a user (e.g. video streaming, voice, web)."@en .
+
+:ServiceSession a owl:Class ;
+    rdfs:label "Service Session"@en , "业务会话"@zh ;
+    rdfs:comment "A concrete instance of a user consuming a service (maps to one or more PDU sessions / QoS flows)."@en .
+
+:EndToEndPath a owl:Class ;
+    rdfs:label "End-to-End Path"@en , "端到端路径"@zh ;
+    rdfs:comment "The ordered chain of network entities and links a service session traverses, from UE to service provider."@en .
+
+:PathSegment a owl:Class ;
+    rdfs:label "Path Segment"@en , "路径段"@zh ;
+    rdfs:comment "One hop of an end-to-end path: a link between two adjacent entities."@en ;
+    rdfs:subClassOf :Link .
+
+:realizesService a owl:ObjectProperty ;
+    rdfs:label "realizes service"@en ; rdfs:domain :ServiceSession ; rdfs:range :Service .
+:hasPath a owl:ObjectProperty ;
+    rdfs:label "has path"@en ; rdfs:domain :ServiceSession ; rdfs:range :EndToEndPath .
+:hasSegment a owl:ObjectProperty ;
+    rdfs:label "has segment"@en ; rdfs:domain :EndToEndPath ; rdfs:range :PathSegment .
+:traverses a owl:ObjectProperty ;
+    rdfs:label "traverses"@en , "经过"@zh ;
+    rdfs:domain :EndToEndPath ; rdfs:range :NetworkEntity ;
+    rdfs:comment "A network entity that the path passes through."@en .
+
+#################################################################
+#  SECTION 8 — Hooks for the KPI/QoE layer
+#  Detailed KPI/QoE classes live in 3gpp-pm-qoe-scaffold.ttl, which
+#  owl:imports this ontology. The two anchor properties below are
+#  declared here so topology entities are ready to carry measurements.
+#################################################################
+
+:Measurable a owl:Class ;
+    rdfs:label "Measurable"@en , "可度量对象"@zh ;
+    rdfs:comment "Anything a performance indicator can be attached to: a network entity or a link. Super-mount-point for the KPI/QoE layer."@en .
+:NetworkEntity rdfs:subClassOf :Measurable .
+:Link          rdfs:subClassOf :Measurable .
+
+:measurementSubject a owl:AnnotationProperty ;
+    rdfs:label "measurement subject (hook)"@en ;
+    rdfs:comment "Marker pointing to where the PM/QoE layer attaches indicators (see :hasPerformanceIndicator in 3gpp-pm-qoe-scaffold.ttl)."@en .

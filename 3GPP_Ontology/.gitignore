@@ -1,0 +1,13 @@
+# Claude Code local (user-specific) settings
+.claude/settings.local.json
+
+# Downloaded 3GPP specifications — copyrighted by 3GPP/ETSI, freely available
+# from the official source. NOT redistributed here; reproduce with:
+#   zsh specs/raw/fetch.sh
+specs/raw/*.zip
+specs/txt/
+
+# Python / tooling artifacts
+__pycache__/
+*.pyc
+*.owl

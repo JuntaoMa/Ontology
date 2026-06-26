@@ -1,0 +1,158 @@
+@prefix pm:   <http://3gpp-ontology.org/ns/pm#> .
+@prefix fgs:  <http://3gpp-ontology.org/ns/5gs#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+#################################################################
+#  3GPP 5G — Performance (KPI) & QoE SCAFFOLD  (placeholder layer)
+#
+#  This module sits ON TOP of the topology ontology
+#  (3gpp-5gs-topology.ttl, owl:imports below). It provides the
+#  *mounting points* — the class skeleton and the object properties —
+#  that bind performance counters, KPIs, QoS parameters and user-side
+#  QoE metrics to network entities and links, and the seed of the
+#  quality-degradation propagation model.
+#
+#  STATUS: SCAFFOLD. Category classes and bridge properties are defined;
+#  concrete KPI/counter individuals are intentionally NOT yet populated
+#  (that is the next phase). A few examples are included, clearly marked.
+#
+#  Grounding: TS 28.552 (5G perf measurements / counters),
+#             TS 28.554 (5G end-to-end KPIs), TS 28.404/28.405 (QoE
+#             measurement collection), TS 23.501 §5.7 (QoS / 5QI).
+#################################################################
+
+<http://3gpp-ontology.org/ns/pm> a owl:Ontology ;
+    dcterms:title "3GPP 5G Performance & QoE Scaffold"@en ;
+    dcterms:title "3GPP 5G 性能与体验指标脚手架"@zh ;
+    dcterms:description "Placeholder/mount-point layer linking KPIs, PM counters, QoS parameters and QoE metrics to the 5GS topology, and seeding quality-degradation propagation."@en ;
+    owl:imports <http://3gpp-ontology.org/ns/5gs> ;
+    owl:versionInfo "0.1.0 — scaffold (category classes + bridge properties, indicators not yet populated)" .
+
+#################################################################
+#  SECTION A — Performance concept hierarchy
+#################################################################
+
+pm:PerformanceConcept a owl:Class ;
+    rdfs:label "Performance Concept"@en , "性能概念"@zh ;
+    rdfs:comment "Any quantity used to describe network performance or user experience."@en .
+
+# A.1 Raw measurements / counters (TS 28.552)
+pm:Counter a owl:Class ; rdfs:subClassOf pm:PerformanceConcept ;
+    rdfs:label "PM Counter / Measurement"@en , "性能计数器"@zh ;
+    rdfs:comment "A raw performance measurement collected at an NF/NE, as defined in TS 28.552 (e.g. a per-cell or per-NF counter)."@en ;
+    dcterms:source "TS 28.552" .
+
+# A.2 Key Performance Indicators (TS 28.554) — network-side
+pm:KPI a owl:Class ; rdfs:subClassOf pm:PerformanceConcept ;
+    rdfs:label "Key Performance Indicator"@en , "关键性能指标"@zh ;
+    rdfs:comment "A network KPI, typically derived from one or more counters. Category breakdown follows TS 28.554 clause 6."@en ;
+    dcterms:source "TS 28.554" .
+
+pm:AccessibilityKPI   a owl:Class ; rdfs:subClassOf pm:KPI ; rdfs:label "Accessibility KPI"@en , "接入性KPI"@zh ; dcterms:source "TS 28.554 §6.2" .
+pm:IntegrityKPI       a owl:Class ; rdfs:subClassOf pm:KPI ; rdfs:label "Integrity KPI"@en , "完整性KPI"@zh ; rdfs:comment "Quality of the delivered service, e.g. throughput, latency, packet loss."@en ; dcterms:source "TS 28.554 §6.3" .
+pm:LatencyKPI         a owl:Class ; rdfs:subClassOf pm:IntegrityKPI ; rdfs:label "Latency / Delay KPI"@en , "时延KPI"@zh ; dcterms:source "TS 28.554 §6.3.1" .
+pm:ThroughputKPI      a owl:Class ; rdfs:subClassOf pm:IntegrityKPI ; rdfs:label "Throughput KPI"@en , "吞吐量KPI"@zh ; dcterms:source "TS 28.554 §6.3" .
+pm:UtilizationKPI     a owl:Class ; rdfs:subClassOf pm:KPI ; rdfs:label "Utilization KPI"@en , "利用率KPI"@zh ; dcterms:source "TS 28.554 §6.4" .
+pm:RetainabilityKPI   a owl:Class ; rdfs:subClassOf pm:KPI ; rdfs:label "Retainability KPI"@en , "保持性KPI"@zh ; dcterms:source "TS 28.554 §6.5" .
+pm:MobilityKPI        a owl:Class ; rdfs:subClassOf pm:KPI ; rdfs:label "Mobility KPI"@en , "移动性KPI"@zh ; dcterms:source "TS 28.554 §6.6" .
+pm:EnergyEfficiencyKPI a owl:Class ; rdfs:subClassOf pm:KPI ; rdfs:label "Energy Efficiency KPI"@en , "能效KPI"@zh ; dcterms:source "TS 28.554 §6.7" .
+pm:AvailabilityKPI    a owl:Class ; rdfs:subClassOf pm:KPI ; rdfs:label "Availability KPI"@en , "可用性KPI"@zh ; dcterms:source "TS 28.554 §6.11" .
+
+# A.3 QoS parameters (TS 23.501 §5.7) — the contracted target
+pm:QoSParameter a owl:Class ; rdfs:subClassOf pm:PerformanceConcept ;
+    rdfs:label "QoS Parameter"@en , "QoS参数"@zh ;
+    rdfs:comment "A quality-of-service parameter/target negotiated for a QoS flow (5QI and associated characteristics)."@en ;
+    dcterms:source "TS 23.501 §5.7" .
+pm:FiveQI            a owl:Class ; rdfs:subClassOf pm:QoSParameter ; rdfs:label "5QI"@en ; rdfs:comment "5G QoS Identifier indexing standardized QoS characteristics."@en ; dcterms:source "TS 23.501 §5.7.2.1, §5.7.4" .
+pm:PacketDelayBudget a owl:Class ; rdfs:subClassOf pm:QoSParameter ; rdfs:label "Packet Delay Budget (PDB)"@en ; dcterms:source "TS 23.501 §5.7.3.4" .
+pm:PacketErrorRate   a owl:Class ; rdfs:subClassOf pm:QoSParameter ; rdfs:label "Packet Error Rate (PER)"@en ; dcterms:source "TS 23.501 §5.7.3.5" .
+pm:GuaranteedBitRate a owl:Class ; rdfs:subClassOf pm:QoSParameter ; rdfs:label "Guaranteed Flow Bit Rate (GFBR)"@en ; dcterms:source "TS 23.501 §5.7.3" .
+
+# A.4 User-experience / QoE metrics (TS 28.405 / 26.247) — user-side
+pm:QoEMetric a owl:Class ; rdfs:subClassOf pm:PerformanceConcept ;
+    rdfs:label "QoE Metric"@en , "用户体验指标"@zh ;
+    rdfs:comment "A user-perceived experience metric (the user-side end of the propagation chain). Collected via QoE measurement collection or app-level reporting."@en ;
+    dcterms:source "TS 28.405, TS 26.247" .
+pm:MeanOpinionScore    a owl:Class ; rdfs:subClassOf pm:QoEMetric ; rdfs:label "Mean Opinion Score (MOS)"@en , "平均意见得分"@zh .
+pm:VideoStallRatio     a owl:Class ; rdfs:subClassOf pm:QoEMetric ; rdfs:label "Video Stalling Ratio"@en , "视频卡顿率"@zh .
+pm:InitialBufferingTime a owl:Class ; rdfs:subClassOf pm:QoEMetric ; rdfs:label "Initial Buffering Time"@en , "初始缓冲时延"@zh .
+pm:WebPageLoadTime     a owl:Class ; rdfs:subClassOf pm:QoEMetric ; rdfs:label "Web Page Load Time"@en , "网页加载时延"@zh .
+
+#################################################################
+#  SECTION B — Bridge / mount-point properties
+#  Attach performance concepts to the topology (fgs:Measurable =
+#  fgs:NetworkEntity or fgs:Link).
+#################################################################
+
+pm:hasPerformanceIndicator a owl:ObjectProperty ;
+    rdfs:label "has performance indicator"@en , "具有性能指标"@zh ;
+    rdfs:domain fgs:Measurable ; rdfs:range pm:PerformanceConcept ;
+    rdfs:comment "Attaches a counter / KPI / QoS parameter / QoE metric to a network entity or link."@en .
+
+pm:measuredOn a owl:ObjectProperty ;
+    owl:inverseOf pm:hasPerformanceIndicator ;
+    rdfs:label "measured on"@en ;
+    rdfs:domain pm:PerformanceConcept ; rdfs:range fgs:Measurable ;
+    rdfs:comment "The network entity or link a performance concept is measured on."@en .
+
+pm:aggregatesFrom a owl:ObjectProperty ;
+    rdfs:label "aggregates from"@en ;
+    rdfs:domain pm:KPI ; rdfs:range pm:Counter ;
+    rdfs:comment "A KPI is computed/aggregated from one or more PM counters (TS 28.554 from TS 28.552)."@en .
+
+pm:reflectsQoS a owl:ObjectProperty ;
+    rdfs:label "reflects QoS target"@en ;
+    rdfs:domain pm:KPI ; rdfs:range pm:QoSParameter ;
+    rdfs:comment "Links a measured KPI to the QoS target it is assessed against."@en .
+
+pm:impactsQoE a owl:ObjectProperty ;
+    rdfs:label "impacts QoE"@en , "影响用户体验"@zh ;
+    rdfs:domain pm:PerformanceConcept ; rdfs:range pm:QoEMetric ;
+    rdfs:comment "A network-side counter/KPI/QoS parameter influences a user-side QoE metric. The key bridge for quality-degradation propagation from network to user experience."@en .
+
+#################################################################
+#  SECTION C — Quality-degradation propagation (seed)
+#  Minimal hooks so the propagation model has somewhere to grow.
+#################################################################
+
+pm:QualityDegradation a owl:Class ;
+    rdfs:label "Quality Degradation"@en , "质量劣化"@zh ;
+    rdfs:comment "An event/state in which a performance indicator violates its expected range at a given measurable (entity or link)."@en .
+
+pm:occursAt a owl:ObjectProperty ;
+    rdfs:label "occurs at"@en ;
+    rdfs:domain pm:QualityDegradation ; rdfs:range fgs:Measurable ;
+    rdfs:comment "Where the degradation is observed."@en .
+
+pm:affectsIndicator a owl:ObjectProperty ;
+    rdfs:label "affects indicator"@en ;
+    rdfs:domain pm:QualityDegradation ; rdfs:range pm:PerformanceConcept .
+
+pm:propagatesTo a owl:ObjectProperty , owl:TransitiveProperty ;
+    rdfs:label "propagates to"@en , "传播至"@zh ;
+    rdfs:domain pm:QualityDegradation ; rdfs:range pm:QualityDegradation ;
+    rdfs:comment "A degradation causally propagates to another degradation (typically along fgs:downstreamOf in the topology). Transitive. The core relation of the future propagation model."@en .
+
+pm:hasRootCause a owl:ObjectProperty ;
+    rdfs:label "has root cause"@en , "根因"@zh ;
+    rdfs:domain pm:QualityDegradation ; rdfs:range pm:QualityDegradation ;
+    rdfs:comment "Points from an observed degradation to its originating degradation (inverse direction of propagation)."@en .
+
+#################################################################
+#  SECTION D — Illustrative placeholder individuals (EXAMPLES ONLY)
+#  Remove or replace when the real indicator catalogue is loaded.
+#################################################################
+
+pm:Example_DLUEThroughput a pm:ThroughputKPI , owl:NamedIndividual ;
+    rdfs:label "[example] DL UE Throughput"@en ;
+    skos:scopeNote "Illustrative placeholder — see TS 28.552 DRB.UEThpDl / TS 28.554 §6.3."@en ;
+    pm:impactsQoE pm:Example_VideoStall .
+
+pm:Example_VideoStall a pm:VideoStallRatio , owl:NamedIndividual ;
+    rdfs:label "[example] video stalling ratio"@en ;
+    skos:scopeNote "Illustrative placeholder QoE metric."@en .
