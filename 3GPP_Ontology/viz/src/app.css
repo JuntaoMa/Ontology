@@ -1,0 +1,130 @@
+/* 3GPP Ontology Viz — Application layout styles */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-header {
+  padding: 10px 20px;
+  background: #1e293b;
+  color: #f8fafc;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-layout-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.app-layout-btn {
+  padding: 4px 14px;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.app-layout-btn:hover {
+  background: #334155;
+  color: #e2e8f0;
+}
+
+.app-layout-btn.is-active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+.app-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.app-subtitle {
+  font-size: 12px;
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.app-main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.app-graph {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-panel {
+  width: 400px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  border-left: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+/* Loading & Error */
+.app-loading,
+.app-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 12px;
+  font-size: 15px;
+  color: #475569;
+}
+
+.app-loading__spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.app-loading__detail {
+  font-size: 12px;
+  color: #94a3b8;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.app-error h1 {
+  font-size: 20px;
+  color: #dc2626;
+}
+
+.app-error button {
+  padding: 8px 20px;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  background: #fff;
+  color: #3b82f6;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.app-error button:hover {
+  background: #eff6ff;
+}
