@@ -146,7 +146,7 @@ export default function App() {
         onChange={setFilters}
       />
 
-      {/* Main content: graph + panel */}
+      {/* Main content: graph + floating panel */}
       <div className="app-main">
         <div className="app-graph">
           <OntologyGraph
@@ -158,12 +158,14 @@ export default function App() {
             onSelect={handleSelect}
           />
         </div>
-        <aside className="app-panel">
-          <ProvenancePanel
-            entity={selectedEntity}
-            onClose={() => setSelectedIRI("")}
-          />
-        </aside>
+        {selectedEntity && (
+          <aside className="app-panel" aria-label="本体详情">
+            <ProvenancePanel
+              entity={selectedEntity}
+              onClose={() => setSelectedIRI("")}
+            />
+          </aside>
+        )}
       </div>
     </div>
   );

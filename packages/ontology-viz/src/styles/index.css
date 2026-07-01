@@ -71,6 +71,19 @@
   font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
 }
 
+.ontology-node__domain {
+  max-width: 108px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 0 5px;
+  line-height: 16px;
+}
+
 .ontology-node__level {
   margin-left: auto;
   font-size: 10px;

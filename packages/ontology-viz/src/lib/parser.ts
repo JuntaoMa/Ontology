@@ -207,7 +207,41 @@ function extractClasses(store: N3Store): OntologyClass[] {
     });
   }
 
-  return classes;
+  return inheritClassDomains(classes);
+}
+
+function inheritClassDomains(classes: OntologyClass[]): OntologyClass[] {
+  const byIRI = new Map(classes.map((cls) => [cls.iri, cls]));
+  const resolved = new Map<string, string | undefined>();
+  const resolving = new Set<string>();
+
+  const resolveDomain = (cls: OntologyClass): string | undefined => {
+    if (resolved.has(cls.iri)) return resolved.get(cls.iri);
+    if (cls.domainIRI) {
+      resolved.set(cls.iri, cls.domainIRI);
+      return cls.domainIRI;
+    }
+    if (resolving.has(cls.iri)) return undefined;
+
+    resolving.add(cls.iri);
+    let inherited: string | undefined;
+    for (const parentIRI of cls.parentIRIs) {
+      const parent = byIRI.get(parentIRI);
+      if (!parent) continue;
+      inherited = resolveDomain(parent);
+      if (inherited) break;
+    }
+    resolving.delete(cls.iri);
+    resolved.set(cls.iri, inherited);
+    return inherited;
+  };
+
+  return classes.map((cls) => {
+    const domainIRI = resolveDomain(cls);
+    return domainIRI && domainIRI !== cls.domainIRI
+      ? { ...cls, domainIRI }
+      : cls;
+  });
 }
 
 // ─── Object property extraction ─────────────────────────────────

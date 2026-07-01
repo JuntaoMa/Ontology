@@ -17,13 +17,14 @@ import {
   forceManyBody,
   forceCenter,
   forceCollide,
+  forceX,
+  forceY,
 } from "d3-force";
 import {
   useDeferredValue,
   useEffect,
   useMemo,
   useCallback,
-  useRef,
   type CSSProperties,
 } from "react";
 import {
@@ -66,7 +67,7 @@ const NODE_HEIGHT = 110;
 
 function OntologyNode({ data }: NodeProps<Node<GraphNodeData>>) {
   const { entity, provenanceLevel, domainKey, selected } = data;
-  const scheme = DEFAULT_COLOR_SCHEME;
+  const scheme = data.colorScheme;
   const domainColor = domainKey
     ? scheme.domainColors[domainKey] ?? scheme.defaultNodeColor
     : scheme.defaultNodeColor;
@@ -74,6 +75,9 @@ function OntologyNode({ data }: NodeProps<Node<GraphNodeData>>) {
 
   // Convert hex domainColor to rgba for safe cross-browser tinting
   const hexToRgba = (hex: string, alpha: number): string => {
+    if (!/^#[0-9a-fA-F]{6}$/.test(hex)) {
+      return `rgba(107,114,128,${alpha})`;
+    }
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
@@ -91,6 +95,7 @@ function OntologyNode({ data }: NodeProps<Node<GraphNodeData>>) {
   };
 
   const isIndividual = entity.kind === "individual";
+  const domainLabel = domainKey?.replace(/Domain$/, "");
 
   return (
     <div
@@ -111,6 +116,18 @@ function OntologyNode({ data }: NodeProps<Node<GraphNodeData>>) {
         </span>
         {entity.abbreviation && (
           <span className="ontology-node__abbrev">{entity.abbreviation}</span>
+        )}
+        {domainLabel && (
+          <span
+            className="ontology-node__domain"
+            style={{
+              borderColor: domainColor,
+              color: domainColor,
+              backgroundColor: hexToRgba(domainColor, 0.1),
+            }}
+          >
+            {domainLabel}
+          </span>
         )}
         <span
           className="ontology-node__level"
@@ -146,6 +163,7 @@ function buildNodes(
   data: OntologyGraphData,
   selectedIRI: string,
   filters: GraphFilters,
+  colorScheme: DomainColorScheme,
 ): Node<GraphNodeData>[] {
   const nodes: Node<GraphNodeData>[] = [];
 
@@ -171,6 +189,7 @@ function buildNodes(
         entity: cls,
         provenanceLevel: cls.provenance.level,
         domainKey,
+        colorScheme,
         selected: cls.iri === selectedIRI,
       },
     });
@@ -192,6 +211,7 @@ function buildNodes(
         entity: ind,
         provenanceLevel: ind.provenance.level,
         domainKey: undefined,
+        colorScheme,
         selected: ind.iri === selectedIRI,
       },
     });
@@ -202,7 +222,7 @@ function buildNodes(
 
 function buildEdges(
   data: OntologyGraphData,
-  filters: GraphFilters,
+  visibleNodeIds: Set<string>,
 ): Edge<GraphEdgeData>[] {
   const edges: Edge<GraphEdgeData>[] = [];
 
@@ -210,12 +230,7 @@ function buildEdges(
     const source = prop.domainIRI;
     const target = prop.rangeIRI;
     if (!source || !target) continue;
-
-    const sourceExists = data.classes.some((c) => c.iri === source) ||
-      data.individuals.some((i) => i.iri === source);
-    const targetExists = data.classes.some((c) => c.iri === target) ||
-      data.individuals.some((i) => i.iri === target);
-    if (!sourceExists || !targetExists) continue;
+    if (!visibleNodeIds.has(source) || !visibleNodeIds.has(target)) continue;
 
     const label = prop.labelZh ?? prop.label;
 
@@ -317,8 +332,24 @@ function layoutForce(
   if (nodes.length === 0) return nodes;
 
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
+  const seededNodes = layoutDagre(nodes, edges);
+  const seedBounds = seededNodes.reduce(
+    (acc, node) => ({
+      minX: Math.min(acc.minX, node.position.x),
+      maxX: Math.max(acc.maxX, node.position.x),
+      minY: Math.min(acc.minY, node.position.y),
+      maxY: Math.max(acc.maxY, node.position.y),
+    }),
+    { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity },
+  );
+  const seedCenterX = (seedBounds.minX + seedBounds.maxX) / 2;
+  const seedCenterY = (seedBounds.minY + seedBounds.maxY) / 2;
 
-  const simNodes = nodes.map((n) => ({ id: n.id, x: 0, y: 0 }));
+  const simNodes = seededNodes.map((n) => ({
+    id: n.id,
+    x: n.position.x - seedCenterX,
+    y: n.position.y - seedCenterY,
+  }));
   const simLinks = edges
     .filter((e) => nodeById.has(e.source) && nodeById.has(e.target))
     .map((e) => ({ source: e.source, target: e.target }));
@@ -342,17 +373,20 @@ function layoutForce(
       "link",
       forceLink(simLinks)
         .id((d: any) => d.id)
-        .distance(200),
+        .distance(260)
+        .strength(0.35),
     )
-    .force("charge", forceManyBody().strength(-800))
+    .force("charge", forceManyBody().strength(-360).distanceMax(1400))
     .force("center", forceCenter(0, 0))
-    .force("collide", forceCollide(NODE_WIDTH / 1.5))
+    .force("x", forceX(0).strength(0.025))
+    .force("y", forceY(0).strength(0.025))
+    .force("collide", forceCollide(NODE_WIDTH * 0.62).strength(0.8).iterations(2))
     .stop();
 
   // Run simulation synchronously
-  for (let i = 0; i < 300; i++) sim.tick();
+  for (let i = 0; i < 240; i++) sim.tick();
 
-  return nodes.map((node) => {
+  const positioned = nodes.map((node) => {
     const simNode = simNodes.find((sn) => sn.id === node.id);
     return {
       ...node,
@@ -363,6 +397,30 @@ function layoutForce(
         : node.position,
     };
   });
+
+  const bounds = positioned.reduce(
+    (acc, node) => ({
+      minX: Math.min(acc.minX, node.position.x),
+      maxX: Math.max(acc.maxX, node.position.x),
+      minY: Math.min(acc.minY, node.position.y),
+      maxY: Math.max(acc.maxY, node.position.y),
+    }),
+    { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity },
+  );
+  const spanX = Math.max(bounds.maxX - bounds.minX + NODE_WIDTH, NODE_WIDTH);
+  const spanY = Math.max(bounds.maxY - bounds.minY + NODE_HEIGHT, NODE_HEIGHT);
+  const maxSpan = Math.max(2600, Math.sqrt(nodes.length) * 520);
+  const scale = Math.min(1, maxSpan / Math.max(spanX, spanY));
+  const centerX = (bounds.minX + bounds.maxX) / 2;
+  const centerY = (bounds.minY + bounds.maxY) / 2;
+
+  return positioned.map((node) => ({
+    ...node,
+    position: {
+      x: (node.position.x - centerX) * scale,
+      y: (node.position.y - centerY) * scale,
+    },
+  }));
 }
 
 // ─── Component ──────────────────────────────────────────────────
@@ -394,6 +452,7 @@ function OntologyGraphInner({
   selectedIRI,
   filters,
   layoutMode = "dagre",
+  colorScheme = DEFAULT_COLOR_SCHEME,
   onSelect,
 }: OntologyGraphProps) {
   const { fitView } = useReactFlow();
@@ -405,27 +464,36 @@ function OntologyGraphInner({
 
   // Compute nodes/edges with layout (NOT dependent on selectedIRI)
   const { nodes: rawNodes, edges: rawEdges } = useMemo(() => {
-    const n = buildNodes(data, "", effectiveFilters);  // "" = no selection
-    const e = buildEdges(data, effectiveFilters);
+    const n = buildNodes(data, "", effectiveFilters, colorScheme);  // "" = no selection
+    const visibleNodeIds = new Set(n.map((node) => node.id));
+    const e = buildEdges(data, visibleNodeIds);
     const laidOut = layoutMode === "force"
       ? layoutForce(n, e)
       : layoutDagre(n, e);
     return { nodes: laidOut, edges: e };
-  }, [data, effectiveFilters, layoutMode]);
+  }, [data, effectiveFilters, layoutMode, colorScheme]);
+
+  const getMiniMapNodeColor = useCallback(
+    (node: Node<GraphNodeData>) => {
+      const domainKey = node.data?.domainKey;
+      return domainKey
+        ? colorScheme.domainColors[domainKey] ?? colorScheme.defaultNodeColor
+        : colorScheme.defaultNodeColor;
+    },
+    [colorScheme],
+  );
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<GraphNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<GraphEdgeData>>([]);
 
   // Initial load & layout change: set nodes + fit view
-  const prevLayout = useRef(layoutMode);
   useEffect(() => {
     setNodes(rawNodes);
     setEdges(rawEdges);
     // Fit viewport on initial load or layout switch
     const timer = setTimeout(() => {
-      fitView({ padding: 0.04, duration: 300, minZoom: 0.4, maxZoom: 1.0 });
+      fitView({ padding: 0.06, duration: 300, minZoom: 0.05, maxZoom: 1.0 });
     }, 100);
-    prevLayout.current = layoutMode;
     return () => clearTimeout(timer);
   }, [rawNodes, rawEdges, setNodes, setEdges, fitView, layoutMode]);
 
@@ -470,15 +538,20 @@ function OntologyGraphInner({
         panOnDrag
         panOnScroll
         autoPanOnNodeDrag
-        minZoom={0.15}
+        minZoom={0.05}
         maxZoom={1.6}
-        fitViewOptions={{ padding: 0.04, duration: 480, minZoom: 0.4, maxZoom: 1.0 }}
+        fitViewOptions={{ padding: 0.06, duration: 480, minZoom: 0.05, maxZoom: 1.0 }}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
         onEdgeClick={handleEdgeClick}
       >
-        <MiniMap pannable zoomable nodeStrokeWidth={3} />
+        <MiniMap
+          pannable
+          zoomable
+          nodeColor={getMiniMapNodeColor}
+          nodeStrokeWidth={3}
+        />
         <Controls showInteractive={false} />
         <Background gap={20} size={1} />
       </ReactFlow>

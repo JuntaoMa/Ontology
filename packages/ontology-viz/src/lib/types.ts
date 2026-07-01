@@ -113,6 +113,8 @@ export interface GraphNodeData extends Record<string, unknown> {
   provenanceLevel: ProvenanceLevel;
   /** Domain-level colour key (e.g. "RadioAccess") */
   domainKey?: string;
+  /** Resolved colour scheme for this graph instance */
+  colorScheme: DomainColorScheme;
   selected: boolean;
 }
 
