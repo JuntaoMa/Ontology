@@ -24,7 +24,21 @@ The ontology cites these via the `fgs:specRef` / `fgs:specClause` annotations an
 | **28.552** | V19.7.0 (2026-03) | Management and orchestration; 5G performance measurements | PM counter catalogue → `pm:Counter`. | 5 (measurements per NF) |
 | **28.554** | V19.7.0 (2026-03) | Management and orchestration; 5G end-to-end KPIs | KPI category structure → `pm:KPI` subclasses. | 6.2–6.11 (Accessibility/Integrity/Latency/Utilization/Retainability/Mobility/Energy/Availability) |
 
-## B. Referenced but NOT downloaded (cited in annotations; fetch on demand)
+## B. 4G/LTE specs (EPC ontology — referenced, not downloaded)
+
+| TS | Version | Title | Why it's in the model | Key clauses used |
+|----|---------|-------|-----------------------|------------------|
+| **23.401** | (Rel-19) | GPRS enhancements for E-UTRAN access | EPC architecture: MME, SGW, PGW, HSS, PCRF, interfaces | 4.4 (NF descriptions), 5.1 (bearers), 5.3 (E-UTRAN) |
+| **23.214** | (Rel-19) | CUPS — Control and User Plane Separation of EPC nodes | SGW-C/U, PGW-C/U split, Sx/Sxb PFCP interfaces | 4.2, 4.3, 5.2, 5.3 |
+| **23.203** | (Rel-19) | Policy and charging control architecture | PCRF, PCC rules, QCI values | 6.1.7 (QCI), 6.2 (PCC) |
+| **36.300** | (Rel-19) | E-UTRAN Overall Description; Stage 2 | eNB, Uu-LTE, X2, E-UTRAN architecture | 4, 5 |
+| **29.274** | (Rel-19) | GTP-C v2 | S11, S5/S8-C, S10 | 5 (procedures) |
+| **29.272** | (Rel-19) | Diameter-based MME-HSS (S6a) | S6a | 5 |
+| **29.212** | (Rel-19) | Diameter-based PCRF-PGW (Gx) | Gx | 4 |
+| **36.413** | (Rel-19) | S1 Application Protocol (S1AP) | S1-MME | 8, 9 |
+| **36.420** | (Rel-19) | X2 general aspects and principles | X2 interface | 5, 6 |
+
+## C. Additional 5GS specs — referenced but NOT downloaded (cited in annotations; fetch on demand)
 
 | TS | Title | Used for |
 |----|-------|----------|
@@ -33,8 +47,8 @@ The ontology cites these via the `fgs:specRef` / `fgs:specClause` annotations an
 | 23.548 | 5G System Enhancements for Edge Computing; Stage 2 | EASDF, Edge Application Server |
 | 28.404 | QoE measurement collection; Concepts, use cases, requirements | `pm:QoEMetric` grounding |
 | 28.405 | QoE measurement collection; Control and reporting | `pm:QoEMetric` grounding |
-| 29.244 | Interface between Control Plane and User Plane nodes (PFCP) | N4 detail |
-| 29.281 | GTP-U | N3/N9 user-plane detail |
+| 29.244 | Interface between Control Plane and User Plane nodes (PFCP) | N4/Sx/Sxb detail |
+| 29.281 | GTP-U | N3/N9/S1-U/S5-U detail |
 | 38.413 | NG-RAN; NG Application Protocol (NGAP) | N2 detail |
 | 23.003 | Numbering, addressing and identification | Identifiers (future ABox) |
 | 32.240 | Charging architecture | CHF / N40 context |

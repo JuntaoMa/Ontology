@@ -1,0 +1,306 @@
+@prefix :        <http://3gpp-ontology.org/ns/5gs#> .
+@prefix fgs:     <http://3gpp-ontology.org/ns/5gs#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+#################################################################
+#  3GPP 4G (LTE/EPC) — Network Topology Ontology Extension
+#
+#  Scope    : E-UTRAN + Evolved Packet Core (EPC)
+#             with CUPS (Control and User Plane Separation)
+#  Baseline : 3GPP Release 19 — TS 23.401, TS 23.214, TS 36.300
+#  Purpose  : Extends the 5G SA topology ontology with 4G network
+#             entities, reference points, and connectivity. Shares
+#             the foundation (NetworkEntity, connectedTo,
+#             userPlaneDownstreamOf, controlPlaneDownstreamOf, etc.)
+#             via owl:imports.
+#
+#  NOTE     : Uses the same base IRI as the 5GS topology
+#             (http://3gpp-ontology.org/ns/5gs#) — the split is
+#             purely for file/module organisation.
+#################################################################
+
+<http://3gpp-ontology.org/ns/epc> a owl:Ontology ;
+    dcterms:title "3GPP 4G EPC Network Topology Ontology (CUPS)"@en ;
+    dcterms:title "3GPP 4G EPC 网络拓扑本体 (CUPS)"@zh ;
+    dcterms:description """Extension module adding 4G/LTE E-UTRAN and Evolved Packet Core (EPC) network entities modelled with CUPS (Control and User Plane Separation per TS 23.214): eNB, MME, SGW-C/SGW-U, PGW-C/PGW-U, HSS, PCRF, plus their reference points and shortcut connectivity properties. Imports the 5GS topology core for shared foundation classes and properties."""@en ;
+    dcterms:source "3GPP TS 23.401 (GPRS enhancements for E-UTRAN); TS 23.214 (CUPS); TS 36.300 (E-UTRAN overall)" ;
+    owl:imports <http://3gpp-ontology.org/ns/5gs> ;
+    owl:versionInfo "0.1.0 — 4G EPC CUPS, imports 5GS core" .
+
+#################################################################
+#  SECTION 1 — E-UTRAN (Radio Access) classes
+#################################################################
+
+:EutranNode a owl:Class ;
+    rdfs:subClassOf fgs:NetworkEntity ;
+    rdfs:label "E-UTRAN Node"@en , "E-UTRAN节点"@zh ;
+    rdfs:comment "A radio access node in the Evolved UTRAN (LTE radio access network)."@en ;
+    dcterms:source "TS 36.300" .
+
+:ENB a owl:Class ;
+    rdfs:subClassOf :EutranNode ;
+    rdfs:label "eNB (eNodeB)"@en , "4G基站"@zh ;
+    :abbreviation "eNB" ;
+    rdfs:comment "The E-UTRAN Node B — the base station in LTE. Unlike gNB, the eNB is a monolithic node (no standardised CU/DU split in 3GPP). Terminates E-UTRA (Uu-LTE) towards the UE and connects to the EPC over S1-MME (control) and S1-U (user)."@en ;
+    :specRef "TS 36.300" ; :specClause "clause 4.2, 4.3" .
+
+# eNB in RadioAccessDomain
+:ENB rdfs:subClassOf
+    [ a owl:Restriction ; owl:onProperty fgs:belongsToDomain ; owl:hasValue fgs:RadioAccessDomainInd ] .
+
+# eNB hosts cells (same hostsCell property as gNB-DU)
+:ENB rdfs:subClassOf fgs:Measurable .
+
+#################################################################
+#  SECTION 2 — EPC Core Network Functions (CUPS model)
+#  Per TS 23.214, SGW and PGW are split into control (-C) and
+#  user (-U) plane parts, analogous to 5G SMF/UPF separation.
+#################################################################
+
+# --- 2.1 Control-plane EPC functions ---
+
+:MME a owl:Class ; rdfs:subClassOf fgs:ControlPlaneFunction ;
+    rdfs:label "Mobility Management Entity"@en , "移动管理实体"@zh ;
+    :abbreviation "MME" ;
+    rdfs:comment "The EPC control-plane anchor. Handles NAS signalling termination, UE authentication (with HSS), mobility management (Tracking Area), session management (bearer setup), and SGW/PGW selection. Approximately maps to AMF + part of SMF in 5G."@en ;
+    :specRef "TS 23.401" ; :specClause "clause 4.4.2" .
+
+:HSS a owl:Class ; rdfs:subClassOf fgs:ControlPlaneFunction ;
+    rdfs:label "Home Subscriber Server"@en , "归属用户服务器"@zh ;
+    :abbreviation "HSS" ;
+    rdfs:comment "The master user database in EPC. Stores subscription profiles, authentication vectors, and serving node identities. Approximately maps to UDM + AUSF in 5G."@en ;
+    :specRef "TS 23.401" ; :specClause "clause 4.4.5" .
+
+:PCRF a owl:Class ; rdfs:subClassOf fgs:ControlPlaneFunction ;
+    rdfs:label "Policy and Charging Rules Function"@en , "策略与计费规则功能"@zh ;
+    :abbreviation "PCRF" ;
+    rdfs:comment "Makes policy and charging control decisions for service data flows. Maps QoS requirements (QCI, ARP, GBR/MBR) to bearer-level enforcement at the PGW. Approximately maps to PCF in 5G."@en ;
+    :specRef "TS 23.401, TS 23.203" ; :specClause "TS 23.401 clause 4.4.7" .
+
+:SGW_C a owl:Class ; rdfs:subClassOf fgs:ControlPlaneFunction ;
+    rdfs:label "SGW Control Plane"@en , "SGW控制面"@zh ;
+    :abbreviation "SGW-C" ;
+    rdfs:comment "Control-plane part of the Serving Gateway (CUPS, TS 23.214). Controls the SGW-U over Sx (PFCP). Handles bearer resource management per EPS bearer context. Analogous to SMF controlling i-UPF."@en ;
+    :specRef "TS 23.214" ; :specClause "clause 4.2, 5.2" .
+
+:PGW_C a owl:Class ; rdfs:subClassOf fgs:ControlPlaneFunction ;
+    rdfs:label "PGW Control Plane"@en , "PGW控制面"@zh ;
+    :abbreviation "PGW-C" ;
+    rdfs:comment "Control-plane part of the PDN Gateway (CUPS, TS 23.214). Controls the PGW-U over Sxb (PFCP). Handles UE IP address allocation, policy enforcement (with PCRF over Gx), and charging. Analogous to SMF controlling PSA UPF."@en ;
+    :specRef "TS 23.214" ; :specClause "clause 4.3, 5.3" .
+
+# --- 2.2 User-plane EPC functions ---
+
+:SGW_U a owl:Class ; rdfs:subClassOf fgs:UserPlaneFunction ;
+    rdfs:label "SGW User Plane"@en , "SGW用户面"@zh ;
+    :abbreviation "SGW-U" ;
+    rdfs:comment "User-plane part of the Serving Gateway (CUPS). Forwards GTP-U packets between eNB (S1-U) and PGW-U (S5/S8-U). Controlled by SGW-C over Sx. Analogous to i-UPF in 5G."@en ;
+    :specRef "TS 23.214" ; :specClause "clause 4.2, 5.2" .
+
+:PGW_U a owl:Class ; rdfs:subClassOf fgs:UserPlaneFunction ;
+    rdfs:label "PGW User Plane"@en , "PGW用户面"@zh ;
+    :abbreviation "PGW-U" ;
+    rdfs:comment "User-plane part of the PDN Gateway (CUPS). The external PDN anchor — terminates SGi towards the data network, S5/S8-U towards SGW-U. Enforces QoS (QCI/ARP) and performs charging per PCC rules. Controlled by PGW-C over Sxb. Analogous to PSA UPF in 5G."@en ;
+    :specRef "TS 23.214" ; :specClause "clause 4.3, 5.3" .
+
+# --- 2.3 CUPS internal composition ---
+# SGW-C logicallyPartOf a conceptual SGW; SGW-U logicallyPartOf SGW
+# PGW-C logicallyPartOf PGW; PGW-U logicallyPartOf PGW
+# (SGW/PGW not instantiated as separate classes — the -C/-U pair IS the implementation.)
+
+#################################################################
+#  SECTION 3 — 4G/EPC Reference Points
+#################################################################
+
+# --- Radio ---
+:Uu_LTE a fgs:RadioReferencePoint ;
+    rdfs:label "Uu-LTE (LTE air interface)"@en , "LTE空口"@zh ;
+    rdfs:comment "The E-UTRA radio interface between UE and eNB (LTE air interface, OFDMA/SC-FDMA)."@en ;
+    fgs:connectsEntityType "UserEquipment <-> ENB" ; :specRef "TS 36.300" .
+
+:X2 a fgs:RadioReferencePoint ;
+    rdfs:label "X2"@en ;
+    rdfs:comment "Interface between two eNBs. Supports handover and load/ interference coordination. X2-C (control) and X2-U (user-plane data forwarding)."@en ;
+    fgs:connectsEntityType "ENB <-> ENB" ; :specRef "TS 36.420, TS 36.300" .
+
+# --- S1 (eNB <-> EPC) ---
+:S1_MME a fgs:ControlPlaneReferencePoint ;
+    rdfs:label "S1-MME"@en ;
+    rdfs:comment "Control-plane interface between eNB and MME (S1-AP over SCTP). Carries NAS messages and S1-AP procedures (bearer setup, handover). ≈ 5G N2."@en ;
+    fgs:connectsEntityType "ENB <-> MME" ; :specRef "TS 23.401, TS 36.413" .
+
+:S1_U a fgs:UserPlaneReferencePoint ;
+    rdfs:label "S1-U"@en ;
+    rdfs:comment "User-plane interface between eNB and SGW-U (GTP-U tunnel per EPS bearer). ≈ 5G N3."@en ;
+    fgs:connectsEntityType "ENB <-> SGW_U" ; :specRef "TS 23.401, TS 29.281" .
+
+# --- S5/S8 (SGW <-> PGW, CUPS split) ---
+:S5_S8_C a fgs:ControlPlaneReferencePoint ;
+    rdfs:label "S5/S8-C"@en ;
+    rdfs:comment "Control-plane between SGW-C and PGW-C (GTP-C). S5 when both in same PLMN; S8 when inter-PLMN (roaming)."@en ;
+    fgs:connectsEntityType "SGW_C <-> PGW_C" ; :specRef "TS 23.401, TS 23.214" .
+
+:S5_S8_U a fgs:UserPlaneReferencePoint ;
+    rdfs:label "S5/S8-U"@en ;
+    rdfs:comment "User-plane between SGW-U and PGW-U (GTP-U tunnel). ≈ 5G N9."@en ;
+    fgs:connectsEntityType "SGW_U <-> PGW_U" ; :specRef "TS 23.401, TS 23.214" .
+
+# --- S6a (MME <-> HSS) ---
+:S6a a fgs:ControlPlaneReferencePoint ;
+    rdfs:label "S6a"@en ;
+    rdfs:comment "Diameter-based interface between MME and HSS for authentication, subscription retrieval, and location update. ≈ 5G N8/N12."@en ;
+    fgs:connectsEntityType "MME <-> HSS" ; :specRef "TS 23.401, TS 29.272" .
+
+# --- S11 (MME <-> SGW-C) ---
+:S11 a fgs:ControlPlaneReferencePoint ;
+    rdfs:label "S11"@en ;
+    rdfs:comment "GTP-C interface between MME and SGW-C for bearer session management (create/modify/delete bearer). ≈ 5G N4."@en ;
+    fgs:connectsEntityType "MME <-> SGW_C" ; :specRef "TS 23.401, TS 29.274" .
+
+# --- SGi (PGW-U <-> DN) ---
+:SGi a fgs:UserPlaneReferencePoint ;
+    rdfs:label "SGi"@en ;
+    rdfs:comment "Interface between PGW-U and the external Packet Data Network (e.g. Internet, IMS). ≈ 5G N6."@en ;
+    fgs:connectsEntityType "PGW_U <-> DataNetwork" ; :specRef "TS 23.401" .
+
+# --- Gx (PCRF <-> PGW-C) ---
+:Gx a fgs:ControlPlaneReferencePoint ;
+    rdfs:label "Gx"@en ;
+    rdfs:comment "Diameter-based interface between PCRF and PGW-C for policy and charging rule (PCC) provisioning. ≈ 5G N7."@en ;
+    fgs:connectsEntityType "PCRF <-> PGW_C" ; :specRef "TS 23.203, TS 29.212" .
+
+# --- S10 (MME <-> MME) ---
+:S10 a fgs:ControlPlaneReferencePoint ;
+    rdfs:label "S10"@en ;
+    rdfs:comment "GTP-C interface between two MMEs for UE context transfer during MME relocation / TAU. ≈ 5G N14."@en ;
+    fgs:connectsEntityType "MME <-> MME" ; :specRef "TS 23.401, TS 29.274" .
+
+# --- Sx / Sxb (CUPS PFCP interfaces, ≈ N4) ---
+:Sx a fgs:ControlPlaneReferencePoint ;
+    rdfs:label "Sx"@en ;
+    rdfs:comment "PFCP (Packet Forwarding Control Protocol) interface between SGW-C and SGW-U (CUPS, TS 23.214). ≈ 5G N4."@en ;
+    fgs:connectsEntityType "SGW_C <-> SGW_U" ; :specRef "TS 23.214, TS 29.244" .
+
+:Sxb a fgs:ControlPlaneReferencePoint ;
+    rdfs:label "Sxb"@en ;
+    rdfs:comment "PFCP interface between PGW-C and PGW-U (CUPS, TS 23.214). ≈ 5G N4."@en ;
+    fgs:connectsEntityType "PGW_C <-> PGW_U" ; :specRef "TS 23.214, TS 29.244" .
+
+#################################################################
+#  SECTION 4 — Connectivity shortcut properties
+#  Each subPropertyOf :connectedTo with domain/range encoding
+#  the standard 4G topology.
+#################################################################
+
+# Radio
+:hasUuLTE a owl:ObjectProperty ; rdfs:subPropertyOf fgs:connectedTo ;
+    rdfs:label "has Uu-LTE to"@en ; rdfs:domain fgs:UserEquipment ; rdfs:range :ENB ;
+    rdfs:comment "UE attaches to an eNB over the LTE air interface (E-UTRA)."@en ; :specRef "TS 36.300" .
+
+# S1 family
+:hasS1MME a owl:ObjectProperty ; rdfs:subPropertyOf fgs:connectedTo ;
+    rdfs:label "has S1-MME to"@en ; rdfs:domain :ENB ; rdfs:range :MME ;
+    rdfs:comment "eNB control-plane connection to the MME over S1-MME."@en ; :specRef "TS 23.401, TS 36.413" .
+:hasS1U a owl:ObjectProperty ; rdfs:subPropertyOf fgs:connectedTo ;
+    rdfs:label "has S1-U to"@en ; rdfs:domain :ENB ; rdfs:range :SGW_U ;
+    rdfs:comment "eNB user-plane connection to the SGW-U over S1-U."@en ; :specRef "TS 23.401" .
+
+# S5/S8 (CUPS)
+:hasS5_S8_C a owl:ObjectProperty ; rdfs:subPropertyOf fgs:connectedTo ;
+    rdfs:label "has S5/S8-C to"@en ; rdfs:domain :SGW_C ; rdfs:range :PGW_C ;
+    rdfs:comment "SGW-C to PGW-C control-plane over S5/S8-C."@en ; :specRef "TS 23.401, TS 23.214" .
+:hasS5_S8_U a owl:ObjectProperty ; rdfs:subPropertyOf fgs:connectedTo ;
+    rdfs:label "has S5/S8-U to"@en ; rdfs:domain :SGW_U ; rdfs:range :PGW_U ;
+    rdfs:comment "SGW-U to PGW-U user-plane over S5/S8-U (GTP-U)."@en ; :specRef "TS 23.401, TS 23.214" .
+
+# Core control
+:hasS6a a owl:ObjectProperty ; rdfs:subPropertyOf fgs:connectedTo ;
+    rdfs:label "has S6a to"@en ; rdfs:domain :MME ; rdfs:range :HSS ;
+    rdfs:comment "MME to HSS over S6a (Diameter)."@en ; :specRef "TS 23.401, TS 29.272" .
+:hasS11 a owl:ObjectProperty ; rdfs:subPropertyOf fgs:connectedTo ;
+    rdfs:label "has S11 to"@en ; rdfs:domain :MME ; rdfs:range :SGW_C ;
+    rdfs:comment "MME to SGW-C session management over S11 (GTP-C)."@en ; :specRef "TS 23.401, TS 29.274" .
+
+# SGi
+:hasSGi a owl:ObjectProperty ; rdfs:subPropertyOf fgs:connectedTo ;
+    rdfs:label "has SGi to"@en ; rdfs:domain :PGW_U ; rdfs:range fgs:DataNetwork ;
+    rdfs:comment "PGW-U connects to the external data network over SGi."@en ; :specRef "TS 23.401" .
+
+# X2 (symmetric, like Xn)
+:hasX2 a owl:ObjectProperty , owl:SymmetricObjectProperty ; rdfs:subPropertyOf fgs:connectedTo ;
+    rdfs:label "has X2 to"@en ; rdfs:domain :ENB ; rdfs:range :ENB ;
+    rdfs:comment "X2 interface between two eNBs (handover, dual connectivity). Symmetric."@en ; :specRef "TS 36.420" .
+
+# Gx
+:hasGx a owl:ObjectProperty ; rdfs:subPropertyOf fgs:connectedTo ;
+    rdfs:label "has Gx to"@en ; rdfs:domain :PCRF ; rdfs:range :PGW_C ;
+    rdfs:comment "PCRF to PGW-C policy provisioning over Gx (Diameter)."@en ; :specRef "TS 23.203, TS 29.212" .
+
+# S10 (symmetric, MME-MME)
+:hasS10 a owl:ObjectProperty , owl:SymmetricObjectProperty ; rdfs:subPropertyOf fgs:connectedTo ;
+    rdfs:label "has S10 to"@en ; rdfs:domain :MME ; rdfs:range :MME ;
+    rdfs:comment "MME-to-MME context transfer over S10. Symmetric."@en ; :specRef "TS 23.401, TS 29.274" .
+
+# CUPS PFCP control (≈ N4)
+:hasSx a owl:ObjectProperty ; rdfs:subPropertyOf fgs:connectedTo ;
+    rdfs:label "has Sx to"@en ; rdfs:domain :SGW_C ; rdfs:range :SGW_U ;
+    rdfs:comment "SGW-C controls SGW-U over Sx (PFCP)."@en ; :specRef "TS 23.214, TS 29.244" .
+:hasSxb a owl:ObjectProperty ; rdfs:subPropertyOf fgs:connectedTo ;
+    rdfs:label "has Sxb to"@en ; rdfs:domain :PGW_C ; rdfs:range :PGW_U ;
+    rdfs:comment "PGW-C controls PGW-U over Sxb (PFCP)."@en ; :specRef "TS 23.214, TS 29.244" .
+
+#################################################################
+#  SECTION 5 — Direction super-property assignments
+#  Same pattern as 5GS: shortcut props → upstreamOf, inverse infers downstreamOf.
+#################################################################
+
+# --- User-plane (UE → eNB → SGW-U → PGW-U → DN → ServiceProvider) ---
+:hasUuLTE    rdfs:subPropertyOf fgs:userPlaneUpstreamOf .
+:hasS1U      rdfs:subPropertyOf fgs:userPlaneUpstreamOf .
+:hasS5_S8_U  rdfs:subPropertyOf fgs:userPlaneUpstreamOf .
+:hasSGi      rdfs:subPropertyOf fgs:userPlaneUpstreamOf .
+
+# --- Control-plane (UE → eNB → MME → HSS/SGW-C/PCRF → PGW-C → ...) ---
+:hasS1MME    rdfs:subPropertyOf fgs:controlPlaneUpstreamOf .
+:hasS6a      rdfs:subPropertyOf fgs:controlPlaneUpstreamOf .
+:hasS11      rdfs:subPropertyOf fgs:controlPlaneUpstreamOf .
+:hasS5_S8_C  rdfs:subPropertyOf fgs:controlPlaneUpstreamOf .
+:hasGx       rdfs:subPropertyOf fgs:controlPlaneUpstreamOf .
+:hasSx       rdfs:subPropertyOf fgs:controlPlaneUpstreamOf .
+:hasSxb      rdfs:subPropertyOf fgs:controlPlaneUpstreamOf .
+:hasS10      rdfs:subPropertyOf fgs:controlPlaneUpstreamOf .
+
+#################################################################
+#  SECTION 6 — Domain membership
+#################################################################
+
+:MME      rdfs:subClassOf [ a owl:Restriction ; owl:onProperty fgs:belongsToDomain ; owl:hasValue fgs:CoreNetworkDomainInd ] .
+:HSS      rdfs:subClassOf [ a owl:Restriction ; owl:onProperty fgs:belongsToDomain ; owl:hasValue fgs:CoreNetworkDomainInd ] .
+:PCRF     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty fgs:belongsToDomain ; owl:hasValue fgs:CoreNetworkDomainInd ] .
+:SGW_C    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty fgs:belongsToDomain ; owl:hasValue fgs:CoreNetworkDomainInd ] .
+:PGW_C    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty fgs:belongsToDomain ; owl:hasValue fgs:CoreNetworkDomainInd ] .
+:SGW_U    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty fgs:belongsToDomain ; owl:hasValue fgs:CoreNetworkDomainInd ] .
+:PGW_U    rdfs:subClassOf [ a owl:Restriction ; owl:onProperty fgs:belongsToDomain ; owl:hasValue fgs:CoreNetworkDomainInd ] .
+
+#################################################################
+#  SECTION 7 — Semantic relations (CUPS control, part-whole)
+#################################################################
+
+# CUPS control relationships (mirrors 5G UPF controlledBy SMF)
+:SGW_U rdfs:subClassOf [ a owl:Restriction ; owl:onProperty fgs:controlledBy ; owl:someValuesFrom :SGW_C ] .
+:PGW_U rdfs:subClassOf [ a owl:Restriction ; owl:onProperty fgs:controlledBy ; owl:someValuesFrom :PGW_C ] .
+
+# CUPS part-whole (SGW-U logically part of SGW entity, etc.)
+:SGW_U rdfs:subClassOf [ a owl:Restriction ; owl:onProperty fgs:logicallyPartOf ; owl:someValuesFrom :SGW_C ] .
+:PGW_U rdfs:subClassOf [ a owl:Restriction ; owl:onProperty fgs:logicallyPartOf ; owl:someValuesFrom :PGW_C ] .
+
+# eNB hosts cells
+:ENB rdfs:subClassOf [ a owl:Restriction ; owl:onProperty fgs:hostsCell ; owl:someValuesFrom fgs:Cell ] .
+
+# UE served by MME and SGW-C/PGW-C (via servedBy)
+fgs:UserEquipment rdfs:subClassOf [ a owl:Restriction ; owl:onProperty fgs:servedBy ; owl:someValuesFrom :MME ] .

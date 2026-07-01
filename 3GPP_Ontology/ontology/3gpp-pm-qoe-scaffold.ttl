@@ -39,7 +39,9 @@
 
 pm:PerformanceConcept a owl:Class ;
     rdfs:label "Performance Concept"@en , "性能概念"@zh ;
-    rdfs:comment "Any quantity used to describe network performance or user experience."@en .
+    rdfs:comment "Any quantity used to describe network performance or user experience."@en ;
+    fgs:designRationale "本体设计者对所有性能和 QoE 指标的抽象超类。3GPP 分别定义了性能测量（TS 28.552）、KPI（TS 28.554）、QoS 参数（TS 23.501 §5.7）和 QoE 指标（TS 28.405），但没有统一的元类。此类将它们统一到一个层次结构下，实现测量栈的桥接：原始 Counter → 派生 KPI → QoS 目标 → QoE 影响。"@en ;
+    fgs:derivedFrom "TS 28.552 (counters), TS 28.554 (KPIs), TS 23.501 §5.7 (QoS), TS 28.405 (QoE)"@en .
 
 # A.1 Raw measurements / counters (TS 28.552)
 pm:Counter a owl:Class ; rdfs:subClassOf pm:PerformanceConcept ;
@@ -69,6 +71,7 @@ pm:QoSParameter a owl:Class ; rdfs:subClassOf pm:PerformanceConcept ;
     rdfs:comment "A quality-of-service parameter/target negotiated for a QoS flow (5QI and associated characteristics)."@en ;
     dcterms:source "TS 23.501 §5.7" .
 pm:FiveQI            a owl:Class ; rdfs:subClassOf pm:QoSParameter ; rdfs:label "5QI"@en ; rdfs:comment "5G QoS Identifier indexing standardized QoS characteristics."@en ; dcterms:source "TS 23.501 §5.7.2.1, §5.7.4" .
+pm:QCI               a owl:Class ; rdfs:subClassOf pm:QoSParameter ; rdfs:label "QCI"@en ; rdfs:comment "QoS Class Identifier (4G/LTE), the EPC counterpart of 5QI. Indexes standardized QoS characteristics for EPS bearers."@en ; dcterms:source "TS 23.203 §6.1.7" .
 pm:PacketDelayBudget a owl:Class ; rdfs:subClassOf pm:QoSParameter ; rdfs:label "Packet Delay Budget (PDB)"@en ; dcterms:source "TS 23.501 §5.7.3.4" .
 pm:PacketErrorRate   a owl:Class ; rdfs:subClassOf pm:QoSParameter ; rdfs:label "Packet Error Rate (PER)"@en ; dcterms:source "TS 23.501 §5.7.3.5" .
 pm:GuaranteedBitRate a owl:Class ; rdfs:subClassOf pm:QoSParameter ; rdfs:label "Guaranteed Flow Bit Rate (GFBR)"@en ; dcterms:source "TS 23.501 §5.7.3" .
@@ -78,10 +81,18 @@ pm:QoEMetric a owl:Class ; rdfs:subClassOf pm:PerformanceConcept ;
     rdfs:label "QoE Metric"@en , "用户体验指标"@zh ;
     rdfs:comment "A user-perceived experience metric (the user-side end of the propagation chain). Collected via QoE measurement collection or app-level reporting."@en ;
     dcterms:source "TS 28.405, TS 26.247" .
-pm:MeanOpinionScore    a owl:Class ; rdfs:subClassOf pm:QoEMetric ; rdfs:label "Mean Opinion Score (MOS)"@en , "平均意见得分"@zh .
-pm:VideoStallRatio     a owl:Class ; rdfs:subClassOf pm:QoEMetric ; rdfs:label "Video Stalling Ratio"@en , "视频卡顿率"@zh .
-pm:InitialBufferingTime a owl:Class ; rdfs:subClassOf pm:QoEMetric ; rdfs:label "Initial Buffering Time"@en , "初始缓冲时延"@zh .
-pm:WebPageLoadTime     a owl:Class ; rdfs:subClassOf pm:QoEMetric ; rdfs:label "Web Page Load Time"@en , "网页加载时延"@zh .
+pm:MeanOpinionScore    a owl:Class ; rdfs:subClassOf pm:QoEMetric ; rdfs:label "Mean Opinion Score (MOS)"@en , "平均意见得分"@zh ;
+    rdfs:comment "ITU-T P.800 Mean Opinion Score — the canonical subjective quality metric for voice and video. Range 1–5."@en ;
+    dcterms:source "ITU-T Rec. P.800, TS 26.247 §10" .
+pm:VideoStallRatio     a owl:Class ; rdfs:subClassOf pm:QoEMetric ; rdfs:label "Video Stalling Ratio"@en , "视频卡顿率"@zh ;
+    rdfs:comment "Percentage of playback time spent in rebuffering/stalling state."@en ;
+    dcterms:source "TS 26.247 §10.2" .
+pm:InitialBufferingTime a owl:Class ; rdfs:subClassOf pm:QoEMetric ; rdfs:label "Initial Buffering Time"@en , "初始缓冲时延"@zh ;
+    rdfs:comment "Time from play request to first video frame rendered."@en ;
+    dcterms:source "TS 26.247 §10.1" .
+pm:WebPageLoadTime     a owl:Class ; rdfs:subClassOf pm:QoEMetric ; rdfs:label "Web Page Load Time"@en , "网页加载时延"@zh ;
+    rdfs:comment "Time to fully load and render a web page."@en ;
+    dcterms:source "TS 28.405 §5.3" .
 
 #################################################################
 #  SECTION B — Bridge / mount-point properties
@@ -92,28 +103,44 @@ pm:WebPageLoadTime     a owl:Class ; rdfs:subClassOf pm:QoEMetric ; rdfs:label "
 pm:hasPerformanceIndicator a owl:ObjectProperty ;
     rdfs:label "has performance indicator"@en , "具有性能指标"@zh ;
     rdfs:domain fgs:Measurable ; rdfs:range pm:PerformanceConcept ;
-    rdfs:comment "Attaches a counter / KPI / QoS parameter / QoE metric to a network entity or link."@en .
+    rdfs:comment "Attaches a counter / KPI / QoS parameter / QoE metric to a network entity or link."@en ;
+    fgs:designRationale "连接拓扑（fgs:Measurable）与性能（pm:PerformanceConcept）的中心挂载点属性。源自 3GPP 性能测量框架：TS 28.552 定义了哪些计数器在哪些测量对象（NRCellCU、GnbCuUpFunction 等）上采集，TS 28.554 定义了 KPI 的计算方式。此属性将该关系抽象到本体层面，使任意 Measurable（实体、链路、小区、会话、流）都能承载指标。"@en ;
+    fgs:derivedFrom "TS 28.552 §5 (measurement objects), TS 28.554 §4 (KPI definitions)"@en .
 
 pm:measuredOn a owl:ObjectProperty ;
     owl:inverseOf pm:hasPerformanceIndicator ;
     rdfs:label "measured on"@en ;
     rdfs:domain pm:PerformanceConcept ; rdfs:range fgs:Measurable ;
-    rdfs:comment "The network entity or link a performance concept is measured on."@en .
+    rdfs:comment "The network entity or link a performance concept is measured on."@en ;
+    fgs:designRationale "hasPerformanceIndicator 的逆属性——支持从 KPI 反向查询其测量目标。"@en .
 
 pm:aggregatesFrom a owl:ObjectProperty ;
     rdfs:label "aggregates from"@en ;
     rdfs:domain pm:KPI ; rdfs:range pm:Counter ;
-    rdfs:comment "A KPI is computed/aggregated from one or more PM counters (TS 28.554 from TS 28.552)."@en .
+    rdfs:comment "A KPI is computed/aggregated from one or more PM counters (TS 28.554 from TS 28.552)."@en ;
+    fgs:designRationale "直接建模了 TS 28.554 的计算层级：端到端 KPI 从 TS 28.552 定义的 NF 级计数器派生而来。此属性支持根因下钻：'Accessibility KPI 劣化→哪些底层计数器（RRC 建立失败、注册拒绝）贡献了劣化？'"@en ;
+    fgs:derivedFrom "TS 28.554 §4 (KPI computation from counters)"@en .
 
 pm:reflectsQoS a owl:ObjectProperty ;
     rdfs:label "reflects QoS target"@en ;
     rdfs:domain pm:KPI ; rdfs:range pm:QoSParameter ;
-    rdfs:comment "Links a measured KPI to the QoS target it is assessed against."@en .
+    rdfs:comment "Links a measured KPI to the QoS target it is assessed against."@en ;
+    fgs:designRationale "桥接测量世界（KPI）和约定世界（QoS）。TS 23.501 §5.7 将 QoS 参数（5QI、PDB、PER、GFBR）定义为目标值；TS 28.554 定义了实际 KPI 如何对照这些目标测量。此属性支持 SLA 违例检测：'测量时延 KPI > PDB 目标 → QoS 劣化'。"@en ;
+    fgs:derivedFrom "TS 23.501 §5.7 (QoS targets), TS 28.554 (KPI measurement)"@en .
 
 pm:impactsQoE a owl:ObjectProperty ;
     rdfs:label "impacts QoE"@en , "影响用户体验"@zh ;
     rdfs:domain pm:PerformanceConcept ; rdfs:range pm:QoEMetric ;
-    rdfs:comment "A network-side counter/KPI/QoS parameter influences a user-side QoE metric. The key bridge for quality-degradation propagation from network to user experience."@en .
+    rdfs:comment "A network-side counter/KPI/QoS parameter influences a user-side QoE metric. The key bridge for quality-degradation propagation from network to user experience."@en ;
+    fgs:designRationale "从网络到用户体验的关键桥接。源自运维关联关系：例如，DL UE 吞吐量（KPI）下降到视频码率门限以下→视频卡顿率（QoE）上升。这**不是** 3GPP 的形式化关系（3GPP 分别定义网络 KPI 和 QoE 指标，不建模它们的因果链）——它是本体设计者基于业务-QoS 映射的领域知识对网络到用户因果链的建模。"@en ;
+    fgs:derivedFrom "TS 28.552 (network counters), TS 28.554 (network KPIs), TS 28.405 (QoE measurement), TS 26.247 (QoE for video/audio)"@en .
+
+pm:hasQI a owl:ObjectProperty ;
+    rdfs:label "has QoS/QCI identifier"@en , "具有QoS标识"@zh ;
+    rdfs:domain fgs:QoSFlow ; rdfs:range pm:QoSParameter ;
+    rdfs:comment "A QoS Flow is assigned a 5QI (5G) or QCI (4G) value that defines its standardized QoS characteristics (resource type, priority, PDB, PER)."@en ;
+    fgs:designRationale "直接源自 TS 23.501 §5.7.4：每个 QoS Flow 关联一个 5QI。5QI/QCI 值决定了标准化的 QoS 特征（资源类型：GBR/Non-GBR、优先级、PDB、PER）。此属性支持劣化推理：'5QI=7 的流 PDB=100ms → 测量时延=150ms → 超预算 50ms → 劣化'。"@en ;
+    fgs:derivedFrom "TS 23.501 §5.7.4 (5QI standardised characteristics)"@en .
 
 #################################################################
 #  SECTION C — Quality-degradation propagation (seed)
@@ -122,26 +149,32 @@ pm:impactsQoE a owl:ObjectProperty ;
 
 pm:QualityDegradation a owl:Class ;
     rdfs:label "Quality Degradation"@en , "质量劣化"@zh ;
-    rdfs:comment "An event/state in which a performance indicator violates its expected range at a given measurable (entity or link)."@en .
+    rdfs:comment "An event/state in which a performance indicator violates its expected range at a given measurable (entity or link)."@en ;
+    fgs:designRationale "本体设计者的核心劣化概念——传播模型的中心实体。3GPP 定义了故障管理（TS 32.111）和性能门限（TS 28.554），但没有定义跨越两者的正式的'质量劣化'概念。此类桥接故障与性能：当 KPI 违反门限时触发劣化（性能→故障），并沿拓扑传播（故障→影响）。传播规则（pm:propagatesTo over fgs:userPlaneDownstreamOf）是本体设计者对因果故障传播的建模。"@en ;
+    fgs:derivedFrom "TS 28.554 (KPI thresholds), TS 32.111 (alarm/fault management), TS 23.501 §5.7 (QoS degradation concept)"@en .
 
 pm:occursAt a owl:ObjectProperty ;
     rdfs:label "occurs at"@en ;
     rdfs:domain pm:QualityDegradation ; rdfs:range fgs:Measurable ;
-    rdfs:comment "Where the degradation is observed."@en .
+    rdfs:comment "Where the degradation is observed."@en ;
+    fgs:designRationale "将劣化事件锚定在特定的可度量实体或链路上。支持查询：'劣化在拓扑中的何处被观测到？'劣化可通过 propagatesTo 从发生点传播到下游实体。"@en .
 
 pm:affectsIndicator a owl:ObjectProperty ;
     rdfs:label "affects indicator"@en ;
-    rdfs:domain pm:QualityDegradation ; rdfs:range pm:PerformanceConcept .
+    rdfs:domain pm:QualityDegradation ; rdfs:range pm:PerformanceConcept ;
+    fgs:designRationale "将劣化链接到它所表现的具体 KPI/Counter/QoE。单个劣化（如 N3 链路拥塞）可能影响多个指标（DL 吞吐量↓、时延↑、丢包率↑）。"@en .
 
 pm:propagatesTo a owl:ObjectProperty , owl:TransitiveProperty ;
     rdfs:label "propagates to"@en , "传播至"@zh ;
     rdfs:domain pm:QualityDegradation ; rdfs:range pm:QualityDegradation ;
-    rdfs:comment "A degradation causally propagates to another degradation (typically along fgs:downstreamOf in the topology). Transitive. The core relation of the future propagation model."@en .
+    rdfs:comment "A degradation causally propagates to another degradation (typically along fgs:downstreamOf in the topology). Transitive. The core relation of the future propagation model."@en ;
+    fgs:designRationale "核心传播关系。这完全是本体设计者的模型——3GPP 不定义跨实体的劣化传播。直觉：如果 UPF 过载（UPF 处发生劣化），所有下游实体（DN、ServiceProvider）都会劣化，因为用户面流量必须经过 UPF。传播沿 fgs:userPlaneDownstreamOf 链。后续阶段将用 SWRL/SHACL 规则形式化。"@en .
 
 pm:hasRootCause a owl:ObjectProperty ;
     rdfs:label "has root cause"@en , "根因"@zh ;
     rdfs:domain pm:QualityDegradation ; rdfs:range pm:QualityDegradation ;
-    rdfs:comment "Points from an observed degradation to its originating degradation (inverse direction of propagation)."@en .
+    rdfs:comment "Points from an observed degradation to its originating degradation (inverse direction of propagation)."@en ;
+    fgs:designRationale "逆向传播方向——从症状到根因。支持诊断查询：'用户反馈视频卡顿→哪个网元是根因？'这是 propagatesTo 的逆方向，通常沿 fgs:userPlaneUpstreamOf（沿数据路径向后追溯）。"@en .
 
 #################################################################
 #  SECTION D — Illustrative placeholder individuals (EXAMPLES ONLY)

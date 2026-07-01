@@ -1,38 +1,54 @@
-# Modeling Notes — 3GPP 5G SA Topology Ontology
+# Modeling Notes — 3GPP 5G SA & 4G EPC Topology Ontology
 
 Design rationale, competency questions, and example queries for
-`ontology/3gpp-5gs-topology.ttl` (+ `3gpp-pm-qoe-scaffold.ttl`).
+`ontology/3gpp-5gs-topology.ttl` (+ `3gpp-epc-topology.ttl` + `3gpp-pm-qoe-scaffold.ttl`).
 
 ## 1. Key design decisions
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Generation | 5G SA (NG-RAN + 5GC) | Cleanest, most modern, self-contained architecture; spec-concentrated (23.501 / 38.300 / 38.401). |
+| Generation | 5G SA (NG-RAN + 5GC) + 4G LTE/EPC | Two-generation coverage for hybrid deployment scenarios. 5G SA as the primary target; 4G EPC as extension. Spec-concentrated. |
 | Release baseline | Rel-19 (`j`-series) | Latest *stable* release; Rel-20 (`k`) is early draft. Pinned for citation coherence. |
 | Connectivity modelling | Shortcut properties **and** reified `Link` | Shortcut props (with domain/range) make the *standard topology* queryable and constrain valid connections; reified links give a place to hang KPIs/faults per connection. |
-| Reference points | First-class individuals of `ReferencePoint` | Each interface (N2, F1, Uu…) is independently citable and re-usable by links. |
-| Symmetry | `connectedTo` symmetric; specific props are sub-properties | Adjacency symmetry is inferred at the super-property; peer interfaces (Xn, N9, N14, N16) are themselves symmetric. |
-| Direction | Separate `downstreamOf`/`upstreamOf` (transitive) | Physical adjacency is symmetric, but propagation needs an ordered data path. Keep the two concerns distinct. |
-| Transport network | Modelled as first-class (`TransportNetworkElement`, fronthaul/midhaul/backhaul) but marked non-normative | 3GPP treats transport as TNL/out-of-scope, yet it is a real fault source the propagation model must see. |
-| KPI/QoE | Separate module, imported | Keeps the topology TBox stable; lets the indicator layer evolve independently (user requirement: topology first, KPI/QoE as mount points). |
+| Reference points | First-class individuals of `ReferencePoint` | Each interface (N2, F1, Uu, S1-MME, Sx…) is independently citable and re-usable by links. |
+| Symmetry | `connectedTo` symmetric; specific props are sub-properties | Adjacency symmetry is inferred at the super-property; peer interfaces (Xn, N9, N14, N16, X2, S10) are themselves symmetric. |
+| Direction | Separate **user-plane** and **control-plane** downstream/upstream property pairs (transitive) | Physical adjacency is symmetric, but propagation needs ordered paths. User-plane (UE→RAN→UPF→AS) and control-plane (UE→RAN→AMF/SMF→…) are fundamentally different chains. |
+| Part-whole | `hasLogicalComponent` / `logicallyPartOf` (transitive) | gNB contains CU+DU; CUPS entities (SGW-C + SGW-U) form logical SGW. |
+| Control dependency | `controlledBy` (UP→CP, subPropertyOf `dependsOn`) | User-plane functions (UPF, SGW-U, PGW-U) are controlled by control-plane functions (SMF, SGW-C, PGW-C) via PFCP (N4/Sx/Sxb). |
+| 4G EPC modelling | CUPS (TS 23.214) split: SGW-C/U, PGW-C/U | Mirrors 5G SMF/UPF separation; enables consistent propagation model across generations. |
+| Transport network | First-class with 3 segments (`FronthaulTransport`, `MidhaulTransport`, `BackhaulTransport`) | 3GPP treats transport as TNL/out-of-scope, yet it is a real fault source. Three segments have distinct latency/capacity/failure characteristics. |
+| Cell | First-class radio service area (`Cell`) | Most radio-side KPIs are measured at Cell granularity; essential for degradation propagation. |
+| Session layer | `PDUSession` → `QoSFlow` → `DRB` | Bridges topology entities to QoS/QoE metrics; provides concrete attachment points for performance indicators. |
+| KPI/QoE | Separate module, imported | Keeps the topology TBox stable; lets the indicator layer evolve independently. |
 
-## 2. Class taxonomy (topology core)
+## 2. Class taxonomy
+
+### 2.1 5G SA (topology core)
 
 ```
 NetworkEntity
-├── UserEquipment                         (Terminal domain)
-├── NgRanNode ── GNB, NgENB               (Radio access domain)
-│   GNB_CU ── GNB_CU_CP, GNB_CU_UP
-│   GNB_DU,  RadioUnit*
-├── CoreNetworkFunction                   (Core domain)
+├── UserEquipment                             (Terminal domain)
+├── NgRanNode ── GNB, NgENB                   (Radio access domain)
+├── GNB_CU ── GNB_CU_CP, GNB_CU_UP            (logicallyPartOf GNB)
+├── GNB_DU,  RadioUnit*                       (logicallyPartOf GNB)
+├── CoreNetworkFunction                       (Core domain)
 │   ├── ControlPlaneFunction ── AMF, SMF, PCF, UDM, AUSF, NRF, NSSF,
 │   │                            NEF, UDR, UDSF, NWDAF, CHF, BSF, LMF,
 │   │                            SMSF, EASDF, NSACF
-│   ├── UserPlaneFunctionClass ── UPF
-│   └── (proxies) SCP, SEPP ; AF ; N3IWF
-├── TransportNetworkElement*              (Transport domain)
-├── DataNetwork                           (Service domain)
-└── ServiceProvider ── EdgeApplicationServer
+│   ├── UserPlaneFunction ── UPF
+│   └── (proxies) SCP, SEPP
+├── Non3GPPAccessGateway ── N3IWF             (Core domain)
+├── AF                                         (Service domain — NOT a 5GC NF)
+├── TransportNetworkElement                    (Transport domain)
+│   ├── FronthaulTransport*
+│   ├── MidhaulTransport*
+│   └── BackhaulTransport*
+├── Cell                                       (Radio access — KPI granularity)
+├── DataNetwork                                (Service domain)
+└── ServiceProvider ── EdgeApplicationServer   (Service domain)
+
+Session layer (Measurable only, not NetworkEntity):
+  ProtocolDataUnitSession ── QoSFlow ── DataRadioBearer
 
 ReferencePoint
 ├── ControlPlaneReferencePoint  (N1,N2,N4,N5,N7,N8,N10–N16,N22,N23,N28,N33,N35–N37,N40,F1-C)
@@ -44,6 +60,29 @@ Link (reified)  ·  Service / ServiceSession / EndToEndPath / PathSegment
 NetworkDomain (Terminal/RadioAccess/Transport/Core/Service)
 ```
 `*` = non-normative deployment extension.
+
+### 2.2 4G EPC (extension, imports 5G core)
+
+```
+NetworkEntity
+├── EutranNode ── ENB                         (Radio access — hosts Cell)
+├── ... (all 5G SA entities above)
+├── ControlPlaneFunction
+│   ├── ... (5GC NFs)
+│   ├── MME                                   (Core domain)
+│   ├── HSS                                   (Core domain)
+│   ├── PCRF                                  (Core domain)
+│   ├── SGW_C                                 (CUPS — controls SGW-U over Sx)
+│   └── PGW_C                                 (CUPS — controls PGW-U over Sxb)
+└── UserPlaneFunction
+    ├── UPF (5G)
+    ├── SGW_U                                 (CUPS — controlledBy SGW-C)
+    └── PGW_U                                 (CUPS — controlledBy PGW-C)
+
+4G Reference Points:
+  Uu-LTE, S1-MME, S1-U, S11, S5/S8-C, S5/S8-U,
+  S6a, SGi, X2, Gx, S10, Sx, Sxb
+```
 
 ## 3. Competency questions
 

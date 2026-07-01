@@ -7,7 +7,7 @@
 
 | 子文件夹 | 领域 | 简介 |
 |----------|------|------|
-| [`3GPP_Ontology/`](3GPP_Ontology/) | 通信网络 | 基于 3GPP Rel-19 标准的 5G SA 网络拓扑本体（TBox/Schema）+ KPI/QoE 挂载层，作为质差传播本体的基础。OWL 2 Turtle。 |
+| [`3GPP_Ontology/`](3GPP_Ontology/) | 通信网络 | 基于 3GPP Rel-19 的 5G SA + 4G EPC (CUPS) 网络拓扑本体（TBox/Schema），含 Cell / PDU Session / QoS Flow / DRB 会话层，双方向（用户面+控制面）质差传播模型，KPI/QoE 脚手架。OWL 2 Turtle，~1575 triples。 |
 | [`SmartManufacturing/`](SmartManufacturing/) | 智能制造 | 制造设计变更 demo：本体平台（`.codex` skills、`openspec` 规范、`demo/` 前端、设计变更/废料成本走查文档）。 |
 
 ## 约定

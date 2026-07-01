@@ -48,6 +48,19 @@
     rdfs:label "abbreviation"@en ;
     rdfs:subPropertyOf skos:altLabel .
 
+:generation a owl:AnnotationProperty ;
+    rdfs:label "generation"@en , "代际"@zh ;
+    rdfs:comment "The 3GPP generation this entity belongs to: '5G' or '4G'. Used to distinguish entities in mixed-generation deployments."@en .
+
+:designRationale a owl:AnnotationProperty ;
+    rdfs:label "design rationale"@en , "设计理由"@zh ;
+    rdfs:comment "Documents the ontology author's design reasoning for entities that are not directly sourced from a single 3GPP specification clause — e.g., abstractions, groupings, inferred relationships, and modelling choices made to serve the quality-degradation propagation use case. This annotation is the primary mechanism for distinguishing 'ontologist-inferred' content from 'spec-sourced' content."@en .
+
+:derivedFrom a owl:AnnotationProperty ;
+    rdfs:label "derived from"@en , "推导自"@zh ;
+    rdfs:comment "Points to the 3GPP specification clauses, ontology entities, or design patterns from which this term was inferred, composed, or abstracted. Used when a concept does not have a single direct spec counterpart but is grounded in spec concepts."@en ;
+    rdfs:subPropertyOf dcterms:source .
+
 #################################################################
 #  SECTION 1 — Network domains / segments
 #  The end-to-end partitioning the propagation model reasons over:
@@ -56,23 +69,30 @@
 
 :NetworkDomain a owl:Class ;
     rdfs:label "Network Domain"@en , "网络域"@zh ;
-    rdfs:comment "A coarse segment of the end-to-end path. Used to group network entities for quality-degradation propagation across domain boundaries."@en .
+    rdfs:comment "A coarse segment of the end-to-end path. Used to group network entities for quality-degradation propagation across domain boundaries."@en ;
+    :designRationale "本体设计者的端到端路径分段，用于质差传播分析。3GPP 没有定义正式的'域'分类体系；五域划分（终端→无线→传输→核心→服务）是一种建模选择，目的是支持跨域故障定界推理。每个域边界通常对应 SLA 责任的交接点。"@en ;
+    :derivedFrom "3GPP TS 23.501 §4.2.1 (5GS architecture overview, high-level grouping)"@en .
 
 :TerminalDomain        a owl:Class ; rdfs:subClassOf :NetworkDomain ;
     rdfs:label "Terminal Domain"@en , "终端域"@zh ;
-    rdfs:comment "The user-side terminal segment (UE)."@en .
+    rdfs:comment "The user-side terminal segment (UE)."@en ;
+    :designRationale "NetworkDomain 的子域。终端是用户 QoE 最终被感知的地方——从用户角度看，所有劣化传播在此终止（或发源）。"@en .
 :RadioAccessDomain     a owl:Class ; rdfs:subClassOf :NetworkDomain ;
     rdfs:label "Radio Access Domain"@en , "无线接入域"@zh ;
-    rdfs:comment "The air interface and NG-RAN segment (RU/DU/CU, Uu)."@en .
+    rdfs:comment "The air interface and NG-RAN segment (RU/DU/CU, Uu)."@en ;
+    :designRationale "NetworkDomain 的子域。无线接入段有独特的劣化特征（空口衰落、干扰、切换），这些是无线独有的。大多数影响用户的故障发源于此。"@en .
 :TransportDomain       a owl:Class ; rdfs:subClassOf :NetworkDomain ;
     rdfs:label "Transport Domain"@en , "传输网域"@zh ;
-    rdfs:comment "The IP/optical bearer network carrying fronthaul, midhaul and backhaul. Largely transport-layer (TNL); out of normative 3GPP scope but modelled here as first-class for fault propagation."@en .
+    rdfs:comment "The IP/optical bearer network carrying fronthaul, midhaul and backhaul. Largely transport-layer (TNL); out of normative 3GPP scope but modelled here as first-class for fault propagation."@en ;
+    :designRationale "NetworkDomain 的子域。传输网络不在 3GPP 范围内（TNL），但是一个真实的故障域——它将 RAN 与 Core 分隔开，通常由独立团队（传输运维）运营。显式建模它使得故障定位中能够区分'无线问题'和'回传问题'。"@en .
 :CoreNetworkDomain     a owl:Class ; rdfs:subClassOf :NetworkDomain ;
     rdfs:label "Core Network Domain"@en , "核心网域"@zh ;
-    rdfs:comment "The 5G Core (5GC) service-based architecture and user-plane functions."@en .
+    rdfs:comment "The 5G Core (5GC) service-based architecture and user-plane functions."@en ;
+    :designRationale "NetworkDomain 的子域。包含 5GC 和 EPC 核心功能。核心网故障通常是多用户范围的——单个 NF 故障（如 AMF、SMF、MME）影响大量用户，不像 RAN 故障通常仅限于单个小区。"@en .
 :ServiceDomain         a owl:Class ; rdfs:subClassOf :NetworkDomain ;
     rdfs:label "Service Domain"@en , "服务域"@zh ;
-    rdfs:comment "The data network and service provider / application server endpoint."@en .
+    rdfs:comment "The data network and service provider / application server endpoint."@en ;
+    :designRationale "NetworkDomain 的子域。服务域在 3GPP 规范范围外，但它是用户感知 QoE 的测量点。将其与核心域分离使得能够区分'网络故障'和'应用/服务故障'。"@en .
 
 #################################################################
 #  SECTION 2 — Network entity class hierarchy (the nodes)
@@ -80,7 +100,9 @@
 
 :NetworkEntity a owl:Class ;
     rdfs:label "Network Entity"@en , "网元"@zh ;
-    rdfs:comment "Any logical node on the end-to-end service path: a terminal, a RAN node, a core network function, a transport element, the data network, or a service endpoint."@en .
+    rdfs:comment "Any logical node on the end-to-end service path: a terminal, a RAN node, a core network function, a transport element, the data network, or a service endpoint."@en ;
+    :designRationale "本体中所有网络节点的抽象超类。3GPP 在不同规范中使用了多种术语（'network function'、'network element'、'node'、'entity'），但没有统一的元类。此类将它们归到一个概念下，以便在 4G/5G 跨代场景中统一进行连接、域分配和测量挂载的推理。"@en ;
+    :derivedFrom "TS 23.501 §4.2 (5GS architecture — 'network function'), TS 23.401 §4.4 (EPC — 'network element'), TS 38.300 §3 (NG-RAN — 'node')"@en .
 
 ############  2.1 Terminal  ############
 
@@ -148,7 +170,8 @@
     rdfs:label "Radio Unit / RU"@en , "射频单元"@zh ;
     :abbreviation "RU/RRU/AAU" ;
     rdfs:comment "The radio/antenna unit terminating the lower PHY and RF towards the air interface. NOTE: the DU–RU lower-layer split (fronthaul) is not specified by 3GPP (cf. O-RAN/eCPRI); included here as a deployment-reality extension for fault propagation."@en ;
-    skos:scopeNote "Non-normative w.r.t. 3GPP (deployment extension)."@en .
+    skos:scopeNote "非规范扩展——3GPP 未定义，属于部署现实。"@zh ;
+    :designRationale "非规范部署扩展。虽然 3GPP 未标准化 DU 与 RU 之间的低层功能拆分，但实际部署中（O-RAN 7.2x 拆分、CPRI/eCPRI），前传是一个独立的故障域。RU 是最接近天线的实体，射频损伤（VSWR、干扰、功放失效）在此处显现——对根因定位至关重要。没有它，故障模型无法区分'射频问题'和'DU 问题'。"@en .
 
 ############  2.3 5G Core network functions  ############
 
@@ -157,12 +180,18 @@
     rdfs:label "5GC Network Function"@en , "核心网网络功能"@zh ;
     :abbreviation "NF" ;
     rdfs:comment "A 3GPP 5G Core network function. Control-plane NFs interact over the Service-Based Interface (SBI); the user plane is carried by the UPF."@en ;
-    :specRef "TS 23.501" ; :specClause "clause 4.2.2, 6.2" .
+    :specRef "TS 23.501" ; :specClause "clause 4.2.2, 6.2" ;
+    :designRationale "同时包含 5GC 和 EPC 核心网元。从最初仅覆盖 5GC 的范围扩展为也涵盖 4G EPC 扩展模块中声明的 EPC 实体（MME、SGW-C/U、PGW-C/U、HSS、PCRF）。保留 'CoreNetworkFunction' 标签以保持向后兼容；该类服务于两个代际。"@en .
 
 :ControlPlaneFunction a owl:Class ; rdfs:subClassOf :CoreNetworkFunction ;
-    rdfs:label "Control-Plane NF"@en .
-:UserPlaneFunctionClass a owl:Class ; rdfs:subClassOf :CoreNetworkFunction ;
-    rdfs:label "User-Plane NF"@en .
+    rdfs:label "Control-Plane NF"@en ;
+    :designRationale "本体设计者的分组：主要承担信令和控制角色的网络功能（移动性、会话、策略、鉴权、数据管理）。3GPP 没有跨代定义正式的'控制面功能'元类。此分组确保 CUPS 分离（CP 通过 PFCP 控制 UP）在 4G 和 5G 中统一建模。"@en ;
+    :derivedFrom "TS 23.501 §6.2 (5GC NF descriptions — AMF, SMF, PCF, UDM, AUSF, NRF, NSSF, NEF, UDR, NWDAF); TS 23.401 §4.4 (EPC — MME, HSS, PCRF); TS 23.214 §4.2-4.3 (CUPS — SGW-C, PGW-C)"@en .
+
+:UserPlaneFunction a owl:Class ; rdfs:subClassOf :CoreNetworkFunction ;
+    rdfs:label "User-Plane NF"@en ;
+    :designRationale "本体设计者的分组：主要承担用户数据包转发（路由、封装、QoS 执行）的网络功能。3GPP 单独定义了这些功能（UPF、SGW-U、PGW-U），但没有定义正式的'用户面功能'元类。此分组确保 controlledBy 语义（CP→UP，通过 PFCP）跨代一致。"@en ;
+    :derivedFrom "TS 23.501 §6.2.3 (UPF); TS 23.214 §4.2-4.3 (SGW-U, PGW-U)"@en .
 
 # Control-plane functions
 :AMF a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
@@ -197,9 +226,10 @@
     rdfs:label "Network Exposure Function"@en ; :abbreviation "NEF" ;
     rdfs:comment "Securely exposes 5GC capabilities and events to external AFs."@en ;
     :specRef "TS 23.501" ; :specClause "clause 6.2.5" .
-:AF a owl:Class ; rdfs:subClassOf :CoreNetworkFunction ;
+:AF a owl:Class ; rdfs:subClassOf :NetworkEntity ;
     rdfs:label "Application Function"@en , "应用功能"@zh ; :abbreviation "AF" ;
-    rdfs:comment "Interacts with the 5GC to influence traffic routing and policy. A trusted AF reaches the PCF over N5; an external AF reaches the NEF over N33. The 3GPP-side representative of the service provider."@en ;
+    rdfs:comment "Interacts with the 5GC to influence traffic routing and policy. A trusted AF reaches the PCF over N5; an external AF reaches the NEF over N33. The 3GPP-side representative of the service provider. NOTE: AF is NOT a 5GC network function — it is external to the core and belongs to the service domain."@en ;
+    skos:scopeNote "外部服务提供方的 3GPP 侧控制面代理；不是 5GC NF。"@zh ;
     :specRef "TS 23.501" ; :specClause "clause 6.2.10" .
 :UDR a owl:Class ; rdfs:subClassOf :ControlPlaneFunction ;
     rdfs:label "Unified Data Repository"@en ; :abbreviation "UDR" ;
@@ -245,13 +275,18 @@
     rdfs:label "Network Slice Admission Control Function"@en ; :abbreviation "NSACF" ;
     rdfs:comment "Monitors and controls the number of registrations / PDU sessions per network slice."@en ;
     :specRef "TS 23.501" .
-:N3IWF a owl:Class ; rdfs:subClassOf :NetworkEntity ;
+:Non3GPPAccessGateway a owl:Class ; rdfs:subClassOf :NetworkEntity ;
+    rdfs:label "Non-3GPP Access Gateway"@en , "非3GPP接入网关"@zh ;
+    rdfs:comment "Gateway connecting untrusted non-3GPP access networks to the 5G Core. Terminates N2/N3 on behalf of non-3GPP access."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 4.2.8" .
+
+:N3IWF a owl:Class ; rdfs:subClassOf :Non3GPPAccessGateway ;
     rdfs:label "Non-3GPP InterWorking Function"@en ; :abbreviation "N3IWF" ;
     rdfs:comment "Connects untrusted non-3GPP access to the 5GC (terminates N2/N3 on behalf of such access)."@en ;
     :specRef "TS 23.501" ; :specClause "clause 4.2.8" .
 
 # User-plane function
-:UPF a owl:Class ; rdfs:subClassOf :UserPlaneFunctionClass ;
+:UPF a owl:Class ; rdfs:subClassOf :UserPlaneFunction ;
     rdfs:label "User Plane Function"@en , "用户面功能"@zh ; :abbreviation "UPF" ;
     rdfs:comment "Packet routing and forwarding anchor for the user plane: terminates N3 from NG-RAN, N9 between UPFs and N6 towards the data network; enforces QoS and traffic policy from the SMF over N4. The central node of the user-plane data path."@en ;
     :specRef "TS 23.501" ; :specClause "clause 6.2.3" .
@@ -262,7 +297,25 @@
     rdfs:subClassOf :NetworkEntity ;
     rdfs:label "Transport Network Element"@en , "传输网元"@zh ;
     rdfs:comment "A node of the transport (bearer) network — e.g. an IP router, switch or optical transport node — carrying the lower transport layers of 3GPP interfaces. Not specified by 3GPP but essential to end-to-end fault propagation."@en ;
-    skos:scopeNote "Non-normative w.r.t. 3GPP."@en .
+    skos:scopeNote "非规范扩展——3GPP 未定义。"@zh ;
+    :designRationale "非规范运维扩展。3GPP 将传输网络层（TNL）视为其架构规范的范围外（TS 23.501 §4.1：'3GPP 规范不定义传输网络'）。然而从故障传播的角度，传输网络是质差的主要来源之一（拥塞、断纤、时延抖动）。不建模传输层，传播链在 RAN 和 Core 之间就存在盲区。前传、中传和回传具有不同的时延预算和故障特征。"@en .
+
+# Transport segment subclasses (different characteristics for fault propagation)
+:FronthaulTransport a owl:Class ; rdfs:subClassOf :TransportNetworkElement ;
+    rdfs:label "Fronthaul Transport"@en , "前传承载"@zh ;
+    rdfs:comment "Transport segment between DU and RU (lower-layer split). Typically CPRI/eCPRI over dark fibre or WDM."@en ;
+    skos:scopeNote "非规范扩展——3GPP 未定义，属于部署现实。"@zh ;
+    :designRationale "非规范扩展。DU-RU 链路有极严格的时延要求（eCPRI <100 μs），通常为专用光纤或 WDM 链路——此处故障导致立即的小区退服，而非渐进劣化。"@en .
+:MidhaulTransport a owl:Class ; rdfs:subClassOf :TransportNetworkElement ;
+    rdfs:label "Midhaul Transport"@en , "中传承载"@zh ;
+    rdfs:comment "Transport segment between CU and DU (F1 interface). Typically IP/Ethernet backhaul ring."@en ;
+    skos:scopeNote "非规范扩展——3GPP 未定义。"@zh ;
+    :designRationale "非规范扩展。CU-DU 链路同时承载 F1-C（控制面）和 F1-U（用户面），有中等时延要求（亚毫秒至数毫秒）。此处的拥塞或抖动会降低用户吞吐量，但不会导致退服。"@en .
+:BackhaulTransport a owl:Class ; rdfs:subClassOf :TransportNetworkElement ;
+    rdfs:label "Backhaul Transport"@en , "回传承载"@zh ;
+    rdfs:comment "Transport segment between NG-RAN/eNB and the core network (N2/N3 or S1-MME/S1-U). Typically IP/MPLS aggregation and core rings."@en ;
+    skos:scopeNote "非规范扩展——3GPP 未定义。"@zh ;
+    :designRationale "非规范扩展。RAN-Core 链路汇聚多个小区/站点的流量。回传拥塞是导致多小区吞吐量下降的常见根因。区分回传时延和核心网内部时延对故障定位至关重要。"@en .
 
 ############  2.5 Data network & service provider  ############
 
@@ -276,7 +329,9 @@
     rdfs:subClassOf :NetworkEntity ;
     rdfs:label "Service Provider / Application Server"@en , "服务提供方/应用服务器"@zh ; :abbreviation "SP/AS" ;
     rdfs:comment "The application server or content/service endpoint reached through the data network — the far end of the user service flow. Modelled as a network entity so end-to-end QoE can be attributed across the whole path. Its 3GPP-side control representative is the AF."@en ;
-    skos:scopeNote "Endpoint outside 3GPP scope; its 3GPP control-plane proxy is the Application Function (AF)."@en .
+    :specRef "TS 23.501" ; :specClause "clause 5.6.1 (DN), clause 6.2.10 (AF)" ;
+    :designRationale "应用服务器不在 3GPP 规范范围内，但被纳入为网络实体的原因：(a) 它是用户面数据路径的最终终点，(b) 它是用户感知 QoE 的测量点，(c) 传播必须遍历完整的 UE 到 AS 链条。3GPP 侧的控制面代理 AF 提供了规范锚点。"@en ;
+    skos:scopeNote "3GPP 规范范围外的端点；其 3GPP 控制面代理是 Application Function (AF)。"@zh .
 
 :EdgeApplicationServer a owl:Class ;
     rdfs:subClassOf :ServiceProvider ;
@@ -296,11 +351,14 @@
     :specRef "TS 23.501" ; :specClause "clause 4.2.3" .
 
 :ControlPlaneReferencePoint a owl:Class ; rdfs:subClassOf :ReferencePoint ;
-    rdfs:label "Control-Plane Reference Point"@en .
+    rdfs:label "Control-Plane Reference Point"@en ;
+    :designRationale "本体设计者的分类：承载信令/控制面流量的参考点。3GPP 单独定义接口，但没有正式将它们分类为'控制面'和'用户面'。此拆分使控制面特定的传播推理成为可能。"@en .
 :UserPlaneReferencePoint a owl:Class ; rdfs:subClassOf :ReferencePoint ;
-    rdfs:label "User-Plane Reference Point"@en .
+    rdfs:label "User-Plane Reference Point"@en ;
+    :designRationale "本体设计者的分类：承载用户数据流量的参考点。此拆分使用户面特定的传播推理和 KPI 挂载（吞吐量、时延、丢包率）成为可能。"@en .
 :RadioReferencePoint a owl:Class ; rdfs:subClassOf :ReferencePoint ;
-    rdfs:label "Radio / RAN-internal Reference Point"@en .
+    rdfs:label "Radio / RAN-internal Reference Point"@en ;
+    :designRationale "本体设计者对 RAN 内部接口（空口、功能拆分接口、gNB 间接口）的分类。与核心网参考点区分开，因为无线链路的劣化特征（空口 vs. 有线）与有线链路完全不同。"@en .
 :ServiceBasedInterface a owl:Class ; rdfs:subClassOf :ReferencePoint ;
     rdfs:label "Service-Based Interface"@en , "基于服务的接口"@zh ; :abbreviation "SBI" ;
     rdfs:comment "An interface exhibited by an NF within the Service-Based Architecture (e.g. Namf, Nsmf)."@en ;
@@ -413,22 +471,28 @@
 
 :Link a owl:Class ;
     rdfs:label "Link / Connection"@en , "连接"@zh ;
-    rdfs:comment "A reified connection between two network entities that realises a reference point. Reified so that KPIs, capacity, latency and degradation events can be attached to the connection itself (essential for quality-degradation propagation)."@en .
+    rdfs:comment "A reified connection between two network entities that realises a reference point. Reified so that KPIs, capacity, latency and degradation events can be attached to the connection itself (essential for quality-degradation propagation)."@en ;
+    :designRationale "物化（reification）模式：3GPP 将参考点定义为实体之间的逻辑关联，但简单的对象属性无法承载 KPI 或劣化事件。Link 类将连接物化为一个独立实体，从而可以在每一跳上挂载测量（通过 Measurable）和故障传播。这是本体论中成熟的 n 元关系物化模式。"@en ;
+    :derivedFrom "3GPP reference-point concept (TS 23.501 §4.2.3); OWL n-ary relation pattern (W3C SWBP)"@en .
 
 :linkEndpoint a owl:ObjectProperty ;
     rdfs:label "link endpoint"@en ;
     rdfs:domain :Link ; rdfs:range :NetworkEntity ;
-    rdfs:comment "A network entity terminating this link (a link has exactly two endpoints)."@en .
+    rdfs:comment "A network entity terminating this link (a link has exactly two endpoints)."@en ;
+    :designRationale "物化模式：linkEndpoint 将物化的 Link 关联到它的两个端点实体。配合 linkSource/linkTarget 和基数为 2 的约束，这实现了 W3C n 元关系模式，用于承载 KPI 和劣化事件的连接。"@en .
 :linkSource a owl:ObjectProperty ; rdfs:subPropertyOf :linkEndpoint ;
     rdfs:label "link source"@en ; rdfs:domain :Link ; rdfs:range :NetworkEntity ;
-    rdfs:comment "The upstream / initiating endpoint (data-path source side)."@en .
+    rdfs:comment "The upstream / initiating endpoint (data-path source side)."@en ;
+    :designRationale "区分上游端点和下游端点，使沿物化链路的方向性传播成为可能。"@en .
 :linkTarget a owl:ObjectProperty ; rdfs:subPropertyOf :linkEndpoint ;
     rdfs:label "link target"@en ; rdfs:domain :Link ; rdfs:range :NetworkEntity ;
-    rdfs:comment "The downstream / terminating endpoint (data-path sink side)."@en .
+    rdfs:comment "The downstream / terminating endpoint (data-path sink side)."@en ;
+    :designRationale "区分下游端点和上游端点。"@en .
 :realizesReferencePoint a owl:ObjectProperty ;
     rdfs:label "realizes reference point"@en ;
     rdfs:domain :Link ; rdfs:range :ReferencePoint ;
-    rdfs:comment "The reference point (interface type) that this link realises."@en .
+    rdfs:comment "The reference point (interface type) that this link realises."@en ;
+    :designRationale "物化 Link 和它实例化的 3GPP 参考点之间的桥接。一条给定的 link 实例化恰好一种参考点类型（例如，RAN 与 UPF 之间的 N3 链路），从而支持推理：'此链路是 N3 的实例→其上的 KPI 符合 N3/KPI 范围'。"@en .
 
 :Link rdfs:subClassOf
     [ a owl:Restriction ; owl:onProperty :linkEndpoint ; owl:cardinality "2"^^xsd:nonNegativeInteger ] ,
@@ -444,7 +508,8 @@
 :connectedTo a owl:ObjectProperty , owl:SymmetricObjectProperty ;
     rdfs:label "connected to"@en , "连接至"@zh ;
     rdfs:domain :NetworkEntity ; rdfs:range :NetworkEntity ;
-    rdfs:comment "Generic physical/logical adjacency between two network entities. Super-property of all reference-point shortcut properties; symmetric."@en .
+    rdfs:comment "Generic physical/logical adjacency between two network entities. Super-property of all reference-point shortcut properties; symmetric."@en ;
+    :designRationale "本体设计者的通用邻接关系。3GPP 定义了许多具体接口（参考点），但从未定义通用的'connected to'超关系。此属性提供对称闭包：每个 shortcut 属性（hasN3、hasS1U 等）是其子属性，对称对等接口（Xn、N9、X2、S10）显式对称。对称性反映了物理现实——如果 A 连接到 B，B 也连接到 A——而具体子属性编码了拓扑约束（domain/range）。"@en .
 
 # Radio / RAN-internal
 :hasUu a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
@@ -452,7 +517,9 @@
     rdfs:comment "UE attaches to an NG-RAN node over the Uu air interface."@en ; :specRef "TS 38.300" .
 :hasFronthaul a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
     rdfs:label "has fronthaul to"@en ; rdfs:domain :GNB_DU ; rdfs:range :RadioUnit ;
-    rdfs:comment "gNB-DU to Radio Unit (non-normative, deployment extension)."@en .
+    rdfs:comment "gNB-DU to Radio Unit (non-normative, deployment extension)."@en ;
+    skos:scopeNote "非规范扩展——3GPP 未定义。参见 O-RAN Alliance WG4（Open Fronthaul）、eCPRI（CPRI Forum）。"@zh ;
+    :designRationale "非规范部署扩展。DU-RU 链路是空口之前的最后一段有线连接。虽然 3GPP 未定义此接口，但它已被 O-RAN（7.2x 功能拆分）标准化并广泛部署。纳入它至关重要，因为前传故障（CPRI/eCPRI 链路中断、时序失准）是一种独特的故障模式，不显式建模就无法与射频故障区分。"@en .
 :hasF1 a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
     rdfs:label "has F1 to"@en ; rdfs:domain :GNB_CU ; rdfs:range :GNB_DU ;
     rdfs:comment "gNB-CU controls a gNB-DU over F1 (midhaul)."@en ; :specRef "TS 38.401" .
@@ -525,7 +592,46 @@
 # Data network -> service endpoint
 :reachesService a owl:ObjectProperty ; rdfs:subPropertyOf :connectedTo ;
     rdfs:label "reaches service"@en ; rdfs:domain :DataNetwork ; rdfs:range :ServiceProvider ;
-    rdfs:comment "The data network reaches the service provider / application server."@en .
+    rdfs:comment "The data network reaches the service provider / application server."@en ;
+    :designRationale "本体设计者对最后一跳（DN 到 AS 链路）的建模。这是'网络域'和'服务域'的边界。3GPP 将 N6/SGi 定义为 UPF-DN 接口，但不建模 DN 内部到应用服务器的路径。此属性为传播目的闭合了端到端用户面链条。AS 本身在 3GPP 范围外，但它是 QoE 的测量点。"@en .
+
+#################################################################
+#  SECTION 5bis — Direction (upstream/downstream) super-property assignments
+#  Shortcut properties model upstream→downstream direction;
+#  :userPlaneUpstreamOf / :controlPlaneUpstreamOf are their super-properties.
+#  Reasoning: hasN3(RAN,UPF) → userPlaneUpstreamOf(RAN,UPF)
+#             → inverse: userPlaneDownstreamOf(UPF,RAN) ✓
+#################################################################
+
+# --- User-plane shortcut props → userPlaneUpstreamOf ---
+:hasUu        rdfs:subPropertyOf :userPlaneUpstreamOf .
+:hasFronthaul rdfs:subPropertyOf :userPlaneUpstreamOf .
+:hasN3        rdfs:subPropertyOf :userPlaneUpstreamOf .
+:hasN6        rdfs:subPropertyOf :userPlaneUpstreamOf .
+:hasN9        rdfs:subPropertyOf :userPlaneUpstreamOf .
+:reachesService rdfs:subPropertyOf :userPlaneUpstreamOf .
+
+# --- Control-plane shortcut props → controlPlaneUpstreamOf ---
+:hasN1  rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN2  rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN4  rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasE1  rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN11 rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN7  rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN8  rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN10 rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN12 rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN15 rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN22 rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN5  rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN33 rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN40 rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN23 rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN28 rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN35 rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN36 rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:hasN37 rdfs:subPropertyOf :controlPlaneUpstreamOf .
+:registersWith rdfs:subPropertyOf :controlPlaneUpstreamOf .
 
 #################################################################
 #  SECTION 6 — Domain membership & data-path direction
@@ -534,7 +640,8 @@
 :belongsToDomain a owl:ObjectProperty ;
     rdfs:label "belongs to domain"@en , "属于网络域"@zh ;
     rdfs:domain :NetworkEntity ; rdfs:range :NetworkDomain ;
-    rdfs:comment "Assigns a network entity to an end-to-end domain/segment."@en .
+    rdfs:comment "Assigns a network entity to an end-to-end domain/segment."@en ;
+    :designRationale "本体设计者的域分段属性。3GPP 单独定义网络功能，但不将它们正式分组为端到端分段。五域划分使跨域传播推理成为可能——传输域的故障可能同时影响无线域和核心域。域边界与运维责任边界（无线运维、传输运维、核心运维）对齐。"@en .
 
 # Default domain membership (schema-level: every instance of the class is in the domain)
 :UserEquipment           rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :belongsToDomain ; owl:hasValue :TerminalDomainInd ] .
@@ -546,6 +653,8 @@
 :CoreNetworkFunction     rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :belongsToDomain ; owl:hasValue :CoreNetworkDomainInd ] .
 :DataNetwork             rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :belongsToDomain ; owl:hasValue :ServiceDomainInd ] .
 :ServiceProvider         rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :belongsToDomain ; owl:hasValue :ServiceDomainInd ] .
+:AF                      rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :belongsToDomain ; owl:hasValue :ServiceDomainInd ] .
+:N3IWF                   rdfs:subClassOf [ a owl:Restriction ; owl:onProperty :belongsToDomain ; owl:hasValue :CoreNetworkDomainInd ] .
 
 :TerminalDomainInd     a :TerminalDomain ,     owl:NamedIndividual ; rdfs:label "Terminal domain"@en .
 :RadioAccessDomainInd  a :RadioAccessDomain ,  owl:NamedIndividual ; rdfs:label "Radio access domain"@en .
@@ -554,15 +663,102 @@
 :ServiceDomainInd      a :ServiceDomain ,      owl:NamedIndividual ; rdfs:label "Service domain"@en .
 
 # Data-path direction — enables quality-degradation propagation reasoning.
+# Split into user-plane and control-plane directions per their distinct topological paths.
+
+# --- User-plane direction (UE → RAN → UPF → DN → ServiceProvider) ---
+:userPlaneDownstreamOf a owl:ObjectProperty , owl:TransitiveProperty ;
+    rdfs:label "user-plane downstream of"@en , "用户面下游于"@zh ;
+    rdfs:domain :NetworkEntity ; rdfs:range :NetworkEntity ;
+    rdfs:comment "X userPlaneDownstreamOf Y means X is later than Y on the UE→Service user-plane data path. Transitive — if A is downstream of B and B downstream of C, then A is downstream of C."@en ;
+    :designRationale "本体设计者对用户面数据流方向的建模，用于质差传播。3GPP 通过参考点的有序链（Uu→N3→N9→N6）隐式定义了用户面路径，但从不将其建模为显式的有向关系。此属性使推理成为可能：'如果 UPF 劣化，所有下游实体（DN、ServiceProvider）都受影响'。通过对用户面 shortcut 属性（hasN3、hasN6、hasN9、hasS1U、hasS5_S8_U、hasSGi、hasUu）的传递闭包提供了 schema 级的传播拓扑。"@en ;
+    :derivedFrom "3GPP user-plane path: TS 23.501 §5.6.1 (UE→UPF→DN); TS 23.401 §4.4.3 (UE→SGW→PGW→DN)"@en .
+:userPlaneUpstreamOf a owl:ObjectProperty , owl:TransitiveProperty ;
+    owl:inverseOf :userPlaneDownstreamOf ;
+    rdfs:label "user-plane upstream of"@en , "用户面上游于"@zh ;
+    rdfs:domain :NetworkEntity ; rdfs:range :NetworkEntity ;
+    rdfs:comment "Inverse of userPlaneDownstreamOf. Transitive."@en ;
+    :designRationale "用户面传播的逆方向——支持从故障位置向后查找可能受影响的上游依赖方。"@en .
+
+# --- Control-plane direction (UE → RAN → AMF/SMF → UDM/PCF → ...) ---
+:controlPlaneDownstreamOf a owl:ObjectProperty , owl:TransitiveProperty ;
+    rdfs:label "control-plane downstream of"@en , "控制面下游于"@zh ;
+    rdfs:domain :NetworkEntity ; rdfs:range :NetworkEntity ;
+    rdfs:comment "X controlPlaneDownstreamOf Y means X is reached later in the control-plane signalling chain from UE. Transitive."@en ;
+    :designRationale "本体设计者对控制面信令流方向的建模。控制面路径（UE→AMF→SMF→PCF/UDM→... 或 UE→MME→SGW-C→PGW-C→PCRF...）与用户面路径根本不同。控制面故障（如 AMF 失效）不会直接中断已有用户面流，但阻止新会话建立——这是一种不同的劣化模式。分开建模使得能够区分'控制面来源'和'用户面来源'的劣化。"@en ;
+    :derivedFrom "3GPP control-plane paths: TS 23.501 §4.2.3 (5GC reference-point model — N1/N2/N11/N7/N8 chain); TS 23.401 §4.4.2 (EPC control — S1-MME/S11/S5-C/Gx chain)"@en .
+:controlPlaneUpstreamOf a owl:ObjectProperty , owl:TransitiveProperty ;
+    owl:inverseOf :controlPlaneDownstreamOf ;
+    rdfs:label "control-plane upstream of"@en , "控制面上游于"@zh ;
+    rdfs:domain :NetworkEntity ; rdfs:range :NetworkEntity ;
+    rdfs:comment "Inverse of controlPlaneDownstreamOf. Transitive."@en ;
+    :designRationale "控制面传播的逆方向。"@en .
+
+# --- Legacy (deprecated) ---
 :downstreamOf a owl:ObjectProperty , owl:TransitiveProperty ;
     rdfs:label "downstream of"@en , "下游于"@zh ;
     rdfs:domain :NetworkEntity ; rdfs:range :NetworkEntity ;
-    rdfs:comment "X downstreamOf Y means X is later than Y on the UE->Application-Server user-plane data path (i.e. Y forwards user traffic toward X). Transitive."@en .
+    rdfs:comment "DEPRECATED: use userPlaneDownstreamOf or controlPlaneDownstreamOf instead. Retained for backward compatibility."@en ;
+    owl:deprecated true ;
+    :designRationale "v0.2.0 中废弃。最初在 v0.1.0 中定义为统一的质差传播方向属性。后来分析表明用户面和控制面路径是根本不同的链条（UE→UPF→DN vs. UE→AMF→SMF→PCF），无法共享单一方向关系而不混淆两个传播域。拆分为 userPlaneDownstreamOf 和 controlPlaneDownstreamOf。保留 owl:deprecated=true 以向后兼容已有 ABox 或 SPARQL 查询。"@en .
 :upstreamOf a owl:ObjectProperty , owl:TransitiveProperty ;
     owl:inverseOf :downstreamOf ;
     rdfs:label "upstream of"@en , "上游于"@zh ;
     rdfs:domain :NetworkEntity ; rdfs:range :NetworkEntity ;
-    rdfs:comment "Inverse of downstreamOf. Transitive."@en .
+    rdfs:comment "DEPRECATED: use userPlaneUpstreamOf or controlPlaneUpstreamOf instead."@en ;
+    owl:deprecated true ;
+    :designRationale "v0.2.0 中废弃——废弃属性 downstreamOf 的逆属性。废弃原因见 downstreamOf 的 designRationale。"@en .
+
+#################################################################
+#  SECTION 5B — Semantic relation properties (part-whole, control, dependency)
+#################################################################
+
+:dependsOn a owl:ObjectProperty , owl:TransitiveProperty ;
+    rdfs:label "depends on"@en , "依赖于"@zh ;
+    rdfs:domain :NetworkEntity ; rdfs:range :NetworkEntity ;
+    rdfs:comment "Generic dependency: X dependsOn Y means X requires Y to function correctly. Super-property of more specific dependency relations. Transitive."@en ;
+    :designRationale "用于故障传播分析的通用依赖超属性。如果 X dependsOn Y 且 Y 劣化，即使没有直接连接，X 也可能受影响。子属性（controlledBy、servedBy）实例化了 3GPP 架构中存在的具体依赖类型。此模式使得级联故障推理不局限于简单的邻接传播。"@en .
+
+:hasLogicalComponent a owl:ObjectProperty , owl:TransitiveProperty ;
+    rdfs:label "has logical component"@en , "逻辑包含"@zh ;
+    rdfs:domain :NetworkEntity ; rdfs:range :NetworkEntity ;
+    rdfs:comment "A network entity logically contains another (e.g. a gNB has a CU and DU). Transitive."@en ;
+    :designRationale "本体设计者对组合结构的建模。依据：(a) TS 38.401 §6.1——gNB 逻辑架构：'一个 gNB 可由一个 gNB-CU 和一个或多个 gNB-DU 组成'；(b) TS 23.214 §4——CUPS：SGW/PGW 分解为 -C 和 -U 部分。此关系是'逻辑'而非'物理'的，因为 CU 和 DU 可部署在不同站点的不同硬件上。"@en ;
+    :derivedFrom "TS 38.401 §6.1 (gNB split), TS 23.214 §4.2-4.3 (CUPS split)"@en .
+
+:logicallyPartOf a owl:ObjectProperty , owl:TransitiveProperty ;
+    owl:inverseOf :hasLogicalComponent ;
+    rdfs:label "logically part of"@en , "逻辑属于"@zh ;
+    rdfs:domain :NetworkEntity ; rdfs:range :NetworkEntity ;
+    rdfs:comment "Inverse of hasLogicalComponent. A component is logically part of a parent entity."@en ;
+    :designRationale "hasLogicalComponent 的逆属性。支持双向查询：'gNB X 有哪些组件？'（hasLogicalComponent）和'此 DU 属于哪个 gNB？'（logicallyPartOf）。"@en .
+
+:controlledBy a owl:ObjectProperty ; rdfs:subPropertyOf :dependsOn ;
+    rdfs:label "controlled by"@en , "受控于"@zh ;
+    rdfs:domain :UserPlaneFunction ; rdfs:range :ControlPlaneFunction ;
+    rdfs:comment "A user-plane function is controlled by a control-plane function (e.g., UPF controlledBy SMF over N4/PFCP)."@en ;
+    :designRationale "本体设计者对 PFCP（分组转发控制协议）关系的抽象。3GPP 中：SMF 通过 N4 控制 UPF（TS 23.501 §6.2.3），SGW-C 通过 Sx 控制 SGW-U（TS 23.214 §4.2），PGW-C 通过 Sxb 控制 PGW-U（TS 23.214 §4.3）。三者遵循相同的 CP→UP 模式。如果控制面 CP 故障，被控 UP 无法处理新会话——这是故障传播中的关键依赖。"@en ;
+    :derivedFrom "TS 23.501 §6.2.3 (N4 PFCP), TS 23.214 §4.2 (Sx), TS 23.214 §4.3 (Sxb), TS 29.244 (PFCP protocol)"@en .
+
+:servedBy a owl:ObjectProperty ; rdfs:subPropertyOf :dependsOn ;
+    rdfs:label "served by"@en , "被服务"@zh ;
+    rdfs:domain :UserEquipment ; rdfs:range :ControlPlaneFunction ;
+    rdfs:comment "A UE is served by a core control-plane NF (e.g., AMF for mobility, SMF for session)."@en ;
+    :designRationale "源自 3GPP 的'serving NF'概念：AMF 是 UE 的服务 AMF（TS 23.501 §5.3.2.2），MME 是服务 MME（TS 23.401 §4.3.5）。如果服务 NF 故障，UE 失去服务。此依赖比 hasN1/hasN2 更具体——它捕捉的是逻辑服务关系，而非仅信令路径。"@en ;
+    :derivedFrom "TS 23.501 §5.3.2.2 (serving AMF), TS 23.401 §4.3.5 (serving MME)"@en .
+
+:hostsCell a owl:ObjectProperty ;
+    rdfs:label "hosts cell"@en , "下辖小区"@zh ;
+    rdfs:domain :NetworkEntity ; rdfs:range :Cell ;
+    rdfs:comment "A RAN node (gNB-DU or eNB) hosts one or more cells."@en ;
+    :designRationale "源自 3GPP 概念：gNB-DU 管理一个或多个 NR 小区（TS 38.300 §4.4），eNB 管理一个或多个 E-UTRA 小区（TS 36.300 §4.2）。大多数无线 KPI 以小区粒度测量，因此 Cell→RAN 节点的关系对于将小区级故障聚合到节点级根因至关重要。"@en ;
+    :derivedFrom "TS 38.300 §4.4 (NR cell), TS 36.300 §4.2 (E-UTRA cell)"@en .
+
+:belongsToCell a owl:ObjectProperty ;
+    owl:inverseOf :hostsCell ;
+    rdfs:label "belongs to cell"@en , "归属于小区"@zh ;
+    rdfs:domain :NetworkEntity ; rdfs:range :Cell ;
+    rdfs:comment "Inverse of hostsCell. An entity (e.g., a radio sector or UE) belongs to a cell."@en ;
+    :designRationale "hostsCell 的逆属性。支持从小区到其服务 RAN 节点的查询。"@en .
 
 #################################################################
 #  SECTION 7 — End-to-end service path
@@ -571,31 +767,40 @@
 
 :Service a owl:Class ;
     rdfs:label "Service"@en , "业务"@zh ;
-    rdfs:comment "A business/application service consumed by a user (e.g. video streaming, voice, web)."@en .
+    rdfs:comment "A business/application service consumed by a user (e.g. video streaming, voice, web)."@en ;
+    :designRationale "本体设计者对最终用户业务的抽象。3GPP 在架构层面不定义'Service'类（它在更低层操作：PDU Session、QoS Flow、5QI）。此类为 QoE 归属提供业务层面的锚点——当用户说'我的视频卡了'，劣化通过网络各层传播到此 Service。源自业务保障用例。"@en ;
+    :derivedFrom "TS 28.554 (end-to-end KPIs — service-level KPI categories like accessibility and retainability imply a service concept)"@en .
 
 :ServiceSession a owl:Class ;
     rdfs:label "Service Session"@en , "业务会话"@zh ;
-    rdfs:comment "A concrete instance of a user consuming a service (maps to one or more PDU sessions / QoS flows)."@en .
+    rdfs:comment "A concrete instance of a user consuming a service (maps to one or more PDU sessions / QoS flows)."@en ;
+    :designRationale "本体设计者对具体业务实例的建模。约等于用户的一个活跃应用会话。映射到底层 3GPP 协议概念（一个或多个 PDU Session / EPS Bearer），但自身是运维层面的抽象，用于 QoE 根因分析。"@en .
 
 :EndToEndPath a owl:Class ;
     rdfs:label "End-to-End Path"@en , "端到端路径"@zh ;
-    rdfs:comment "The ordered chain of network entities and links a service session traverses, from UE to service provider."@en .
+    rdfs:comment "The ordered chain of network entities and links a service session traverses, from UE to service provider."@en ;
+    :designRationale "本体设计者的路径建模构造。提供劣化沿其传播的拓扑骨架。3GPP 通过参考点链隐式定义用户面路径，但不将路径建模为形式化实体。显式的路径建模使得逐跳故障定位成为可能。"@en .
 
 :PathSegment a owl:Class ;
     rdfs:label "Path Segment"@en , "路径段"@zh ;
     rdfs:comment "One hop of an end-to-end path: a link between two adjacent entities."@en ;
-    rdfs:subClassOf :Link .
+    rdfs:subClassOf :Link ;
+    :designRationale "EndToEndPath 中的一跳。复用 Link 的物化模式；每段携带逐跳 KPI（时延贡献、丢包贡献），汇总后形成端到端路径指标。"@en .
 
 :realizesService a owl:ObjectProperty ;
-    rdfs:label "realizes service"@en ; rdfs:domain :ServiceSession ; rdfs:range :Service .
+    rdfs:label "realizes service"@en ; rdfs:domain :ServiceSession ; rdfs:range :Service ;
+    :designRationale "将具体的 ServiceSession 链接到它实例化的抽象 Service 类型。支持将会话级劣化聚合到业务级 QoE。"@en .
 :hasPath a owl:ObjectProperty ;
-    rdfs:label "has path"@en ; rdfs:domain :ServiceSession ; rdfs:range :EndToEndPath .
+    rdfs:label "has path"@en ; rdfs:domain :ServiceSession ; rdfs:range :EndToEndPath ;
+    :designRationale "将业务会话与其端到端拓扑路径关联。当路径上某条链路检测到劣化时，此属性使反向追溯到受影响会话成为可能。"@en .
 :hasSegment a owl:ObjectProperty ;
-    rdfs:label "has segment"@en ; rdfs:domain :EndToEndPath ; rdfs:range :PathSegment .
+    rdfs:label "has segment"@en ; rdfs:domain :EndToEndPath ; rdfs:range :PathSegment ;
+    :designRationale "将端到端路径分解为逐跳段，用于逐跳劣化分析。"@en .
 :traverses a owl:ObjectProperty ;
     rdfs:label "traverses"@en , "经过"@zh ;
     rdfs:domain :EndToEndPath ; rdfs:range :NetworkEntity ;
-    rdfs:comment "A network entity that the path passes through."@en .
+    rdfs:comment "A network entity that the path passes through."@en ;
+    :designRationale "将路径直接关联到它经过的每个网络实体（无需通过 segment）。支持简单 SPARQL：'查找给定会话路径上的所有实体'。"@en .
 
 #################################################################
 #  SECTION 8 — Hooks for the KPI/QoE layer
@@ -606,10 +811,81 @@
 
 :Measurable a owl:Class ;
     rdfs:label "Measurable"@en , "可度量对象"@zh ;
-    rdfs:comment "Anything a performance indicator can be attached to: a network entity or a link. Super-mount-point for the KPI/QoE layer."@en .
+    rdfs:comment "Anything a performance indicator can be attached to: a network entity or a link. Super-mount-point for the KPI/QoE layer."@en ;
+    :designRationale "本体设计者的挂载点抽象。3GPP 性能测量（TS 28.552）针对特定测量对象（NRCellCU、GnbCuUpFunction 等）定义，但 3GPP 没有定义统一的'可度量'元类。此类使本体能够通过 pm:hasPerformanceIndicator 统一将 KPI 挂载到任意实体或链路，将拓扑模型与不断演进的测量目录解耦。"@en ;
+    :derivedFrom "TS 28.552 §5 (measurement object types); TS 28.554 (KPI computation from counters)"@en .
 :NetworkEntity rdfs:subClassOf :Measurable .
 :Link          rdfs:subClassOf :Measurable .
 
 :measurementSubject a owl:AnnotationProperty ;
     rdfs:label "measurement subject (hook)"@en ;
     rdfs:comment "Marker pointing to where the PM/QoE layer attaches indicators (see :hasPerformanceIndicator in 3gpp-pm-qoe-scaffold.ttl)."@en .
+
+#################################################################
+#  SECTION 9 — Cell (radio service area)
+#################################################################
+
+:Cell a owl:Class ;
+    rdfs:subClassOf :NetworkEntity , :Measurable ;
+    rdfs:label "Cell"@en , "小区"@zh ;
+    rdfs:comment "A radio cell — the fundamental service area unit of a RAN node. Most radio-side KPIs (accessibility, retainability, throughput, PRB utilization) are measured at Cell granularity. A gNB-DU or eNB hosts one or more cells."@en ;
+    :specRef "TS 38.300, TS 36.300" .
+
+:Cell rdfs:subClassOf
+    [ a owl:Restriction ; owl:onProperty :belongsToDomain ; owl:hasValue :RadioAccessDomainInd ] .
+
+#################################################################
+#  SECTION 10 — PDU Session, QoS Flow, and Data Radio Bearer
+#  Session-layer concepts bridging network topology and QoS/QoE.
+#################################################################
+
+:ProtocolDataUnitSession a owl:Class ;
+    rdfs:subClassOf :Measurable ;
+    rdfs:label "PDU Session"@en , "PDU会话"@zh ;
+    rdfs:comment "A Protocol Data Unit (PDU) session established between a UE and a UPF (PSA) for user data connectivity. Maps to one or more QoS Flows. The anchor point for session-level KPIs."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 5.6.1, 5.6.2" .
+
+:QoSFlow a owl:Class ;
+    rdfs:subClassOf :Measurable ;
+    rdfs:label "QoS Flow"@en , "QoS流"@zh ;
+    rdfs:comment "The finest granularity of QoS differentiation within a PDU Session. Each QoS Flow is associated with a 5QI/QCI value and a set of QoS parameters. The primary attachment point for QoS/QoE KPIs."@en ;
+    :specRef "TS 23.501" ; :specClause "clause 5.7.1, 5.7.2" .
+
+:DataRadioBearer a owl:Class ;
+    rdfs:subClassOf :Measurable ;
+    rdfs:label "Data Radio Bearer"@en , "数据无线承载"@zh ;
+    :abbreviation "DRB" ;
+    rdfs:comment "The radio-side bearer carrying one or more QoS Flows over the Uu air interface. Maps QoS requirements to radio resources (RLC/MAC/PHY)."@en ;
+    :specRef "TS 38.300" ; :specClause "clause 6.5" .
+
+# --- Session-layer relationship properties ---
+
+:hasPDUSession a owl:ObjectProperty ;
+    rdfs:label "has PDU session"@en ;
+    rdfs:domain :UserEquipment ; rdfs:range :ProtocolDataUnitSession ;
+    rdfs:comment "A UE has one or more PDU sessions for data connectivity."@en ;
+    :designRationale "源自 TS 23.501 §5.6.1：'PDU Session 是 UE 和 Data Network 之间的关联，提供 PDU 连接服务'。此属性直接建模了该关联。每个 PDU Session 锚定在一个 PSA UPF，并包含一个或多个 QoS Flow。"@en ;
+    :derivedFrom "TS 23.501 §5.6.1 (PDU Session definition)"@en .
+
+:anchoredAt a owl:ObjectProperty ;
+    rdfs:label "anchored at"@en , "锚定于"@zh ;
+    rdfs:domain :ProtocolDataUnitSession ; rdfs:range :UserPlaneFunction ;
+    rdfs:comment "A PDU session is anchored at a user-plane function (UPF for 5G, PGW-U for 4G)."@en ;
+    :designRationale "源自 TS 23.501 §5.6.1：'PDU Session 锚定在 PDU Session Anchor (PSA) UPF'。对于 4G，等价物是 PGW-U。anchoredAt 属性将会话链接到其流量锚点——锚点处的劣化（过载、接口故障）影响该会话中的所有 QoS Flow。"@en ;
+    :derivedFrom "TS 23.501 §5.6.1 (PSA UPF)"@en .
+
+:containsQoSFlow a owl:ObjectProperty ;
+    rdfs:label "contains QoS flow"@en ;
+    rdfs:domain :ProtocolDataUnitSession ; rdfs:range :QoSFlow ;
+    rdfs:comment "A PDU session contains one or more QoS flows."@en ;
+    :designRationale "源自 TS 23.501 §5.7.1：'一个 PDU Session 包含一个或多个 QoS Flow'。每个 QoS Flow 是 QoS 区分的最细粒度——KPI 测量在此级别进行（每 5QI 的吞吐量、时延、丢包率）。"@en ;
+    :derivedFrom "TS 23.501 §5.7.1 (QoS Flow concept)"@en .
+
+:mapsToDRB a owl:ObjectProperty ;
+    rdfs:label "maps to DRB"@en ;
+    rdfs:domain :QoSFlow ; rdfs:range :DataRadioBearer ;
+    rdfs:comment "A QoS flow is mapped to a Data Radio Bearer on the air interface."@en ;
+    :designRationale "源自 TS 38.300 §6.5：QoS Flow 在 SDAP 层映射到 DRB。一个 DRB 在 Uu 空口上承载一个或多个 QoS Flow。无线侧劣化（SINR 差、BLER 高）影响 DRB，进而影响映射到它的所有 QoS Flow。此映射对无线根因到 QoE 的关联至关重要。"@en ;
+    :derivedFrom "TS 38.300 §6.5 (QoS Flow to DRB mapping)"@en .
+
+# :has5QI is declared in 3gpp-pm-qoe-scaffold.ttl (avoids circular import through pm:FiveQI)

@@ -1,15 +1,18 @@
-# 3GPP 5G SA — Quality-Degradation-Propagation Ontology
+# 3GPP 5G SA & 4G EPC — Quality-Degradation-Propagation Ontology
 
 A 3GPP-grounded ontology for **end-to-end quality-degradation propagation** in
-mobile networks. This first release delivers the **foundation**: a TBox/Schema of
-the **5G Standalone network-element connection topology** — from terminal, through
-the radio air interface, transport network, and core network, to the service
-provider — plus the **mounting points** for the KPI / QoE layer to come.
+mobile networks. This release delivers:
+
+- **5G SA topology TBox** (NG-RAN + 5GC) — from terminal to service provider
+- **4G EPC topology TBox** (E-UTRAN + EPC, CUPS model) — extending to LTE
+- **Session-layer concepts** (PDU Session, QoS Flow, DRB) for KPI/QoE attachment
+- **KPI / QoE scaffold** — performance indicator hierarchy + degradation propagation seed
+- **Dual-direction path model** — separate user-plane and control-plane downstream chains
 
 > Scope decisions for this release:
-> **Generation** = 5G SA (NG-RAN + 5GC) · **Format** = OWL 2 Turtle ·
+> **Generation** = 5G SA + 4G LTE/EPC · **Format** = OWL 2 Turtle ·
 > **Standards** = key Rel-19 specs downloaded + indexed · **Coverage** = full
-> topology TBox + KPI/QoE placeholder scaffold.
+> topology TBox (both generations) + Cell / PDU Session / QoS Flow + KPI/QoE scaffold.
 
 ---
 
@@ -19,8 +22,10 @@ provider — plus the **mounting points** for the KPI / QoE layer to come.
 3GPP_Ontology/
 ├── README.md                         ← this file
 ├── ontology/
-│   ├── 3gpp-5gs-topology.ttl         ← CORE TBox: network entities, reference
-│   │                                    points, links, domains, e2e path
+│   ├── 3gpp-5gs-topology.ttl         ← CORE TBox: 5G SA network entities, reference
+│   │                                    points, links, domains, e2e path, Cell,
+│   │                                    PDUSession/QoSFlow/DRB
+│   ├── 3gpp-epc-topology.ttl         ← 4G EPC CUPS extension (imports core)
 │   └── 3gpp-pm-qoe-scaffold.ttl      ← KPI/QoE mount-point layer (imports core)
 ├── specs/
 │   ├── INDEX.md                      ← provenance: spec no / version / clauses
@@ -30,12 +35,13 @@ provider — plus the **mounting points** for the KPI / QoE layer to come.
     └── modeling-notes.md            ← design rationale, competency questions, SPARQL
 ```
 
-## 2. The two ontology modules
+## 2. The three ontology modules
 
 | Module | IRI | Contents |
 |--------|-----|----------|
-| Topology (core) | `http://3gpp-ontology.org/ns/5gs#` (prefix `fgs:`) | 56 classes, 40 object properties. Network entities, reference points, reified links, network domains, data-path direction, end-to-end service path. |
-| PM/QoE scaffold | `http://3gpp-ontology.org/ns/pm#` (prefix `pm:`) | KPI/QoS/QoE category classes + bridge properties + degradation-propagation seed. `owl:imports` the core. |
+| Topology (5G SA core) | `http://3gpp-ontology.org/ns/5gs#` (prefix `fgs:`) | ~70 classes, ~50 object properties. 5G SA network entities, reference points, reified links, Cell, PDUSession/QoSFlow/DRB, network domains, dual-direction data-path model (user-plane + control-plane), part-whole semantics. |
+| Topology (4G EPC extension) | same IRI (prefix `fgs:`) | ~12 classes, ~14 shortcut properties. 4G E-UTRAN + EPC CUPS entities (eNB, MME, SGW-C/U, PGW-C/U, HSS, PCRF), reference points (S1-MME, S1-U, S5/S8, S6a, S11, SGi, X2, Gx, S10, Sx, Sxb, Uu-LTE). `owl:imports` the core. |
+| PM/QoE scaffold | `http://3gpp-ontology.org/ns/pm#` (prefix `pm:`) | KPI/QoS/QoE category classes (incl. 4G QCI) + bridge properties + degradation-propagation seed + hasQI property. `owl:imports` the core. |
 
 > ⚠️ The base IRIs are working placeholders — rename to your own domain before publishing.
 
