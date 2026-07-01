@@ -7,7 +7,13 @@
  * derivedFrom, scopeNote).
  */
 
-import type { OntologyEntity, OntologyObjectProperty, Provenance } from "../lib/types";
+import type {
+  DomainColorScheme,
+  OntologyEntity,
+  OntologyObjectProperty,
+  ProvenancePanelLabels,
+  ProvenanceLevel,
+} from "../lib/types";
 import { DEFAULT_COLOR_SCHEME } from "../lib/colors";
 
 /** Safely narrow OntologyEntity to OntologyObjectProperty */
@@ -18,14 +24,46 @@ function asProp(entity: OntologyEntity): OntologyObjectProperty | null {
 
 // ─── Helpers ────────────────────────────────────────────────────
 
-function LevelBadge({ level }: { level: string }) {
-  const color = DEFAULT_COLOR_SCHEME.provenanceColors[level as keyof typeof DEFAULT_COLOR_SCHEME.provenanceColors] ?? "#6b7280";
+const DEFAULT_LEVEL_LABELS: Record<ProvenanceLevel, string> = {
+  L1: "L1 · direct reference",
+  L2: "L2 · inferred model",
+  L3: "L3 · non-normative extension",
+};
 
-  const labels: Record<string, string> = {
-    L1: "L1 · spec 直接引用",
-    L2: "L2 · 本体推导",
-    L3: "L3 · 非规范扩展",
-  };
+const DEFAULT_PANEL_LABELS: ProvenancePanelLabels = {
+  closeTitle: "Close",
+  basicInfo: "Basic Info",
+  iri: "IRI",
+  abbreviation: "Abbreviation",
+  type: "Type",
+  classType: "Class (owl:Class)",
+  objectPropertyType: "Object property (owl:ObjectProperty)",
+  individualType: "Individual (NamedIndividual)",
+  secondaryName: "Secondary name",
+  description: "Description",
+  provenance: "Provenance",
+  specRef: "Spec reference",
+  specClause: "Clause",
+  source: "Source",
+  derivedFrom: "Derived from",
+  designRationale: "Design rationale",
+  scopeNote: "Scope note",
+  topology: "Topology",
+  domain: "domain",
+  range: "range",
+  subPropertyOf: "subPropertyOf",
+};
+
+function LevelBadge({
+  level,
+  colorScheme,
+  labels,
+}: {
+  level: ProvenanceLevel;
+  colorScheme: DomainColorScheme;
+  labels: Record<ProvenanceLevel, string>;
+}) {
+  const color = colorScheme.provenanceColors[level] ?? colorScheme.defaultNodeColor;
 
   return (
     <span
@@ -42,24 +80,34 @@ function LevelBadge({ level }: { level: string }) {
 export interface ProvenancePanelProps {
   /** Selected entity, or null if nothing selected */
   entity: OntologyEntity | null;
+  /** Optional colour scheme for provenance level markers */
+  colorScheme?: DomainColorScheme;
+  /** UI text overrides */
+  labels?: Partial<ProvenancePanelLabels>;
+  /** Provenance level label overrides */
+  levelLabels?: Partial<Record<ProvenanceLevel, string>>;
   /** Called to close/deselect */
   onClose: () => void;
 }
 
-export function ProvenancePanel({ entity, onClose }: ProvenancePanelProps) {
+export function ProvenancePanel({
+  entity,
+  colorScheme = DEFAULT_COLOR_SCHEME,
+  labels: labelOverrides = {},
+  levelLabels: levelLabelOverrides = {},
+  onClose,
+}: ProvenancePanelProps) {
   if (!entity) {
-    return (
-      <div className="prov-panel prov-panel--empty">
-        <p className="prov-panel__hint">点击节点或边查看溯源证据</p>
-      </div>
-    );
+    return null;
   }
 
+  const labels = { ...DEFAULT_PANEL_LABELS, ...labelOverrides };
+  const levelLabels = { ...DEFAULT_LEVEL_LABELS, ...levelLabelOverrides };
   const p = entity.provenance;
   const eKind = entity.kind;
-  const isIndividual = eKind === "individual";
   const isClass = eKind === "class";
-  const isProp = eKind === "objectProperty";
+  const prop = asProp(entity);
+  const isProp = Boolean(prop);
 
   return (
     <div className="prov-panel">
@@ -67,33 +115,41 @@ export function ProvenancePanel({ entity, onClose }: ProvenancePanelProps) {
         <h2 className="prov-panel__title">
           {entity.labelZh ?? entity.label}
         </h2>
-        <button className="prov-panel__close" onClick={onClose} title="关闭">
+        <button
+          className="prov-panel__close"
+          onClick={onClose}
+          title={labels.closeTitle}
+        >
           ×
         </button>
       </div>
 
       {/* Entity metadata */}
       <section className="prov-section">
-        <h3 className="prov-section__title">基本信息</h3>
+        <h3 className="prov-section__title">{labels.basicInfo}</h3>
         <dl className="prov-dl">
-          <dt>IRI</dt>
+          <dt>{labels.iri}</dt>
           <dd className="prov-iri">{entity.iri}</dd>
 
           {entity.abbreviation && (
             <>
-              <dt>缩写</dt>
+              <dt>{labels.abbreviation}</dt>
               <dd>{entity.abbreviation}</dd>
             </>
           )}
 
-          <dt>类型</dt>
+          <dt>{labels.type}</dt>
           <dd>
-            {isClass ? "类 (owl:Class)" : isProp ? "对象属性 (owl:ObjectProperty)" : "个体 (NamedIndividual)"}
+            {isClass
+              ? labels.classType
+              : isProp
+                ? labels.objectPropertyType
+                : labels.individualType}
           </dd>
 
           {entity.labelZh && entity.labelZh !== entity.label && (
             <>
-              <dt>中文名</dt>
+              <dt>{labels.secondaryName}</dt>
               <dd>{entity.labelZh}</dd>
             </>
           )}
@@ -103,41 +159,45 @@ export function ProvenancePanel({ entity, onClose }: ProvenancePanelProps) {
       {/* Comment */}
       {entity.comment && (
         <section className="prov-section">
-          <h3 className="prov-section__title">描述</h3>
+          <h3 className="prov-section__title">{labels.description}</h3>
           <p className="prov-comment">{entity.comment}</p>
         </section>
       )}
 
       {/* Provenance */}
       <section className="prov-section">
-        <h3 className="prov-section__title">溯源证据</h3>
-        <LevelBadge level={p.level} />
+        <h3 className="prov-section__title">{labels.provenance}</h3>
+        <LevelBadge
+          level={p.level}
+          colorScheme={colorScheme}
+          labels={levelLabels}
+        />
 
         <dl className="prov-dl">
           {p.specRef && (
             <>
-              <dt>Spec 引用</dt>
+              <dt>{labels.specRef}</dt>
               <dd className="prov-source">{p.specRef}</dd>
             </>
           )}
 
           {p.specClause && (
             <>
-              <dt>条款</dt>
+              <dt>{labels.specClause}</dt>
               <dd className="prov-source">{p.specClause}</dd>
             </>
           )}
 
           {p.source && !p.specRef && (
             <>
-              <dt>数据源</dt>
+              <dt>{labels.source}</dt>
               <dd className="prov-source">{p.source}</dd>
             </>
           )}
 
           {p.derivedFrom && p.derivedFrom.length > 0 && (
             <>
-              <dt>推导自</dt>
+              <dt>{labels.derivedFrom}</dt>
               <dd>
                 <ul className="prov-list">
                   {p.derivedFrom.map((d, i) => (
@@ -150,14 +210,14 @@ export function ProvenancePanel({ entity, onClose }: ProvenancePanelProps) {
 
           {p.designRationale && (
             <>
-              <dt>设计理由</dt>
+              <dt>{labels.designRationale}</dt>
               <dd className="prov-rationale">{p.designRationale}</dd>
             </>
           )}
 
           {p.scopeNote && (
             <>
-              <dt>范围说明</dt>
+              <dt>{labels.scopeNote}</dt>
               <dd className="prov-scope">{p.scopeNote}</dd>
             </>
           )}
@@ -165,28 +225,28 @@ export function ProvenancePanel({ entity, onClose }: ProvenancePanelProps) {
       </section>
 
       {/* For object properties: extra topology info */}
-      {isProp && asProp(entity) && (
+      {prop && (
         <section className="prov-section">
-          <h3 className="prov-section__title">拓扑约束</h3>
+          <h3 className="prov-section__title">{labels.topology}</h3>
           <dl className="prov-dl">
-            {asProp(entity)!.domainIRI && (
+            {prop.domainIRI && (
               <>
-                <dt>domain</dt>
-                <dd className="prov-iri">{asProp(entity)!.domainIRI!.split("#").pop()}</dd>
+                <dt>{labels.domain}</dt>
+                <dd className="prov-iri">{prop.domainIRI.split("#").pop()}</dd>
               </>
             )}
-            {asProp(entity)!.rangeIRI && (
+            {prop.rangeIRI && (
               <>
-                <dt>range</dt>
-                <dd className="prov-iri">{asProp(entity)!.rangeIRI!.split("#").pop()}</dd>
+                <dt>{labels.range}</dt>
+                <dd className="prov-iri">{prop.rangeIRI.split("#").pop()}</dd>
               </>
             )}
-            {asProp(entity)!.parentIRIs.length > 0 && (
+            {prop.parentIRIs.length > 0 && (
               <>
-                <dt>subPropertyOf</dt>
+                <dt>{labels.subPropertyOf}</dt>
                 <dd>
                   <ul className="prov-list">
-                    {asProp(entity)!.parentIRIs.map((p) => (
+                    {prop.parentIRIs.map((p) => (
                       <li key={p} className="prov-iri">{p.split("#").pop()}</li>
                     ))}
                   </ul>

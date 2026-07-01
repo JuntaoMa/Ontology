@@ -18,7 +18,7 @@ export type ProvenanceLevel = "L1" | "L2" | "L3";
  * Provenance record for a single ontology entity.
  *
  * L1 — Direct spec reference: specRef + specClause point to a
- *      single 3GPP (or other standard) clause.
+ *      single standard or source clause.
  * L2 — Ontologist inference/abstraction: designRationale explains
  *      the reasoning; derivedFrom lists supporting spec clauses.
  * L3 — Non-normative operational extension: scopeNote marks the
@@ -27,7 +27,7 @@ export type ProvenanceLevel = "L1" | "L2" | "L3";
  */
 export interface Provenance {
   level: ProvenanceLevel;
-  specRef?: string;          // L1: e.g. "TS 23.501"
+  specRef?: string;          // L1: e.g. a standard or source identifier
   specClause?: string;       // L1: e.g. "clause 6.2.3"
   designRationale?: string;  // L2/L3: design reasoning (localised)
   derivedFrom?: string[];    // L2: supporting spec clauses / entities
@@ -63,7 +63,7 @@ export interface OntologyClass extends OntologyEntity {
   parentIRIs: string[];
   /** Domain membership IRI, if declared via belongsToDomain */
   domainIRI?: string;
-  /** 3GPP generation tag ("4G" | "5G"), if applicable */
+  /** Generation/version tag, if applicable */
   generation?: string;
 }
 
@@ -84,7 +84,7 @@ export interface OntologyObjectProperty extends OntologyEntity {
   direction?: "userPlane" | "controlPlane" | "generic";
 }
 
-/** A named individual (e.g. a ReferencePoint instance) */
+/** A named individual selected by parser configuration */
 export interface OntologyIndividual extends OntologyEntity {
   kind: "individual";
   /** Types (rdf:type targets) */
@@ -103,6 +103,47 @@ export interface OntologyGraphData {
   classes: OntologyClass[];
   objectProperties: OntologyObjectProperty[];
   individuals: OntologyIndividual[];
+}
+
+// ─── Parser configuration ───────────────────────────────────────
+
+export interface OntologyVocabulary {
+  /** Object/data property used to assign a class to a visual domain */
+  domainPropertyIRI?: string;
+  /** Data property used to assign a class to a generation/version tag */
+  generationPropertyIRI?: string;
+  /** Data property used to read a compact abbreviation */
+  abbreviationPropertyIRI?: string;
+  /** Provenance property for a normative/reference source */
+  specRefPropertyIRI?: string;
+  /** Provenance property for a reference clause/section */
+  specClausePropertyIRI?: string;
+  /** Provenance property for modeling rationale */
+  designRationalePropertyIRI?: string;
+  /** Provenance property for source derivation links */
+  derivedFromPropertyIRI?: string;
+  /** Provenance property for out-of-scope/non-normative notes */
+  scopeNotePropertyIRI?: string;
+  /** Alternative generic source property */
+  sourcePropertyIRI?: string;
+}
+
+export interface OntologyParseOptions {
+  /** Base IRI used by the Turtle parser */
+  baseIRI?: string;
+  /** Fallback title when no owl:Ontology title is present */
+  ontologyTitleFallback?: string;
+  /** Secondary label language copied into labelZh for existing consumers */
+  secondaryLabelLang?: string;
+  /** Domain/provenance/application vocabulary predicates */
+  vocabulary?: OntologyVocabulary;
+  /** Type IRI substrings that should be rendered as named individuals */
+  individualTypeMatchers?: string[];
+  /** Super-property IRI substrings used for edge direction styling */
+  propertyDirectionMatchers?: {
+    userPlane?: string[];
+    controlPlane?: string[];
+  };
 }
 
 // ─── Graph node / edge (React Flow compatible) ──────────────────
@@ -153,4 +194,39 @@ export interface GraphFilters {
   provenanceLevels: ProvenanceLevel[];
   /** Free-text search (matches label, localName, abbreviation, comment) */
   search: string;
+}
+
+// ─── UI configuration ───────────────────────────────────────────
+
+export interface FilterBarLabels {
+  search: string;
+  searchPlaceholder: string;
+  domains: string;
+  generations: string;
+  provenanceLevels: string;
+  all: string;
+}
+
+export interface ProvenancePanelLabels {
+  closeTitle: string;
+  basicInfo: string;
+  iri: string;
+  abbreviation: string;
+  type: string;
+  classType: string;
+  objectPropertyType: string;
+  individualType: string;
+  secondaryName: string;
+  description: string;
+  provenance: string;
+  specRef: string;
+  specClause: string;
+  source: string;
+  derivedFrom: string;
+  designRationale: string;
+  scopeNote: string;
+  topology: string;
+  domain: string;
+  range: string;
+  subPropertyOf: string;
 }

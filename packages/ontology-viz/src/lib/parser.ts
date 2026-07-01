@@ -14,6 +14,8 @@ import type {
   OntologyClass,
   OntologyObjectProperty,
   OntologyIndividual,
+  OntologyParseOptions,
+  OntologyVocabulary,
   Provenance,
   ProvenanceLevel,
 } from "./types";
@@ -53,8 +55,6 @@ function localName(iri: string): string {
 // ─── Namespace IRIs (as strings) ─────────────────────────────────
 
 const NS = {
-  FGS:  "http://3gpp-ontology.org/ns/5gs#",
-  PM:   "http://3gpp-ontology.org/ns/pm#",
   RDF:  "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
   RDFS: "http://www.w3.org/2000/01/rdf-schema#",
   OWL:  "http://www.w3.org/2002/07/owl#",
@@ -64,6 +64,40 @@ const NS = {
 
 function iri(ns: keyof typeof NS, local: string): string {
   return NS[ns] + local;
+}
+
+const DEFAULT_VOCABULARY: OntologyVocabulary = {
+  scopeNotePropertyIRI: iri("SKOS", "scopeNote"),
+  sourcePropertyIRI: iri("DCT", "source"),
+};
+
+const DEFAULT_PARSE_OPTIONS: Required<
+  Omit<OntologyParseOptions, "vocabulary" | "propertyDirectionMatchers">
+> & {
+  vocabulary: OntologyVocabulary;
+  propertyDirectionMatchers: NonNullable<OntologyParseOptions["propertyDirectionMatchers"]>;
+} = {
+  baseIRI: "urn:ontology",
+  ontologyTitleFallback: "Ontology",
+  secondaryLabelLang: "zh",
+  vocabulary: DEFAULT_VOCABULARY,
+  individualTypeMatchers: [],
+  propertyDirectionMatchers: {},
+};
+
+function resolveParseOptions(options: OntologyParseOptions = {}) {
+  return {
+    ...DEFAULT_PARSE_OPTIONS,
+    ...options,
+    vocabulary: {
+      ...DEFAULT_PARSE_OPTIONS.vocabulary,
+      ...options.vocabulary,
+    },
+    propertyDirectionMatchers: {
+      ...DEFAULT_PARSE_OPTIONS.propertyDirectionMatchers,
+      ...options.propertyDirectionMatchers,
+    },
+  };
 }
 
 // ─── Store helpers ───────────────────────────────────────────────
@@ -119,13 +153,29 @@ function getSubjects(store: N3Store, pred: string, obj: string): string[] {
 
 // ─── Provenance extraction ──────────────────────────────────────
 
-function extractProvenance(store: N3Store, subject: string): Provenance {
-  const specRef = getString(store, subject, iri("FGS", "specRef"));
-  const specClause = getString(store, subject, iri("FGS", "specClause"));
-  const designRationale = getString(store, subject, iri("FGS", "designRationale"));
-  const derivedFrom = getStrings(store, subject, iri("FGS", "derivedFrom"));
-  const scopeNote = getString(store, subject, iri("SKOS", "scopeNote"));
-  const source = getString(store, subject, iri("DCT", "source"));
+function extractProvenance(
+  store: N3Store,
+  subject: string,
+  vocabulary: OntologyVocabulary,
+): Provenance {
+  const specRef = vocabulary.specRefPropertyIRI
+    ? getString(store, subject, vocabulary.specRefPropertyIRI)
+    : undefined;
+  const specClause = vocabulary.specClausePropertyIRI
+    ? getString(store, subject, vocabulary.specClausePropertyIRI)
+    : undefined;
+  const designRationale = vocabulary.designRationalePropertyIRI
+    ? getString(store, subject, vocabulary.designRationalePropertyIRI)
+    : undefined;
+  const derivedFrom = vocabulary.derivedFromPropertyIRI
+    ? getStrings(store, subject, vocabulary.derivedFromPropertyIRI)
+    : [];
+  const scopeNote = vocabulary.scopeNotePropertyIRI
+    ? getString(store, subject, vocabulary.scopeNotePropertyIRI)
+    : undefined;
+  const source = vocabulary.sourcePropertyIRI
+    ? getString(store, subject, vocabulary.sourcePropertyIRI)
+    : undefined;
 
   let level: ProvenanceLevel;
   if (specRef || specClause) {
@@ -151,10 +201,14 @@ function extractProvenance(store: N3Store, subject: string): Provenance {
 
 // ─── Class extraction ───────────────────────────────────────────
 
-function extractClasses(store: N3Store): OntologyClass[] {
+function extractClasses(
+  store: N3Store,
+  options: ReturnType<typeof resolveParseOptions>,
+): OntologyClass[] {
   const classes: OntologyClass[] = [];
   const classIRIs = new Set<string>();
   const bnIndex = buildBlankNodeIndex(store);
+  const { vocabulary } = options;
 
   for (const s of getSubjects(store, iri("RDF", "type"), iri("OWL", "Class"))) {
     classIRIs.add(s);
@@ -168,19 +222,21 @@ function extractClasses(store: N3Store): OntologyClass[] {
 
     const parents = getIRIs(store, iriStr, iri("RDFS", "subClassOf"))
       .filter((p) => !p.includes("w3.org"));
-    const domainIRI = getIRI(store, iriStr, iri("FGS", "belongsToDomain"));
+    const domainIRI = vocabulary.domainPropertyIRI
+      ? getIRI(store, iriStr, vocabulary.domainPropertyIRI)
+      : undefined;
 
     // Resolve domain membership from owl:hasValue restrictions
     let resolvedDomain: string | undefined = domainIRI ?? undefined;
-    if (!resolvedDomain) {
+    if (!resolvedDomain && vocabulary.domainPropertyIRI) {
       // Find blank node restrictions: iriStr rdfs:subClassOf _:bn .
-      // _:bn owl:onProperty fgs:belongsToDomain ; owl:hasValue fgs:XxxDomainInd .
+      // _:bn owl:onProperty <domainPropertyIRI> ; owl:hasValue <domainIndividual> .
       const superClassObjs = store.getObjects(iriStr, iri("RDFS", "subClassOf"), null);
       for (const scObj of superClassObjs) {
         if (scObj.termType !== "BlankNode") continue;
         const bnId = scObj.value;
         const onPropValues = getFromBN(bnIndex, bnId, iri("OWL", "onProperty"));
-        if (onPropValues.includes(iri("FGS", "belongsToDomain"))) {
+        if (onPropValues.includes(vocabulary.domainPropertyIRI)) {
           const hasValValues = getFromBN(bnIndex, bnId, iri("OWL", "hasValue"));
           if (hasValValues.length > 0) {
             resolvedDomain = hasValValues[0];
@@ -190,17 +246,21 @@ function extractClasses(store: N3Store): OntologyClass[] {
       }
     }
 
-    const genVal = getString(store, iriStr, iri("FGS", "generation"));
+    const genVal = vocabulary.generationPropertyIRI
+      ? getString(store, iriStr, vocabulary.generationPropertyIRI)
+      : undefined;
 
     classes.push({
       iri: iriStr,
       localName: localName(iriStr),
       kind: "class",
       label: getLabel(store, iriStr) ?? localName(iriStr),
-      labelZh: getLabel(store, iriStr, "zh"),
-      abbreviation: getString(store, iriStr, iri("FGS", "abbreviation")),
+      labelZh: getLabel(store, iriStr, options.secondaryLabelLang),
+      abbreviation: vocabulary.abbreviationPropertyIRI
+        ? getString(store, iriStr, vocabulary.abbreviationPropertyIRI)
+        : undefined,
       comment: getString(store, iriStr, iri("RDFS", "comment")),
-      provenance: extractProvenance(store, iriStr),
+      provenance: extractProvenance(store, iriStr, vocabulary),
       parentIRIs: parents,
       domainIRI: resolvedDomain,
       generation: genVal ?? undefined,
@@ -246,9 +306,13 @@ function inheritClassDomains(classes: OntologyClass[]): OntologyClass[] {
 
 // ─── Object property extraction ─────────────────────────────────
 
-function extractObjectProperties(store: N3Store): OntologyObjectProperty[] {
+function extractObjectProperties(
+  store: N3Store,
+  options: ReturnType<typeof resolveParseOptions>,
+): OntologyObjectProperty[] {
   const props: OntologyObjectProperty[] = [];
   const propIRIs = new Set<string>();
+  const { propertyDirectionMatchers, vocabulary } = options;
 
   for (const s of getSubjects(store, iri("RDF", "type"), iri("OWL", "ObjectProperty"))) {
     propIRIs.add(s);
@@ -268,8 +332,11 @@ function extractObjectProperties(store: N3Store): OntologyObjectProperty[] {
     // Determine direction from super-property assignments
     let direction: "userPlane" | "controlPlane" | "generic" | undefined;
     for (const p of parents) {
-      if (p.includes("userPlane")) direction = "userPlane";
-      else if (p.includes("controlPlane")) direction = "controlPlane";
+      if (propertyDirectionMatchers.userPlane?.some((matcher) => p.includes(matcher))) {
+        direction = "userPlane";
+      } else if (propertyDirectionMatchers.controlPlane?.some((matcher) => p.includes(matcher))) {
+        direction = "controlPlane";
+      }
     }
     if (!direction && (symmetric || parents.length === 0)) {
       direction = "generic";
@@ -280,10 +347,12 @@ function extractObjectProperties(store: N3Store): OntologyObjectProperty[] {
       localName: localName(iriStr),
       kind: "objectProperty",
       label: getLabel(store, iriStr) ?? localName(iriStr),
-      labelZh: getLabel(store, iriStr, "zh"),
-      abbreviation: getString(store, iriStr, iri("FGS", "abbreviation")),
+      labelZh: getLabel(store, iriStr, options.secondaryLabelLang),
+      abbreviation: vocabulary.abbreviationPropertyIRI
+        ? getString(store, iriStr, vocabulary.abbreviationPropertyIRI)
+        : undefined,
       comment: getString(store, iriStr, iri("RDFS", "comment")),
-      provenance: extractProvenance(store, iriStr),
+      provenance: extractProvenance(store, iriStr, vocabulary),
       domainIRI: getIRI(store, iriStr, iri("RDFS", "domain")) ?? undefined,
       rangeIRI: getIRI(store, iriStr, iri("RDFS", "range")) ?? undefined,
       parentIRIs: parents,
@@ -296,31 +365,34 @@ function extractObjectProperties(store: N3Store): OntologyObjectProperty[] {
   return props;
 }
 
-// ─── Individual extraction (Reference Points) ────────────────────
+// ─── Individual extraction ──────────────────────────────────────
 
-function extractIndividuals(store: N3Store): OntologyIndividual[] {
+function extractIndividuals(
+  store: N3Store,
+  options: ReturnType<typeof resolveParseOptions>,
+): OntologyIndividual[] {
   const individuals: OntologyIndividual[] = [];
+  const { individualTypeMatchers, vocabulary } = options;
 
-  // Find subjects that have rdf:type pointing to a ReferencePoint class
+  // Find subjects that have rdf:type pointing to an application-selected individual type.
   for (const s of store.getSubjects(null, null, null)) {
     if (s.termType !== "NamedNode") continue;
     const types = store.getObjects(s.value, iri("RDF", "type"), null)
       .filter((o) => o.termType === "NamedNode")
       .map((o) => o.value);
 
-    const isRefPt = types.some(
-      (t) => t.includes("ReferencePoint") || t.includes("ServiceBasedInterface"),
-    );
-    if (!isRefPt) continue;
+    const isRenderableIndividual = individualTypeMatchers.length > 0 &&
+      types.some((t) => individualTypeMatchers.some((matcher) => t.includes(matcher)));
+    if (!isRenderableIndividual) continue;
 
     individuals.push({
       iri: s.value,
       localName: localName(s.value),
       kind: "individual",
       label: getLabel(store, s.value) ?? localName(s.value),
-      labelZh: getLabel(store, s.value, "zh"),
+      labelZh: getLabel(store, s.value, options.secondaryLabelLang),
       comment: getString(store, s.value, iri("RDFS", "comment")),
-      provenance: extractProvenance(store, s.value),
+      provenance: extractProvenance(store, s.value, vocabulary),
       typeIRIs: types,
     });
   }
@@ -338,18 +410,22 @@ function extractIndividuals(store: N3Store): OntologyIndividual[] {
  * @param ttlContent — single TTL string, or array of TTL file contents
  * @returns OntologyGraphData ready for rendering
  */
-export function parseTTLFiles(ttlContent: string | string[]): OntologyGraphData {
+export function parseTTLFiles(
+  ttlContent: string | string[],
+  options: OntologyParseOptions = {},
+): OntologyGraphData {
   const content = Array.isArray(ttlContent) ? ttlContent.join("\n") : ttlContent;
+  const resolvedOptions = resolveParseOptions(options);
 
   const parser = new Parser({
     format: "text/turtle",
-    baseIRI: "http://3gpp-ontology.org/ns/5gs",
+    baseIRI: resolvedOptions.baseIRI,
   });
   const quads = parser.parse(content);
   const store = new N3Store(quads);
 
   // Detect ontology IRI
-  let ontologyIRI = "http://3gpp-ontology.org/ns/5gs";
+  let ontologyIRI = resolvedOptions.baseIRI;
   let ontologyTitle: string | undefined;
   const ontSubjects = store.getSubjects(iri("RDF", "type"), iri("OWL", "Ontology"), null);
   for (const s of ontSubjects) {
@@ -360,13 +436,13 @@ export function parseTTLFiles(ttlContent: string | string[]): OntologyGraphData 
     }
   }
 
-  const classes = extractClasses(store);
-  const objectProperties = extractObjectProperties(store);
-  const individuals = extractIndividuals(store);
+  const classes = extractClasses(store, resolvedOptions);
+  const objectProperties = extractObjectProperties(store, resolvedOptions);
+  const individuals = extractIndividuals(store, resolvedOptions);
 
   return {
     ontologyIRI,
-    ontologyTitle: ontologyTitle ?? "3GPP Ontology",
+    ontologyTitle: ontologyTitle ?? resolvedOptions.ontologyTitleFallback,
     classes,
     objectProperties,
     individuals,

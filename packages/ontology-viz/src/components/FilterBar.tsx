@@ -5,8 +5,22 @@
  * provenance level, and free-text search.
  */
 
-import type { GraphFilters, ProvenanceLevel } from "../lib/types";
-import { DEFAULT_DOMAIN_COLORS } from "../lib/colors";
+import type {
+  DomainColorScheme,
+  FilterBarLabels,
+  GraphFilters,
+  ProvenanceLevel,
+} from "../lib/types";
+import { DEFAULT_COLOR_SCHEME } from "../lib/colors";
+
+const DEFAULT_FILTER_LABELS: FilterBarLabels = {
+  search: "Search",
+  searchPlaceholder: "Name, abbreviation, description...",
+  domains: "Domains",
+  generations: "Generations",
+  provenanceLevels: "Provenance",
+  all: "All",
+};
 
 export interface FilterBarProps {
   filters: GraphFilters;
@@ -14,6 +28,12 @@ export interface FilterBarProps {
   availableDomains: string[];
   /** Available generations in the current ontology */
   availableGenerations: string[];
+  /** Optional display labels for domain keys */
+  domainLabels?: Record<string, string>;
+  /** Optional colour scheme for domain filter chips */
+  colorScheme?: DomainColorScheme;
+  /** UI text overrides */
+  labels?: Partial<FilterBarLabels>;
   onChange: (filters: GraphFilters) => void;
 }
 
@@ -21,8 +41,13 @@ export function FilterBar({
   filters,
   availableDomains,
   availableGenerations,
+  domainLabels = {},
+  colorScheme = DEFAULT_COLOR_SCHEME,
+  labels: labelOverrides = {},
   onChange,
 }: FilterBarProps) {
+  const labels = { ...DEFAULT_FILTER_LABELS, ...labelOverrides };
+
   const toggleDomain = (domain: string) => {
     const next = filters.domains.includes(domain)
       ? filters.domains.filter((d) => d !== domain)
@@ -51,11 +76,11 @@ export function FilterBar({
   return (
     <div className="filter-bar">
       <div className="filter-bar__group">
-        <span className="filter-bar__label">搜索</span>
+        <span className="filter-bar__label">{labels.search}</span>
         <input
           className="filter-bar__search"
           type="text"
-          placeholder="类名、缩写、描述…"
+          placeholder={labels.searchPlaceholder}
           value={filters.search}
           onChange={(e) => onChange({ ...filters, search: e.target.value })}
         />
@@ -63,12 +88,12 @@ export function FilterBar({
 
       {availableDomains.length > 0 && (
         <div className="filter-bar__group">
-          <span className="filter-bar__label">域</span>
+          <span className="filter-bar__label">{labels.domains}</span>
           <button
             className={`filter-chip ${allDomains ? "is-active" : ""}`}
             onClick={() => onChange({ ...filters, domains: [] })}
           >
-            全部
+            {labels.all}
           </button>
           {availableDomains.map((domain) => (
             <button
@@ -76,16 +101,19 @@ export function FilterBar({
               className={`filter-chip ${filters.domains.includes(domain) ? "is-active" : ""}`}
               style={{
                 borderColor: filters.domains.includes(domain)
-                  ? DEFAULT_DOMAIN_COLORS[domain] ?? "#6b7280"
+                  ? colorScheme.domainColors[domain] ?? colorScheme.defaultNodeColor
                   : "transparent",
               }}
               onClick={() => toggleDomain(domain)}
             >
               <span
                 className="filter-chip__dot"
-                style={{ backgroundColor: DEFAULT_DOMAIN_COLORS[domain] ?? "#6b7280" }}
+                style={{
+                  backgroundColor: colorScheme.domainColors[domain] ??
+                    colorScheme.defaultNodeColor,
+                }}
               />
-              {domain.replace("Domain", "")}
+              {domainLabels[domain] ?? domain.replace(/Domain$/, "")}
             </button>
           ))}
         </div>
@@ -93,12 +121,12 @@ export function FilterBar({
 
       {availableGenerations.length > 0 && (
         <div className="filter-bar__group">
-          <span className="filter-bar__label">代际</span>
+          <span className="filter-bar__label">{labels.generations}</span>
           <button
             className={`filter-chip ${allGens ? "is-active" : ""}`}
             onClick={() => onChange({ ...filters, generations: [] })}
           >
-            全部
+            {labels.all}
           </button>
           {availableGenerations.map((gen) => (
             <button
@@ -113,12 +141,12 @@ export function FilterBar({
       )}
 
       <div className="filter-bar__group">
-        <span className="filter-bar__label">溯源层级</span>
+        <span className="filter-bar__label">{labels.provenanceLevels}</span>
         <button
           className={`filter-chip ${allProv ? "is-active" : ""}`}
           onClick={() => onChange({ ...filters, provenanceLevels: [] })}
         >
-          全部
+          {labels.all}
         </button>
         {(["L1", "L2", "L3"] as ProvenanceLevel[]).map((level) => (
           <button

@@ -22,8 +22,13 @@ import "@ontology/viz/styles";
 import {
   TTL_FILES,
   G3PP_COLOR_SCHEME,
+  G3PP_PARSE_OPTIONS,
   AVAILABLE_DOMAINS,
   AVAILABLE_GENERATIONS,
+  DOMAIN_LABELS,
+  FILTER_LABELS,
+  PROVENANCE_LEVEL_LABELS,
+  PROVENANCE_PANEL_LABELS,
 } from "./config";
 
 type LoadState =
@@ -55,7 +60,7 @@ export default function App() {
           if (!resp.ok) throw new Error(`Failed to fetch ${path}: ${resp.status}`);
           parts.push(await resp.text());
         }
-        const data = parseTTLFiles(parts.join("\n"));
+        const data = parseTTLFiles(parts.join("\n"), G3PP_PARSE_OPTIONS);
         if (!cancelled) setLoadState({ status: "ready", data });
       } catch (err) {
         if (!cancelled) {
@@ -143,6 +148,9 @@ export default function App() {
         filters={filters}
         availableDomains={AVAILABLE_DOMAINS}
         availableGenerations={AVAILABLE_GENERATIONS}
+        domainLabels={DOMAIN_LABELS}
+        colorScheme={G3PP_COLOR_SCHEME}
+        labels={FILTER_LABELS}
         onChange={setFilters}
       />
 
@@ -162,6 +170,9 @@ export default function App() {
           <aside className="app-panel" aria-label="本体详情">
             <ProvenancePanel
               entity={selectedEntity}
+              colorScheme={G3PP_COLOR_SCHEME}
+              labels={PROVENANCE_PANEL_LABELS}
+              levelLabels={PROVENANCE_LEVEL_LABELS}
               onClose={() => setSelectedIRI("")}
             />
           </aside>

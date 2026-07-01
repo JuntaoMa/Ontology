@@ -22,6 +22,8 @@ export type {
   OntologyObjectProperty,
   OntologyIndividual,
   OntologyGraphData,
+  OntologyVocabulary,
+  OntologyParseOptions,
   GraphNodeData,
   GraphEdgeData,
   Provenance,
@@ -29,6 +31,8 @@ export type {
   DomainColorScheme,
   GraphFilters,
   LayoutMode,
+  FilterBarLabels,
+  ProvenancePanelLabels,
 } from "./lib/types";
 
 // Parser
