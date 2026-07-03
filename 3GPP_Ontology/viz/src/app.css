@@ -500,6 +500,29 @@
   font-size: 12px;
 }
 
+.npd-owl-state {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #f6f8fb;
+  color: #475569;
+  font-size: 14px;
+}
+
+.npd-owl-state h2 {
+  margin: 0;
+  color: #dc2626;
+  font-size: 18px;
+}
+
+.npd-owl-state p {
+  margin: 0;
+}
+
 /* Ontology mapping explorer */
 .mapping-map {
   flex: 1;

@@ -31,17 +31,18 @@ import {
   PROVENANCE_PANEL_LABELS,
 } from "./config";
 import { NpdMappingExplorer } from "./npd/NpdMappingExplorer";
+import { NpdOwlExplorer } from "./npd/NpdOwlExplorer";
 
 type LoadState =
   | { status: "loading" }
   | { status: "error"; message: string }
   | { status: "ready"; data: OntologyGraphData };
 
-type AppView = "npd" | "g3pp";
+type AppView = "npd-owl" | "npd" | "g3pp";
 
 export default function App() {
   const [loadState, setLoadState] = useState<LoadState>({ status: "loading" });
-  const [activeView, setActiveView] = useState<AppView>("npd");
+  const [activeView, setActiveView] = useState<AppView>("npd-owl");
   const [selectedIRI, setSelectedIRI] = useState("");
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("dagre");
   const [filters, setFilters] = useState<GraphFilters>({
@@ -100,11 +101,21 @@ export default function App() {
       <h1 className="app-title">
         本体建模可视化
         <span className="app-subtitle">
-          {activeView === "npd" ? "NPD 表-本体图谱" : "3GPP 图谱"}
+          {activeView === "npd-owl"
+            ? "NPD OWL 可配置图谱"
+            : activeView === "npd"
+              ? "NPD 表-本体图谱"
+              : "3GPP 图谱"}
         </span>
       </h1>
       <div className="app-header__actions">
         <div className="app-view-toggle" aria-label="视图切换">
+          <button
+            className={`app-view-btn ${activeView === "npd-owl" ? "is-active" : ""}`}
+            onClick={() => setActiveView("npd-owl")}
+          >
+            NPD OWL
+          </button>
           <button
             className={`app-view-btn ${activeView === "npd" ? "is-active" : ""}`}
             onClick={() => setActiveView("npd")}
@@ -143,6 +154,15 @@ export default function App() {
       <div className="app">
         {header}
         <NpdMappingExplorer />
+      </div>
+    );
+  }
+
+  if (activeView === "npd-owl") {
+    return (
+      <div className="app">
+        {header}
+        <NpdOwlExplorer />
       </div>
     );
   }

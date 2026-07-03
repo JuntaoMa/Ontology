@@ -35,6 +35,22 @@ export type {
   ProvenancePanelLabels,
 } from "./lib/types";
 export type {
+  ExplicitOntologyCardConfig,
+  ExplicitOntologyColorMode,
+  ExplicitOntologyEdge,
+  ExplicitOntologyEdgeConfig,
+  ExplicitOntologyEdgeKind,
+  ExplicitOntologyEntity,
+  ExplicitOntologyEntityKind,
+  ExplicitOntologyField,
+  ExplicitOntologyFieldKind,
+  ExplicitOntologyGraphData,
+  ExplicitOntologyLayoutMode,
+  ExplicitOntologyParseOptions,
+  ExplicitOntologyValue,
+  ExplicitOntologyVisualConfig,
+} from "./lib/explicitOntologyTypes";
+export type {
   BilingualLabel,
   MappingGraphClassMapping,
   MappingGraphData,
@@ -51,6 +67,13 @@ export type {
 
 // Parser
 export { parseTTLFiles } from "./lib/parser";
+export {
+  getExplicitOntologyDefaultDescription,
+  getExplicitOntologyDefaultLabel,
+  getExplicitOntologyDisplayValue,
+  getExplicitOntologyFieldValues,
+  parseExplicitOntology,
+} from "./lib/explicitOntologyParser";
 
 // Colour utilities
 export {
@@ -66,6 +89,12 @@ export type { OntologyGraphProps } from "./components/OntologyGraph";
 
 export { OntologyMappingGraph } from "./components/OntologyMappingGraph";
 export type { OntologyMappingGraphProps } from "./components/OntologyMappingGraph";
+
+export {
+  ConfigurableOntologyViewer,
+  DEFAULT_EXPLICIT_ONTOLOGY_CONFIG,
+} from "./components/ConfigurableOntologyViewer";
+export type { ConfigurableOntologyViewerProps } from "./components/ConfigurableOntologyViewer";
 
 export { ProvenancePanel } from "./components/ProvenancePanel";
 export type { ProvenancePanelProps } from "./components/ProvenancePanel";

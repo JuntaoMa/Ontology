@@ -13,6 +13,7 @@ import react from "@vitejs/plugin-react";
  */
 function ontologyStaticPlugin(): Plugin {
   const ontologyDir = path.resolve(__dirname, "../ontology");
+  const npdOntologyFile = path.resolve(__dirname, "../../datasets/npd-benchmark/ontology/npd-v2-ql.owl");
 
   return {
     name: "serve-ontology-ttl",
@@ -22,6 +23,14 @@ function ontologyStaticPlugin(): Plugin {
         if (fs.existsSync(filePath) && filePath.endsWith(".ttl")) {
           res.setHeader("Content-Type", "text/turtle");
           res.end(fs.readFileSync(filePath, "utf-8"));
+          return;
+        }
+        next();
+      });
+      server.middlewares.use("/npd-ontology", (req, res, next) => {
+        if (req.url === "/npd-v2-ql.owl" && fs.existsSync(npdOntologyFile)) {
+          res.setHeader("Content-Type", "application/rdf+xml");
+          res.end(fs.readFileSync(npdOntologyFile, "utf-8"));
           return;
         }
         next();
@@ -39,6 +48,15 @@ function ontologyStaticPlugin(): Plugin {
         }
         next();
       });
+      server.middlewares.use("/npd-ontology", (req, res, next) => {
+        const filePath = path.resolve(__dirname, "dist/npd-ontology/npd-v2-ql.owl");
+        if (req.url === "/npd-v2-ql.owl" && fs.existsSync(filePath)) {
+          res.setHeader("Content-Type", "application/rdf+xml");
+          res.end(fs.readFileSync(filePath, "utf-8"));
+          return;
+        }
+        next();
+      });
     },
     closeBundle() {
       // Copy TTL files into dist/ontology/ for production build
@@ -51,6 +69,11 @@ function ontologyStaticPlugin(): Plugin {
             path.join(distDir, file),
           );
         }
+      }
+      const npdDistDir = path.resolve(__dirname, "dist/npd-ontology");
+      fs.mkdirSync(npdDistDir, { recursive: true });
+      if (fs.existsSync(npdOntologyFile)) {
+        fs.copyFileSync(npdOntologyFile, path.join(npdDistDir, "npd-v2-ql.owl"));
       }
     },
   };
