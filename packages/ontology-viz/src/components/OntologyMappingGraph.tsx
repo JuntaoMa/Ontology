@@ -4,11 +4,13 @@ import {
   forceCollide,
   forceLink,
   forceManyBody,
+  forceRadial,
   forceSimulation,
   forceX,
   forceY,
+  type SimulationNodeDatum,
 } from "d3-force";
-import { useCallback, useDeferredValue, useEffect, useMemo } from "react";
+import { memo, useCallback, useDeferredValue, useEffect, useMemo } from "react";
 import {
   Background,
   Controls,
@@ -41,6 +43,12 @@ const NODE_WIDTH = 260;
 const NODE_HEIGHT = 112;
 const NODE_GAP = 340;
 
+interface LayoutSimNode extends SimulationNodeDatum {
+  id: string;
+  x: number;
+  y: number;
+}
+
 const KIND_LABELS: Record<MappingGraphNodeKind, string> = {
   ontologyObject: "对象",
   sourceTable: "源表",
@@ -64,7 +72,7 @@ function tint(hex: string, alpha: number) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-function MappingNode({ data }: NodeProps<Node<MappingGraphNodeData>>) {
+const MappingNode = memo(function MappingNode({ data }: NodeProps<Node<MappingGraphNodeData>>) {
   const item = data.node;
   const color = KIND_COLORS[item.kind];
   const secondary =
@@ -110,7 +118,7 @@ function MappingNode({ data }: NodeProps<Node<MappingGraphNodeData>>) {
       <div className="mapping-graph-node__summary">{secondary}</div>
     </div>
   );
-}
+});
 
 const nodeTypes = {
   mappingNode: MappingNode,
@@ -218,6 +226,17 @@ function edgeClassName(state: { selected?: boolean; highlighted?: boolean; dimme
   ].filter(Boolean).join(" ");
 }
 
+function edgeHasState(
+  edge: Edge<MappingGraphEdgeData>,
+  state: { selected?: boolean; highlighted?: boolean; dimmed?: boolean },
+) {
+  return (
+    Boolean(edge.data?.selected) === Boolean(state.selected) &&
+    Boolean(edge.data?.highlighted) === Boolean(state.highlighted) &&
+    Boolean(edge.data?.dimmed) === Boolean(state.dimmed)
+  );
+}
+
 function buildEdges(
   data: MappingGraphData,
   visibleNodeIds: Set<string>,
@@ -286,6 +305,42 @@ function assignDynamicHandles(
       targetHandle: `${targetSide}-target`,
     };
   });
+}
+
+function forceCircleBoundary(radius: number) {
+  let nodes: LayoutSimNode[] = [];
+  const maxDistance = Math.max(0, radius - Math.hypot(NODE_WIDTH, NODE_HEIGHT) / 2);
+
+  const force = (() => {
+    for (const node of nodes) {
+      const distance = Math.hypot(node.x, node.y);
+      if (distance <= maxDistance || distance === 0) continue;
+
+      const ratio = maxDistance / distance;
+      node.x *= ratio;
+      node.y *= ratio;
+      node.vx = (node.vx ?? 0) * 0.25;
+      node.vy = (node.vy ?? 0) * 0.25;
+    }
+  }) as (() => void) & { initialize: (nextNodes: LayoutSimNode[]) => void };
+
+  force.initialize = (nextNodes: LayoutSimNode[]) => {
+    nodes = nextNodes;
+  };
+
+  return force;
+}
+
+function averageAngle(angles: number[]) {
+  if (angles.length === 0) return Number.POSITIVE_INFINITY;
+  const vector = angles.reduce(
+    (acc, angle) => ({
+      x: acc.x + Math.cos(angle),
+      y: acc.y + Math.sin(angle),
+    }),
+    { x: 0, y: 0 },
+  );
+  return Math.atan2(vector.y, vector.x);
 }
 
 function layoutDagre(nodes: Node<MappingGraphNodeData>[], edges: Edge<MappingGraphEdgeData>[]) {
@@ -370,41 +425,68 @@ function layoutRadial(nodes: Node<MappingGraphNodeData>[], edges: Edge<MappingGr
 
   const objectNodes = nodes.filter((node) => node.data.node.kind === "ontologyObject");
   const tableNodes = nodes.filter((node) => node.data.node.kind === "sourceTable");
-  const degree = new Map(nodes.map((node) => [node.id, 0]));
+  const objectIds = new Set(objectNodes.map((node) => node.id));
+  const objectEdges = edges.filter(
+    (edge) =>
+      edge.data?.edge.kind === "objectRelation" &&
+      objectIds.has(edge.source) &&
+      objectIds.has(edge.target),
+  );
+  const degree = new Map(objectNodes.map((node) => [node.id, 0]));
 
-  for (const edge of edges) {
-    if (edge.data?.edge.kind === "objectRelation") {
-      degree.set(edge.source, (degree.get(edge.source) ?? 0) + 1);
-      degree.set(edge.target, (degree.get(edge.target) ?? 0) + 1);
-    }
+  for (const edge of objectEdges) {
+    degree.set(edge.source, (degree.get(edge.source) ?? 0) + 1);
+    degree.set(edge.target, (degree.get(edge.target) ?? 0) + 1);
   }
 
-  const positioned = new Map<string, { x: number; y: number; angle: number }>();
   const sortedObjects = [...objectNodes].sort((a, b) =>
     (degree.get(b.id) ?? 0) - (degree.get(a.id) ?? 0) ||
     a.data.node.label.en.localeCompare(b.data.node.label.en),
   );
+  const innerRadius = Math.max(900, Math.ceil(Math.sqrt(Math.max(1, objectNodes.length)) * 205));
+  const seedRadius = innerRadius * 0.68;
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  const simNodes: LayoutSimNode[] = sortedObjects.map((node, index) => {
+    const radius = seedRadius * Math.sqrt((index + 0.5) / Math.max(1, sortedObjects.length));
+    const angle = index * goldenAngle;
+    return {
+      id: node.id,
+      x: Math.cos(angle) * radius,
+      y: Math.sin(angle) * radius,
+    };
+  });
+  const simLinks = objectEdges.map((edge) => ({ source: edge.source, target: edge.target }));
 
-  let objectIndex = 0;
-  let radius = 720;
-  let maxObjectRadius = radius;
-  while (objectIndex < sortedObjects.length) {
-    const capacity = Math.max(8, Math.floor((2 * Math.PI * radius) / NODE_GAP));
-    const ringNodes = sortedObjects.slice(objectIndex, objectIndex + capacity);
-    const offset = (objectIndex / Math.max(1, sortedObjects.length)) * Math.PI;
+  const sim = forceSimulation<LayoutSimNode>(simNodes)
+    .force(
+      "link",
+      forceLink<LayoutSimNode, any>(simLinks)
+        .id((d: any) => d.id)
+        .distance(270)
+        .strength(0.34),
+    )
+    .force("charge", forceManyBody().strength(-520).distanceMax(innerRadius * 0.9))
+    .force("center", forceCenter(0, 0))
+    .force("radial", forceRadial(innerRadius * 0.44, 0, 0).strength(0.018))
+    .force("x", forceX(0).strength(0.018))
+    .force("y", forceY(0).strength(0.018))
+    .force("collide", forceCollide(NODE_WIDTH * 0.58).strength(0.92).iterations(3))
+    .force("boundary", forceCircleBoundary(innerRadius))
+    .stop();
 
-    ringNodes.forEach((node, ringIndex) => {
-      const angle = offset + (ringIndex / ringNodes.length) * 2 * Math.PI;
-      positioned.set(node.id, {
-        x: Math.cos(angle) * radius - NODE_WIDTH / 2,
-        y: Math.sin(angle) * radius - NODE_HEIGHT / 2,
-        angle,
-      });
+  for (let index = 0; index < 240; index += 1) sim.tick();
+
+  const simById = new Map(simNodes.map((node) => [node.id, node]));
+  const positioned = new Map<string, { x: number; y: number; angle: number }>();
+
+  for (const node of objectNodes) {
+    const simNode = simById.get(node.id);
+    if (!simNode) continue;
+    positioned.set(node.id, {
+      x: simNode.x - NODE_WIDTH / 2,
+      y: simNode.y - NODE_HEIGHT / 2,
+      angle: Math.atan2(simNode.y, simNode.x),
     });
-
-    maxObjectRadius = radius;
-    objectIndex += ringNodes.length;
-    radius += 500;
   }
 
   const objectAngles = new Map([...positioned.entries()].map(([id, pos]) => [id, pos.angle]));
@@ -419,25 +501,16 @@ function layoutRadial(nodes: Node<MappingGraphNodeData>[], edges: Edge<MappingGr
       }
     }
 
-    if (linkedAngles.length === 0) return { node, angle: 0 };
-
-    const vector = linkedAngles.reduce(
-      (acc, angle) => ({
-        x: acc.x + Math.cos(angle),
-        y: acc.y + Math.sin(angle),
-      }),
-      { x: 0, y: 0 },
-    );
-    return { node, angle: Math.atan2(vector.y, vector.x) };
+    return { node, angle: averageAngle(linkedAngles) };
   }).sort((a, b) => a.angle - b.angle || a.node.data.node.label.en.localeCompare(b.node.data.node.label.en));
 
   const tableRadius = Math.max(
-    maxObjectRadius + 1000,
-    tableNodes.length > 0 ? (tableNodes.length * NODE_GAP) / (2 * Math.PI) : maxObjectRadius + 1000,
+    innerRadius + 980,
+    tableNodes.length > 0 ? (tableNodes.length * NODE_GAP) / (2 * Math.PI) : innerRadius + 980,
   );
 
   tableAngles.forEach(({ node }, tableIndex) => {
-    const angle = (tableIndex / Math.max(1, tableAngles.length)) * 2 * Math.PI - Math.PI / 2;
+    const angle = -Math.PI + (tableIndex / Math.max(1, tableAngles.length)) * 2 * Math.PI;
     positioned.set(node.id, {
       x: Math.cos(angle) * tableRadius - NODE_WIDTH / 2,
       y: Math.sin(angle) * tableRadius - NODE_HEIGHT / 2,
@@ -557,12 +630,22 @@ function OntologyMappingGraphInner({
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<MappingGraphNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<MappingGraphEdgeData>>([]);
+  const fitDuration = nodes.length > 160 || edges.length > 260 ? 0 : 320;
+  const fitViewOptions = useMemo(
+    () => ({ padding: 0.08, duration: fitDuration, minZoom: 0.04, maxZoom: 1 }),
+    [fitDuration],
+  );
 
   useEffect(() => {
     setNodes(rawNodes);
     setEdges(rawEdges);
     const timer = setTimeout(() => {
-      fitView({ padding: 0.08, duration: 320, minZoom: 0.04, maxZoom: 1 });
+      fitView({
+        padding: 0.08,
+        duration: rawNodes.length > 160 || rawEdges.length > 260 ? 0 : 320,
+        minZoom: 0.04,
+        maxZoom: 1,
+      });
     }, 100);
     return () => clearTimeout(timer);
   }, [fitView, layoutMode, rawEdges, rawNodes, setEdges, setNodes]);
@@ -571,14 +654,23 @@ function OntologyMappingGraphInner({
     const sets = selectionSets(selectedId, rawNodes, rawEdges);
     setNodes((current) =>
       current.map((node) => {
+        const selected = node.id === sets.selectedNodeId;
         const highlighted = sets.highlightedNodes.has(node.id);
+        const dimmed = Boolean(selectedId) && !highlighted;
+        if (
+          node.data.selected === selected &&
+          node.data.highlighted === highlighted &&
+          node.data.dimmed === dimmed
+        ) {
+          return node;
+        }
         return {
           ...node,
           data: {
             ...node.data,
-            selected: node.id === sets.selectedNodeId,
+            selected,
             highlighted,
-            dimmed: Boolean(selectedId) && !highlighted,
+            dimmed,
           },
         };
       }),
@@ -586,11 +678,12 @@ function OntologyMappingGraphInner({
     setEdges((current) =>
       current.map((edge) => {
         const highlighted = sets.highlightedEdges.has(edge.id);
-        return applyEdgeState(edge, {
+        const state = {
           selected: edge.id === sets.selectedEdgeId,
           highlighted,
           dimmed: Boolean(selectedId) && !highlighted,
-        });
+        };
+        return edgeHasState(edge, state) ? edge : applyEdgeState(edge, state);
       }),
     );
   }, [rawEdges, rawNodes, selectedId, setEdges, setNodes]);
@@ -624,9 +717,10 @@ function OntologyMappingGraphInner({
         panOnDrag
         panOnScroll
         autoPanOnNodeDrag
+        onlyRenderVisibleElements
         minZoom={0.04}
         maxZoom={1.6}
-        fitViewOptions={{ padding: 0.08, duration: 480, minZoom: 0.04, maxZoom: 1 }}
+        fitViewOptions={fitViewOptions}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}

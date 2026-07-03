@@ -359,10 +359,6 @@
   z-index: 2;
 }
 
-.mapping-graph-node.is-dimmed {
-  filter: grayscale(0.4);
-}
-
 .mapping-graph-node .react-flow__handle {
   width: 8px;
   height: 8px;
