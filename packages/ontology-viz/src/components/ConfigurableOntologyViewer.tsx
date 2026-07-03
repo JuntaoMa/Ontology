@@ -163,12 +163,12 @@ const ExplicitOntologyNode = memo(function ExplicitOntologyNode({
 
   const style: CSSProperties = {
     borderLeft: `4px solid ${color}`,
-    background: `linear-gradient(135deg, ${tint(color, 0.12)} 0%, ${tint(color, 0.04)} 100%), #fff`,
+    background: "#fff",
     boxShadow: data.selected
-      ? `0 0 0 2px ${color}, 0 4px 12px rgba(0,0,0,0.1)`
+      ? `0 0 0 2px ${tint(color, 0.42)}, 0 8px 20px rgba(15,23,42,0.16)`
       : data.highlighted
-        ? `0 0 0 2px ${tint(color, 0.45)}, 0 4px 12px rgba(0,0,0,0.1)`
-        : "0 1px 3px rgba(0,0,0,0.08)",
+        ? `0 0 0 2px ${tint(color, 0.32)}, 0 5px 14px rgba(15,23,42,0.12)`
+        : "0 1px 3px rgba(15,23,42,0.08)",
   };
 
   return (
@@ -572,14 +572,22 @@ function ConfigPanel({
   return (
     <aside className="explicit-config-panel" aria-label="可视化配置">
       <div className="explicit-config-panel__header">
+        <span>Graph Controls</span>
         <h2>可视化配置</h2>
-        <p>字段均来自当前本体文件；没有值的卡片项自动隐藏。</p>
+        <p>所有可选字段均来自当前本体文件；实体没有对应值时，卡片项自动隐藏。</p>
       </div>
 
-      <label className="explicit-config-field">
-        <span>搜索</span>
-        <input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder="IRI、名称、注解值" />
-      </label>
+      <section className="explicit-config-section explicit-config-section--first">
+        <h3>检索</h3>
+        <label className="explicit-config-field">
+          <span>关键词</span>
+          <input
+            value={search}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="IRI、名称、注解值"
+          />
+        </label>
+      </section>
 
       <section className="explicit-config-section">
         <h3>实体类型</h3>
@@ -599,7 +607,7 @@ function ConfigPanel({
       </section>
 
       <section className="explicit-config-section">
-        <h3>卡片</h3>
+        <h3>卡片字段</h3>
         <FieldSelect label="标题" value={config.card.titleField} fields={data.fields} onChange={(value) => updateCard({ titleField: value })} />
         <FieldSelect label="副标题" value={config.card.subtitleField} fields={data.fields} onChange={(value) => updateCard({ subtitleField: value })} allowNone />
         <FieldSelect label="描述" value={config.card.descriptionField} fields={data.fields} onChange={(value) => updateCard({ descriptionField: value })} allowNone />
@@ -640,7 +648,7 @@ function ConfigPanel({
       </section>
 
       <section className="explicit-config-section">
-        <h3>布局与边</h3>
+        <h3>布局</h3>
         <label className="explicit-config-field">
           <span>布局</span>
           <select value={config.layoutMode} onChange={(event) => update({ layoutMode: event.target.value as any })}>
@@ -649,6 +657,10 @@ function ConfigPanel({
             <option value="typeGroups">按类型分组</option>
           </select>
         </label>
+      </section>
+
+      <section className="explicit-config-section">
+        <h3>边</h3>
         <label className="explicit-config-switch">
           <input type="checkbox" checked={config.edges.showLabels} onChange={(event) => updateEdges({ showLabels: event.target.checked })} />
           <span>显示边标签</span>
@@ -731,6 +743,10 @@ function compactPanelLabel(fields: ExplicitOntologyField[], predicate: string) {
   return fields.find((field) => field.id === predicate)?.label ?? predicate;
 }
 
+function compactNumber(value: number) {
+  return value >= 1000 ? `${(value / 1000).toFixed(1)}k` : String(value);
+}
+
 export interface ConfigurableOntologyViewerProps {
   data: ExplicitOntologyGraphData;
   initialConfig?: Partial<ExplicitOntologyVisualConfig>;
@@ -771,6 +787,14 @@ export function ConfigurableOntologyViewer({
     setSelectedId((previous) => previous === id ? "" : id);
   }, []);
 
+  const visibleSummary = useMemo(() => {
+    const ids = visibleEntityIds(data, config, search.trim());
+    return {
+      nodes: ids.size,
+      edges: data.edges.filter((edge) => edgeVisibleForNodes(edge, ids)).length,
+    };
+  }, [config, data, search]);
+
   return (
     <div className="explicit-viewer">
       <ConfigPanel
@@ -781,16 +805,30 @@ export function ConfigurableOntologyViewer({
         onConfigChange={setConfig}
       />
       <main className="explicit-viewer__stage">
-        <ReactFlowProvider>
-          <ConfigurableOntologyGraph
-            data={data}
-            config={config}
-            selectedId={selectedId}
-            search={search}
-            onSelect={handleSelect}
-            onClearSelection={() => setSelectedId("")}
-          />
-        </ReactFlowProvider>
+        <div className="explicit-stage-bar">
+          <div className="explicit-stage-bar__title">
+            <span>OWL Graph</span>
+            <strong>{data.ontologyTitle ?? "Ontology"}</strong>
+            {data.ontologyIRI && <small title={data.ontologyIRI}>{data.ontologyIRI}</small>}
+          </div>
+          <div className="explicit-stage-bar__metrics" aria-label="当前图谱规模">
+            <span><strong>{compactNumber(visibleSummary.nodes)}</strong> 节点</span>
+            <span><strong>{compactNumber(visibleSummary.edges)}</strong> 边</span>
+            <span><strong>{config.visibleEntityKinds.length}</strong> 类型</span>
+          </div>
+        </div>
+        <div className="explicit-viewer__graph-shell">
+          <ReactFlowProvider>
+            <ConfigurableOntologyGraph
+              data={data}
+              config={config}
+              selectedId={selectedId}
+              search={search}
+              onSelect={handleSelect}
+              onClearSelection={() => setSelectedId("")}
+            />
+          </ReactFlowProvider>
+        </div>
       </main>
       {selectedId && (
         <DetailPanel data={data} selectedId={selectedId} onClose={() => setSelectedId("")} />

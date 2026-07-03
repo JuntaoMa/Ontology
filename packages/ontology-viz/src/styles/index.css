@@ -431,48 +431,66 @@
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: 336px minmax(0, 1fr);
   overflow: hidden;
-  background: #f6f8fb;
+  background: #eef2f7;
+  color: #172033;
 }
 
 .explicit-config-panel {
   min-height: 0;
   overflow-y: auto;
-  border-right: 1px solid #d8dee8;
+  border-right: 1px solid #d6dde8;
   background: #fff;
-  padding: 14px;
+  padding: 16px 14px 18px;
 }
 
 .explicit-config-panel__header {
-  margin-bottom: 14px;
+  padding: 2px 2px 14px;
+}
+
+.explicit-config-panel__header span {
+  display: block;
+  margin-bottom: 6px;
+  color: #1e40af;
+  font-size: 10px;
+  font-weight: 780;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
 .explicit-config-panel__header h2 {
   margin: 0;
-  color: var(--viz-text);
-  font-size: 16px;
+  color: #0f172a;
+  font-size: 18px;
+  line-height: 1.2;
 }
 
 .explicit-config-panel__header p {
-  margin: 6px 0 0;
-  color: var(--viz-text-secondary);
+  margin: 7px 0 0;
+  color: #64748b;
   font-size: 12px;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .explicit-config-section {
   display: grid;
-  gap: 10px;
-  padding: 14px 0;
-  border-top: 1px solid #e2e8f0;
+  gap: 9px;
+  padding: 14px 2px;
+  border-top: 1px solid #e5eaf1;
+}
+
+.explicit-config-section--first {
+  border-top: 0;
+  padding-top: 0;
 }
 
 .explicit-config-section h3 {
   margin: 0;
-  color: #475569;
+  color: #334155;
   font-size: 12px;
-  font-weight: 760;
+  font-weight: 780;
+  line-height: 1.2;
 }
 
 .explicit-config-field {
@@ -480,24 +498,38 @@
   gap: 5px;
   color: #475569;
   font-size: 12px;
-  font-weight: 680;
+  font-weight: 700;
 }
 
 .explicit-config-field input,
 .explicit-config-field select {
-  min-height: 34px;
-  border: 1px solid #cbd5e1;
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #cbd5df;
   border-radius: 6px;
   background: #fff;
-  color: #172033;
-  padding: 6px 9px;
+  color: #111827;
+  padding: 6px 10px;
   font: inherit;
-  font-weight: 520;
+  font-weight: 560;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.explicit-config-field input:hover,
+.explicit-config-field select:hover {
+  border-color: #94a3b8;
+}
+
+.explicit-config-field input:focus,
+.explicit-config-field select:focus {
+  border-color: #1e40af;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.13);
 }
 
 .explicit-config-checks {
   display: grid;
-  gap: 6px;
+  gap: 7px;
 }
 
 .explicit-config-checks label,
@@ -505,9 +537,27 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 32px;
+  border: 1px solid #e1e7ef;
+  border-radius: 7px;
+  background: #f8fafc;
   color: #334155;
+  padding: 6px 8px;
   font-size: 12px;
-  font-weight: 620;
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.explicit-config-checks label:hover,
+.explicit-config-switch:hover {
+  border-color: #b8c4d4;
+  background: #fff;
+}
+
+.explicit-config-checks input,
+.explicit-config-switch input {
+  accent-color: #1e40af;
 }
 
 .explicit-config-checks small {
@@ -521,7 +571,7 @@
   gap: 7px;
   color: #475569;
   font-size: 12px;
-  font-weight: 680;
+  font-weight: 700;
 }
 
 .explicit-config-badges {
@@ -531,62 +581,192 @@
 }
 
 .explicit-config-badges button {
-  border: 1px solid #cbd5e1;
-  border-radius: 999px;
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid #cbd5df;
+  border-radius: 6px;
   background: #fff;
   color: #475569;
   padding: 4px 8px;
   font-size: 11px;
   cursor: pointer;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.explicit-config-badges button:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
 }
 
 .explicit-config-badges button.is-active {
-  border-color: #2563eb;
+  border-color: #1e40af;
   background: #eff6ff;
-  color: #1d4ed8;
+  color: #1e3a8a;
+  font-weight: 720;
 }
 
 .explicit-viewer__stage {
   min-width: 0;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.explicit-stage-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 58px;
+  border-bottom: 1px solid #d6dde8;
+  background: #ffffff;
+  padding: 9px 16px;
+}
+
+.explicit-stage-bar__title {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.explicit-stage-bar__title span {
+  color: #1e40af;
+  font-size: 10px;
+  font-weight: 780;
+  text-transform: uppercase;
+}
+
+.explicit-stage-bar__title strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 780;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.explicit-stage-bar__title small {
+  min-width: 0;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.explicit-stage-bar__metrics {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.explicit-stage-bar__metrics span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  min-height: 28px;
+  border: 1px solid #dbeafe;
+  border-radius: 7px;
+  background: #f8fbff;
+  color: #475569;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.explicit-stage-bar__metrics strong {
+  color: #1e40af;
+  font-size: 14px;
+}
+
+.explicit-viewer__graph-shell {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
 }
 
 .explicit-ontology-graph {
   width: 100%;
   height: 100%;
-  min-height: 420px;
-  background: #f6f8fb;
+  min-height: 0;
+  background: #f2f5f9;
+}
+
+.explicit-ontology-graph .react-flow__pane {
+  cursor: grab;
+}
+
+.explicit-ontology-graph .react-flow__pane:active {
+  cursor: grabbing;
+}
+
+.explicit-ontology-graph .react-flow__background {
+  background-color: #f2f5f9;
+}
+
+.explicit-ontology-graph .react-flow__controls,
+.explicit-ontology-graph .react-flow__minimap {
+  border: 1px solid #d6dde8;
+  border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
+  overflow: hidden;
+}
+
+.explicit-ontology-graph .react-flow__controls-button {
+  border-bottom: 1px solid #e5eaf1;
+  background: #fff;
+  color: #334155;
+}
+
+.explicit-ontology-graph .react-flow__controls-button:hover {
+  background: #f1f5f9;
 }
 
 .explicit-ontology-graph.has-selection .explicit-ontology-node:not(.is-selected):not(.is-highlighted) {
-  opacity: 0.22;
+  opacity: 0.24;
 }
 
 .explicit-ontology-graph.has-selection .react-flow__edge:not(.is-selected):not(.is-highlighted) {
   opacity: 0.14;
 }
 
+.explicit-ontology-graph .react-flow__edge.is-selected path,
+.explicit-ontology-graph .react-flow__edge.is-highlighted path {
+  filter: drop-shadow(0 1px 3px rgba(15, 23, 42, 0.18));
+}
+
 .explicit-ontology-node {
   width: 280px;
-  min-height: 106px;
-  border-radius: var(--viz-radius);
+  height: 116px;
+  overflow: hidden;
+  border-radius: 8px;
   padding: 10px 12px;
-  color: var(--viz-text);
+  color: #172033;
   font-size: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  transition: box-shadow 0.15s ease;
+  transition: box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+}
+
+.explicit-ontology-node:hover {
+  transform: translateY(-1px);
 }
 
 .explicit-ontology-node__header {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 6px;
+  min-width: 0;
+  margin-bottom: 7px;
 }
 
 .explicit-ontology-node__type {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   height: 18px;
   border-radius: 4px;
   padding: 0 6px;
@@ -597,9 +777,9 @@
 
 .explicit-ontology-node__badge {
   min-width: 0;
-  max-width: 96px;
+  max-width: 108px;
   overflow: hidden;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #d7dee9;
   border-radius: 3px;
   color: #475569;
   padding: 0 5px;
@@ -611,9 +791,10 @@
 
 .explicit-ontology-node__title {
   overflow: hidden;
-  color: var(--viz-text);
+  color: #111827;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 760;
+  line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -622,7 +803,7 @@
 .explicit-ontology-node__description {
   overflow: hidden;
   margin-top: 4px;
-  color: var(--viz-text-secondary);
+  color: #64748b;
   font-size: 11px;
   line-height: 1.4;
   text-overflow: ellipsis;
@@ -638,16 +819,16 @@
 
 .explicit-detail-panel {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  bottom: 16px;
+  top: 72px;
+  right: 18px;
+  bottom: 18px;
   z-index: 20;
-  width: min(430px, calc(100vw - 32px));
+  width: min(440px, calc(100vw - 36px));
   overflow-y: auto;
-  border: 1px solid #d2dae6;
+  border: 1px solid #d6dde8;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.22);
+  background: rgba(255, 255, 255, 0.99);
+  box-shadow: 0 22px 56px rgba(15, 23, 42, 0.2);
 }
 
 .explicit-detail-panel__close {
@@ -658,13 +839,21 @@
   width: 28px;
   height: 28px;
   margin: 10px 10px 0 0;
-  border: 1px solid #cbd4df;
+  border: 1px solid #cbd5df;
   border-radius: 6px;
   background: #fff;
   color: #475569;
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.explicit-detail-panel__close:hover,
+.explicit-detail-panel__close:focus-visible {
+  border-color: #94a3b8;
+  background: #f8fafc;
+  color: #0f172a;
 }
 
 .explicit-detail-panel__header,
@@ -675,9 +864,9 @@
 
 .explicit-detail-panel__header span {
   display: inline-flex;
-  border-radius: 999px;
-  background: #edf2f8;
-  color: #475569;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #1e3a8a;
   padding: 3px 9px;
   font-size: 11px;
   font-weight: 760;
@@ -717,7 +906,7 @@
   min-width: 0;
   border: 1px solid #e1e7ef;
   border-radius: 7px;
-  background: #fbfcfe;
+  background: #fbfdff;
   padding: 9px 10px;
 }
 
@@ -732,4 +921,62 @@
   margin: 0;
   color: #64748b;
   font-size: 11px;
+}
+
+@media (max-width: 980px) {
+  .explicit-viewer {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .explicit-config-panel {
+    max-height: 270px;
+    border-right: 0;
+    border-bottom: 1px solid #d6dde8;
+  }
+
+  .explicit-stage-bar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .explicit-stage-bar__metrics {
+    flex-wrap: wrap;
+  }
+
+  .explicit-detail-panel {
+    top: auto;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+    max-height: 48vh;
+  }
+}
+
+@media (max-width: 620px) {
+  .explicit-stage-bar__metrics span {
+    flex: 1 1 92px;
+  }
+
+  .explicit-config-badges button {
+    max-width: calc(50% - 4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .explicit-config-field input,
+  .explicit-config-field select,
+  .explicit-config-checks label,
+  .explicit-config-switch,
+  .explicit-config-badges button,
+  .explicit-ontology-node,
+  .explicit-detail-panel__close {
+    transition: none;
+  }
+
+  .explicit-ontology-node:hover {
+    transform: none;
+  }
 }

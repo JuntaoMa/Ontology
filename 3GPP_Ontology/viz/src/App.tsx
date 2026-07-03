@@ -98,18 +98,19 @@ export default function App() {
 
   const header = (
     <header className="app-header">
-      <h1 className="app-title">
-        本体建模可视化
-        <span className="app-subtitle">
+      <div className="app-title-group">
+        <span className="app-kicker">Ontology Workbench</span>
+        <h1 className="app-title">本体建模可视化</h1>
+        <p className="app-subtitle">
           {activeView === "npd-owl"
             ? "NPD OWL 可配置图谱"
             : activeView === "npd"
               ? "NPD 表-本体图谱"
               : "3GPP 图谱"}
-        </span>
-      </h1>
+        </p>
+      </div>
       <div className="app-header__actions">
-        <div className="app-view-toggle" aria-label="视图切换">
+        <nav className="app-view-toggle" aria-label="视图切换">
           <button
             className={`app-view-btn ${activeView === "npd-owl" ? "is-active" : ""}`}
             onClick={() => setActiveView("npd-owl")}
@@ -128,7 +129,7 @@ export default function App() {
           >
             3GPP 图谱
           </button>
-        </div>
+        </nav>
         {activeView === "g3pp" && (
           <div className="app-layout-toggle">
             <button
