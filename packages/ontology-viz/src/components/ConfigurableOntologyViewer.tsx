@@ -8,7 +8,7 @@ import {
   forceX,
   forceY,
 } from "d3-force";
-import { memo, useCallback, useDeferredValue, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   Background,
   Controls,
@@ -861,6 +861,8 @@ export function ConfigurableOntologyViewer({
   );
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [saveLabel, setSaveLabel] = useState("保存");
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
+  const configPopoverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setSelectedId("");
@@ -875,13 +877,39 @@ export function ConfigurableOntologyViewer({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setIsConfigOpen(false);
     };
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (configPopoverRef.current?.contains(target)) return;
+      if (settingsButtonRef.current?.contains(target)) return;
+      setIsConfigOpen(false);
+    };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("pointerdown", handlePointerDown);
+    };
   }, [isConfigOpen]);
 
+  useEffect(() => {
+    if (selectedId) setIsConfigOpen(false);
+  }, [selectedId]);
+
   const handleSelect = useCallback((id: string) => {
+    setIsConfigOpen(false);
     setSelectedId((previous) => previous === id ? "" : id);
   }, []);
+
+  const handleClearSelection = useCallback(() => {
+    setIsConfigOpen(false);
+    setSelectedId("");
+  }, []);
+
+  const handleSettingsButtonClick = useCallback(() => {
+    setSelectedId("");
+    setIsConfigOpen((current) => selectedId ? true : !current);
+  }, [selectedId]);
 
   const persistConfig = useCallback((nextConfig: ExplicitOntologyVisualConfig) => {
     const saved = writeSavedConfig(resolvedStorageKey, nextConfig);
@@ -940,9 +968,10 @@ export function ConfigurableOntologyViewer({
               <span><strong>{config.visibleEntityKinds.length}</strong> 类型</span>
             </div>
             <button
+              ref={settingsButtonRef}
               className="explicit-settings-button"
               type="button"
-              onClick={() => setIsConfigOpen(true)}
+              onClick={handleSettingsButtonClick}
               aria-label="打开设置"
               title="设置"
             >
@@ -961,13 +990,13 @@ export function ConfigurableOntologyViewer({
               selectedId={selectedId}
               search={search}
               onSelect={handleSelect}
-              onClearSelection={() => setSelectedId("")}
+              onClearSelection={handleClearSelection}
             />
           </ReactFlowProvider>
         </div>
       </main>
-      {isConfigOpen && (
-        <div className="explicit-config-popover">
+      {isConfigOpen && !selectedId && (
+        <div className="explicit-config-popover" ref={configPopoverRef}>
           <ConfigPanel
             data={data}
             config={config}
@@ -981,7 +1010,7 @@ export function ConfigurableOntologyViewer({
         </div>
       )}
       {selectedId && (
-        <DetailPanel data={data} selectedId={selectedId} onClose={() => setSelectedId("")} />
+        <DetailPanel data={data} selectedId={selectedId} onClose={handleClearSelection} />
       )}
     </div>
   );
