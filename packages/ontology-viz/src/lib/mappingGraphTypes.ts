@@ -106,13 +106,18 @@ export interface MappingGraphData {
   edges: MappingGraphEdge[];
 }
 
-export type MappingGraphLayoutMode = "dagre" | "force";
+export type MappingGraphLayoutMode = "dagre" | "force" | "radial";
 
 export interface MappingGraphNodeData extends Record<string, unknown> {
   node: MappingGraphNode;
   selected: boolean;
+  highlighted: boolean;
+  dimmed: boolean;
 }
 
 export interface MappingGraphEdgeData extends Record<string, unknown> {
   edge: MappingGraphEdge;
+  selected?: boolean;
+  highlighted?: boolean;
+  dimmed?: boolean;
 }

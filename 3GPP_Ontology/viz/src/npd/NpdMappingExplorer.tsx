@@ -30,7 +30,7 @@ const EDGE_KIND_LABELS = {
 export function NpdMappingExplorer() {
   const [selectedId, setSelectedId] = useState("");
   const [search, setSearch] = useState("");
-  const [layoutMode, setLayoutMode] = useState<MappingGraphLayoutMode>("dagre");
+  const [layoutMode, setLayoutMode] = useState<MappingGraphLayoutMode>("radial");
 
   const selection = useMemo<Selection>(() => {
     const node = npdMappingGraph.nodes.find((item) => item.id === selectedId);
@@ -62,6 +62,12 @@ export function NpdMappingExplorer() {
           </label>
 
           <div className="npd-graph-layout" aria-label="布局切换">
+            <button
+              className={layoutMode === "radial" ? "is-active" : ""}
+              onClick={() => setLayoutMode("radial")}
+            >
+              环形布局
+            </button>
             <button
               className={layoutMode === "dagre" ? "is-active" : ""}
               onClick={() => setLayoutMode("dagre")}

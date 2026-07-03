@@ -39,6 +39,7 @@ import type {
 
 const NODE_WIDTH = 260;
 const NODE_HEIGHT = 112;
+const NODE_GAP = 340;
 
 const KIND_LABELS: Record<MappingGraphNodeKind, string> = {
   ontologyObject: "对象",
@@ -73,19 +74,32 @@ function MappingNode({ data }: NodeProps<Node<MappingGraphNodeData>>) {
 
   return (
     <div
-      className={`mapping-graph-node mapping-graph-node--${item.kind} ${data.selected ? "is-selected" : ""}`}
+      className={[
+        "mapping-graph-node",
+        `mapping-graph-node--${item.kind}`,
+        data.selected ? "is-selected" : "",
+        data.highlighted ? "is-highlighted" : "",
+        data.dimmed ? "is-dimmed" : "",
+      ].filter(Boolean).join(" ")}
       style={{
         borderColor: color,
         background: `linear-gradient(135deg, ${tint(color, 0.12)}, #fff 72%)`,
         boxShadow: data.selected
           ? `0 0 0 2px ${tint(color, 0.42)}, 0 10px 24px rgba(15, 23, 42, 0.16)`
+          : data.highlighted
+            ? `0 0 0 1px ${tint(color, 0.26)}, 0 8px 18px rgba(15, 23, 42, 0.13)`
           : "0 2px 8px rgba(15, 23, 42, 0.1)",
+        opacity: data.dimmed ? 0.2 : 1,
       }}
     >
-      <Handle type="target" position={Position.Left} />
-      <Handle type="source" position={Position.Right} />
-      <Handle type="target" position={Position.Top} />
-      <Handle type="source" position={Position.Bottom} />
+      <Handle id="left-target" type="target" position={Position.Left} />
+      <Handle id="right-target" type="target" position={Position.Right} />
+      <Handle id="top-target" type="target" position={Position.Top} />
+      <Handle id="bottom-target" type="target" position={Position.Bottom} />
+      <Handle id="left-source" type="source" position={Position.Left} />
+      <Handle id="right-source" type="source" position={Position.Right} />
+      <Handle id="top-source" type="source" position={Position.Top} />
+      <Handle id="bottom-source" type="source" position={Position.Bottom} />
 
       <div className="mapping-graph-node__meta">
         <span style={{ background: color }}>{KIND_LABELS[item.kind]}</span>
@@ -167,8 +181,41 @@ function buildNodes(data: MappingGraphData, selectedId: string, search: string):
       data: {
         node,
         selected: node.id === selectedId,
+        highlighted: false,
+        dimmed: false,
       },
     }));
+}
+
+function edgeBaseStyle(edge: MappingGraphEdge, state: { selected?: boolean; highlighted?: boolean; dimmed?: boolean } = {}) {
+  const color = EDGE_COLORS[edge.kind];
+  return {
+    stroke: color,
+    strokeWidth: state.selected
+      ? edge.kind === "objectRelation" ? 3.4 : 2.6
+      : state.highlighted
+        ? edge.kind === "objectRelation" ? 2.8 : 2.1
+        : edge.kind === "objectRelation" ? 2 : 1.4,
+    strokeDasharray: edge.kind === "tableToObject" ? "5 4" : "none",
+    opacity: state.dimmed ? 0.12 : 1,
+  };
+}
+
+function edgeLabelStyle(state: { selected?: boolean; highlighted?: boolean; dimmed?: boolean } = {}) {
+  return {
+    fontSize: 10,
+    fontWeight: state.selected || state.highlighted ? 760 : 650,
+    fill: "#334155",
+    opacity: state.dimmed ? 0.18 : 1,
+  };
+}
+
+function edgeClassName(state: { selected?: boolean; highlighted?: boolean; dimmed?: boolean } = {}) {
+  return [
+    state.selected ? "is-selected" : "",
+    state.highlighted ? "is-highlighted" : "",
+    state.dimmed ? "is-dimmed" : "",
+  ].filter(Boolean).join(" ");
 }
 
 function buildEdges(
@@ -181,6 +228,7 @@ function buildEdges(
       const color = EDGE_COLORS[edge.kind];
       return {
         id: edge.id,
+        type: "straight",
         source: edge.source,
         target: edge.target,
         label: edge.label.zh,
@@ -191,18 +239,53 @@ function buildEdges(
           color,
         },
         data: { edge },
-        style: {
-          stroke: color,
-          strokeWidth: edge.kind === "objectRelation" ? 2 : 1.4,
-          strokeDasharray: edge.kind === "tableToObject" ? "5 4" : "none",
-        },
+        style: edgeBaseStyle(edge),
         labelShowBg: true,
         labelBgStyle: { fill: "rgba(255,255,255,0.92)", fillOpacity: 1 },
-        labelStyle: { fontSize: 10, fontWeight: 650, fill: "#334155" },
+        labelStyle: edgeLabelStyle(),
         labelBgPadding: [6, 3] as [number, number],
         labelBgBorderRadius: 6,
       };
     });
+}
+
+function assignDynamicHandles(
+  nodes: Node<MappingGraphNodeData>[],
+  edges: Edge<MappingGraphEdgeData>[],
+): Edge<MappingGraphEdgeData>[] {
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  return edges.map((edge) => {
+    const source = nodeById.get(edge.source);
+    const target = nodeById.get(edge.target);
+    if (!source || !target) return edge;
+
+    const sourceCenter = {
+      x: source.position.x + NODE_WIDTH / 2,
+      y: source.position.y + NODE_HEIGHT / 2,
+    };
+    const targetCenter = {
+      x: target.position.x + NODE_WIDTH / 2,
+      y: target.position.y + NODE_HEIGHT / 2,
+    };
+    const dx = targetCenter.x - sourceCenter.x;
+    const dy = targetCenter.y - sourceCenter.y;
+    let sourceSide: "left" | "right" | "top" | "bottom";
+    let targetSide: "left" | "right" | "top" | "bottom";
+
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      sourceSide = dx >= 0 ? "right" : "left";
+      targetSide = dx >= 0 ? "left" : "right";
+    } else {
+      sourceSide = dy >= 0 ? "bottom" : "top";
+      targetSide = dy >= 0 ? "top" : "bottom";
+    }
+
+    return {
+      ...edge,
+      sourceHandle: `${sourceSide}-source`,
+      targetHandle: `${targetSide}-target`,
+    };
+  });
 }
 
 function layoutDagre(nodes: Node<MappingGraphNodeData>[], edges: Edge<MappingGraphEdgeData>[]) {
@@ -282,6 +365,156 @@ function layoutForce(nodes: Node<MappingGraphNodeData>[], edges: Edge<MappingGra
   });
 }
 
+function layoutRadial(nodes: Node<MappingGraphNodeData>[], edges: Edge<MappingGraphEdgeData>[]) {
+  if (nodes.length === 0) return nodes;
+
+  const objectNodes = nodes.filter((node) => node.data.node.kind === "ontologyObject");
+  const tableNodes = nodes.filter((node) => node.data.node.kind === "sourceTable");
+  const degree = new Map(nodes.map((node) => [node.id, 0]));
+
+  for (const edge of edges) {
+    if (edge.data?.edge.kind === "objectRelation") {
+      degree.set(edge.source, (degree.get(edge.source) ?? 0) + 1);
+      degree.set(edge.target, (degree.get(edge.target) ?? 0) + 1);
+    }
+  }
+
+  const positioned = new Map<string, { x: number; y: number; angle: number }>();
+  const sortedObjects = [...objectNodes].sort((a, b) =>
+    (degree.get(b.id) ?? 0) - (degree.get(a.id) ?? 0) ||
+    a.data.node.label.en.localeCompare(b.data.node.label.en),
+  );
+
+  let objectIndex = 0;
+  let radius = 720;
+  let maxObjectRadius = radius;
+  while (objectIndex < sortedObjects.length) {
+    const capacity = Math.max(8, Math.floor((2 * Math.PI * radius) / NODE_GAP));
+    const ringNodes = sortedObjects.slice(objectIndex, objectIndex + capacity);
+    const offset = (objectIndex / Math.max(1, sortedObjects.length)) * Math.PI;
+
+    ringNodes.forEach((node, ringIndex) => {
+      const angle = offset + (ringIndex / ringNodes.length) * 2 * Math.PI;
+      positioned.set(node.id, {
+        x: Math.cos(angle) * radius - NODE_WIDTH / 2,
+        y: Math.sin(angle) * radius - NODE_HEIGHT / 2,
+        angle,
+      });
+    });
+
+    maxObjectRadius = radius;
+    objectIndex += ringNodes.length;
+    radius += 500;
+  }
+
+  const objectAngles = new Map([...positioned.entries()].map(([id, pos]) => [id, pos.angle]));
+  const tableAngles = tableNodes.map((node) => {
+    const linkedAngles: number[] = [];
+    for (const edge of edges) {
+      if (edge.data?.edge.kind !== "tableToObject") continue;
+      if (edge.source === node.id && objectAngles.has(edge.target)) {
+        linkedAngles.push(objectAngles.get(edge.target)!);
+      } else if (edge.target === node.id && objectAngles.has(edge.source)) {
+        linkedAngles.push(objectAngles.get(edge.source)!);
+      }
+    }
+
+    if (linkedAngles.length === 0) return { node, angle: 0 };
+
+    const vector = linkedAngles.reduce(
+      (acc, angle) => ({
+        x: acc.x + Math.cos(angle),
+        y: acc.y + Math.sin(angle),
+      }),
+      { x: 0, y: 0 },
+    );
+    return { node, angle: Math.atan2(vector.y, vector.x) };
+  }).sort((a, b) => a.angle - b.angle || a.node.data.node.label.en.localeCompare(b.node.data.node.label.en));
+
+  const tableRadius = Math.max(
+    maxObjectRadius + 1000,
+    tableNodes.length > 0 ? (tableNodes.length * NODE_GAP) / (2 * Math.PI) : maxObjectRadius + 1000,
+  );
+
+  tableAngles.forEach(({ node }, tableIndex) => {
+    const angle = (tableIndex / Math.max(1, tableAngles.length)) * 2 * Math.PI - Math.PI / 2;
+    positioned.set(node.id, {
+      x: Math.cos(angle) * tableRadius - NODE_WIDTH / 2,
+      y: Math.sin(angle) * tableRadius - NODE_HEIGHT / 2,
+      angle,
+    });
+  });
+
+  return nodes.map((node) => {
+    const pos = positioned.get(node.id);
+    return {
+      ...node,
+      position: pos ? { x: pos.x, y: pos.y } : node.position,
+    };
+  });
+}
+
+function selectionSets(
+  selectedId: string,
+  nodes: Node<MappingGraphNodeData>[],
+  edges: Edge<MappingGraphEdgeData>[],
+) {
+  const nodeIds = new Set(nodes.map((node) => node.id));
+  const edgeIds = new Set(edges.map((edge) => edge.id));
+  const highlightedNodes = new Set<string>();
+  const highlightedEdges = new Set<string>();
+  const selectedNodeId = nodeIds.has(selectedId) ? selectedId : "";
+  const selectedEdgeId = edgeIds.has(selectedId) ? selectedId : "";
+
+  if (!selectedId) {
+    return { selectedNodeId, selectedEdgeId, highlightedNodes, highlightedEdges };
+  }
+
+  if (selectedNodeId) {
+    highlightedNodes.add(selectedNodeId);
+    for (const edge of edges) {
+      if (edge.source === selectedNodeId || edge.target === selectedNodeId) {
+        highlightedEdges.add(edge.id);
+        highlightedNodes.add(edge.source);
+        highlightedNodes.add(edge.target);
+      }
+    }
+    return { selectedNodeId, selectedEdgeId, highlightedNodes, highlightedEdges };
+  }
+
+  if (selectedEdgeId) {
+    const edge = edges.find((item) => item.id === selectedEdgeId);
+    if (edge) {
+      highlightedEdges.add(edge.id);
+      highlightedNodes.add(edge.source);
+      highlightedNodes.add(edge.target);
+    }
+  }
+
+  return { selectedNodeId, selectedEdgeId, highlightedNodes, highlightedEdges };
+}
+
+function applyEdgeState(
+  edge: Edge<MappingGraphEdgeData>,
+  state: { selected?: boolean; highlighted?: boolean; dimmed?: boolean },
+): Edge<MappingGraphEdgeData> {
+  const mappingEdge = edge.data?.edge;
+  if (!mappingEdge) return edge;
+  return {
+    ...edge,
+    className: edgeClassName(state),
+    style: edgeBaseStyle(mappingEdge, state),
+    labelStyle: edgeLabelStyle(state),
+    data: {
+      ...(edge.data ?? {}),
+      edge: mappingEdge,
+      selected: Boolean(state.selected),
+      highlighted: Boolean(state.highlighted),
+      dimmed: Boolean(state.dimmed),
+    },
+  };
+}
+
 export interface OntologyMappingGraphProps {
   data: MappingGraphData;
   selectedId: string;
@@ -314,8 +547,12 @@ function OntologyMappingGraphInner({
     const nodes = buildNodes(data, "", deferredSearch.trim());
     const visibleNodeIds = new Set(nodes.map((node) => node.id));
     const edges = buildEdges(data, visibleNodeIds);
-    const laidOut = layoutMode === "force" ? layoutForce(nodes, edges) : layoutDagre(nodes, edges);
-    return { rawNodes: laidOut, rawEdges: edges };
+    const laidOut = layoutMode === "force"
+      ? layoutForce(nodes, edges)
+      : layoutMode === "radial"
+        ? layoutRadial(nodes, edges)
+        : layoutDagre(nodes, edges);
+    return { rawNodes: laidOut, rawEdges: assignDynamicHandles(laidOut, edges) };
   }, [data, deferredSearch, layoutMode]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<MappingGraphNodeData>>([]);
@@ -331,16 +568,32 @@ function OntologyMappingGraphInner({
   }, [fitView, layoutMode, rawEdges, rawNodes, setEdges, setNodes]);
 
   useEffect(() => {
+    const sets = selectionSets(selectedId, rawNodes, rawEdges);
     setNodes((current) =>
-      current.map((node) => ({
-        ...node,
-        data: {
-          ...node.data,
-          selected: node.id === selectedId,
-        },
-      })),
+      current.map((node) => {
+        const highlighted = sets.highlightedNodes.has(node.id);
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            selected: node.id === sets.selectedNodeId,
+            highlighted,
+            dimmed: Boolean(selectedId) && !highlighted,
+          },
+        };
+      }),
     );
-  }, [selectedId, setNodes]);
+    setEdges((current) =>
+      current.map((edge) => {
+        const highlighted = sets.highlightedEdges.has(edge.id);
+        return applyEdgeState(edge, {
+          selected: edge.id === sets.selectedEdgeId,
+          highlighted,
+          dimmed: Boolean(selectedId) && !highlighted,
+        });
+      }),
+    );
+  }, [rawEdges, rawNodes, selectedId, setEdges, setNodes]);
 
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node<MappingGraphNodeData>) => onSelect(node.id),

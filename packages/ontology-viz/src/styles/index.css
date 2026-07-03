@@ -355,6 +355,27 @@
   transform: translateY(-1px);
 }
 
+.mapping-graph-node.is-highlighted {
+  z-index: 2;
+}
+
+.mapping-graph-node.is-dimmed {
+  filter: grayscale(0.4);
+}
+
+.mapping-graph-node .react-flow__handle {
+  width: 8px;
+  height: 8px;
+  border: 1px solid rgba(71, 85, 105, 0.35);
+  background: rgba(255, 255, 255, 0.9);
+  opacity: 0.12;
+}
+
+.mapping-graph-node:hover .react-flow__handle,
+.mapping-graph-node.is-selected .react-flow__handle {
+  opacity: 0.55;
+}
+
 .mapping-graph-node__meta {
   display: flex;
   align-items: center;
