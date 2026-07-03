@@ -104,6 +104,33 @@ export const DEFAULT_EXPLICIT_ONTOLOGY_CONFIG: ExplicitOntologyVisualConfig = {
   },
 };
 
+function createExplicitOntologyConfig(initialConfig?: Partial<ExplicitOntologyVisualConfig>) {
+  return {
+    ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG,
+    ...initialConfig,
+    card: {
+      ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG.card,
+      ...initialConfig?.card,
+    },
+    color: {
+      ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG.color,
+      ...initialConfig?.color,
+      typeColors: {
+        ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG.color.typeColors,
+        ...initialConfig?.color?.typeColors,
+      },
+    },
+    edges: {
+      ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG.edges,
+      ...initialConfig?.edges,
+      colorByKind: {
+        ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG.edges.colorByKind,
+        ...initialConfig?.edges?.colorByKind,
+      },
+    },
+  };
+}
+
 interface ExplicitNodeData extends Record<string, unknown> {
   entity: ExplicitOntologyEntity;
   config: ExplicitOntologyVisualConfig;
@@ -540,12 +567,14 @@ function ConfigPanel({
   search,
   onSearchChange,
   onConfigChange,
+  onClose,
 }: {
   data: ExplicitOntologyGraphData;
   config: ExplicitOntologyVisualConfig;
   search: string;
   onSearchChange: (value: string) => void;
   onConfigChange: (config: ExplicitOntologyVisualConfig) => void;
+  onClose: () => void;
 }) {
   const update = (patch: Partial<ExplicitOntologyVisualConfig>) => onConfigChange({ ...config, ...patch });
   const updateCard = (patch: Partial<ExplicitOntologyVisualConfig["card"]>) =>
@@ -570,11 +599,12 @@ function ConfigPanel({
   };
 
   return (
-    <aside className="explicit-config-panel" aria-label="可视化配置">
+    <aside className="explicit-config-panel" role="dialog" aria-modal="false" aria-label="设置">
       <div className="explicit-config-panel__header">
-        <span>Graph Controls</span>
-        <h2>可视化配置</h2>
-        <p>所有可选字段均来自当前本体文件；实体没有对应值时，卡片项自动隐藏。</p>
+        <h2>设置</h2>
+        <button className="explicit-config-panel__close" type="button" onClick={onClose} aria-label="关闭设置">
+          ×
+        </button>
       </div>
 
       <section className="explicit-config-section explicit-config-section--first">
@@ -758,30 +788,24 @@ export function ConfigurableOntologyViewer({
 }: ConfigurableOntologyViewerProps) {
   const [selectedId, setSelectedId] = useState("");
   const [search, setSearch] = useState("");
-  const [config, setConfig] = useState<ExplicitOntologyVisualConfig>({
-    ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG,
-    ...initialConfig,
-    card: {
-      ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG.card,
-      ...initialConfig?.card,
-    },
-    color: {
-      ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG.color,
-      ...initialConfig?.color,
-      typeColors: {
-        ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG.color.typeColors,
-        ...initialConfig?.color?.typeColors,
-      },
-    },
-    edges: {
-      ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG.edges,
-      ...initialConfig?.edges,
-      colorByKind: {
-        ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG.edges.colorByKind,
-        ...initialConfig?.edges?.colorByKind,
-      },
-    },
-  });
+  const [config, setConfig] = useState<ExplicitOntologyVisualConfig>(() => createExplicitOntologyConfig(initialConfig));
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+
+  useEffect(() => {
+    setSelectedId("");
+    setSearch("");
+    setConfig(createExplicitOntologyConfig(initialConfig));
+    setIsConfigOpen(false);
+  }, [data, initialConfig]);
+
+  useEffect(() => {
+    if (!isConfigOpen) return undefined;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsConfigOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isConfigOpen]);
 
   const handleSelect = useCallback((id: string) => {
     setSelectedId((previous) => previous === id ? "" : id);
@@ -797,24 +821,29 @@ export function ConfigurableOntologyViewer({
 
   return (
     <div className="explicit-viewer">
-      <ConfigPanel
-        data={data}
-        config={config}
-        search={search}
-        onSearchChange={setSearch}
-        onConfigChange={setConfig}
-      />
       <main className="explicit-viewer__stage">
         <div className="explicit-stage-bar">
           <div className="explicit-stage-bar__title">
-            <span>OWL Graph</span>
             <strong>{data.ontologyTitle ?? "Ontology"}</strong>
-            {data.ontologyIRI && <small title={data.ontologyIRI}>{data.ontologyIRI}</small>}
           </div>
-          <div className="explicit-stage-bar__metrics" aria-label="当前图谱规模">
-            <span><strong>{compactNumber(visibleSummary.nodes)}</strong> 节点</span>
-            <span><strong>{compactNumber(visibleSummary.edges)}</strong> 边</span>
-            <span><strong>{config.visibleEntityKinds.length}</strong> 类型</span>
+          <div className="explicit-stage-bar__tools">
+            <div className="explicit-stage-bar__metrics" aria-label="当前图谱规模">
+              <span><strong>{compactNumber(visibleSummary.nodes)}</strong> 节点</span>
+              <span><strong>{compactNumber(visibleSummary.edges)}</strong> 边</span>
+              <span><strong>{config.visibleEntityKinds.length}</strong> 类型</span>
+            </div>
+            <button
+              className="explicit-settings-button"
+              type="button"
+              onClick={() => setIsConfigOpen(true)}
+              aria-label="打开设置"
+              title="设置"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+                <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 0 1-4 0v-.08a1.7 1.7 0 0 0-1.04-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 0 1 0-4h.08A1.7 1.7 0 0 0 4.64 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 0 1 4 0v.08a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.04A1.7 1.7 0 0 0 20.96 10H21a2 2 0 0 1 0 4h-.08A1.7 1.7 0 0 0 19.4 15Z" />
+              </svg>
+            </button>
           </div>
         </div>
         <div className="explicit-viewer__graph-shell">
@@ -830,6 +859,18 @@ export function ConfigurableOntologyViewer({
           </ReactFlowProvider>
         </div>
       </main>
+      {isConfigOpen && (
+        <div className="explicit-config-popover">
+          <ConfigPanel
+            data={data}
+            config={config}
+            search={search}
+            onSearchChange={setSearch}
+            onConfigChange={setConfig}
+            onClose={() => setIsConfigOpen(false)}
+          />
+        </div>
+      )}
       {selectedId && (
         <DetailPanel data={data} selectedId={selectedId} onClose={() => setSelectedId("")} />
       )}

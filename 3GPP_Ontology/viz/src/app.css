@@ -31,86 +31,62 @@
   min-width: 0;
 }
 
-.app-view-toggle,
-.app-layout-toggle {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  border: 1px solid #d6dde8;
-  border-radius: 8px;
-  background: #f8fafc;
-  padding: 3px;
-}
-
-.app-view-btn,
-.app-layout-btn {
-  min-height: 32px;
-  padding: 5px 12px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: transparent;
-  color: #475569;
-  font-size: 12px;
-  font-weight: 680;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-  white-space: nowrap;
-}
-
-.app-view-btn:hover,
-.app-layout-btn:hover {
-  background: #fff;
-  color: #0f172a;
-}
-
-.app-view-btn.is-active,
-.app-layout-btn.is-active {
-  background: #1e40af;
-  border-color: #1e40af;
-  color: #fff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
-}
-
-.app-view-btn:focus-visible,
-.app-layout-btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.18);
-}
-
-.app-title-group {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.app-kicker {
-  color: #1e40af;
-  font-size: 10px;
-  font-weight: 780;
-  letter-spacing: 0;
-  line-height: 1.1;
-  text-transform: uppercase;
-}
-
 .app-title {
   overflow: hidden;
   color: #0f172a;
-  font-size: 18px;
-  font-weight: 780;
+  font-size: 20px;
+  font-weight: 800;
   line-height: 1.15;
   margin: 0;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.app-subtitle {
-  margin: 0;
-  overflow: hidden;
+.app-import-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  border: 1px solid #cbd5df;
+  border-radius: 7px;
+  background: #fff;
+  color: #334155;
+  padding: 6px 11px;
   font-size: 12px;
-  font-weight: 520;
-  color: #64748b;
-  text-overflow: ellipsis;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
   white-space: nowrap;
+}
+
+.app-import-btn:hover,
+.app-import-btn:focus-within {
+  border-color: #1e40af;
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+.app-import-btn:focus-within {
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15);
+}
+
+.app-import-btn input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.app-import-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
 }
 
 .app-main {
@@ -930,23 +906,6 @@
   .app-header__actions {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .app-view-toggle,
-  .app-layout-toggle {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .app-layout-toggle {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .app-view-btn,
-  .app-layout-btn {
-    min-width: 0;
-    padding-inline: 8px;
-    white-space: normal;
   }
 
   .npd-graph-stats {
