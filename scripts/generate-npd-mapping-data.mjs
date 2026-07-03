@@ -397,7 +397,6 @@ function buildMappingGraph(entries, sourcePath) {
   }
 
   const objects = new Map();
-  const relations = new Map();
   const tables = new Map();
   const edges = new Map();
 
@@ -443,51 +442,10 @@ function buildMappingGraph(entries, sourcePath) {
     return tables.get(id);
   }
 
-  function ensureRelation(entry, sourceObject, targetObject) {
-    const id = makeId("relation", `${sourceObject.name}:${entry.entityName}:${targetObject.name}`);
-    if (!relations.has(id)) {
-      relations.set(id, {
-        id,
-        kind: "ontologyRelation",
-        name: entry.entityName,
-        label: makeLabel(entry.entityName),
-        predicate: entry.targetPredicate,
-        sourceObjectId: sourceObject.id,
-        targetObjectId: targetObject.id,
-        sourceObjectName: sourceObject.name,
-        targetObjectName: targetObject.name,
-        sourceTables: [],
-        sourceColumns: [],
-        mappingIds: [],
-        mappings: [],
-      });
-      sourceObject.relations.push(id);
-      targetObject.relations.push(id);
-      upsertEdge({
-        id: `${sourceObject.id}->${id}`,
-        kind: "objectToRelation",
-        source: sourceObject.id,
-        target: id,
-        label: { en: "domain", zh: "定义域" },
-        mappingIds: [],
-        mappings: [],
-      });
-      upsertEdge({
-        id: `${id}->${targetObject.id}`,
-        kind: "relationToObject",
-        source: id,
-        target: targetObject.id,
-        label: { en: "range", zh: "值域" },
-        mappingIds: [],
-        mappings: [],
-      });
-    }
-    return relations.get(id);
-  }
-
   function upsertEdge(next) {
     if (!edges.has(next.id)) {
       edges.set(next.id, {
+        sourceTables: [],
         sourceColumns: [],
         targetProperties: [],
         ...next,
@@ -499,6 +457,7 @@ function buildMappingGraph(entries, sourcePath) {
   function addMappingToEdge(edge, mapping) {
     edge.mappingIds.push(mapping.mappingId);
     edge.mappings.push(mapping);
+    edge.sourceTables.push(...(mapping.sourceTables ?? []));
     edge.sourceColumns.push(...mapping.sourceColumns);
     if (mapping.targetProperty) edge.targetProperties.push(mapping.targetProperty);
   }
@@ -537,6 +496,7 @@ function buildMappingGraph(entries, sourcePath) {
         });
         addMappingToEdge(edge, {
           mappingId: entry.id,
+          sourceTables: [tableName],
           sourceColumns: firstColumnsForTable(entry.sourceColumns, tableName),
           targetProperty: `${entry.entityName}.rdf:type`,
           targetLabel: makeLabel(`${entry.entityName} type`),
@@ -554,7 +514,6 @@ function buildMappingGraph(entries, sourcePath) {
     if (entry.kind === "objectProperty" && /^npd:/.test(entry.targetObject.trim())) {
       const targetObjectName = resolveObjectName(entry.targetObject);
       const targetObject = ensureObject(targetObjectName, entry.targetObject);
-      const relation = ensureRelation(entry, sourceObject, targetObject);
       const mapping = {
         mappingId: entry.id,
         sourceTables: entry.sourceTables,
@@ -567,24 +526,37 @@ function buildMappingGraph(entries, sourcePath) {
         abstraction: entry.abstraction,
         condition: entry.condition,
       };
-      relation.sourceTables.push(...entry.sourceTables);
-      relation.sourceColumns.push(...entry.sourceColumns);
-      relation.mappingIds.push(entry.id);
-      relation.mappings.push(mapping);
+      const relationEdge = upsertEdge({
+        id: makeId("edge", `${sourceObject.name}:${entry.entityName}:${targetObject.name}`),
+        kind: "objectRelation",
+        name: entry.entityName,
+        predicate: entry.targetPredicate,
+        source: sourceObject.id,
+        target: targetObject.id,
+        label: makeLabel(entry.entityName),
+        sourceObjectName: sourceObject.name,
+        targetObjectName: targetObject.name,
+        mappingIds: [],
+        mappings: [],
+      });
+      addMappingToEdge(relationEdge, mapping);
+      sourceObject.relations.push(relationEdge.id);
+      targetObject.relations.push(relationEdge.id);
 
       for (const tableName of entry.sourceTables) {
         const table = ensureTable(tableName);
         const edge = upsertEdge({
-          id: `${table.id}->${relation.id}`,
-          kind: "tableToRelation",
+          id: `${table.id}->${sourceObject.id}`,
+          kind: "tableToObject",
           source: table.id,
-          target: relation.id,
-          label: { en: "columns to relation", zh: "列到关系" },
+          target: sourceObject.id,
+          label: { en: "columns to relationship", zh: "列到对象关系" },
           mappingIds: [],
           mappings: [],
         });
         addMappingToEdge(edge, {
           ...mapping,
+          sourceTables: [tableName],
           sourceColumns: firstColumnsForTable(entry.sourceColumns, tableName),
         });
       }
@@ -619,6 +591,7 @@ function buildMappingGraph(entries, sourcePath) {
       });
       addMappingToEdge(edge, {
         mappingId: entry.id,
+        sourceTables: [tableName],
         sourceColumns: firstColumnsForTable(entry.sourceColumns, tableName),
         targetProperty: `${sourceObject.name}.${entry.entityName}`,
         targetLabel: makeLabel(`${sourceObject.name} ${entry.entityName}`),
@@ -628,7 +601,7 @@ function buildMappingGraph(entries, sourcePath) {
     }
   }
 
-  const nodes = [...objects.values(), ...relations.values(), ...tables.values()].map((node) => ({
+  const nodes = [...objects.values(), ...tables.values()].map((node) => ({
     ...node,
     uriTemplates: node.uriTemplates ? uniqueSorted(node.uriTemplates) : undefined,
     sourceTables: uniqueSorted(node.sourceTables ?? []),
@@ -641,7 +614,9 @@ function buildMappingGraph(entries, sourcePath) {
     const sourceColumns = uniqueSorted(edge.sourceColumns ?? []);
     const targetProperties = uniqueSorted(edge.targetProperties ?? []);
     const firstMapping = edge.mappings[0];
-    const label = firstMapping
+    const label = edge.kind === "objectRelation"
+      ? edge.label
+      : firstMapping
       ? {
           en: edge.mappings.length > 1
             ? `${edge.mappings.length} mappings`
@@ -654,6 +629,7 @@ function buildMappingGraph(entries, sourcePath) {
     return {
       ...edge,
       label,
+      sourceTables: uniqueSorted(edge.sourceTables ?? []),
       sourceColumns,
       targetProperties,
       mappingIds: uniqueSorted(edge.mappingIds ?? []),
@@ -668,7 +644,7 @@ function buildMappingGraph(entries, sourcePath) {
     stats: {
       mappingCount: entries.length,
       ontologyObjectCount: objects.size,
-      ontologyRelationCount: relations.size,
+      ontologyRelationCount: graphEdges.filter((edge) => edge.kind === "objectRelation").length,
       sourceTableCount: tables.size,
       dataPropertyMappingCount: entries.filter((entry) => entry.kind === "dataProperty").length,
       classMappingCount: entries.filter((entry) => entry.kind === "class" || entry.kind === "subclass").length,

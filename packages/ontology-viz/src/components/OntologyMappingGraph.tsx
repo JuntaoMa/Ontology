@@ -42,21 +42,17 @@ const NODE_HEIGHT = 112;
 
 const KIND_LABELS: Record<MappingGraphNodeKind, string> = {
   ontologyObject: "对象",
-  ontologyRelation: "关系",
   sourceTable: "源表",
 };
 
 const KIND_COLORS: Record<MappingGraphNodeKind, string> = {
   ontologyObject: "#2563eb",
-  ontologyRelation: "#7c3aed",
   sourceTable: "#0f766e",
 };
 
 const EDGE_COLORS = {
   tableToObject: "#0f766e",
-  tableToRelation: "#b45309",
-  objectToRelation: "#2563eb",
-  relationToObject: "#7c3aed",
+  objectRelation: "#7c3aed",
 };
 
 function tint(hex: string, alpha: number) {
@@ -73,9 +69,7 @@ function MappingNode({ data }: NodeProps<Node<MappingGraphNodeData>>) {
   const secondary =
     item.kind === "ontologyObject"
       ? `${item.properties.length} 属性 · ${item.sourceTables.length} 表`
-      : item.kind === "ontologyRelation"
-        ? `${item.mappings.length} 映射 · ${item.sourceTables.length} 表`
-        : `${item.sourceColumns.length} 列 · ${item.mappingIds.length} 映射`;
+      : `${item.sourceColumns.length} 列 · ${item.mappingIds.length} 映射`;
 
   return (
     <div
@@ -118,7 +112,32 @@ function matchesNode(node: MappingGraphNode, search: string) {
     ...node.sourceTables,
     ...(node.sourceColumns ?? []),
     ...(node.kind === "ontologyObject" ? node.properties.flatMap((prop) => [prop.name, prop.label.en, prop.label.zh]) : []),
-    ...(node.kind === "ontologyRelation" ? [node.sourceObjectName, node.targetObjectName, node.predicate] : []),
+  ].join(" ").toLowerCase();
+  return haystack.includes(search.toLowerCase());
+}
+
+function matchesEdge(edge: MappingGraphEdge, search: string) {
+  if (!search) return true;
+  const haystack = [
+    edge.id,
+    edge.name ?? "",
+    edge.predicate ?? "",
+    edge.label.en,
+    edge.label.zh,
+    edge.sourceObjectName ?? "",
+    edge.targetObjectName ?? "",
+    ...edge.sourceTables,
+    ...edge.sourceColumns,
+    ...edge.targetProperties,
+    ...edge.mappings.flatMap((mapping) => [
+      mapping.mappingId,
+      mapping.abstraction,
+      mapping.targetProperty ?? "",
+      mapping.targetLabel?.en ?? "",
+      mapping.targetLabel?.zh ?? "",
+      ...(mapping.sourceTables ?? []),
+      ...mapping.sourceColumns,
+    ]),
   ].join(" ").toLowerCase();
   return haystack.includes(search.toLowerCase());
 }
@@ -128,7 +147,7 @@ function visibleIdsForSearch(data: MappingGraphData, search: string) {
   const direct = new Set(data.nodes.filter((node) => matchesNode(node, search)).map((node) => node.id));
   const visible = new Set(direct);
   for (const edge of data.edges) {
-    if (direct.has(edge.source) || direct.has(edge.target)) {
+    if (direct.has(edge.source) || direct.has(edge.target) || matchesEdge(edge, search)) {
       visible.add(edge.source);
       visible.add(edge.target);
     }
@@ -174,8 +193,8 @@ function buildEdges(
         data: { edge },
         style: {
           stroke: color,
-          strokeWidth: edge.kind === "tableToObject" || edge.kind === "tableToRelation" ? 1.4 : 1.8,
-          strokeDasharray: edge.kind.startsWith("table") ? "5 4" : "none",
+          strokeWidth: edge.kind === "objectRelation" ? 2 : 1.4,
+          strokeDasharray: edge.kind === "tableToObject" ? "5 4" : "none",
         },
         labelShowBg: true,
         labelBgStyle: { fill: "rgba(255,255,255,0.92)", fillOpacity: 1 },

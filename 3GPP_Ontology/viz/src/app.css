@@ -273,11 +273,21 @@
   border-radius: 50%;
 }
 
+.npd-legend-line {
+  width: 18px;
+  height: 3px;
+  border-radius: 999px;
+}
+
 .npd-legend-dot--object {
   background: #2563eb;
 }
 
 .npd-legend-dot--relation {
+  background: #7c3aed;
+}
+
+.npd-legend-line--relation {
   background: #7c3aed;
 }
 

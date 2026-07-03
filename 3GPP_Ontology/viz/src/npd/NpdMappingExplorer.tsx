@@ -6,7 +6,6 @@ import {
   type MappingGraphLayoutMode,
   type MappingGraphNode,
   type MappingGraphObjectNode,
-  type MappingGraphRelationNode,
   type MappingGraphSourceTableNode,
 } from "@ontology/viz";
 import npdMappingGraphJson from "./generatedMappingGraph.json";
@@ -20,8 +19,12 @@ type Selection =
 
 const NODE_KIND_LABELS = {
   ontologyObject: "本体对象",
-  ontologyRelation: "本体关系",
   sourceTable: "源表",
+};
+
+const EDGE_KIND_LABELS = {
+  objectRelation: "本体关系",
+  tableToObject: "映射边",
 };
 
 export function NpdMappingExplorer() {
@@ -42,7 +45,7 @@ export function NpdMappingExplorer() {
       <div className="npd-graph-toolbar">
         <div className="npd-graph-stats" aria-label="NPD 映射图谱统计">
           <Stat value={npdMappingGraph.stats.ontologyObjectCount} label="本体对象" />
-          <Stat value={npdMappingGraph.stats.ontologyRelationCount} label="关系" />
+          <Stat value={npdMappingGraph.stats.ontologyRelationCount} label="关系边" />
           <Stat value={npdMappingGraph.stats.sourceTableCount} label="源表" />
           <Stat value={npdMappingGraph.stats.dataPropertyMappingCount} label="属性映射" />
           <Stat value={npdMappingGraph.stats.mappingCount} label="OBDA 映射" />
@@ -76,7 +79,7 @@ export function NpdMappingExplorer() {
 
         <div className="npd-graph-legend" aria-label="图例">
           <span><i className="npd-legend-dot npd-legend-dot--object" />对象</span>
-          <span><i className="npd-legend-dot npd-legend-dot--relation" />关系</span>
+          <span><i className="npd-legend-line npd-legend-line--relation" />关系边</span>
           <span><i className="npd-legend-dot npd-legend-dot--table" />源表</span>
         </div>
       </div>
@@ -159,16 +162,13 @@ function NodePanel({ node, data }: { node: MappingGraphNode; data: MappingGraphD
   if (node.kind === "ontologyObject") {
     return <ObjectNodePanel node={node} data={data} />;
   }
-  if (node.kind === "ontologyRelation") {
-    return <RelationNodePanel node={node} data={data} />;
-  }
   return <SourceTableNodePanel node={node} />;
 }
 
 function ObjectNodePanel({ node, data }: { node: MappingGraphObjectNode; data: MappingGraphData }) {
   const relations = (node.relations ?? [])
-    .map((id) => data.nodes.find((item) => item.id === id))
-    .filter((item): item is MappingGraphRelationNode => item?.kind === "ontologyRelation");
+    .map((id) => data.edges.find((item) => item.id === id))
+    .filter((item): item is MappingGraphEdge => item?.kind === "objectRelation");
 
   return (
     <>
@@ -216,34 +216,6 @@ function ObjectNodePanel({ node, data }: { node: MappingGraphObjectNode; data: M
   );
 }
 
-function RelationNodePanel({ node, data }: { node: MappingGraphRelationNode; data: MappingGraphData }) {
-  const source = data.nodes.find((item) => item.id === node.sourceObjectId);
-  const target = data.nodes.find((item) => item.id === node.targetObjectId);
-
-  return (
-    <>
-      <PanelHeader type={NODE_KIND_LABELS[node.kind]} zh={node.label.zh} en={node.label.en} />
-      <PanelSection title="对象关系">
-        <div className="npd-relation-flow">
-          <span>{source?.label.zh ?? node.sourceObjectName}</span>
-          <strong>{node.label.zh}</strong>
-          <span>{target?.label.zh ?? node.targetObjectName}</span>
-        </div>
-      </PanelSection>
-      <PanelSection title="来源表">
-        <ChipList items={node.sourceTables} />
-      </PanelSection>
-      <PanelSection title="来源列">
-        <ChipList items={node.sourceColumns.slice(0, 80)} dense />
-      </PanelSection>
-      <details className="npd-graph-details" open>
-        <summary>关系映射 ({node.mappings.length})</summary>
-        <MappingList items={node.mappings} />
-      </details>
-    </>
-  );
-}
-
 function SourceTableNodePanel({ node }: { node: MappingGraphSourceTableNode }) {
   return (
     <>
@@ -265,16 +237,19 @@ function EdgePanel({ edge, data }: { edge: MappingGraphEdge; data: MappingGraphD
   return (
     <>
       <PanelHeader
-        type="映射边"
+        type={EDGE_KIND_LABELS[edge.kind]}
         zh={edge.label.zh}
         en={edge.label.en}
       />
       <PanelSection title="连接">
         <div className="npd-relation-flow">
           <span>{source?.label.zh ?? edge.source}</span>
-          <strong>→</strong>
+          <strong>{edge.kind === "objectRelation" ? edge.label.zh : "→"}</strong>
           <span>{target?.label.zh ?? edge.target}</span>
         </div>
+      </PanelSection>
+      <PanelSection title="来源表">
+        <ChipList items={edge.sourceTables} />
       </PanelSection>
       <PanelSection title="来源列">
         <ChipList items={edge.sourceColumns.slice(0, 120)} dense />

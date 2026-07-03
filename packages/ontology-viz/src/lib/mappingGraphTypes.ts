@@ -3,12 +3,10 @@ export interface BilingualLabel {
   zh: string;
 }
 
-export type MappingGraphNodeKind = "ontologyObject" | "ontologyRelation" | "sourceTable";
+export type MappingGraphNodeKind = "ontologyObject" | "sourceTable";
 export type MappingGraphEdgeKind =
   | "tableToObject"
-  | "tableToRelation"
-  | "objectToRelation"
-  | "relationToObject";
+  | "objectRelation";
 
 export interface MappingGraphClassMapping {
   mappingId: string;
@@ -62,18 +60,8 @@ export interface MappingGraphObjectNode extends MappingGraphNodeBase {
   uriTemplates: string[];
   classMappings: MappingGraphClassMapping[];
   properties: MappingGraphProperty[];
+  /** Relation edge ids where this object is source or target. */
   relations?: string[];
-}
-
-export interface MappingGraphRelationNode extends MappingGraphNodeBase {
-  kind: "ontologyRelation";
-  predicate: string;
-  sourceObjectId: string;
-  targetObjectId: string;
-  sourceObjectName: string;
-  targetObjectName: string;
-  sourceColumns: string[];
-  mappings: MappingGraphEdgeMapping[];
 }
 
 export interface MappingGraphSourceTableNode extends MappingGraphNodeBase {
@@ -83,15 +71,19 @@ export interface MappingGraphSourceTableNode extends MappingGraphNodeBase {
 
 export type MappingGraphNode =
   | MappingGraphObjectNode
-  | MappingGraphRelationNode
   | MappingGraphSourceTableNode;
 
 export interface MappingGraphEdge {
   id: string;
   kind: MappingGraphEdgeKind;
+  name?: string;
+  predicate?: string;
   source: string;
   target: string;
   label: BilingualLabel;
+  sourceObjectName?: string;
+  targetObjectName?: string;
+  sourceTables: string[];
   sourceColumns: string[];
   targetProperties: string[];
   mappingIds: string[];

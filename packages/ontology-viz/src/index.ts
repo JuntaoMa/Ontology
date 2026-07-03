@@ -46,7 +46,6 @@ export type {
   MappingGraphNodeKind,
   MappingGraphObjectNode,
   MappingGraphProperty,
-  MappingGraphRelationNode,
   MappingGraphSourceTableNode,
 } from "./lib/mappingGraphTypes";
 
