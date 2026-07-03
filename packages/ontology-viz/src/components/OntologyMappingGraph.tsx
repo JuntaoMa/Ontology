@@ -39,8 +39,8 @@ import type {
   MappingGraphNodeKind,
 } from "../lib/mappingGraphTypes";
 
-const NODE_WIDTH = 260;
-const NODE_HEIGHT = 112;
+const NODE_WIDTH = 280;
+const NODE_HEIGHT = 110;
 const NODE_GAP = 340;
 
 interface LayoutSimNode extends SimulationNodeDatum {
@@ -90,24 +90,27 @@ const MappingNode = memo(function MappingNode({ data }: NodeProps<Node<MappingGr
         data.dimmed ? "is-dimmed" : "",
       ].filter(Boolean).join(" ")}
       style={{
-        borderColor: color,
-        background: `linear-gradient(135deg, ${tint(color, 0.12)}, #fff 72%)`,
+        borderLeft: `4px solid ${color}`,
+        background: `linear-gradient(135deg, ${tint(color, 0.12)} 0%, ${tint(color, 0.04)} 100%), #fff`,
         boxShadow: data.selected
-          ? `0 0 0 2px ${tint(color, 0.42)}, 0 10px 24px rgba(15, 23, 42, 0.16)`
+          ? `0 0 0 2px ${color}, 0 4px 12px rgba(0,0,0,0.1)`
           : data.highlighted
-            ? `0 0 0 1px ${tint(color, 0.26)}, 0 8px 18px rgba(15, 23, 42, 0.13)`
-          : "0 2px 8px rgba(15, 23, 42, 0.1)",
-        opacity: data.dimmed ? 0.2 : 1,
+            ? `0 0 0 2px ${tint(color, 0.45)}, 0 4px 12px rgba(0,0,0,0.1)`
+            : "0 1px 3px rgba(0,0,0,0.08)",
       }}
     >
-      <Handle id="left-target" type="target" position={Position.Left} />
-      <Handle id="right-target" type="target" position={Position.Right} />
-      <Handle id="top-target" type="target" position={Position.Top} />
-      <Handle id="bottom-target" type="target" position={Position.Bottom} />
-      <Handle id="left-source" type="source" position={Position.Left} />
-      <Handle id="right-source" type="source" position={Position.Right} />
-      <Handle id="top-source" type="source" position={Position.Top} />
-      <Handle id="bottom-source" type="source" position={Position.Bottom} />
+      <Handle
+        id="center-target"
+        className="mapping-graph-node__center-handle"
+        type="target"
+        position={Position.Top}
+      />
+      <Handle
+        id="center-source"
+        className="mapping-graph-node__center-handle"
+        type="source"
+        position={Position.Top}
+      />
 
       <div className="mapping-graph-node__meta">
         <span style={{ background: color }}>{KIND_LABELS[item.kind]}</span>
@@ -205,7 +208,6 @@ function edgeBaseStyle(edge: MappingGraphEdge, state: { selected?: boolean; high
         ? edge.kind === "objectRelation" ? 2.8 : 2.1
         : edge.kind === "objectRelation" ? 2 : 1.4,
     strokeDasharray: edge.kind === "tableToObject" ? "5 4" : "none",
-    opacity: state.dimmed ? 0.12 : 1,
   };
 }
 
@@ -214,8 +216,14 @@ function edgeLabelStyle(state: { selected?: boolean; highlighted?: boolean; dimm
     fontSize: 10,
     fontWeight: state.selected || state.highlighted ? 760 : 650,
     fill: "#334155",
-    opacity: state.dimmed ? 0.18 : 1,
   };
+}
+
+function shouldShowEdgeLabel(
+  edge: MappingGraphEdge,
+  state: { selected?: boolean; highlighted?: boolean } = {},
+) {
+  return edge.kind === "objectRelation" || Boolean(state.selected || state.highlighted);
 }
 
 function edgeClassName(state: { selected?: boolean; highlighted?: boolean; dimmed?: boolean } = {}) {
@@ -232,8 +240,7 @@ function edgeHasState(
 ) {
   return (
     Boolean(edge.data?.selected) === Boolean(state.selected) &&
-    Boolean(edge.data?.highlighted) === Boolean(state.highlighted) &&
-    Boolean(edge.data?.dimmed) === Boolean(state.dimmed)
+    Boolean(edge.data?.highlighted) === Boolean(state.highlighted)
   );
 }
 
@@ -245,12 +252,15 @@ function buildEdges(
     .filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target))
     .map((edge) => {
       const color = EDGE_COLORS[edge.kind];
+      const showLabel = shouldShowEdgeLabel(edge);
       return {
         id: edge.id,
         type: "straight",
         source: edge.source,
+        sourceHandle: "center-source",
         target: edge.target,
-        label: edge.label.zh,
+        targetHandle: "center-target",
+        label: showLabel ? edge.label.zh : undefined,
         markerEnd: {
           type: MarkerType.ArrowClosed,
           width: 16,
@@ -259,52 +269,13 @@ function buildEdges(
         },
         data: { edge },
         style: edgeBaseStyle(edge),
-        labelShowBg: true,
+        labelShowBg: showLabel,
         labelBgStyle: { fill: "rgba(255,255,255,0.92)", fillOpacity: 1 },
         labelStyle: edgeLabelStyle(),
         labelBgPadding: [6, 3] as [number, number],
         labelBgBorderRadius: 6,
       };
     });
-}
-
-function assignDynamicHandles(
-  nodes: Node<MappingGraphNodeData>[],
-  edges: Edge<MappingGraphEdgeData>[],
-): Edge<MappingGraphEdgeData>[] {
-  const nodeById = new Map(nodes.map((node) => [node.id, node]));
-  return edges.map((edge) => {
-    const source = nodeById.get(edge.source);
-    const target = nodeById.get(edge.target);
-    if (!source || !target) return edge;
-
-    const sourceCenter = {
-      x: source.position.x + NODE_WIDTH / 2,
-      y: source.position.y + NODE_HEIGHT / 2,
-    };
-    const targetCenter = {
-      x: target.position.x + NODE_WIDTH / 2,
-      y: target.position.y + NODE_HEIGHT / 2,
-    };
-    const dx = targetCenter.x - sourceCenter.x;
-    const dy = targetCenter.y - sourceCenter.y;
-    let sourceSide: "left" | "right" | "top" | "bottom";
-    let targetSide: "left" | "right" | "top" | "bottom";
-
-    if (Math.abs(dx) >= Math.abs(dy)) {
-      sourceSide = dx >= 0 ? "right" : "left";
-      targetSide = dx >= 0 ? "left" : "right";
-    } else {
-      sourceSide = dy >= 0 ? "bottom" : "top";
-      targetSide = dy >= 0 ? "top" : "bottom";
-    }
-
-    return {
-      ...edge,
-      sourceHandle: `${sourceSide}-source`,
-      targetHandle: `${targetSide}-target`,
-    };
-  });
 }
 
 function forceCircleBoundary(radius: number) {
@@ -573,8 +544,11 @@ function applyEdgeState(
 ): Edge<MappingGraphEdgeData> {
   const mappingEdge = edge.data?.edge;
   if (!mappingEdge) return edge;
+  const showLabel = shouldShowEdgeLabel(mappingEdge, state);
   return {
     ...edge,
+    label: showLabel ? mappingEdge.label.zh : undefined,
+    labelShowBg: showLabel,
     className: edgeClassName(state),
     style: edgeBaseStyle(mappingEdge, state),
     labelStyle: edgeLabelStyle(state),
@@ -625,7 +599,7 @@ function OntologyMappingGraphInner({
       : layoutMode === "radial"
         ? layoutRadial(nodes, edges)
         : layoutDagre(nodes, edges);
-    return { rawNodes: laidOut, rawEdges: assignDynamicHandles(laidOut, edges) };
+    return { rawNodes: laidOut, rawEdges: edges };
   }, [data, deferredSearch, layoutMode]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<MappingGraphNodeData>>([]);
@@ -634,6 +608,13 @@ function OntologyMappingGraphInner({
   const fitViewOptions = useMemo(
     () => ({ padding: 0.08, duration: fitDuration, minZoom: 0.04, maxZoom: 1 }),
     [fitDuration],
+  );
+  const hasActiveSelection = useMemo(
+    () => Boolean(selectedId) && (
+      rawNodes.some((node) => node.id === selectedId) ||
+      rawEdges.some((edge) => edge.id === selectedId)
+    ),
+    [rawEdges, rawNodes, selectedId],
   );
 
   useEffect(() => {
@@ -656,11 +637,10 @@ function OntologyMappingGraphInner({
       current.map((node) => {
         const selected = node.id === sets.selectedNodeId;
         const highlighted = sets.highlightedNodes.has(node.id);
-        const dimmed = Boolean(selectedId) && !highlighted;
         if (
           node.data.selected === selected &&
           node.data.highlighted === highlighted &&
-          node.data.dimmed === dimmed
+          node.data.dimmed === false
         ) {
           return node;
         }
@@ -670,7 +650,7 @@ function OntologyMappingGraphInner({
             ...node.data,
             selected,
             highlighted,
-            dimmed,
+            dimmed: false,
           },
         };
       }),
@@ -681,7 +661,7 @@ function OntologyMappingGraphInner({
         const state = {
           selected: edge.id === sets.selectedEdgeId,
           highlighted,
-          dimmed: Boolean(selectedId) && !highlighted,
+          dimmed: false,
         };
         return edgeHasState(edge, state) ? edge : applyEdgeState(edge, state);
       }),
@@ -703,7 +683,7 @@ function OntologyMappingGraphInner({
   }, []);
 
   return (
-    <div className="mapping-graph">
+    <div className={`mapping-graph ${hasActiveSelection ? "has-selection" : ""}`}>
       <ReactFlow
         fitView
         proOptions={{ hideAttribution: true }}

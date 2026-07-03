@@ -341,35 +341,38 @@
 }
 
 .mapping-graph-node {
-  width: 260px;
-  min-height: 108px;
-  border: 1px solid;
-  border-left-width: 5px;
-  border-radius: 8px;
+  width: 280px;
+  min-height: 100px;
+  background: var(--viz-panel-bg);
+  border-radius: var(--viz-radius);
   padding: 10px 12px;
-  color: #172033;
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  color: var(--viz-text);
+  font-size: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: box-shadow 0.15s ease;
 }
 
-.mapping-graph-node.is-selected {
-  transform: translateY(-1px);
+.mapping-graph.has-selection .mapping-graph-node:not(.is-selected):not(.is-highlighted) {
+  opacity: 0.2;
+}
+
+.mapping-graph.has-selection .react-flow__edge:not(.is-selected):not(.is-highlighted) {
+  opacity: 0.12;
 }
 
 .mapping-graph-node.is-highlighted {
   z-index: 2;
 }
 
-.mapping-graph-node .react-flow__handle {
-  width: 8px;
-  height: 8px;
-  border: 1px solid rgba(71, 85, 105, 0.35);
-  background: rgba(255, 255, 255, 0.9);
-  opacity: 0.12;
-}
-
-.mapping-graph-node:hover .react-flow__handle,
-.mapping-graph-node.is-selected .react-flow__handle {
-  opacity: 0.55;
+.mapping-graph-node .mapping-graph-node__center-handle {
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  border: 0;
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .mapping-graph-node__meta {
@@ -382,12 +385,12 @@
 .mapping-graph-node__meta span {
   display: inline-flex;
   align-items: center;
-  height: 20px;
+  height: 18px;
   border-radius: 4px;
-  padding: 0 7px;
+  padding: 0 6px;
   color: #fff;
-  font-size: 11px;
-  font-weight: 760;
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .mapping-graph-node__meta small {
@@ -399,26 +402,25 @@
 
 .mapping-graph-node__zh {
   overflow: hidden;
-  color: #0f172a;
-  font-size: 15px;
-  font-weight: 760;
-  line-height: 1.22;
+  color: var(--viz-text);
+  font-size: 13px;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .mapping-graph-node__en {
   overflow: hidden;
-  margin-top: 3px;
-  color: #475569;
-  font-size: 12px;
-  font-weight: 650;
+  margin-top: 4px;
+  color: var(--viz-text-secondary);
+  font-size: 11px;
+  line-height: 1.4;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .mapping-graph-node__summary {
-  margin-top: 8px;
-  color: #64748b;
+  margin-top: 6px;
+  color: var(--viz-text-secondary);
   font-size: 11px;
 }
