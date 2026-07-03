@@ -100,7 +100,7 @@ export default function App() {
       <h1 className="app-title">
         本体建模可视化
         <span className="app-subtitle">
-          {activeView === "npd" ? "NPD 表-本体映射" : "3GPP 图谱"}
+          {activeView === "npd" ? "NPD 表-本体图谱" : "3GPP 图谱"}
         </span>
       </h1>
       <div className="app-header__actions">
@@ -109,7 +109,7 @@ export default function App() {
             className={`app-view-btn ${activeView === "npd" ? "is-active" : ""}`}
             onClick={() => setActiveView("npd")}
           >
-            NPD 映射
+            NPD 图谱
           </button>
           <button
             className={`app-view-btn ${activeView === "g3pp" ? "is-active" : ""}`}

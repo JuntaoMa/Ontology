@@ -34,6 +34,21 @@ export type {
   FilterBarLabels,
   ProvenancePanelLabels,
 } from "./lib/types";
+export type {
+  BilingualLabel,
+  MappingGraphClassMapping,
+  MappingGraphData,
+  MappingGraphEdge,
+  MappingGraphEdgeKind,
+  MappingGraphEdgeMapping,
+  MappingGraphLayoutMode,
+  MappingGraphNode,
+  MappingGraphNodeKind,
+  MappingGraphObjectNode,
+  MappingGraphProperty,
+  MappingGraphRelationNode,
+  MappingGraphSourceTableNode,
+} from "./lib/mappingGraphTypes";
 
 // Parser
 export { parseTTLFiles } from "./lib/parser";
@@ -49,6 +64,9 @@ export {
 // Components
 export { OntologyGraph } from "./components/OntologyGraph";
 export type { OntologyGraphProps } from "./components/OntologyGraph";
+
+export { OntologyMappingGraph } from "./components/OntologyMappingGraph";
+export type { OntologyMappingGraphProps } from "./components/OntologyMappingGraph";
 
 export { ProvenancePanel } from "./components/ProvenancePanel";
 export type { ProvenancePanelProps } from "./components/ProvenancePanel";

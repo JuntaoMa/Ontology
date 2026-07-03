@@ -9,20 +9,20 @@ export const npdMappingData = {
   "mappingCount": 1177,
   "totals": {
     "byKind": {
-      "dataProperty": 563,
-      "objectProperty": 452,
+      "dataProperty": 854,
+      "objectProperty": 161,
       "class": 80,
       "subclass": 82
     },
     "byAbstraction": {
-      "空间坐标属性": 58,
+      "空间坐标属性": 60,
       "条件规则映射": 505,
-      "对象属性关系": 69,
-      "数据属性": 190,
+      "数据属性": 243,
       "指标值属性": 57,
-      "历史属性": 22,
-      "历史对象关系": 7,
+      "历史属性": 26,
+      "对象属性关系": 14,
       "业务关系": 17,
+      "历史对象关系": 3,
       "实体表到业务对象": 28,
       "关系或状态历史实体化": 16,
       "储量或资源汇总对象": 3,
@@ -113,7 +113,7 @@ export const npdMappingData = {
       "entityName": "minutesNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:minutesNS",
-      "targetObject": "{wlbNsMin}^^xsd:integer ",
+      "targetObject": "{wlbNsMin}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:minutesNS {wlbNsMin}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsMin\" FROM \"wellbore_coordinates\"",
       "sourceTables": [
@@ -136,7 +136,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:licence/{prlNpdidLicence}/transfer/{prlTransferDirection}/{cmpNpdidCompany}/history/{prlTransferDateValidFrom}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{prlTransferDateUpdated}^^xsd:date ",
+      "targetObject": "{prlTransferDateUpdated}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/transfer/{prlTransferDirection}/{cmpNpdidCompany}/history/{prlTransferDateValidFrom} npdv:dateUpdated {prlTransferDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlTransferDirection\", \"cmpNpdidCompany\", \"prlTransferDateValidFrom\", \"prlTransferDateUpdated\" FROM \"licence_transfer_hst\" WHERE \"prlTransferDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -166,7 +166,7 @@ export const npdMappingData = {
       "entityName": "degreesNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:degreesNS",
-      "targetObject": "{wlbNsDeg}^^xsd:integer ",
+      "targetObject": "{wlbNsDeg}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:degreesNS {wlbNsDeg}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsDeg\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -183,13 +183,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00004:Literal:seaMultiline:seaSourcePressure",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "sourcePressure",
       "targetSubject": "npd:survey/{seaSurveyName}/multiline",
       "targetPredicate": "npdv:sourcePressure",
-      "targetObject": "{seaSourcePressure} ",
+      "targetObject": "{seaSourcePressure}",
       "target": "npd:survey/{seaSurveyName}/multiline npdv:sourcePressure {seaSourcePressure} .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaSourcePressure\" FROM \"seaMultiline\"",
       "sourceTables": [
@@ -212,7 +212,7 @@ export const npdMappingData = {
       "entityName": "DSTFinalFlowPressure",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber}",
       "targetPredicate": "npdv:DSTFinalFlowPressure",
-      "targetObject": "{wlbDstFinFlowPress}^^xsd:decimal ",
+      "targetObject": "{wlbDstFinFlowPress}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber} npdv:DSTFinalFlowPressure {wlbDstFinFlowPress}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDstTestNumber\", \"wlbDstFinFlowPress\" FROM \"wellbore_dst\"",
       "sourceTables": [
@@ -237,7 +237,7 @@ export const npdMappingData = {
       "entityName": "casingDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/casingleakoff/{wellbore_casing_and_lot_id}",
       "targetPredicate": "npdv:casingDepth",
-      "targetObject": "{wlbCasingDepth}^^xsd:decimal ",
+      "targetObject": "{wlbCasingDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/casingleakoff/{wellbore_casing_and_lot_id} npdv:casingDepth {wlbCasingDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wellbore_casing_and_lot_id\", \"wlbNpdidWellbore\", \"wlbCasingDepth\" FROM \"wellbore_casing_and_lot\"",
       "sourceTables": [
@@ -262,7 +262,7 @@ export const npdMappingData = {
       "entityName": "wellborePlotSymbol",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellborePlotSymbol",
-      "targetObject": "{wlbPlotSymbol}^^xsd:integer ",
+      "targetObject": "{wlbPlotSymbol}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellborePlotSymbol {wlbPlotSymbol}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbPlotSymbol\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -285,7 +285,7 @@ export const npdMappingData = {
       "entityName": "areaSize3DKm2",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:areaSize3DKm2",
-      "targetObject": "{sea3DKm2}^^xsd:decimal ",
+      "targetObject": "{sea3DKm2}^^xsd:decimal",
       "target": "npd:survey/{seaName} npdv:areaSize3DKm2 {sea3DKm2}^^xsd:decimal .",
       "sourceSql": "SELECT \"seaName\", \"sea3DKm2\" FROM \"seis_acquisition\"",
       "sourceTables": [
@@ -308,7 +308,7 @@ export const npdMappingData = {
       "entityName": "pipelineMedium",
       "targetSubject": "npd:pipeline/{pipNpdidPipe}",
       "targetPredicate": "npdv:pipelineMedium",
-      "targetObject": "{pipMedium}^^xsd:string ",
+      "targetObject": "{pipMedium}^^xsd:string",
       "target": "npd:pipeline/{pipNpdidPipe} npdv:pipelineMedium {pipMedium}^^xsd:string .",
       "sourceSql": "SELECT \"pipNpdidPipe\", \"pipMedium\" FROM \"pipLine\"",
       "sourceTables": [
@@ -331,7 +331,7 @@ export const npdMappingData = {
       "entityName": "remainingOilEquivalents",
       "targetSubject": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField}",
       "targetPredicate": "npdv:remainingOilEquivalents",
-      "targetObject": "{cmpRemainingOE}^^xsd:decimal ",
+      "targetObject": "{cmpRemainingOE}^^xsd:decimal",
       "target": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField} npdv:remainingOilEquivalents {cmpRemainingOE}^^xsd:decimal .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"fldNpdidField\", \"cmpRemainingOE\" FROM \"company_reserves\"",
       "sourceTables": [
@@ -356,7 +356,7 @@ export const npdMappingData = {
       "entityName": "DSTDepthTo",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber}",
       "targetPredicate": "npdv:DSTDepthTo",
-      "targetObject": "{wlbDstToDepth}^^xsd:decimal ",
+      "targetObject": "{wlbDstToDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber} npdv:DSTDepthTo {wlbDstToDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDstTestNumber\", \"wlbDstToDepth\" FROM \"wellbore_dst\"",
       "sourceTables": [
@@ -381,7 +381,7 @@ export const npdMappingData = {
       "entityName": "areaSize",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/block/{baaAreaPolyBlockName}/polyno/{baaAreaPolyNo}/history/{baaAreaPolyDateValidFrom}/{baaAreaPolyDateValidTo}",
       "targetPredicate": "npdv:areaSize",
-      "targetObject": "{baaAreaPolyArea}^^xsd:decimal ",
+      "targetObject": "{baaAreaPolyArea}^^xsd:decimal",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/block/{baaAreaPolyBlockName}/polyno/{baaAreaPolyNo}/history/{baaAreaPolyDateValidFrom}/{baaAreaPolyDateValidTo} npdv:areaSize {baaAreaPolyArea}^^xsd:decimal .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaAreaPolyBlockName\", \"baaAreaPolyNo\", \"baaAreaPolyDateValidFrom\", \"baaAreaPolyDateValidTo\", \"baaAreaPolyArea\" FROM \"bsns_arr_area_area_poly_hst\"",
       "sourceTables": [
@@ -412,7 +412,7 @@ export const npdMappingData = {
       "entityName": "reclassedFromWellbore",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:reclassedFromWellbore",
-      "targetObject": "npd:wellbore/{wlbNpdidWellboreReclass} ",
+      "targetObject": "npd:wellbore/{wlbNpdidWellboreReclass}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:reclassedFromWellbore npd:wellbore/{wlbNpdidWellboreReclass} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNpdidWellboreReclass\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -435,7 +435,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"dateSyncNPD\" FROM \"wellbore_coordinates\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -459,7 +459,7 @@ export const npdMappingData = {
       "entityName": "dateAwarded",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}",
       "targetPredicate": "ptl:dateAwarded",
-      "targetObject": "{ptlDateAwarded}^^xsd:date ",
+      "targetObject": "{ptlDateAwarded}^^xsd:date",
       "target": "npd:petreg/licence/{prlNpdidLicence} ptl:dateAwarded {ptlDateAwarded}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"ptlDateAwarded\" FROM \"licence_petreg_licence\" WHERE \"ptlDateAwarded\" <> '9999-12-31'",
       "sourceTables": [
@@ -483,7 +483,7 @@ export const npdMappingData = {
       "entityName": "DSTOilDensity",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber}",
       "targetPredicate": "npdv:DSTOilDensity",
-      "targetObject": "{wlbDstOilDensity}^^xsd:decimal ",
+      "targetObject": "{wlbDstOilDensity}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber} npdv:DSTOilDensity {wlbDstOilDensity}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDstTestNumber\", \"wlbDstOilDensity\" FROM \"wellbore_dst\"",
       "sourceTables": [
@@ -502,13 +502,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00018:Literal:seaMultiline:seaSensorLength",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "sensorLength",
       "targetSubject": "npd:survey/{seaSurveyName}/multiline",
       "targetPredicate": "npdv:sensorLength",
-      "targetObject": "{seaSensorLength} ",
+      "targetObject": "{seaSensorLength}",
       "target": "npd:survey/{seaSurveyName}/multiline npdv:sensorLength {seaSensorLength} .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaSensorLength\" FROM \"seaMultiline\"",
       "sourceTables": [
@@ -531,7 +531,7 @@ export const npdMappingData = {
       "entityName": "dateLicenceValidTo",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}",
       "targetPredicate": "ptl:dateLicenceValidTo",
-      "targetObject": "{ptlDateValidTo}^^xsd:date ",
+      "targetObject": "{ptlDateValidTo}^^xsd:date",
       "target": "npd:petreg/facility/{tufNpdidTuf} ptl:dateLicenceValidTo {ptlDateValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"ptlDateValidTo\" FROM \"tuf_petreg_licence\" WHERE \"ptlDateValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -555,7 +555,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/document/{wellbore_document_id}/{wlbDocumentName}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{wlbDocumentDateUpdated}^^xsd:date ",
+      "targetObject": "{wlbDocumentDateUpdated}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/document/{wellbore_document_id}/{wlbDocumentName} npdv:dateUpdated {wlbDocumentDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"wellbore_document_id\", \"wlbNpdidWellbore\", \"wlbDocumentName\", \"wlbDocumentDateUpdated\" FROM \"wellbore_document\" WHERE \"wlbDocumentDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -583,7 +583,7 @@ export const npdMappingData = {
       "entityName": "geodeticDatum",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:geodeticDatum",
-      "targetObject": "{wlbGeodeticDatum}^^xsd:string ",
+      "targetObject": "{wlbGeodeticDatum}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:geodeticDatum {wlbGeodeticDatum}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbGeodeticDatum\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -606,7 +606,7 @@ export const npdMappingData = {
       "entityName": "documentName",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/document/{wellbore_document_id}/{wlbDocumentName}",
       "targetPredicate": "npdv:documentName",
-      "targetObject": "{wlbDocumentName}^^xsd:string ",
+      "targetObject": "{wlbDocumentName}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore}/document/{wellbore_document_id}/{wlbDocumentName} npdv:documentName {wlbDocumentName}^^xsd:string .",
       "sourceSql": "SELECT \"wellbore_document_id\", \"wlbNpdidWellbore\", \"wlbDocumentName\" FROM \"wellbore_document\"",
       "sourceTables": [
@@ -632,7 +632,7 @@ export const npdMappingData = {
       "entityName": "wellboreWaterDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreWaterDepth",
-      "targetObject": "{wlbWaterDepth}^^xsd:decimal ",
+      "targetObject": "{wlbWaterDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreWaterDepth {wlbWaterDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbWaterDepth\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -655,7 +655,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart6",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart6",
-      "targetObject": "{wlbNamePart6}^^xsd:string ",
+      "targetObject": "{wlbNamePart6}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart6 {wlbNamePart6}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart6\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -678,7 +678,7 @@ export const npdMappingData = {
       "entityName": "utmNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:utmNS",
-      "targetObject": "{wlbNsUtm}^^xsd:decimal ",
+      "targetObject": "{wlbNsUtm}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:utmNS {wlbNsUtm}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsUtm\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -701,7 +701,7 @@ export const npdMappingData = {
       "entityName": "polygonNo",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/block/{baaAreaPolyBlockName}/polyno/{baaAreaPolyNo}/history/{baaAreaPolyDateValidFrom}/{baaAreaPolyDateValidTo}",
       "targetPredicate": "npdv:polygonNo",
-      "targetObject": "{baaAreaPolyNo}^^xsd:integer ",
+      "targetObject": "{baaAreaPolyNo}^^xsd:integer",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/block/{baaAreaPolyBlockName}/polyno/{baaAreaPolyNo}/history/{baaAreaPolyDateValidFrom}/{baaAreaPolyDateValidTo} npdv:polygonNo {baaAreaPolyNo}^^xsd:integer .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaAreaPolyBlockName\", \"baaAreaPolyNo\", \"baaAreaPolyDateValidFrom\", \"baaAreaPolyDateValidTo\" FROM \"bsns_arr_area_area_poly_hst\"",
       "sourceTables": [
@@ -731,7 +731,7 @@ export const npdMappingData = {
       "entityName": "dateResourceEstimate",
       "targetSubject": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField}",
       "targetPredicate": "npdv:dateResourceEstimate",
-      "targetObject": "{cmpDateOffResEstDisplay}^^xsd:date ",
+      "targetObject": "{cmpDateOffResEstDisplay}^^xsd:date",
       "target": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField} npdv:dateResourceEstimate {cmpDateOffResEstDisplay}^^xsd:date .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"fldNpdidField\", \"cmpDateOffResEstDisplay\" FROM \"company_reserves\" WHERE \"cmpDateOffResEstDisplay\" <> '9999-12-31'",
       "sourceTables": [
@@ -757,7 +757,7 @@ export const npdMappingData = {
       "entityName": "wellboreTotalDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreTotalDepth",
-      "targetObject": "{wlbTotalDepth}^^xsd:decimal ",
+      "targetObject": "{wlbTotalDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreTotalDepth {wlbTotalDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbTotalDepth\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -780,7 +780,7 @@ export const npdMappingData = {
       "entityName": "wellboreCompletionYear",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreCompletionYear",
-      "targetObject": "{wlbCompletionYear}^^xsd:integer ",
+      "targetObject": "{wlbCompletionYear}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreCompletionYear {wlbCompletionYear}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbCompletionYear\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -803,7 +803,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscReservesRC\", \"dateSyncNPD\" FROM \"discovery_reserves\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -829,7 +829,7 @@ export const npdMappingData = {
       "entityName": "dateBaaLicenseeValidFrom",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/licensee/{cmpNpdidCompany}/history/{baaLicenseeDateValidFrom}/{baaLicenseeDateValidTo}",
       "targetPredicate": "npdv:dateBaaLicenseeValidFrom",
-      "targetObject": "{baaLicenseeDateValidFrom}^^xsd:date ",
+      "targetObject": "{baaLicenseeDateValidFrom}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/licensee/{cmpNpdidCompany}/history/{baaLicenseeDateValidFrom}/{baaLicenseeDateValidTo} npdv:dateBaaLicenseeValidFrom {baaLicenseeDateValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"cmpNpdidCompany\", \"baaLicenseeDateValidFrom\", \"baaLicenseeDateValidTo\" FROM \"bsns_arr_area_licensee_hst\" WHERE \"baaLicenseeDateValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -858,7 +858,7 @@ export const npdMappingData = {
       "entityName": "utmEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:utmEW",
-      "targetObject": "{wlbEwUtm}^^xsd:decimal ",
+      "targetObject": "{wlbEwUtm}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:utmEW {wlbEwUtm}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwUtm\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -881,7 +881,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:discovery/{dscNpdidDiscovery} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dateSyncNPD\" FROM \"discovery\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -905,7 +905,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{wlbNpdidWellbore}^^xsd:integer ",
+      "targetObject": "{wlbNpdidWellbore}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:idNPD {wlbNpdidWellbore}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -927,7 +927,7 @@ export const npdMappingData = {
       "entityName": "isShallowDrillingPerformed",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:isShallowDrillingPerformed",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:survey/{seaName} npdv:isShallowDrillingPerformed \"true\" .",
       "sourceSql": "SELECT \"seaName\" FROM \"seis_acquisition\" WHERE \"seaShallowDrilling\"='Ja'",
       "sourceTables": [
@@ -950,7 +950,7 @@ export const npdMappingData = {
       "entityName": "isShallowDrillingPerformed",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:isShallowDrillingPerformed",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:survey/{seaName} npdv:isShallowDrillingPerformed \"false\" .",
       "sourceSql": "SELECT \"seaName\" FROM \"seis_acquisition\" WHERE \"seaShallowDrilling\"='Nei'",
       "sourceTables": [
@@ -973,7 +973,7 @@ export const npdMappingData = {
       "entityName": "dateLicenceValidFrom",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}",
       "targetPredicate": "ptl:dateLicenceValidFrom",
-      "targetObject": "{ptlDateValidFrom}^^xsd:date ",
+      "targetObject": "{ptlDateValidFrom}^^xsd:date",
       "target": "npd:petreg/licence/{prlNpdidLicence} ptl:dateLicenceValidFrom {ptlDateValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"ptlDateValidFrom\" FROM \"licence_petreg_licence\" WHERE \"ptlDateValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -991,13 +991,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00038:Literal:seaArea:seaSourceNumber",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "sourceNumber",
       "targetSubject": "npd:survey/{seaSurveyName}/area",
       "targetPredicate": "npdv:sourceNumber",
-      "targetObject": "{seaSourceNumber} ",
+      "targetObject": "{seaSourceNumber}",
       "target": "npd:survey/{seaSurveyName}/area npdv:sourceNumber {seaSourceNumber} .",
       "sourceSql": "SELECT \"seaArea_id\", \"seaSurveyName\", \"seaSourceNumber\" FROM \"seaArea\"",
       "sourceTables": [
@@ -1021,7 +1021,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart1",
-      "targetObject": "{wlbNamePart1}^^xsd:integer ",
+      "targetObject": "{wlbNamePart1}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart1 {wlbNamePart1}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart1\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -1044,7 +1044,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart3",
-      "targetObject": "{wlbNamePart3}^^xsd:string ",
+      "targetObject": "{wlbNamePart3}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart3 {wlbNamePart3}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart3\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -1067,7 +1067,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:licence/{prlNpdidLicence}/phase/{prlPhase}/history/{prlDatePhaseValidFrom}/{prlDatePhaseValidTo}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/phase/{prlPhase}/history/{prlDatePhaseValidFrom}/{prlDatePhaseValidTo} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlPhase\", \"prlDatePhaseValidFrom\", \"prlDatePhaseValidTo\", \"dateSyncNPD\" FROM \"licence_phase_hst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -1097,7 +1097,7 @@ export const npdMappingData = {
       "entityName": "wellboreSeismicLocation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreSeismicLocation",
-      "targetObject": "{wlbSeismicLocation}^^xsd:string ",
+      "targetObject": "{wlbSeismicLocation}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreSeismicLocation {wlbSeismicLocation}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbSeismicLocation\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -1120,7 +1120,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:field/{fldNpdidField}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{fldNpdidField}^^xsd:integer ",
+      "targetObject": "{fldNpdidField}^^xsd:integer",
       "target": "npd:field/{fldNpdidField} npdv:idNPD {fldNpdidField}^^xsd:integer .",
       "sourceSql": "SELECT \"fldNpdidField\" FROM \"field\"",
       "sourceTables": [
@@ -1142,7 +1142,7 @@ export const npdMappingData = {
       "entityName": "companyShare",
       "targetSubject": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField}",
       "targetPredicate": "npdv:companyShare",
-      "targetObject": "{cmpShare}^^xsd:decimal ",
+      "targetObject": "{cmpShare}^^xsd:decimal",
       "target": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField} npdv:companyShare {cmpShare}^^xsd:decimal .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"fldNpdidField\", \"cmpShare\" FROM \"company_reserves\"",
       "sourceTables": [
@@ -1167,7 +1167,7 @@ export const npdMappingData = {
       "entityName": "wellboreLicensingActivity",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreLicensingActivity",
-      "targetObject": "{wlbLicensingActivity}^^xsd:string ",
+      "targetObject": "{wlbLicensingActivity}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreLicensingActivity {wlbLicensingActivity}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbLicensingActivity\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -1190,7 +1190,7 @@ export const npdMappingData = {
       "entityName": "isCoreSampleAvailable",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}",
       "targetPredicate": "npdv:isCoreSampleAvailable",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber} npdv:isCoreSampleAvailable \"true\" .",
       "sourceSql": "SELECT \"wellbore_core_id\", \"wlbNpdidWellbore\", \"wlbCoreNumber\" FROM \"wellbore_core\" WHERE \"wlbCoreSampleAvailable\"='YES'",
       "sourceTables": [
@@ -1216,7 +1216,7 @@ export const npdMappingData = {
       "entityName": "isCoreSampleAvailable",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}",
       "targetPredicate": "npdv:isCoreSampleAvailable",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber} npdv:isCoreSampleAvailable \"false\" .",
       "sourceSql": "SELECT \"wellbore_core_id\", \"wlbNpdidWellbore\", \"wlbCoreNumber\" FROM \"wellbore_core\" WHERE \"wlbCoreSampleAvailable\"='NO'",
       "sourceTables": [
@@ -1242,7 +1242,7 @@ export const npdMappingData = {
       "entityName": "SDFI",
       "targetSubject": "npd:licence/{prlNpdidLicence}/transfer/{prlTransferDirection}/{cmpNpdidCompany}/history/{prlTransferDateValidFrom}",
       "targetPredicate": "npdv:SDFI",
-      "targetObject": "{prlTransferSdfi}^^xsd:decimal ",
+      "targetObject": "{prlTransferSdfi}^^xsd:decimal",
       "target": "npd:licence/{prlNpdidLicence}/transfer/{prlTransferDirection}/{cmpNpdidCompany}/history/{prlTransferDateValidFrom} npdv:SDFI {prlTransferSdfi}^^xsd:decimal .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlTransferDirection\", \"cmpNpdidCompany\", \"prlTransferDateValidFrom\", \"prlTransferSdfi\" FROM \"licence_transfer_hst\"",
       "sourceTables": [
@@ -1271,7 +1271,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{baaDateUpdated}^^xsd:date ",
+      "targetObject": "{baaDateUpdated}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea} npdv:dateUpdated {baaDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaDateUpdated\" FROM \"bsns_arr_area\" WHERE \"baaDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -1295,7 +1295,7 @@ export const npdMappingData = {
       "entityName": "remainingNGL",
       "targetSubject": "npd:field/{fldNpdidField}/reserve",
       "targetPredicate": "npdv:remainingNGL",
-      "targetObject": "{fldRemainingNGL}^^xsd:decimal ",
+      "targetObject": "{fldRemainingNGL}^^xsd:decimal",
       "target": "npd:field/{fldNpdidField}/reserve npdv:remainingNGL {fldRemainingNGL}^^xsd:decimal .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldRemainingNGL\" FROM \"field_reserves\"",
       "sourceTables": [
@@ -1318,7 +1318,7 @@ export const npdMappingData = {
       "entityName": "producedCondensate",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}",
       "targetPredicate": "npdv:producedCondensate",
-      "targetObject": "{prfPrdCondensateNetMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdCondensateNetMillSm3}^^xsd:decimal",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear} npdv:producedCondensate {prfPrdCondensateNetMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\", \"prfPrdCondensateNetMillSm3\" FROM \"field_production_yearly\"",
       "sourceTables": [
@@ -1343,7 +1343,7 @@ export const npdMappingData = {
       "entityName": "mudWeight",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/mud/{wellbore_mud_id}",
       "targetPredicate": "npdv:mudWeight",
-      "targetObject": "{wlbMudWeightAtMD}^^xsd:decimal ",
+      "targetObject": "{wlbMudWeightAtMD}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/mud/{wellbore_mud_id} npdv:mudWeight {wlbMudWeightAtMD}^^xsd:decimal .",
       "sourceSql": "SELECT \"wellbore_mud_id\", \"wlbNpdidWellbore\", \"wlbMudWeightAtMD\" FROM \"wellbore_mud\"",
       "sourceTables": [
@@ -1368,7 +1368,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:pipeline/{pipNpdidPipe}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{pipName}^^xsd:string ",
+      "targetObject": "{pipName}^^xsd:string",
       "target": "npd:pipeline/{pipNpdidPipe} npdv:name {pipName}^^xsd:string .",
       "sourceSql": "SELECT \"pipNpdidPipe\", \"pipName\" FROM \"pipLine\"",
       "sourceTables": [
@@ -1391,7 +1391,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/casingleakoff/{wellbore_casing_and_lot_id}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/casingleakoff/{wellbore_casing_and_lot_id} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wellbore_casing_and_lot_id\", \"wlbNpdidWellbore\", \"dateSyncNPD\" FROM \"wellbore_casing_and_lot\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -1417,7 +1417,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/depth/{lsuTopDepth}/{lsuBottomDepth}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/depth/{lsuTopDepth}/{lsuBottomDepth} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"lsuNpdidLithoStrat\", \"lsuTopDepth\", \"lsuBottomDepth\", \"dateSyncNPD\" FROM \"wellbore_formation_top\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -1447,7 +1447,7 @@ export const npdMappingData = {
       "entityName": "recoverableNGL",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC}",
       "targetPredicate": "npdv:recoverableNGL",
-      "targetObject": "{dscRecoverableNGL}^^xsd:decimal ",
+      "targetObject": "{dscRecoverableNGL}^^xsd:decimal",
       "target": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC} npdv:recoverableNGL {dscRecoverableNGL}^^xsd:decimal .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscReservesRC\", \"dscRecoverableNGL\" FROM \"discovery_reserves\"",
       "sourceTables": [
@@ -1472,7 +1472,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/1 ",
+      "targetObject": "npd:ncs/mainarea/1",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:mainAreaLocation npd:ncs/mainarea/1 .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_development_all\" WHERE \"wlbMainArea\"='Barents sea'",
       "sourceTables": [
@@ -1495,7 +1495,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/2 ",
+      "targetObject": "npd:ncs/mainarea/2",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:mainAreaLocation npd:ncs/mainarea/2 .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_development_all\" WHERE \"wlbMainArea\"='Norwegian sea'",
       "sourceTables": [
@@ -1518,7 +1518,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/3 ",
+      "targetObject": "npd:ncs/mainarea/3",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:mainAreaLocation npd:ncs/mainarea/3 .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_development_all\" WHERE \"wlbMainArea\"='North sea'",
       "sourceTables": [
@@ -1541,7 +1541,7 @@ export const npdMappingData = {
       "entityName": "LOTMudDensity",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/casingleakoff/{wellbore_casing_and_lot_id}",
       "targetPredicate": "npdv:LOTMudDensity",
-      "targetObject": "{wlbLotMudDencity}^^xsd:decimal ",
+      "targetObject": "{wlbLotMudDencity}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/casingleakoff/{wellbore_casing_and_lot_id} npdv:LOTMudDensity {wlbLotMudDencity}^^xsd:decimal .",
       "sourceSql": "SELECT \"wellbore_casing_and_lot_id\", \"wlbNpdidWellbore\", \"wlbLotMudDencity\" FROM \"wellbore_casing_and_lot\"",
       "sourceTables": [
@@ -1566,7 +1566,7 @@ export const npdMappingData = {
       "entityName": "codeEW",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:codeEW",
-      "targetObject": "{fclEwCode}^^xsd:string ",
+      "targetObject": "{fclEwCode}^^xsd:string",
       "target": "npd:facility/{fclNpdidFacility} npdv:codeEW {fclEwCode}^^xsd:string .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclEwCode\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -1589,7 +1589,7 @@ export const npdMappingData = {
       "entityName": "mudType",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/mud/{wellbore_mud_id}",
       "targetPredicate": "npdv:mudType",
-      "targetObject": "{wlbMudType}^^xsd:string ",
+      "targetObject": "{wlbMudType}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/mud/{wellbore_mud_id} npdv:mudType {wlbMudType}^^xsd:string .",
       "sourceSql": "SELECT \"wellbore_mud_id\", \"wlbNpdidWellbore\", \"wlbMudType\" FROM \"wellbore_mud\"",
       "sourceTables": [
@@ -1614,7 +1614,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/cores",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/cores npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"lsuNpdidLithoStrat\", \"dateSyncNPD\" FROM \"strat_litho_wellbore_core\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -1640,7 +1640,7 @@ export const npdMappingData = {
       "entityName": "minutesEW",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:minutesEW",
-      "targetObject": "{fclEwMin}^^xsd:integer ",
+      "targetObject": "{fclEwMin}^^xsd:integer",
       "target": "npd:facility/{fclNpdidFacility} npdv:minutesEW {fclEwMin}^^xsd:integer .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclEwMin\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -1663,7 +1663,7 @@ export const npdMappingData = {
       "entityName": "geodeticDatum",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:geodeticDatum",
-      "targetObject": "{wlbGeodeticDatum}^^xsd:string ",
+      "targetObject": "{wlbGeodeticDatum}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:geodeticDatum {wlbGeodeticDatum}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbGeodeticDatum\" FROM \"wellbore_coordinates\"",
       "sourceTables": [
@@ -1686,7 +1686,7 @@ export const npdMappingData = {
       "entityName": "documentType",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/document/{wellbore_document_id}/{wlbDocumentName}",
       "targetPredicate": "npdv:documentType",
-      "targetObject": "{wlbDocumentType}^^xsd:string ",
+      "targetObject": "{wlbDocumentType}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore}/document/{wellbore_document_id}/{wlbDocumentName} npdv:documentType {wlbDocumentType}^^xsd:string .",
       "sourceSql": "SELECT \"wellbore_document_id\", \"wlbNpdidWellbore\", \"wlbDocumentName\", \"wlbDocumentType\" FROM \"wellbore_document\"",
       "sourceTables": [
@@ -1713,7 +1713,7 @@ export const npdMappingData = {
       "entityName": "isMarketAvailable",
       "targetSubject": "npd:survey/{seaSurveyName}/area",
       "targetPredicate": "npdv:isMarketAvailable",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:survey/{seaSurveyName}/area npdv:isMarketAvailable \"true\" .",
       "sourceSql": "SELECT \"seaArea_id\", \"seaSurveyName\" FROM \"seaArea\" WHERE \"seaMarketAvailable\"='Ja'",
       "sourceTables": [
@@ -1737,7 +1737,7 @@ export const npdMappingData = {
       "entityName": "isMarketAvailable",
       "targetSubject": "npd:survey/{seaSurveyName}/area",
       "targetPredicate": "npdv:isMarketAvailable",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:survey/{seaSurveyName}/area npdv:isMarketAvailable \"false\" .",
       "sourceSql": "SELECT \"seaArea_id\", \"seaSurveyName\" FROM \"seaArea\" WHERE \"seaMarketAvailable\"='Nei'",
       "sourceTables": [
@@ -1761,7 +1761,7 @@ export const npdMappingData = {
       "entityName": "polygonPointNo",
       "targetSubject": "npd:survey/{seaSurveyName}/point/{seaPolygonPointNumber}",
       "targetPredicate": "npdv:polygonPointNo",
-      "targetObject": "{seaPolygonPointNumber}^^xsd:integer ",
+      "targetObject": "{seaPolygonPointNumber}^^xsd:integer",
       "target": "npd:survey/{seaSurveyName}/point/{seaPolygonPointNumber} npdv:polygonPointNo {seaPolygonPointNumber}^^xsd:integer .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaPolygonPointNumber\" FROM \"seis_acquisition_coordinates_inc_turnarea\"",
       "sourceTables": [
@@ -1785,7 +1785,7 @@ export const npdMappingData = {
       "entityName": "DSTTestNo",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber}",
       "targetPredicate": "npdv:DSTTestNo",
-      "targetObject": "{wlbDstTestNumber}^^xsd:decimal ",
+      "targetObject": "{wlbDstTestNumber}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber} npdv:DSTTestNo {wlbDstTestNumber}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDstTestNumber\" FROM \"wellbore_dst\"",
       "sourceTables": [
@@ -1809,7 +1809,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/1 ",
+      "targetObject": "npd:ncs/mainarea/1",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:mainAreaLocation npd:ncs/mainarea/1 .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_coordinates\" WHERE \"wlbMainArea\"='Barents sea'",
       "sourceTables": [
@@ -1832,7 +1832,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/2 ",
+      "targetObject": "npd:ncs/mainarea/2",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:mainAreaLocation npd:ncs/mainarea/2 .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_coordinates\" WHERE \"wlbMainArea\"='Norwegian sea'",
       "sourceTables": [
@@ -1855,7 +1855,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/3 ",
+      "targetObject": "npd:ncs/mainarea/3",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:mainAreaLocation npd:ncs/mainarea/3 .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_coordinates\" WHERE \"wlbMainArea\"='North sea'",
       "sourceTables": [
@@ -1872,13 +1872,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00075:Literal:prlArea:prlFactUrl",
-      "kind": "objectProperty",
-      "abstraction": "历史对象关系",
+      "kind": "dataProperty",
+      "abstraction": "历史属性",
       "entityPrefix": "npdv",
       "entityName": "factPageURL",
       "targetSubject": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:factPageURL",
-      "targetObject": "<{prlFactUrl}> ",
+      "targetObject": "<{prlFactUrl}>",
       "target": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:factPageURL <{prlFactUrl}> .",
       "sourceSql": "SELECT \"prlArea_id\", \"prlNpdidLicence\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\", \"prlFactUrl\" FROM \"prlArea\"",
       "sourceTables": [
@@ -1907,7 +1907,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wellbore_core_id\", \"wlbNpdidWellbore\", \"wlbCoreNumber\", \"dateSyncNPD\" FROM \"wellbore_core\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -1934,7 +1934,7 @@ export const npdMappingData = {
       "entityName": "remainingCondensate",
       "targetSubject": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField}",
       "targetPredicate": "npdv:remainingCondensate",
-      "targetObject": "{cmpRemainingCondensate}^^xsd:decimal ",
+      "targetObject": "{cmpRemainingCondensate}^^xsd:decimal",
       "target": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField} npdv:remainingCondensate {cmpRemainingCondensate}^^xsd:decimal .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"fldNpdidField\", \"cmpRemainingCondensate\" FROM \"company_reserves\"",
       "sourceTables": [
@@ -1959,7 +1959,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{dscReservesDateUpdated}^^xsd:date ",
+      "targetObject": "{dscReservesDateUpdated}^^xsd:date",
       "target": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC} npdv:dateUpdated {dscReservesDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscReservesRC\", \"dscReservesDateUpdated\" FROM \"discovery_reserves\" WHERE \"dscReservesDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -1985,7 +1985,7 @@ export const npdMappingData = {
       "entityName": "dateWellboreCompletion",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateWellboreCompletion",
-      "targetObject": "{wlbCompletionDate}^^xsd:date ",
+      "targetObject": "{wlbCompletionDate}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateWellboreCompletion {wlbCompletionDate}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbCompletionDate\" FROM \"wellbore_exploration_all\" WHERE \"wlbCompletionDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -2003,13 +2003,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00080:Literal:wellbore_development_all:wlbFactMapUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "factMapURL",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:factMapURL",
-      "targetObject": "<{wlbFactMapUrl}> ",
+      "targetObject": "<{wlbFactMapUrl}>",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:factMapURL <{wlbFactMapUrl}> .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbFactMapUrl\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -2032,7 +2032,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart2",
-      "targetObject": "{wlbNamePart2}^^xsd:integer ",
+      "targetObject": "{wlbNamePart2}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart2 {wlbNamePart2}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart2\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -2055,7 +2055,7 @@ export const npdMappingData = {
       "entityName": "decimalDegreesNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:decimalDegreesNS",
-      "targetObject": "{wlbNsDecDeg}^^xsd:decimal ",
+      "targetObject": "{wlbNsDecDeg}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:decimalDegreesNS {wlbNsDecDeg}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsDecDeg\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -2072,13 +2072,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00083:Literal:wellbore_development_all:wlbDiskosWellboreType",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "wellboreType",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreType",
-      "targetObject": "{wlbDiskosWellboreType} ",
+      "targetObject": "{wlbDiskosWellboreType}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreType {wlbDiskosWellboreType} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDiskosWellboreType\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -2101,7 +2101,7 @@ export const npdMappingData = {
       "entityName": "wellboreCompletionYear",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreCompletionYear",
-      "targetObject": "{wlbCompletionYear}^^xsd:integer ",
+      "targetObject": "{wlbCompletionYear}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreCompletionYear {wlbCompletionYear}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbCompletionYear\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -2124,7 +2124,7 @@ export const npdMappingData = {
       "entityName": "coreNo",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}/photo/{wellbore_core_photo_id}/{wlbCorePhotoTitle}",
       "targetPredicate": "npdv:coreNo",
-      "targetObject": "{wlbCoreNumber}^^xsd:integer ",
+      "targetObject": "{wlbCoreNumber}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}/photo/{wellbore_core_photo_id}/{wlbCorePhotoTitle} npdv:coreNo {wlbCoreNumber}^^xsd:integer .",
       "sourceSql": "SELECT \"wellbore_core_photo_id\", \"wlbNpdidWellbore\", \"wlbCoreNumber\", \"wlbCorePhotoTitle\" FROM \"wellbore_core_photo\"",
       "sourceTables": [
@@ -2152,7 +2152,7 @@ export const npdMappingData = {
       "entityName": "dateBaaValidFrom",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}",
       "targetPredicate": "npdv:dateBaaValidFrom",
-      "targetObject": "{baaDateValidFrom}^^xsd:date ",
+      "targetObject": "{baaDateValidFrom}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea} npdv:dateBaaValidFrom {baaDateValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaDateValidFrom\" FROM \"bsns_arr_area\" WHERE \"baaDateValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -2176,7 +2176,7 @@ export const npdMappingData = {
       "entityName": "dateFieldOperatorTo",
       "targetSubject": "npd:field/{fldNpdidField}/operator/{cmpNpdidCompany}/history/{fldOperatorFrom}/{fldOperatorTo}",
       "targetPredicate": "npdv:dateFieldOperatorTo",
-      "targetObject": "{fldOperatorTo}^^xsd:date ",
+      "targetObject": "{fldOperatorTo}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/operator/{cmpNpdidCompany}/history/{fldOperatorFrom}/{fldOperatorTo} npdv:dateFieldOperatorTo {fldOperatorTo}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"cmpNpdidCompany\", \"fldOperatorFrom\", \"fldOperatorTo\" FROM \"field_operator_hst\" WHERE \"fldOperatorTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -2205,7 +2205,7 @@ export const npdMappingData = {
       "entityName": "reclassedFromWellbore",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:reclassedFromWellbore",
-      "targetObject": "npd:wellbore/{wlbNpdidWellboreReclass} ",
+      "targetObject": "npd:wellbore/{wlbNpdidWellboreReclass}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:reclassedFromWellbore npd:wellbore/{wlbNpdidWellboreReclass} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNpdidWellboreReclass\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -2228,7 +2228,7 @@ export const npdMappingData = {
       "entityName": "surveyType",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:surveyType",
-      "targetObject": "{seaSurveyTypeMain}^^xsd:string ",
+      "targetObject": "{seaSurveyTypeMain}^^xsd:string",
       "target": "npd:survey/{seaName} npdv:surveyType {seaSurveyTypeMain}^^xsd:string .",
       "sourceSql": "SELECT \"seaName\", \"seaSurveyTypeMain\" FROM \"seis_acquisition\"",
       "sourceTables": [
@@ -2251,7 +2251,7 @@ export const npdMappingData = {
       "entityName": "dateWDSSQC",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateWDSSQC",
-      "targetObject": "{wlbWdssQcdate}^^xsd:date ",
+      "targetObject": "{wlbWdssQcdate}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateWDSSQC {wlbWdssQcdate}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbWdssQcdate\" FROM \"wellbore_development_all\" WHERE \"wlbWdssQcdate\" <> '9999-12-31'",
       "sourceTables": [
@@ -2275,7 +2275,7 @@ export const npdMappingData = {
       "entityName": "producedGas",
       "targetSubject": "npd:ncs/production/{prfYear}",
       "targetPredicate": "npdv:producedGas",
-      "targetObject": "{prfPrdGasNetBillSm}^^xsd:decimal ",
+      "targetObject": "{prfPrdGasNetBillSm}^^xsd:decimal",
       "target": "npd:ncs/production/{prfYear} npdv:producedGas {prfPrdGasNetBillSm}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfYear\", \"prfPrdGasNetBillSm\" FROM \"field_production_totalt_NCS_year\"",
       "sourceTables": [
@@ -2298,7 +2298,7 @@ export const npdMappingData = {
       "entityName": "minutesEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:minutesEW",
-      "targetObject": "{wlbEwMin}^^xsd:integer ",
+      "targetObject": "{wlbEwMin}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:minutesEW {wlbEwMin}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwMin\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -2321,7 +2321,7 @@ export const npdMappingData = {
       "entityName": "licenseeInterest",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}/licencee/{cmpNpdidCompany}",
       "targetPredicate": "ptl:licenseeInterest",
-      "targetObject": "{ptlLicenseeInterest}^^xsd:decimal ",
+      "targetObject": "{ptlLicenseeInterest}^^xsd:decimal",
       "target": "npd:petreg/facility/{tufNpdidTuf}/licencee/{cmpNpdidCompany} ptl:licenseeInterest {ptlLicenseeInterest}^^xsd:decimal .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"cmpNpdidCompany\", \"ptlLicenseeInterest\" FROM \"tuf_petreg_licence_licencee\"",
       "sourceTables": [
@@ -2346,7 +2346,7 @@ export const npdMappingData = {
       "entityName": "dateSurveyPlannedStart",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:dateSurveyPlannedStart",
-      "targetObject": "{seaPlanFromDate}^^xsd:date ",
+      "targetObject": "{seaPlanFromDate}^^xsd:date",
       "target": "npd:survey/{seaName} npdv:dateSurveyPlannedStart {seaPlanFromDate}^^xsd:date .",
       "sourceSql": "SELECT \"seaName\", \"seaPlanFromDate\" FROM \"seis_acquisition\" WHERE \"seaPlanFromDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -2364,13 +2364,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00095:Literal:wellbore_exploration_all:wlbEwCode",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "codeEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:codeEW",
-      "targetObject": "{wlbEwCode} ",
+      "targetObject": "{wlbEwCode}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:codeEW {wlbEwCode} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwCode\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -2393,7 +2393,7 @@ export const npdMappingData = {
       "entityName": "facilityType",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:facilityType",
-      "targetObject": "{fclKind}^^xsd:string ",
+      "targetObject": "{fclKind}^^xsd:string",
       "target": "npd:facility/{fclNpdidFacility} npdv:facilityType {fclKind}^^xsd:string .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclKind\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -2416,7 +2416,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart3",
-      "targetObject": "{wlbNamePart3}^^xsd:string ",
+      "targetObject": "{wlbNamePart3}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart3 {wlbNamePart3}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart3\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -2439,7 +2439,7 @@ export const npdMappingData = {
       "entityName": "dateUpdatedMax",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateUpdatedMax",
-      "targetObject": "{wlbDateUpdatedMax}^^xsd:date ",
+      "targetObject": "{wlbDateUpdatedMax}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateUpdatedMax {wlbDateUpdatedMax}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDateUpdatedMax\" FROM \"wellbore_development_all\" WHERE \"wlbDateUpdatedMax\" <> '9999-12-31'",
       "sourceTables": [
@@ -2463,7 +2463,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{wlbNpdidWellbore}^^xsd:integer ",
+      "targetObject": "{wlbNpdidWellbore}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:idNPD {wlbNpdidWellbore}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_npdid_overview\"",
       "sourceTables": [
@@ -2485,7 +2485,7 @@ export const npdMappingData = {
       "entityName": "dateLicenseeValidFrom",
       "targetSubject": "npd:licence/{prlNpdidLicence}/licensee/{cmpNpdidCompany}/history/{prlLicenseeDateValidFrom}/{prlLicenseeDateValidTo}",
       "targetPredicate": "npdv:dateLicenseeValidFrom",
-      "targetObject": "{prlLicenseeDateValidFrom}^^xsd:date ",
+      "targetObject": "{prlLicenseeDateValidFrom}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/licensee/{cmpNpdidCompany}/history/{prlLicenseeDateValidFrom}/{prlLicenseeDateValidTo} npdv:dateLicenseeValidFrom {prlLicenseeDateValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"cmpNpdidCompany\", \"prlLicenseeDateValidFrom\", \"prlLicenseeDateValidTo\" FROM \"licence_licensee_hst\" WHERE \"prlLicenseeDateValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -2514,7 +2514,7 @@ export const npdMappingData = {
       "entityName": "degreesEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:degreesEW",
-      "targetObject": "{wlbEwDeg}^^xsd:integer ",
+      "targetObject": "{wlbEwDeg}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:degreesEW {wlbEwDeg}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwDeg\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -2537,7 +2537,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{wlbDateUpdated}^^xsd:date ",
+      "targetObject": "{wlbDateUpdated}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateUpdated {wlbDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDateUpdated\" FROM \"wellbore_exploration_all\" WHERE \"wlbDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -2555,13 +2555,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00103:Literal:discovery:dscFactMapUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "factMapURL",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}",
       "targetPredicate": "npdv:factMapURL",
-      "targetObject": "<{dscFactMapUrl}> ",
+      "targetObject": "<{dscFactMapUrl}>",
       "target": "npd:discovery/{dscNpdidDiscovery} npdv:factMapURL <{dscFactMapUrl}> .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscFactMapUrl\" FROM \"discovery\"",
       "sourceTables": [
@@ -2584,7 +2584,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{wlbDstDateUpdated}^^xsd:date ",
+      "targetObject": "{wlbDstDateUpdated}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber} npdv:dateUpdated {wlbDstDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDstTestNumber\", \"wlbDstDateUpdated\" FROM \"wellbore_dst\" WHERE \"wlbDstDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -2604,13 +2604,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00105:Literal:licence:prlFactMapUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "factMapURL",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:factMapURL",
-      "targetObject": "<{prlFactMapUrl}> ",
+      "targetObject": "<{prlFactMapUrl}>",
       "target": "npd:licence/{prlNpdidLicence} npdv:factMapURL <{prlFactMapUrl}> .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlFactMapUrl\" FROM \"licence\"",
       "sourceTables": [
@@ -2633,7 +2633,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDstTestNumber\", \"dateSyncNPD\" FROM \"wellbore_dst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -2659,7 +2659,7 @@ export const npdMappingData = {
       "entityName": "productionFacility",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:productionFacility",
-      "targetObject": "npd:facility/{fclNpdidFacilityProducing} ",
+      "targetObject": "npd:facility/{fclNpdidFacilityProducing}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:productionFacility npd:facility/{fclNpdidFacilityProducing} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"fclNpdidFacilityProducing\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -2682,7 +2682,7 @@ export const npdMappingData = {
       "entityName": "productionMonth",
       "targetSubject": "npd:ncs/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:productionMonth",
-      "targetObject": "{prfMonth}^^xsd:integer ",
+      "targetObject": "{prfMonth}^^xsd:integer",
       "target": "npd:ncs/production/{prfYear}/{prfMonth} npdv:productionMonth {prfMonth}^^xsd:integer .",
       "sourceSql": "SELECT \"prfYear\", \"prfMonth\" FROM \"field_production_totalt_NCS_month\"",
       "sourceTables": [
@@ -2700,13 +2700,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00109:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Campanian ",
+      "targetObject": "isc:Campanian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Campanian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='CAMPANIAN'",
       "sourceTables": [
@@ -2723,13 +2723,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00110:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Carboniferous ",
+      "targetObject": "isc:Carboniferous",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Carboniferous .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='CARBONIFEROUS'",
       "sourceTables": [
@@ -2746,13 +2746,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00111:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Cretaceous ",
+      "targetObject": "isc:Cretaceous",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Cretaceous .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='CRETACEOUS'",
       "sourceTables": [
@@ -2769,13 +2769,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00112:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Danian ",
+      "targetObject": "isc:Danian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Danian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='DANIAN'",
       "sourceTables": [
@@ -2792,13 +2792,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00113:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Devonian ",
+      "targetObject": "isc:Devonian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Devonian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='DEVONIAN'",
       "sourceTables": [
@@ -2815,13 +2815,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00114:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Mississippian ",
+      "targetObject": "isc:Mississippian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Mississippian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='EARLY CARBONIFEROUS'",
       "sourceTables": [
@@ -2838,13 +2838,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00115:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:LowerCretaceous ",
+      "targetObject": "isc:LowerCretaceous",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:LowerCretaceous .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='EARLY CRETACEOUS'",
       "sourceTables": [
@@ -2861,13 +2861,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00116:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:LowerJurassic ",
+      "targetObject": "isc:LowerJurassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:LowerJurassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='EARLY JURASSIC'",
       "sourceTables": [
@@ -2884,13 +2884,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00117:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Cisuralian ",
+      "targetObject": "isc:Cisuralian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Cisuralian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='EARLY PERMIAN'",
       "sourceTables": [
@@ -2907,13 +2907,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00118:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:LowerTriassic ",
+      "targetObject": "isc:LowerTriassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:LowerTriassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='EARLY TRIASSIC'",
       "sourceTables": [
@@ -2930,13 +2930,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00119:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Eocene ",
+      "targetObject": "isc:Eocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Eocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='EOCENE'",
       "sourceTables": [
@@ -2953,13 +2953,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00120:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Jurassic ",
+      "targetObject": "isc:Jurassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Jurassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='JURASSIC'",
       "sourceTables": [
@@ -2976,13 +2976,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00121:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Pennsylvanian ",
+      "targetObject": "isc:Pennsylvanian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Pennsylvanian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='LATE CARBONIFEROUS'",
       "sourceTables": [
@@ -2999,13 +2999,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00122:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:UpperCretaceous ",
+      "targetObject": "isc:UpperCretaceous",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:UpperCretaceous .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='LATE CRETACEOUS'",
       "sourceTables": [
@@ -3022,13 +3022,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00123:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:UpperJurassic ",
+      "targetObject": "isc:UpperJurassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:UpperJurassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='LATE JURASSIC'",
       "sourceTables": [
@@ -3045,13 +3045,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00124:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Thanetian ",
+      "targetObject": "isc:Thanetian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Thanetian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='LATE PALEOCENE'",
       "sourceTables": [
@@ -3068,13 +3068,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00125:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Lopingian ",
+      "targetObject": "isc:Lopingian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Lopingian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='LATE PERMIAN'",
       "sourceTables": [
@@ -3091,13 +3091,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00126:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Piacenzian ",
+      "targetObject": "isc:Piacenzian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Piacenzian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='LATE PLIOCENE'",
       "sourceTables": [
@@ -3114,13 +3114,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00127:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:UpperTriassic ",
+      "targetObject": "isc:UpperTriassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:UpperTriassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='LATE TRIASSIC'",
       "sourceTables": [
@@ -3137,13 +3137,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00128:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:MiddleJurassic ",
+      "targetObject": "isc:MiddleJurassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:MiddleJurassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='MIDDLE JURASSIC'",
       "sourceTables": [
@@ -3160,13 +3160,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00129:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:MiddleTriassic ",
+      "targetObject": "isc:MiddleTriassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:MiddleTriassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='MIDDLE TRIASSIC'",
       "sourceTables": [
@@ -3183,13 +3183,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00130:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Miocene ",
+      "targetObject": "isc:Miocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Miocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='MIOCENE'",
       "sourceTables": [
@@ -3206,13 +3206,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00131:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Oligocene ",
+      "targetObject": "isc:Oligocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Oligocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='OLIGOCENE'",
       "sourceTables": [
@@ -3229,13 +3229,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00132:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Paleocene ",
+      "targetObject": "isc:Paleocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Paleocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='PALEOCENE'",
       "sourceTables": [
@@ -3252,13 +3252,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00133:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Permian ",
+      "targetObject": "isc:Permian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Permian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='PERMIAN'",
       "sourceTables": [
@@ -3275,13 +3275,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00134:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Pleistocene ",
+      "targetObject": "isc:Pleistocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Pleistocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='PLEISTOCENE'",
       "sourceTables": [
@@ -3298,13 +3298,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00135:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Pliocene ",
+      "targetObject": "isc:Pliocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Pliocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='PLIOCENE'",
       "sourceTables": [
@@ -3321,13 +3321,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00136:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Silurian ",
+      "targetObject": "isc:Silurian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Silurian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='SILURIAN'",
       "sourceTables": [
@@ -3344,13 +3344,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00137:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel2",
-      "targetObject": "isc:Triassic ",
+      "targetObject": "isc:Triassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel2 isc:Triassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc2\"='TRIASSIC'",
       "sourceTables": [
@@ -3373,7 +3373,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{dscNpdidDiscovery}^^xsd:integer ",
+      "targetObject": "{dscNpdidDiscovery}^^xsd:integer",
       "target": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC} npdv:idNPD {dscNpdidDiscovery}^^xsd:integer .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscReservesRC\" FROM \"discovery_reserves\"",
       "sourceTables": [
@@ -3397,7 +3397,7 @@ export const npdMappingData = {
       "entityName": "discoveryYear",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}",
       "targetPredicate": "npdv:discoveryYear",
-      "targetObject": "{dscDiscoveryYear}^^xsd:integer ",
+      "targetObject": "{dscDiscoveryYear}^^xsd:integer",
       "target": "npd:discovery/{dscNpdidDiscovery} npdv:discoveryYear {dscDiscoveryYear}^^xsd:integer .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscDiscoveryYear\" FROM \"discovery\"",
       "sourceTables": [
@@ -3420,7 +3420,7 @@ export const npdMappingData = {
       "entityName": "dateWellboreEntry",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateWellboreEntry",
-      "targetObject": "{wlbEntryDate}^^xsd:date ",
+      "targetObject": "{wlbEntryDate}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateWellboreEntry {wlbEntryDate}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEntryDate\" FROM \"wellbore_shallow_all\" WHERE \"wlbEntryDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -3444,7 +3444,7 @@ export const npdMappingData = {
       "entityName": "minutesNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:minutesNS",
-      "targetObject": "{wlbNsMin}^^xsd:integer ",
+      "targetObject": "{wlbNsMin}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:minutesNS {wlbNsMin}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsMin\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -3467,7 +3467,7 @@ export const npdMappingData = {
       "entityName": "blockLocation",
       "targetSubject": "npd:quadrant/{qdrName}/block/{blkName}/award/{prvName}/area/{apaAreaNet_id}",
       "targetPredicate": "npdv:blockLocation",
-      "targetObject": "npd:block/{blkLabel} ",
+      "targetObject": "npd:block/{blkLabel}",
       "target": "npd:quadrant/{qdrName}/block/{blkName}/award/{prvName}/area/{apaAreaNet_id} npdv:blockLocation npd:block/{blkLabel} .",
       "sourceSql": "SELECT \"apaAreaNet_id\", \"qdrName\", \"blkName\", \"prvName\", \"blkId\", \"blkLabel\" FROM \"apaAreaNet\"",
       "sourceTables": [
@@ -3497,7 +3497,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:field/{fldNpdidField}/owner/{fldNpdidOwner}/history/{fldOwnershipFromDate}/{fldOwnershipToDate}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/owner/{fldNpdidOwner}/history/{fldOwnershipFromDate}/{fldOwnershipToDate} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldNpdidOwner\", \"fldOwnershipFromDate\", \"fldOwnershipToDate\", \"dateSyncNPD\" FROM \"field_owner_hst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -3527,7 +3527,7 @@ export const npdMappingData = {
       "entityName": "secondsEW",
       "targetSubject": "npd:survey/{seaSurveyName}/point/{seaPolygonPointNumber}",
       "targetPredicate": "npdv:secondsEW",
-      "targetObject": "{seaPolygonEWSec}^^xsd:decimal ",
+      "targetObject": "{seaPolygonEWSec}^^xsd:decimal",
       "target": "npd:survey/{seaSurveyName}/point/{seaPolygonPointNumber} npdv:secondsEW {seaPolygonEWSec}^^xsd:decimal .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaPolygonPointNumber\", \"seaPolygonEWSec\" FROM \"seis_acquisition_coordinates_inc_turnarea\"",
       "sourceTables": [
@@ -3552,7 +3552,7 @@ export const npdMappingData = {
       "entityName": "wellboreBottomHoleTemperature",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreBottomHoleTemperature",
-      "targetObject": "{wlbBottomHoleTemperature}^^xsd:integer ",
+      "targetObject": "{wlbBottomHoleTemperature}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreBottomHoleTemperature {wlbBottomHoleTemperature}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbBottomHoleTemperature\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -3575,7 +3575,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{tufNpdidTuf}^^xsd:integer ",
+      "targetObject": "{tufNpdidTuf}^^xsd:integer",
       "target": "npd:petreg/facility/{tufNpdidTuf} npdv:idNPD {tufNpdidTuf}^^xsd:integer .",
       "sourceSql": "SELECT \"tufNpdidTuf\" FROM \"tuf_petreg_licence\"",
       "sourceTables": [
@@ -3597,7 +3597,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:company/{cmpNpdidCompany}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:company/{cmpNpdidCompany} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"dateSyncNPD\" FROM \"company\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -3621,7 +3621,7 @@ export const npdMappingData = {
       "entityName": "producedWater",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}",
       "targetPredicate": "npdv:producedWater",
-      "targetObject": "{prfPrdProducedWaterInFieldMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdProducedWaterInFieldMillSm3}^^xsd:decimal",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear} npdv:producedWater {prfPrdProducedWaterInFieldMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\", \"prfPrdProducedWaterInFieldMillSm3\" FROM \"field_production_yearly\"",
       "sourceTables": [
@@ -3646,7 +3646,7 @@ export const npdMappingData = {
       "entityName": "dateWDSSQC",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateWDSSQC",
-      "targetObject": "{wlbWdssQcDate}^^xsd:date ",
+      "targetObject": "{wlbWdssQcDate}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateWDSSQC {wlbWdssQcDate}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbWdssQcDate\" FROM \"wellbore_exploration_all\" WHERE \"wlbWdssQcDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -3670,7 +3670,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:facility/{fclNpdidFacility} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"dateSyncNPD\" FROM \"facility_moveable\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -3694,7 +3694,7 @@ export const npdMappingData = {
       "entityName": "shortName",
       "targetSubject": "npd:company/{cmpNpdidCompany}",
       "targetPredicate": "npdv:shortName",
-      "targetObject": "{cmpShortName}^^xsd:string ",
+      "targetObject": "{cmpShortName}^^xsd:string",
       "target": "npd:company/{cmpNpdidCompany} npdv:shortName {cmpShortName}^^xsd:string .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"cmpShortName\" FROM \"company\"",
       "sourceTables": [
@@ -3711,13 +3711,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00152:Literal:facility_moveable:fclFunctions",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "facilityFunction",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:facilityFunction",
-      "targetObject": "{fclFunctions} ",
+      "targetObject": "{fclFunctions}",
       "target": "npd:facility/{fclNpdidFacility} npdv:facilityFunction {fclFunctions} .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclFunctions\" FROM \"facility_moveable\"",
       "sourceTables": [
@@ -3740,7 +3740,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:licence/{prlNpdidLicence}/operator/{cmpNpdidCompany}/history/{prlOperDateValidFrom}/{prlOperDateValidTo}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{prlOperDateUpdated}^^xsd:date ",
+      "targetObject": "{prlOperDateUpdated}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/operator/{cmpNpdidCompany}/history/{prlOperDateValidFrom}/{prlOperDateValidTo} npdv:dateUpdated {prlOperDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"cmpNpdidCompany\", \"prlOperDateValidFrom\", \"prlOperDateValidTo\", \"prlOperDateUpdated\" FROM \"licence_oper_hst\" WHERE \"prlOperDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -3770,7 +3770,7 @@ export const npdMappingData = {
       "entityName": "wellboreEntryYear",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreEntryYear",
-      "targetObject": "{wlbEntryYear}^^xsd:integer ",
+      "targetObject": "{wlbEntryYear}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreEntryYear {wlbEntryYear}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEntryYear\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -3793,7 +3793,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{wlbWellboreName}^^xsd:string ",
+      "targetObject": "{wlbWellboreName}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:name {wlbWellboreName}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbWellboreName\" FROM \"wellbore_npdid_overview\"",
       "sourceTables": [
@@ -3816,7 +3816,7 @@ export const npdMappingData = {
       "entityName": "drillPermit",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:drillPermit",
-      "targetObject": "{wlbDrillPermit}^^xsd:string ",
+      "targetObject": "{wlbDrillPermit}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:drillPermit {wlbDrillPermit}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDrillPermit\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -3839,7 +3839,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/1 ",
+      "targetObject": "npd:ncs/mainarea/1",
       "target": "npd:licence/{prlNpdidLicence} npdv:mainAreaLocation npd:ncs/mainarea/1 .",
       "sourceSql": "SELECT \"prlNpdidLicence\" FROM \"licence\" WHERE \"prlMainArea\"='Barents sea'",
       "sourceTables": [
@@ -3862,7 +3862,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/2 ",
+      "targetObject": "npd:ncs/mainarea/2",
       "target": "npd:licence/{prlNpdidLicence} npdv:mainAreaLocation npd:ncs/mainarea/2 .",
       "sourceSql": "SELECT \"prlNpdidLicence\" FROM \"licence\" WHERE \"prlMainArea\"='Norwegian sea'",
       "sourceTables": [
@@ -3885,7 +3885,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/3 ",
+      "targetObject": "npd:ncs/mainarea/3",
       "target": "npd:licence/{prlNpdidLicence} npdv:mainAreaLocation npd:ncs/mainarea/3 .",
       "sourceSql": "SELECT \"prlNpdidLicence\" FROM \"licence\" WHERE \"prlMainArea\"='North sea'",
       "sourceTables": [
@@ -3902,13 +3902,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00160:Literal:licence_task:prlTaskTypeNo",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "taskType",
       "targetSubject": "npd:licence/{prlNpdidLicence}/task/{prlTaskID}",
       "targetPredicate": "npdv:taskType",
-      "targetObject": "{prlTaskTypeNo} ",
+      "targetObject": "{prlTaskTypeNo}",
       "target": "npd:licence/{prlNpdidLicence}/task/{prlTaskID} npdv:taskType {prlTaskTypeNo} .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlTaskID\", \"prlTaskTypeNo\" FROM \"licence_task\"",
       "sourceTables": [
@@ -3933,7 +3933,7 @@ export const npdMappingData = {
       "entityName": "surveySubType",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:surveySubType",
-      "targetObject": "{seaSurveyTypePart}^^xsd:string ",
+      "targetObject": "{seaSurveyTypePart}^^xsd:string",
       "target": "npd:survey/{seaName} npdv:surveySubType {seaSurveyTypePart}^^xsd:string .",
       "sourceSql": "SELECT \"seaName\", \"seaSurveyTypePart\" FROM \"seis_acquisition\"",
       "sourceTables": [
@@ -3956,7 +3956,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart5",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart5",
-      "targetObject": "{wlbNamePart5}^^xsd:string ",
+      "targetObject": "{wlbNamePart5}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart5 {wlbNamePart5}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart5\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -3973,13 +3973,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00163:Literal:facility_fixed:fclGeodeticDatum",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "geodeticDatum",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:geodeticDatum",
-      "targetObject": "{fclGeodeticDatum} ",
+      "targetObject": "{fclGeodeticDatum}",
       "target": "npd:facility/{fclNpdidFacility} npdv:geodeticDatum {fclGeodeticDatum} .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclGeodeticDatum\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -4002,7 +4002,7 @@ export const npdMappingData = {
       "entityName": "dateFieldOwnerFrom",
       "targetSubject": "npd:field/{fldNpdidField}/owner/{fldNpdidOwner}/history/{fldOwnershipFromDate}/{fldOwnershipToDate}",
       "targetPredicate": "npdv:dateFieldOwnerFrom",
-      "targetObject": "{fldOwnershipFromDate}^^xsd:date ",
+      "targetObject": "{fldOwnershipFromDate}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/owner/{fldNpdidOwner}/history/{fldOwnershipFromDate}/{fldOwnershipToDate} npdv:dateFieldOwnerFrom {fldOwnershipFromDate}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldNpdidOwner\", \"fldOwnershipFromDate\", \"fldOwnershipToDate\" FROM \"field_owner_hst\" WHERE \"fldOwnershipFromDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -4031,7 +4031,7 @@ export const npdMappingData = {
       "entityName": "reservesResourceClass",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC}",
       "targetPredicate": "npdv:reservesResourceClass",
-      "targetObject": "{dscReservesRC}^^xsd:string ",
+      "targetObject": "{dscReservesRC}^^xsd:string",
       "target": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC} npdv:reservesResourceClass {dscReservesRC}^^xsd:string .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscReservesRC\" FROM \"discovery_reserves\"",
       "sourceTables": [
@@ -4055,7 +4055,7 @@ export const npdMappingData = {
       "entityName": "producedOil",
       "targetSubject": "npd:ncs/production/{prfYear}",
       "targetPredicate": "npdv:producedOil",
-      "targetObject": "{prfPrdOilNetMillSm}^^xsd:decimal ",
+      "targetObject": "{prfPrdOilNetMillSm}^^xsd:decimal",
       "target": "npd:ncs/production/{prfYear} npdv:producedOil {prfPrdOilNetMillSm}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfYear\", \"prfPrdOilNetMillSm\" FROM \"field_production_totalt_NCS_year\"",
       "sourceTables": [
@@ -4078,7 +4078,7 @@ export const npdMappingData = {
       "entityName": "dateUpdatedMax",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}",
       "targetPredicate": "npdv:dateUpdatedMax",
-      "targetObject": "{dscDateUpdatedMax}^^xsd:date ",
+      "targetObject": "{dscDateUpdatedMax}^^xsd:date",
       "target": "npd:discovery/{dscNpdidDiscovery} npdv:dateUpdatedMax {dscDateUpdatedMax}^^xsd:date .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscDateUpdatedMax\" FROM \"discovery\" WHERE \"dscDateUpdatedMax\" <> '9999-12-31'",
       "sourceTables": [
@@ -4096,13 +4096,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00168:Literal:wellbore_shallow_all:wlbNsCode",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "codeNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:codeNS",
-      "targetObject": "{wlbNsCode} ",
+      "targetObject": "{wlbNsCode}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:codeNS {wlbNsCode} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsCode\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -4125,7 +4125,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{wlbOilSampleDateUpdated}^^xsd:date ",
+      "targetObject": "{wlbOilSampleDateUpdated}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id} npdv:dateUpdated {wlbOilSampleDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"wellbore_oil_sample_id\", \"wlbNpdidWellbore\", \"wlbOilSampleDateUpdated\" FROM \"wellbore_oil_sample\" WHERE \"wlbOilSampleDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -4151,7 +4151,7 @@ export const npdMappingData = {
       "entityName": "dateTUFOwnerValidTo",
       "targetSubject": "npd:facility/{tufNpdidTuf}/owner/{cmpNpdidCompany}/history/{tufOwnerDateValidFrom}/{tufOwnerDateValidTo}",
       "targetPredicate": "npdv:dateTUFOwnerValidTo",
-      "targetObject": "{tufOwnerDateValidTo}^^xsd:date ",
+      "targetObject": "{tufOwnerDateValidTo}^^xsd:date",
       "target": "npd:facility/{tufNpdidTuf}/owner/{cmpNpdidCompany}/history/{tufOwnerDateValidFrom}/{tufOwnerDateValidTo} npdv:dateTUFOwnerValidTo {tufOwnerDateValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"cmpNpdidCompany\", \"tufOwnerDateValidFrom\", \"tufOwnerDateValidTo\" FROM \"tuf_owner_hst\" WHERE \"tufOwnerDateValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -4180,7 +4180,7 @@ export const npdMappingData = {
       "entityName": "isMultilateral",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:isMultilateral",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:isMultilateral \"true\" .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_development_all\" WHERE \"wlbMultilateral\"='YES'",
       "sourceTables": [
@@ -4203,7 +4203,7 @@ export const npdMappingData = {
       "entityName": "isMultilateral",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:isMultilateral",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:isMultilateral \"false\" .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_development_all\" WHERE \"wlbMultilateral\"='NO'",
       "sourceTables": [
@@ -4226,7 +4226,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{wlbWellboreName}^^xsd:string ",
+      "targetObject": "{wlbWellboreName}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:name {wlbWellboreName}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbWellboreName\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -4249,7 +4249,7 @@ export const npdMappingData = {
       "entityName": "producedOil",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}",
       "targetPredicate": "npdv:producedOil",
-      "targetObject": "{prfPrdOilNetMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdOilNetMillSm3}^^xsd:decimal",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear} npdv:producedOil {prfPrdOilNetMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\", \"prfPrdOilNetMillSm3\" FROM \"field_production_yearly\"",
       "sourceTables": [
@@ -4274,7 +4274,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart4",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart4",
-      "targetObject": "{wlbNamePart4}^^xsd:integer ",
+      "targetObject": "{wlbNamePart4}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart4 {wlbNamePart4}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart4\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -4297,7 +4297,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{fclName}^^xsd:string ",
+      "targetObject": "{fclName}^^xsd:string",
       "target": "npd:facility/{fclNpdidFacility} npdv:name {fclName}^^xsd:string .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclName\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -4314,13 +4314,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00177:Literal:wellbore_casing_and_lot:wlbHoleDiameter",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "wellboreHoleDiameter",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/casingleakoff/{wellbore_casing_and_lot_id}",
       "targetPredicate": "npdv:wellboreHoleDiameter",
-      "targetObject": "{wlbHoleDiameter} ",
+      "targetObject": "{wlbHoleDiameter}",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/casingleakoff/{wellbore_casing_and_lot_id} npdv:wellboreHoleDiameter {wlbHoleDiameter} .",
       "sourceSql": "SELECT \"wellbore_casing_and_lot_id\", \"wlbNpdidWellbore\", \"wlbHoleDiameter\" FROM \"wellbore_casing_and_lot\"",
       "sourceTables": [
@@ -4345,7 +4345,7 @@ export const npdMappingData = {
       "entityName": "dateUpdatedMax",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateUpdatedMax",
-      "targetObject": "{wlbDateUpdatedMax}^^xsd:date ",
+      "targetObject": "{wlbDateUpdatedMax}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateUpdatedMax {wlbDateUpdatedMax}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDateUpdatedMax\" FROM \"wellbore_shallow_all\" WHERE \"wlbDateUpdatedMax\" <> '9999-12-31'",
       "sourceTables": [
@@ -4369,7 +4369,7 @@ export const npdMappingData = {
       "entityName": "lengthBoatTotalKm",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:lengthBoatTotalKm",
-      "targetObject": "{seaBoatTotalKm}^^xsd:integer ",
+      "targetObject": "{seaBoatTotalKm}^^xsd:integer",
       "target": "npd:survey/{seaName} npdv:lengthBoatTotalKm {seaBoatTotalKm}^^xsd:integer .",
       "sourceSql": "SELECT \"seaName\", \"seaBoatTotalKm\" FROM \"seis_acquisition\"",
       "sourceTables": [
@@ -4392,7 +4392,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}/licencee/{cmpNpdidCompany}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:petreg/licence/{prlNpdidLicence}/licencee/{cmpNpdidCompany} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"cmpNpdidCompany\", \"dateSyncNPD\" FROM \"licence_petreg_licence_licencee\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -4418,7 +4418,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{baaName}^^xsd:string ",
+      "targetObject": "{baaName}^^xsd:string",
       "target": "npd:baa/{baaNpdidBsnsArrArea} npdv:name {baaName}^^xsd:string .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaName\" FROM \"bsns_arr_area\"",
       "sourceTables": [
@@ -4441,7 +4441,7 @@ export const npdMappingData = {
       "entityName": "secondsNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:secondsNS",
-      "targetObject": "{wlbNsSec}^^xsd:decimal ",
+      "targetObject": "{wlbNsSec}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:secondsNS {wlbNsSec}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsSec\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -4464,7 +4464,7 @@ export const npdMappingData = {
       "entityName": "decimalDegreesNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:decimalDegreesNS",
-      "targetObject": "{wlbNsDecDeg}^^xsd:decimal ",
+      "targetObject": "{wlbNsDecDeg}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:decimalDegreesNS {wlbNsDecDeg}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsDecDeg\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -4487,7 +4487,7 @@ export const npdMappingData = {
       "entityName": "dateOilSampleTest",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id}",
       "targetPredicate": "npdv:dateOilSampleTest",
-      "targetObject": "{wlbOilSampleTestDate}^^xsd:date ",
+      "targetObject": "{wlbOilSampleTestDate}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id} npdv:dateOilSampleTest {wlbOilSampleTestDate}^^xsd:date .",
       "sourceSql": "SELECT \"wellbore_oil_sample_id\", \"wlbNpdidWellbore\", \"wlbOilSampleTestDate\" FROM \"wellbore_oil_sample\" WHERE \"wlbOilSampleTestDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -4507,13 +4507,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00185:Literal:wellbore_development_all:wlbDiskosWellboreParent",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "wellboreParent",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreParent",
-      "targetObject": "{wlbDiskosWellboreParent} ",
+      "targetObject": "{wlbDiskosWellboreParent}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreParent {wlbDiskosWellboreParent} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDiskosWellboreParent\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -4536,7 +4536,7 @@ export const npdMappingData = {
       "entityName": "DSTChokeSize",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber}",
       "targetPredicate": "npdv:DSTChokeSize",
-      "targetObject": "{wlbDstChokeSize}^^xsd:decimal ",
+      "targetObject": "{wlbDstChokeSize}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber} npdv:DSTChokeSize {wlbDstChokeSize}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDstTestNumber\", \"wlbDstChokeSize\" FROM \"wellbore_dst\"",
       "sourceTables": [
@@ -4561,7 +4561,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{wlbWellboreName}^^xsd:string ",
+      "targetObject": "{wlbWellboreName}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:name {wlbWellboreName}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbWellboreName\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -4578,13 +4578,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00188:Literal:wellbore_shallow_all:wlbEwCode",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "codeEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:codeEW",
-      "targetObject": "{wlbEwCode} ",
+      "targetObject": "{wlbEwCode}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:codeEW {wlbEwCode} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwCode\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -4607,7 +4607,7 @@ export const npdMappingData = {
       "entityName": "dateLicenceGranted",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:dateLicenceGranted",
-      "targetObject": "{prlDateGranted}^^xsd:date ",
+      "targetObject": "{prlDateGranted}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence} npdv:dateLicenceGranted {prlDateGranted}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlDateGranted\" FROM \"licence\" WHERE \"prlDateGranted\" <> '9999-12-31'",
       "sourceTables": [
@@ -4625,13 +4625,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00190:Literal:seaArea:seaSourcePressure",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "sourcePressure",
       "targetSubject": "npd:survey/{seaSurveyName}/area",
       "targetPredicate": "npdv:sourcePressure",
-      "targetObject": "{seaSourcePressure} ",
+      "targetObject": "{seaSourcePressure}",
       "target": "npd:survey/{seaSurveyName}/area npdv:sourcePressure {seaSourcePressure} .",
       "sourceSql": "SELECT \"seaArea_id\", \"seaSurveyName\", \"seaSourcePressure\" FROM \"seaArea\"",
       "sourceTables": [
@@ -4655,7 +4655,7 @@ export const npdMappingData = {
       "entityName": "inLithostratigraphicUnit",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/depth/{lsuTopDepth}/{lsuBottomDepth}",
       "targetPredicate": "npdv:inLithostratigraphicUnit",
-      "targetObject": "npd:stratum/{lsuNpdidLithoStrat} ",
+      "targetObject": "npd:stratum/{lsuNpdidLithoStrat}",
       "target": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/depth/{lsuTopDepth}/{lsuBottomDepth} npdv:inLithostratigraphicUnit npd:stratum/{lsuNpdidLithoStrat} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"lsuNpdidLithoStrat\", \"lsuTopDepth\", \"lsuBottomDepth\" FROM \"wellbore_formation_top\"",
       "sourceTables": [
@@ -4683,7 +4683,7 @@ export const npdMappingData = {
       "entityName": "SDFI",
       "targetSubject": "npd:field/{fldNpdidField}/licensee/{cmpNpdidCompany}/history/{fldLicenseeFrom}/{fldLicenseeTo}",
       "targetPredicate": "npdv:SDFI",
-      "targetObject": "{fldSdfiShare}^^xsd:decimal ",
+      "targetObject": "{fldSdfiShare}^^xsd:decimal",
       "target": "npd:field/{fldNpdidField}/licensee/{cmpNpdidCompany}/history/{fldLicenseeFrom}/{fldLicenseeTo} npdv:SDFI {fldSdfiShare}^^xsd:decimal .",
       "sourceSql": "SELECT \"fldNpdidField\", \"cmpNpdidCompany\", \"fldLicenseeFrom\", \"fldLicenseeTo\", \"fldSdfiShare\" FROM \"field_licensee_hst\"",
       "sourceTables": [
@@ -4712,7 +4712,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{fclNpdidFacility}^^xsd:integer ",
+      "targetObject": "{fclNpdidFacility}^^xsd:integer",
       "target": "npd:facility/{fclNpdidFacility} npdv:idNPD {fclNpdidFacility}^^xsd:integer .",
       "sourceSql": "SELECT \"fclNpdidFacility\" FROM \"facility_moveable\"",
       "sourceTables": [
@@ -4734,7 +4734,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"dateSyncNPD\" FROM \"bsns_arr_area\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -4758,7 +4758,7 @@ export const npdMappingData = {
       "entityName": "remainingOilEquivalents",
       "targetSubject": "npd:field/{fldNpdidField}/reserve",
       "targetPredicate": "npdv:remainingOilEquivalents",
-      "targetObject": "{fldRemainingOE}^^xsd:decimal ",
+      "targetObject": "{fldRemainingOE}^^xsd:decimal",
       "target": "npd:field/{fldNpdidField}/reserve npdv:remainingOilEquivalents {fldRemainingOE}^^xsd:decimal .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldRemainingOE\" FROM \"field_reserves\"",
       "sourceTables": [
@@ -4781,7 +4781,7 @@ export const npdMappingData = {
       "entityName": "transferredInterest",
       "targetSubject": "npd:licence/{prlNpdidLicence}/transfer/{prlTransferDirection}/{cmpNpdidCompany}/history/{prlTransferDateValidFrom}",
       "targetPredicate": "npdv:transferredInterest",
-      "targetObject": "{prlTransferredInterest}^^xsd:decimal ",
+      "targetObject": "{prlTransferredInterest}^^xsd:decimal",
       "target": "npd:licence/{prlNpdidLicence}/transfer/{prlTransferDirection}/{cmpNpdidCompany}/history/{prlTransferDateValidFrom} npdv:transferredInterest {prlTransferredInterest}^^xsd:decimal .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlTransferDirection\", \"cmpNpdidCompany\", \"prlTransferDateValidFrom\", \"prlTransferredInterest\" FROM \"licence_transfer_hst\"",
       "sourceTables": [
@@ -4810,7 +4810,7 @@ export const npdMappingData = {
       "entityName": "status",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:status",
-      "targetObject": "{fclPhase}^^xsd:string ",
+      "targetObject": "{fclPhase}^^xsd:string",
       "target": "npd:facility/{fclNpdidFacility} npdv:status {fclPhase}^^xsd:string .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclPhase\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -4833,7 +4833,7 @@ export const npdMappingData = {
       "entityName": "secondsNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:secondsNS",
-      "targetObject": "{wlbNsSec}^^xsd:decimal ",
+      "targetObject": "{wlbNsSec}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:secondsNS {wlbNsSec}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsSec\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -4856,7 +4856,7 @@ export const npdMappingData = {
       "entityName": "utmZone",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:utmZone",
-      "targetObject": "{wlbUtmZone}^^xsd:integer ",
+      "targetObject": "{wlbUtmZone}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:utmZone {wlbUtmZone}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbUtmZone\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -4879,7 +4879,7 @@ export const npdMappingData = {
       "entityName": "licenseeInterest",
       "targetSubject": "npd:licence/{prlNpdidLicence}/licensee/{cmpNpdidCompany}/history/{prlLicenseeDateValidFrom}/{prlLicenseeDateValidTo}",
       "targetPredicate": "npdv:licenseeInterest",
-      "targetObject": "{prlLicenseeInterest}^^xsd:decimal ",
+      "targetObject": "{prlLicenseeInterest}^^xsd:decimal",
       "target": "npd:licence/{prlNpdidLicence}/licensee/{cmpNpdidCompany}/history/{prlLicenseeDateValidFrom}/{prlLicenseeDateValidTo} npdv:licenseeInterest {prlLicenseeInterest}^^xsd:decimal .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"cmpNpdidCompany\", \"prlLicenseeDateValidFrom\", \"prlLicenseeDateValidTo\", \"prlLicenseeInterest\" FROM \"licence_licensee_hst\"",
       "sourceTables": [
@@ -4908,7 +4908,7 @@ export const npdMappingData = {
       "entityName": "dateUpdatedMax",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateUpdatedMax",
-      "targetObject": "{wlbDateUpdatedMax}^^xsd:date ",
+      "targetObject": "{wlbDateUpdatedMax}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateUpdatedMax {wlbDateUpdatedMax}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDateUpdatedMax\" FROM \"wellbore_exploration_all\" WHERE \"wlbDateUpdatedMax\" <> '9999-12-31'",
       "sourceTables": [
@@ -4932,7 +4932,7 @@ export const npdMappingData = {
       "entityName": "hydrocarbonType",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}",
       "targetPredicate": "npdv:hydrocarbonType",
-      "targetObject": "{dscHcType}^^xsd:string ",
+      "targetObject": "{dscHcType}^^xsd:string",
       "target": "npd:discovery/{dscNpdidDiscovery} npdv:hydrocarbonType {dscHcType}^^xsd:string .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscHcType\" FROM \"discovery\"",
       "sourceTables": [
@@ -4955,7 +4955,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:petreg/licence/{prlNpdidLicence} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"dateSyncNPD\" FROM \"licence_petreg_licence\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -4979,7 +4979,7 @@ export const npdMappingData = {
       "entityName": "utmEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:utmEW",
-      "targetObject": "{wlbEwUtm}^^xsd:decimal ",
+      "targetObject": "{wlbEwUtm}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:utmEW {wlbEwUtm}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwUtm\" FROM \"wellbore_coordinates\"",
       "sourceTables": [
@@ -5002,7 +5002,7 @@ export const npdMappingData = {
       "entityName": "lengthCdpTotalKm",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:lengthCdpTotalKm",
-      "targetObject": "{seaCdpTotalKm}^^xsd:integer ",
+      "targetObject": "{seaCdpTotalKm}^^xsd:integer",
       "target": "npd:survey/{seaName} npdv:lengthCdpTotalKm {seaCdpTotalKm}^^xsd:integer .",
       "sourceSql": "SELECT \"seaName\", \"seaCdpTotalKm\" FROM \"seis_acquisition\"",
       "sourceTables": [
@@ -5025,7 +5025,7 @@ export const npdMappingData = {
       "entityName": "productionYear",
       "targetSubject": "npd:ncs/production/{prfYear}",
       "targetPredicate": "npdv:productionYear",
-      "targetObject": "{prfYear}^^xsd:integer ",
+      "targetObject": "{prfYear}^^xsd:integer",
       "target": "npd:ncs/production/{prfYear} npdv:productionYear {prfYear}^^xsd:integer .",
       "sourceSql": "SELECT \"prfYear\" FROM \"field_production_totalt_NCS_year\"",
       "sourceTables": [
@@ -5047,7 +5047,7 @@ export const npdMappingData = {
       "entityName": "isDiscoveryWellbore",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:isDiscoveryWellbore",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:isDiscoveryWellbore \"true\" .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_development_all\" WHERE \"wlbDiscoveryWellbore\"='YES'",
       "sourceTables": [
@@ -5070,7 +5070,7 @@ export const npdMappingData = {
       "entityName": "isDiscoveryWellbore",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:isDiscoveryWellbore",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:isDiscoveryWellbore \"false\" .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_development_all\" WHERE \"wlbDiscoveryWellbore\"='NO'",
       "sourceTables": [
@@ -5093,7 +5093,7 @@ export const npdMappingData = {
       "entityName": "isStratigraphical",
       "targetSubject": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:isStratigraphical",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:isStratigraphical \"true\" .",
       "sourceSql": "SELECT \"prlArea_id\", \"prlNpdidLicence\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"prlArea\" WHERE \"prlAreaPolyStratigraphical\"='YES'",
       "sourceTables": [
@@ -5122,7 +5122,7 @@ export const npdMappingData = {
       "entityName": "isStratigraphical",
       "targetSubject": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:isStratigraphical",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:isStratigraphical \"false\" .",
       "sourceSql": "SELECT \"prlArea_id\", \"prlNpdidLicence\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"prlArea\" WHERE \"prlAreaPolyStratigraphical\"='NO'",
       "sourceTables": [
@@ -5151,7 +5151,7 @@ export const npdMappingData = {
       "entityName": "oilSampleBottomDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id}",
       "targetPredicate": "npdv:oilSampleBottomDepth",
-      "targetObject": "{wlbOilSampleBottomDepth}^^xsd:decimal ",
+      "targetObject": "{wlbOilSampleBottomDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id} npdv:oilSampleBottomDepth {wlbOilSampleBottomDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wellbore_oil_sample_id\", \"wlbNpdidWellbore\", \"wlbOilSampleBottomDepth\" FROM \"wellbore_oil_sample\"",
       "sourceTables": [
@@ -5176,7 +5176,7 @@ export const npdMappingData = {
       "entityName": "dateFieldOwnerFrom",
       "targetSubject": "npd:field/{fldNpdidField}/licensee/{cmpNpdidCompany}/history/{fldLicenseeFrom}/{fldLicenseeTo}",
       "targetPredicate": "npdv:dateFieldOwnerFrom",
-      "targetObject": "{fldOwnerFrom}^^xsd:date ",
+      "targetObject": "{fldOwnerFrom}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/licensee/{cmpNpdidCompany}/history/{fldLicenseeFrom}/{fldLicenseeTo} npdv:dateFieldOwnerFrom {fldOwnerFrom}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"cmpNpdidCompany\", \"fldLicenseeFrom\", \"fldLicenseeTo\", \"fldOwnerFrom\" FROM \"field_licensee_hst\" WHERE \"fldOwnerFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -5206,7 +5206,7 @@ export const npdMappingData = {
       "entityName": "dateSurveyProgress",
       "targetSubject": "npd:survey/{seaProgressText2}/status/{seis_acquisition_progress_id}",
       "targetPredicate": "npdv:dateSurveyProgress",
-      "targetObject": "{seaProgressDate}^^xsd:date ",
+      "targetObject": "{seaProgressDate}^^xsd:date",
       "target": "npd:survey/{seaProgressText2}/status/{seis_acquisition_progress_id} npdv:dateSurveyProgress {seaProgressDate}^^xsd:date .",
       "sourceSql": "SELECT \"seis_acquisition_progress_id\", \"seaProgressText2\", \"seaProgressDate\" FROM \"seis_acquisition_progress\" WHERE \"seaProgressDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -5232,7 +5232,7 @@ export const npdMappingData = {
       "entityName": "isFormerLicenceOperator",
       "targetSubject": "npd:company/{cmpNpdidCompany}",
       "targetPredicate": "npdv:isFormerLicenceOperator",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:company/{cmpNpdidCompany} npdv:isFormerLicenceOperator \"true\" .",
       "sourceSql": "SELECT \"cmpNpdidCompany\" FROM \"company\" WHERE \"cmpLicenceOperFormer\"='Y'",
       "sourceTables": [
@@ -5255,7 +5255,7 @@ export const npdMappingData = {
       "entityName": "isFormerLicenceOperator",
       "targetSubject": "npd:company/{cmpNpdidCompany}",
       "targetPredicate": "npdv:isFormerLicenceOperator",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:company/{cmpNpdidCompany} npdv:isFormerLicenceOperator \"false\" .",
       "sourceSql": "SELECT \"cmpNpdidCompany\" FROM \"company\" WHERE \"cmpLicenceOperFormer\"='N'",
       "sourceTables": [
@@ -5278,7 +5278,7 @@ export const npdMappingData = {
       "entityName": "coreIntervalBottom",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}",
       "targetPredicate": "npdv:coreIntervalBottom",
-      "targetObject": "{wlbCoreIntervalBottom}^^xsd:decimal ",
+      "targetObject": "{wlbCoreIntervalBottom}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber} npdv:coreIntervalBottom {wlbCoreIntervalBottom}^^xsd:decimal .",
       "sourceSql": "SELECT \"wellbore_core_id\", \"wlbNpdidWellbore\", \"wlbCoreNumber\", \"wlbCoreIntervalBottom\" FROM \"wellbore_core\"",
       "sourceTables": [
@@ -5304,7 +5304,7 @@ export const npdMappingData = {
       "entityName": "dateOperatorValidTo",
       "targetSubject": "npd:licence/{prlNpdidLicence}/licensee/{cmpNpdidCompany}/history/{prlLicenseeDateValidFrom}/{prlLicenseeDateValidTo}",
       "targetPredicate": "npdv:dateOperatorValidTo",
-      "targetObject": "{prlOperDateValidTo}^^xsd:date ",
+      "targetObject": "{prlOperDateValidTo}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/licensee/{cmpNpdidCompany}/history/{prlLicenseeDateValidFrom}/{prlLicenseeDateValidTo} npdv:dateOperatorValidTo {prlOperDateValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"cmpNpdidCompany\", \"prlLicenseeDateValidFrom\", \"prlLicenseeDateValidTo\", \"prlOperDateValidTo\" FROM \"licence_licensee_hst\" WHERE \"prlOperDateValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -5334,7 +5334,7 @@ export const npdMappingData = {
       "entityName": "lengthPlannedCdpKm",
       "targetSubject": "npd:survey/{seaSurveyName}/multiline",
       "targetPredicate": "npdv:lengthPlannedCdpKm",
-      "targetObject": "{seaPlanCdpKm}^^xsd:integer ",
+      "targetObject": "{seaPlanCdpKm}^^xsd:integer",
       "target": "npd:survey/{seaSurveyName}/multiline npdv:lengthPlannedCdpKm {seaPlanCdpKm}^^xsd:integer .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaPlanCdpKm\" FROM \"seaMultiline\"",
       "sourceTables": [
@@ -5357,7 +5357,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}/message/{ptlMessageDocumentNo}",
       "targetPredicate": "ptl:dateUpdated",
-      "targetObject": "{ptlMessageDateUpdated}^^xsd:date ",
+      "targetObject": "{ptlMessageDateUpdated}^^xsd:date",
       "target": "npd:petreg/facility/{tufNpdidTuf}/message/{ptlMessageDocumentNo} ptl:dateUpdated {ptlMessageDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"ptlMessageDocumentNo\", \"ptlMessageDateUpdated\" FROM \"tuf_petreg_message\" WHERE \"ptlMessageDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -5377,13 +5377,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00220:Literal:field_activity_status_hst:fldStatus",
-      "kind": "objectProperty",
-      "abstraction": "历史对象关系",
+      "kind": "dataProperty",
+      "abstraction": "历史属性",
       "entityPrefix": "npdv",
       "entityName": "status",
       "targetSubject": "npd:field/{fldNpdidField}/activity/{fldStatus}/history/{fldStatusFromDate}/{fldStatusToDate}",
       "targetPredicate": "npdv:status",
-      "targetObject": "{fldStatus} ",
+      "targetObject": "{fldStatus}",
       "target": "npd:field/{fldNpdidField}/activity/{fldStatus}/history/{fldStatusFromDate}/{fldStatusToDate} npdv:status {fldStatus} .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldStatus\", \"fldStatusFromDate\", \"fldStatusToDate\" FROM \"field_activity_status_hst\"",
       "sourceTables": [
@@ -5411,7 +5411,7 @@ export const npdMappingData = {
       "entityName": "DSTFinalShutInPressure",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber}",
       "targetPredicate": "npdv:DSTFinalShutInPressure",
-      "targetObject": "{wlbDstFinShutInPress}^^xsd:decimal ",
+      "targetObject": "{wlbDstFinShutInPress}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber} npdv:DSTFinalShutInPressure {wlbDstFinShutInPress}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDstTestNumber\", \"wlbDstFinShutInPress\" FROM \"wellbore_dst\"",
       "sourceTables": [
@@ -5436,7 +5436,7 @@ export const npdMappingData = {
       "entityName": "lengthPlannedBoatKm",
       "targetSubject": "npd:survey/{seaSurveyName}/area",
       "targetPredicate": "npdv:lengthPlannedBoatKm",
-      "targetObject": "{seaPlanBoatKm}^^xsd:integer ",
+      "targetObject": "{seaPlanBoatKm}^^xsd:integer",
       "target": "npd:survey/{seaSurveyName}/area npdv:lengthPlannedBoatKm {seaPlanBoatKm}^^xsd:integer .",
       "sourceSql": "SELECT \"seaArea_id\", \"seaSurveyName\", \"seaPlanBoatKm\" FROM \"seaArea\"",
       "sourceTables": [
@@ -5460,7 +5460,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:licence/{prlNpdidLicence}/task/{prlTaskID}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{wlbName}^^xsd:string ",
+      "targetObject": "{wlbName}^^xsd:string",
       "target": "npd:licence/{prlNpdidLicence}/task/{prlTaskID} npdv:name {wlbName}^^xsd:string .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlTaskID\", \"wlbName\" FROM \"licence_task\"",
       "sourceTables": [
@@ -5485,7 +5485,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:licence/{prlNpdidLicence}/operator/{cmpNpdidCompany}/history/{prlOperDateValidFrom}/{prlOperDateValidTo}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/operator/{cmpNpdidCompany}/history/{prlOperDateValidFrom}/{prlOperDateValidTo} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"cmpNpdidCompany\", \"prlOperDateValidFrom\", \"prlOperDateValidTo\", \"dateSyncNPD\" FROM \"licence_oper_hst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -5515,7 +5515,7 @@ export const npdMappingData = {
       "entityName": "secondsNS",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:secondsNS",
-      "targetObject": "{fclNsSec}^^xsd:decimal ",
+      "targetObject": "{fclNsSec}^^xsd:decimal",
       "target": "npd:facility/{fclNpdidFacility} npdv:secondsNS {fclNsSec}^^xsd:decimal .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclNsSec\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -5538,7 +5538,7 @@ export const npdMappingData = {
       "entityName": "mapNo",
       "targetSubject": "npd:mainarea/{apaAreaGross_id}",
       "targetPredicate": "npdv:mapNo",
-      "targetObject": "{apaMap_no}^^xsd:integer ",
+      "targetObject": "{apaMap_no}^^xsd:integer",
       "target": "npd:mainarea/{apaAreaGross_id} npdv:mapNo {apaMap_no}^^xsd:integer .",
       "sourceSql": "SELECT \"apaAreaGross_id\", \"apaMap_no\" FROM \"apaAreaGross\"",
       "sourceTables": [
@@ -5555,13 +5555,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00227:Literal:discovery:dscFactPageUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "factPageURL",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}",
       "targetPredicate": "npdv:factPageURL",
-      "targetObject": "<{dscFactPageUrl}> ",
+      "targetObject": "<{dscFactPageUrl}>",
       "target": "npd:discovery/{dscNpdidDiscovery} npdv:factPageURL <{dscFactPageUrl}> .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscFactPageUrl\" FROM \"discovery\"",
       "sourceTables": [
@@ -5584,7 +5584,7 @@ export const npdMappingData = {
       "entityName": "mudMeasuredDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/mud/{wellbore_mud_id}",
       "targetPredicate": "npdv:mudMeasuredDepth",
-      "targetObject": "{wlbMD}^^xsd:decimal ",
+      "targetObject": "{wlbMD}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/mud/{wellbore_mud_id} npdv:mudMeasuredDepth {wlbMD}^^xsd:decimal .",
       "sourceSql": "SELECT \"wellbore_mud_id\", \"wlbNpdidWellbore\", \"wlbMD\" FROM \"wellbore_mud\"",
       "sourceTables": [
@@ -5609,7 +5609,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart6",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart6",
-      "targetObject": "{wlbNamePart6}^^xsd:string ",
+      "targetObject": "{wlbNamePart6}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart6 {wlbNamePart6}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart6\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -5632,7 +5632,7 @@ export const npdMappingData = {
       "entityName": "minutesNS",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:minutesNS",
-      "targetObject": "{fclNsMin}^^xsd:integer ",
+      "targetObject": "{fclNsMin}^^xsd:integer",
       "target": "npd:facility/{fclNpdidFacility} npdv:minutesNS {fclNsMin}^^xsd:integer .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclNsMin\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -5655,7 +5655,7 @@ export const npdMappingData = {
       "entityName": "dateResourceEstimate",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC}",
       "targetPredicate": "npdv:dateResourceEstimate",
-      "targetObject": "{dscDateOffResEstDisplay}^^xsd:date ",
+      "targetObject": "{dscDateOffResEstDisplay}^^xsd:date",
       "target": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC} npdv:dateResourceEstimate {dscDateOffResEstDisplay}^^xsd:date .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscReservesRC\", \"dscDateOffResEstDisplay\" FROM \"discovery_reserves\" WHERE \"dscDateOffResEstDisplay\" <> '9999-12-31'",
       "sourceTables": [
@@ -5681,7 +5681,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:field/{fldNpdidField}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{fldName}^^xsd:string ",
+      "targetObject": "{fldName}^^xsd:string",
       "target": "npd:field/{fldNpdidField} npdv:name {fldName}^^xsd:string .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldName\" FROM \"field\"",
       "sourceTables": [
@@ -5698,13 +5698,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00233:Literal:wellbore_exploration_all:wlbFactPageUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "factPageURL",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:factPageURL",
-      "targetObject": "<{wlbFactPageUrl}> ",
+      "targetObject": "<{wlbFactPageUrl}>",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:factPageURL <{wlbFactPageUrl}> .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbFactPageUrl\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -5721,13 +5721,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00234:Literal:wellbore_exploration_all:wlbDiskosWellboreParent",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "wellboreParent",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreParent",
-      "targetObject": "{wlbDiskosWellboreParent} ",
+      "targetObject": "{wlbDiskosWellboreParent}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreParent {wlbDiskosWellboreParent} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDiskosWellboreParent\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -5750,7 +5750,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:licence/{prlNpdidLicence}/licensee/{cmpNpdidCompany}/history/{prlLicenseeDateValidFrom}/{prlLicenseeDateValidTo}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{prlLicenseeDateUpdated}^^xsd:date ",
+      "targetObject": "{prlLicenseeDateUpdated}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/licensee/{cmpNpdidCompany}/history/{prlLicenseeDateValidFrom}/{prlLicenseeDateValidTo} npdv:dateUpdated {prlLicenseeDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"cmpNpdidCompany\", \"prlLicenseeDateValidFrom\", \"prlLicenseeDateValidTo\", \"prlLicenseeDateUpdated\" FROM \"licence_licensee_hst\" WHERE \"prlLicenseeDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -5780,7 +5780,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{wlbNpdidWellbore}^^xsd:integer ",
+      "targetObject": "{wlbNpdidWellbore}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:idNPD {wlbNpdidWellbore}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -5802,7 +5802,7 @@ export const npdMappingData = {
       "entityName": "recoverableGas",
       "targetSubject": "npd:field/{fldNpdidField}/reserve",
       "targetPredicate": "npdv:recoverableGas",
-      "targetObject": "{fldRecoverableGas}^^xsd:decimal ",
+      "targetObject": "{fldRecoverableGas}^^xsd:decimal",
       "target": "npd:field/{fldNpdidField}/reserve npdv:recoverableGas {fldRecoverableGas}^^xsd:decimal .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldRecoverableGas\" FROM \"field_reserves\"",
       "sourceTables": [
@@ -5825,7 +5825,7 @@ export const npdMappingData = {
       "entityName": "ZValueFrom",
       "targetSubject": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:ZValueFrom",
-      "targetObject": "{prlAreaPolyFromZvalue}^^xsd:integer ",
+      "targetObject": "{prlAreaPolyFromZvalue}^^xsd:integer",
       "target": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:ZValueFrom {prlAreaPolyFromZvalue}^^xsd:integer .",
       "sourceSql": "SELECT \"prlArea_id\", \"prlNpdidLicence\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\", \"prlAreaPolyFromZvalue\" FROM \"prlArea\"",
       "sourceTables": [
@@ -5854,7 +5854,7 @@ export const npdMappingData = {
       "entityName": "producedCondensate",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:producedCondensate",
-      "targetObject": "{prfPrdCondensateNetMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdCondensateNetMillSm3}^^xsd:decimal",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth} npdv:producedCondensate {prfPrdCondensateNetMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\", \"prfMonth\", \"prfPrdCondensateNetMillSm3\" FROM \"field_production_monthly\"",
       "sourceTables": [
@@ -5875,13 +5875,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00240:Literal:licence_petreg_licence:ptlName",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "ptl",
       "entityName": "name",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}",
       "targetPredicate": "ptl:name",
-      "targetObject": "{ptlName} ",
+      "targetObject": "{ptlName}",
       "target": "npd:petreg/licence/{prlNpdidLicence} ptl:name {ptlName} .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"ptlName\" FROM \"licence_petreg_licence\"",
       "sourceTables": [
@@ -5904,7 +5904,7 @@ export const npdMappingData = {
       "entityName": "wellboreStratumTopDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/depth/{lsuTopDepth}/{lsuBottomDepth}",
       "targetPredicate": "npdv:wellboreStratumTopDepth",
-      "targetObject": "{lsuTopDepth}^^xsd:decimal ",
+      "targetObject": "{lsuTopDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/depth/{lsuTopDepth}/{lsuBottomDepth} npdv:wellboreStratumTopDepth {lsuTopDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"lsuNpdidLithoStrat\", \"lsuTopDepth\", \"lsuBottomDepth\" FROM \"strat_litho_wellbore\"",
       "sourceTables": [
@@ -5932,7 +5932,7 @@ export const npdMappingData = {
       "entityName": "investmentNOK",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/investment/{prfYear}",
       "targetPredicate": "npdv:investmentNOK",
-      "targetObject": "{prfInvestmentsMillNOK}^^xsd:decimal ",
+      "targetObject": "{prfInvestmentsMillNOK}^^xsd:decimal",
       "target": "npd:field/{prfNpdidInformationCarrier}/investment/{prfYear} npdv:investmentNOK {prfInvestmentsMillNOK}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\", \"prfInvestmentsMillNOK\" FROM \"field_investment_yearly\"",
       "sourceTables": [
@@ -5957,7 +5957,7 @@ export const npdMappingData = {
       "entityName": "DSTDepthFrom",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber}",
       "targetPredicate": "npdv:DSTDepthFrom",
-      "targetObject": "{wlbDstFromDepth}^^xsd:decimal ",
+      "targetObject": "{wlbDstFromDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber} npdv:DSTDepthFrom {wlbDstFromDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDstTestNumber\", \"wlbDstFromDepth\" FROM \"wellbore_dst\"",
       "sourceTables": [
@@ -5982,7 +5982,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"fldNpdidField\", \"dateSyncNPD\" FROM \"company_reserves\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -6008,7 +6008,7 @@ export const npdMappingData = {
       "entityName": "wellboreDrillingDays",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreDrillingDays",
-      "targetObject": "{wlbDrillingDays}^^xsd:integer ",
+      "targetObject": "{wlbDrillingDays}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreDrillingDays {wlbDrillingDays}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDrillingDays\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -6031,7 +6031,7 @@ export const npdMappingData = {
       "entityName": "degreesNS",
       "targetSubject": "npd:survey/{seaSurveyName}/point/{seaPolygonPointNumber}",
       "targetPredicate": "npdv:degreesNS",
-      "targetObject": "{seaPolygonNSDeg}^^xsd:integer ",
+      "targetObject": "{seaPolygonNSDeg}^^xsd:integer",
       "target": "npd:survey/{seaSurveyName}/point/{seaPolygonPointNumber} npdv:degreesNS {seaPolygonNSDeg}^^xsd:integer .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaPolygonPointNumber\", \"seaPolygonNSDeg\" FROM \"seis_acquisition_coordinates_inc_turnarea\"",
       "sourceTables": [
@@ -6056,7 +6056,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{baaOperatorDateUpdated}^^xsd:date ",
+      "targetObject": "{baaOperatorDateUpdated}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea} npdv:dateUpdated {baaOperatorDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaOperatorDateUpdated\" FROM \"bsns_arr_area_operator\" WHERE \"baaOperatorDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -6080,7 +6080,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:facility/{tufNpdidTuf}/owner/{cmpNpdidCompany}/history/{tufOwnerDateValidFrom}/{tufOwnerDateValidTo}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:facility/{tufNpdidTuf}/owner/{cmpNpdidCompany}/history/{tufOwnerDateValidFrom}/{tufOwnerDateValidTo} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"cmpNpdidCompany\", \"tufOwnerDateValidFrom\", \"tufOwnerDateValidTo\", \"dateSyncNPD\" FROM \"tuf_owner_hst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -6110,7 +6110,7 @@ export const npdMappingData = {
       "entityName": "wellborePlotSymbol",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellborePlotSymbol",
-      "targetObject": "{wlbPlotSymbol}^^xsd:integer ",
+      "targetObject": "{wlbPlotSymbol}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellborePlotSymbol {wlbPlotSymbol}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbPlotSymbol\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -6133,7 +6133,7 @@ export const npdMappingData = {
       "entityName": "dateResourceEstimate",
       "targetSubject": "npd:field/{fldNpdidField}/reserve",
       "targetPredicate": "npdv:dateResourceEstimate",
-      "targetObject": "{fldDateOffResEstDisplay}^^xsd:date ",
+      "targetObject": "{fldDateOffResEstDisplay}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/reserve npdv:dateResourceEstimate {fldDateOffResEstDisplay}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldDateOffResEstDisplay\" FROM \"field_reserves\" WHERE \"fldDateOffResEstDisplay\" <> '9999-12-31'",
       "sourceTables": [
@@ -6157,7 +6157,7 @@ export const npdMappingData = {
       "entityName": "dateOilSampleReceived",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id}",
       "targetPredicate": "npdv:dateOilSampleReceived",
-      "targetObject": "{wlbOilSampledateReceivedDate}^^xsd:date ",
+      "targetObject": "{wlbOilSampledateReceivedDate}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id} npdv:dateOilSampleReceived {wlbOilSampledateReceivedDate}^^xsd:date .",
       "sourceSql": "SELECT \"wellbore_oil_sample_id\", \"wlbNpdidWellbore\", \"wlbOilSampledateReceivedDate\" FROM \"wellbore_oil_sample\" WHERE \"wlbOilSampledateReceivedDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -6183,7 +6183,7 @@ export const npdMappingData = {
       "entityName": "oilSampleTestNumber",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id}",
       "targetPredicate": "npdv:oilSampleTestNumber",
-      "targetObject": "{wlbOilSampleTestNumber}^^xsd:string ",
+      "targetObject": "{wlbOilSampleTestNumber}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id} npdv:oilSampleTestNumber {wlbOilSampleTestNumber}^^xsd:string .",
       "sourceSql": "SELECT \"wellbore_oil_sample_id\", \"wlbNpdidWellbore\", \"wlbOilSampleTestNumber\" FROM \"wellbore_oil_sample\"",
       "sourceTables": [
@@ -6208,7 +6208,7 @@ export const npdMappingData = {
       "entityName": "currentStatus",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:currentStatus",
-      "targetObject": "{prlPhaseCurrent}^^xsd:string ",
+      "targetObject": "{prlPhaseCurrent}^^xsd:string",
       "target": "npd:licence/{prlNpdidLicence} npdv:currentStatus {prlPhaseCurrent}^^xsd:string .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlPhaseCurrent\" FROM \"licence\"",
       "sourceTables": [
@@ -6231,7 +6231,7 @@ export const npdMappingData = {
       "entityName": "currentResponsibleCompany",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:currentResponsibleCompany",
-      "targetObject": "npd:company/{fclNpdidCurrentRespCompany} ",
+      "targetObject": "npd:company/{fclNpdidCurrentRespCompany}",
       "target": "npd:facility/{fclNpdidFacility} npdv:currentResponsibleCompany npd:company/{fclNpdidCurrentRespCompany} .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclNpdidCurrentRespCompany\" FROM \"facility_moveable\"",
       "sourceTables": [
@@ -6254,7 +6254,7 @@ export const npdMappingData = {
       "entityName": "ZValueFrom",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:ZValueFrom",
-      "targetObject": "{prlAreaPolyFromZvalue}^^xsd:integer ",
+      "targetObject": "{prlAreaPolyFromZvalue}^^xsd:integer",
       "target": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:ZValueFrom {prlAreaPolyFromZvalue}^^xsd:integer .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"blcName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\", \"prlAreaPolyFromZvalue\" FROM \"prlAreaSplitByBlock\"",
       "sourceTables": [
@@ -6285,7 +6285,7 @@ export const npdMappingData = {
       "entityName": "dateFieldOperatorFrom",
       "targetSubject": "npd:field/{fldNpdidField}/operator/{cmpNpdidCompany}/history/{fldOperatorFrom}/{fldOperatorTo}",
       "targetPredicate": "npdv:dateFieldOperatorFrom",
-      "targetObject": "{fldOperatorFrom}^^xsd:date ",
+      "targetObject": "{fldOperatorFrom}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/operator/{cmpNpdidCompany}/history/{fldOperatorFrom}/{fldOperatorTo} npdv:dateFieldOperatorFrom {fldOperatorFrom}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"cmpNpdidCompany\", \"fldOperatorFrom\", \"fldOperatorTo\" FROM \"field_operator_hst\" WHERE \"fldOperatorFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -6314,7 +6314,7 @@ export const npdMappingData = {
       "entityName": "drillPermit",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:drillPermit",
-      "targetObject": "{wlbDrillPermit}^^xsd:string ",
+      "targetObject": "{wlbDrillPermit}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:drillPermit {wlbDrillPermit}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDrillPermit\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -6331,13 +6331,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00258:Literal:seaMultiline:seaSourceNumber",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "sourceNumber",
       "targetSubject": "npd:survey/{seaSurveyName}/multiline",
       "targetPredicate": "npdv:sourceNumber",
-      "targetObject": "{seaSourceNumber} ",
+      "targetObject": "{seaSourceNumber}",
       "target": "npd:survey/{seaSurveyName}/multiline npdv:sourceNumber {seaSourceNumber} .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaSourceNumber\" FROM \"seaMultiline\"",
       "sourceTables": [
@@ -6360,7 +6360,7 @@ export const npdMappingData = {
       "entityName": "utmNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:utmNS",
-      "targetObject": "{wlbNsUtm}^^xsd:decimal ",
+      "targetObject": "{wlbNsUtm}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:utmNS {wlbNsUtm}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsUtm\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -6383,7 +6383,7 @@ export const npdMappingData = {
       "entityName": "producedGas",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}",
       "targetPredicate": "npdv:producedGas",
-      "targetObject": "{prfPrdGasNetBillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdGasNetBillSm3}^^xsd:decimal",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear} npdv:producedGas {prfPrdGasNetBillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\", \"prfPrdGasNetBillSm3\" FROM \"field_production_yearly\"",
       "sourceTables": [
@@ -6402,13 +6402,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00261:Literal:field:fldFactPageUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "factPageURL",
       "targetSubject": "npd:field/{fldNpdidField}",
       "targetPredicate": "npdv:factPageURL",
-      "targetObject": "<{fldFactPageUrl}> ",
+      "targetObject": "<{fldFactPageUrl}>",
       "target": "npd:field/{fldNpdidField} npdv:factPageURL <{fldFactPageUrl}> .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldFactPageUrl\" FROM \"field\"",
       "sourceTables": [
@@ -6431,7 +6431,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}",
       "targetPredicate": "ptl:dateUpdated",
-      "targetObject": "{ptlOperDateUpdated}^^xsd:date ",
+      "targetObject": "{ptlOperDateUpdated}^^xsd:date",
       "target": "npd:petreg/licence/{prlNpdidLicence} ptl:dateUpdated {ptlOperDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"ptlOperDateUpdated\" FROM \"licence_petreg_licence_oper\" WHERE \"ptlOperDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -6449,13 +6449,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00263:Literal:seaArea:seaSensorNumbers",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "sensorNumbers",
       "targetSubject": "npd:survey/{seaSurveyName}/area",
       "targetPredicate": "npdv:sensorNumbers",
-      "targetObject": "{seaSensorNumbers} ",
+      "targetObject": "{seaSensorNumbers}",
       "target": "npd:survey/{seaSurveyName}/area npdv:sensorNumbers {seaSensorNumbers} .",
       "sourceSql": "SELECT \"seaArea_id\", \"seaSurveyName\", \"seaSensorNumbers\" FROM \"seaArea\"",
       "sourceTables": [
@@ -6473,13 +6473,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00264:Literal:wellbore_development_all:wlbFactPageUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "factPageURL",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:factPageURL",
-      "targetObject": "<{wlbFactPageUrl}> ",
+      "targetObject": "<{wlbFactPageUrl}>",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:factPageURL <{wlbFactPageUrl}> .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbFactPageUrl\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -6502,7 +6502,7 @@ export const npdMappingData = {
       "entityName": "dateLicenceValidTo",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}",
       "targetPredicate": "ptl:dateLicenceValidTo",
-      "targetObject": "{ptlDateValidTo}^^xsd:date ",
+      "targetObject": "{ptlDateValidTo}^^xsd:date",
       "target": "npd:petreg/licence/{prlNpdidLicence} ptl:dateLicenceValidTo {ptlDateValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"ptlDateValidTo\" FROM \"licence_petreg_licence\" WHERE \"ptlDateValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -6526,7 +6526,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/1 ",
+      "targetObject": "npd:ncs/mainarea/1",
       "target": "npd:discovery/{dscNpdidDiscovery} npdv:mainAreaLocation npd:ncs/mainarea/1 .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\" FROM \"discovery\" WHERE \"nmaName\"='Barents sea'",
       "sourceTables": [
@@ -6549,7 +6549,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/2 ",
+      "targetObject": "npd:ncs/mainarea/2",
       "target": "npd:discovery/{dscNpdidDiscovery} npdv:mainAreaLocation npd:ncs/mainarea/2 .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\" FROM \"discovery\" WHERE \"nmaName\"='Norwegian sea'",
       "sourceTables": [
@@ -6572,7 +6572,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/3 ",
+      "targetObject": "npd:ncs/mainarea/3",
       "target": "npd:discovery/{dscNpdidDiscovery} npdv:mainAreaLocation npd:ncs/mainarea/3 .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\" FROM \"discovery\" WHERE \"nmaName\"='North sea'",
       "sourceTables": [
@@ -6595,7 +6595,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:licence/{prlNpdidLicence}/task/{prlTaskID}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/task/{prlTaskID} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlTaskID\", \"dateSyncNPD\" FROM \"licence_task\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -6621,7 +6621,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/licensee/{cmpNpdidCompany}/history/{baaLicenseeDateValidFrom}/{baaLicenseeDateValidTo}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{baaLicenseeDateUpdated}^^xsd:date ",
+      "targetObject": "{baaLicenseeDateUpdated}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/licensee/{cmpNpdidCompany}/history/{baaLicenseeDateValidFrom}/{baaLicenseeDateValidTo} npdv:dateUpdated {baaLicenseeDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"cmpNpdidCompany\", \"baaLicenseeDateValidFrom\", \"baaLicenseeDateValidTo\", \"baaLicenseeDateUpdated\" FROM \"bsns_arr_area_licensee_hst\" WHERE \"baaLicenseeDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -6645,13 +6645,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00271:Literal:facility_moveable:fclFactPageUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "factPageURL",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:factPageURL",
-      "targetObject": "<{fclFactPageUrl}> ",
+      "targetObject": "<{fclFactPageUrl}>",
       "target": "npd:facility/{fclNpdidFacility} npdv:factPageURL <{fclFactPageUrl}> .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclFactPageUrl\" FROM \"facility_moveable\"",
       "sourceTables": [
@@ -6674,7 +6674,7 @@ export const npdMappingData = {
       "entityName": "dateBaaLicenseeValidTo",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/licensee/{cmpNpdidCompany}/history/{baaLicenseeDateValidFrom}/{baaLicenseeDateValidTo}",
       "targetPredicate": "npdv:dateBaaLicenseeValidTo",
-      "targetObject": "{baaLicenseeDateValidTo}^^xsd:date ",
+      "targetObject": "{baaLicenseeDateValidTo}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/licensee/{cmpNpdidCompany}/history/{baaLicenseeDateValidFrom}/{baaLicenseeDateValidTo} npdv:dateBaaLicenseeValidTo {baaLicenseeDateValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"cmpNpdidCompany\", \"baaLicenseeDateValidFrom\", \"baaLicenseeDateValidTo\" FROM \"bsns_arr_area_licensee_hst\" WHERE \"baaLicenseeDateValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -6703,7 +6703,7 @@ export const npdMappingData = {
       "entityName": "lengthPlannedCdpKm",
       "targetSubject": "npd:survey/{seaSurveyName}/area",
       "targetPredicate": "npdv:lengthPlannedCdpKm",
-      "targetObject": "{seaPlanCdpKm}^^xsd:integer ",
+      "targetObject": "{seaPlanCdpKm}^^xsd:integer",
       "target": "npd:survey/{seaSurveyName}/area npdv:lengthPlannedCdpKm {seaPlanCdpKm}^^xsd:integer .",
       "sourceSql": "SELECT \"seaArea_id\", \"seaSurveyName\", \"seaPlanCdpKm\" FROM \"seaArea\"",
       "sourceTables": [
@@ -6727,7 +6727,7 @@ export const npdMappingData = {
       "entityName": "secondsNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:secondsNS",
-      "targetObject": "{wlbNsSec}^^xsd:decimal ",
+      "targetObject": "{wlbNsSec}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:secondsNS {wlbNsSec}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsSec\" FROM \"wellbore_coordinates\"",
       "sourceTables": [
@@ -6750,7 +6750,7 @@ export const npdMappingData = {
       "entityName": "dateOperatorValidFrom",
       "targetSubject": "npd:licence/{prlNpdidLicence}/operator/{cmpNpdidCompany}/history/{prlOperDateValidFrom}/{prlOperDateValidTo}",
       "targetPredicate": "npdv:dateOperatorValidFrom",
-      "targetObject": "{prlOperDateValidFrom}^^xsd:date ",
+      "targetObject": "{prlOperDateValidFrom}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/operator/{cmpNpdidCompany}/history/{prlOperDateValidFrom}/{prlOperDateValidTo} npdv:dateOperatorValidFrom {prlOperDateValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"cmpNpdidCompany\", \"prlOperDateValidFrom\", \"prlOperDateValidTo\" FROM \"licence_oper_hst\" WHERE \"prlOperDateValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -6779,7 +6779,7 @@ export const npdMappingData = {
       "entityName": "areaSize3DKm2",
       "targetSubject": "npd:survey/{seaSurveyName}/area",
       "targetPredicate": "npdv:areaSize3DKm2",
-      "targetObject": "{sea3DKm2}^^xsd:decimal ",
+      "targetObject": "{sea3DKm2}^^xsd:decimal",
       "target": "npd:survey/{seaSurveyName}/area npdv:areaSize3DKm2 {sea3DKm2}^^xsd:decimal .",
       "sourceSql": "SELECT \"seaArea_id\", \"seaSurveyName\", \"sea3DKm2\" FROM \"seaArea\"",
       "sourceTables": [
@@ -6803,7 +6803,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:licence/{prlNpdidLicence}/task/{prlTaskID}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{prlTaskDateUpdated}^^xsd:date ",
+      "targetObject": "{prlTaskDateUpdated}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/task/{prlTaskID} npdv:dateUpdated {prlTaskDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlTaskID\", \"prlTaskDateUpdated\" FROM \"licence_task\" WHERE \"prlTaskDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -6829,7 +6829,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}",
       "targetPredicate": "ptl:dateUpdated",
-      "targetObject": "{ptlDateUpdated}^^xsd:date ",
+      "targetObject": "{ptlDateUpdated}^^xsd:date",
       "target": "npd:petreg/facility/{tufNpdidTuf} ptl:dateUpdated {ptlDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"ptlDateUpdated\" FROM \"tuf_petreg_licence\" WHERE \"ptlDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -6853,7 +6853,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wellbore_oil_sample_id\", \"wlbNpdidWellbore\", \"dateSyncNPD\" FROM \"wellbore_oil_sample\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -6879,7 +6879,7 @@ export const npdMappingData = {
       "entityName": "transferredInterest",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/transfer/{baaTransferDirection}/{cmpNpdidCompany}/history/{baaTransferDateValidFrom}",
       "targetPredicate": "npdv:transferredInterest",
-      "targetObject": "{baaTransferredInterest}^^xsd:decimal ",
+      "targetObject": "{baaTransferredInterest}^^xsd:decimal",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/transfer/{baaTransferDirection}/{cmpNpdidCompany}/history/{baaTransferDateValidFrom} npdv:transferredInterest {baaTransferredInterest}^^xsd:decimal .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaTransferDirection\", \"cmpNpdidCompany\", \"baaTransferDateValidFrom\", \"baaTransferredInterest\" FROM \"bsns_arr_area_transfer_hst\"",
       "sourceTables": [
@@ -6908,7 +6908,7 @@ export const npdMappingData = {
       "entityName": "productionYear",
       "targetSubject": "npd:ncs/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:productionYear",
-      "targetObject": "{prfYear}^^xsd:integer ",
+      "targetObject": "{prfYear}^^xsd:integer",
       "target": "npd:ncs/production/{prfYear}/{prfMonth} npdv:productionYear {prfYear}^^xsd:integer .",
       "sourceSql": "SELECT \"prfYear\", \"prfMonth\" FROM \"field_production_totalt_NCS_month\"",
       "sourceTables": [
@@ -6932,7 +6932,7 @@ export const npdMappingData = {
       "entityName": "DSTBottomHolePressure",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber}",
       "targetPredicate": "npdv:DSTBottomHolePressure",
-      "targetObject": "{wlbDstBottomHolePress}^^xsd:decimal ",
+      "targetObject": "{wlbDstBottomHolePress}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber} npdv:DSTBottomHolePressure {wlbDstBottomHolePress}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDstTestNumber\", \"wlbDstBottomHolePress\" FROM \"wellbore_dst\"",
       "sourceTables": [
@@ -6957,7 +6957,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/mud/{wellbore_mud_id}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/mud/{wellbore_mud_id} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wellbore_mud_id\", \"wlbNpdidWellbore\", \"dateSyncNPD\" FROM \"wellbore_mud\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -6983,7 +6983,7 @@ export const npdMappingData = {
       "entityName": "minutesNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:minutesNS",
-      "targetObject": "{wlbNsMin}^^xsd:integer ",
+      "targetObject": "{wlbNsMin}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:minutesNS {wlbNsMin}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsMin\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -7006,7 +7006,7 @@ export const npdMappingData = {
       "entityName": "utmNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:utmNS",
-      "targetObject": "{wlbNsUtm}^^xsd:decimal ",
+      "targetObject": "{wlbNsUtm}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:utmNS {wlbNsUtm}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsUtm\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -7029,7 +7029,7 @@ export const npdMappingData = {
       "entityName": "producedWater",
       "targetSubject": "npd:ncs/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:producedWater",
-      "targetObject": "{prfPrdProducedWaterInFieldMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdProducedWaterInFieldMillSm3}^^xsd:decimal",
       "target": "npd:ncs/production/{prfYear}/{prfMonth} npdv:producedWater {prfPrdProducedWaterInFieldMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfYear\", \"prfMonth\", \"prfPrdProducedWaterInFieldMillSm3\" FROM \"field_production_totalt_NCS_month\"",
       "sourceTables": [
@@ -7054,7 +7054,7 @@ export const npdMappingData = {
       "entityName": "dateFieldLicenseeTo",
       "targetSubject": "npd:field/{fldNpdidField}/licensee/{cmpNpdidCompany}/history/{fldLicenseeFrom}/{fldLicenseeTo}",
       "targetPredicate": "npdv:dateFieldLicenseeTo",
-      "targetObject": "{fldLicenseeTo}^^xsd:date ",
+      "targetObject": "{fldLicenseeTo}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/licensee/{cmpNpdidCompany}/history/{fldLicenseeFrom}/{fldLicenseeTo} npdv:dateFieldLicenseeTo {fldLicenseeTo}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"cmpNpdidCompany\", \"fldLicenseeFrom\", \"fldLicenseeTo\" FROM \"field_licensee_hst\" WHERE \"fldLicenseeTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -7083,7 +7083,7 @@ export const npdMappingData = {
       "entityName": "DSTOilProducedRate",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber}",
       "targetPredicate": "npdv:DSTOilProducedRate",
-      "targetObject": "{wlbDstOilProd}^^xsd:integer ",
+      "targetObject": "{wlbDstOilProd}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber} npdv:DSTOilProducedRate {wlbDstOilProd}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDstTestNumber\", \"wlbDstOilProd\" FROM \"wellbore_dst\"",
       "sourceTables": [
@@ -7108,7 +7108,7 @@ export const npdMappingData = {
       "entityName": "dateOperatorValidFrom",
       "targetSubject": "npd:licence/{prlNpdidLicence}/licensee/{cmpNpdidCompany}/history/{prlLicenseeDateValidFrom}/{prlLicenseeDateValidTo}",
       "targetPredicate": "npdv:dateOperatorValidFrom",
-      "targetObject": "{prlOperDateValidFrom}^^xsd:date ",
+      "targetObject": "{prlOperDateValidFrom}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/licensee/{cmpNpdidCompany}/history/{prlLicenseeDateValidFrom}/{prlLicenseeDateValidTo} npdv:dateOperatorValidFrom {prlOperDateValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"cmpNpdidCompany\", \"prlLicenseeDateValidFrom\", \"prlLicenseeDateValidTo\", \"prlOperDateValidFrom\" FROM \"licence_licensee_hst\" WHERE \"prlOperDateValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -7138,7 +7138,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:petreg/facility/{tufNpdidTuf} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"dateSyncNPD\" FROM \"tuf_petreg_licence_oper\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -7156,13 +7156,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00292:Literal:wellbore_exploration_all:wlbDiskosWellboreType",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "wellboreType",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreType",
-      "targetObject": "{wlbDiskosWellboreType} ",
+      "targetObject": "{wlbDiskosWellboreType}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreType {wlbDiskosWellboreType} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDiskosWellboreType\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -7185,7 +7185,7 @@ export const npdMappingData = {
       "entityName": "dateBaaAreaValidTo",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/block/{baaAreaPolyBlockName}/polyno/{baaAreaPolyNo}/history/{baaAreaPolyDateValidFrom}/{baaAreaPolyDateValidTo}",
       "targetPredicate": "npdv:dateBaaAreaValidTo",
-      "targetObject": "{baaAreaPolyDateValidTo}^^xsd:date ",
+      "targetObject": "{baaAreaPolyDateValidTo}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/block/{baaAreaPolyBlockName}/polyno/{baaAreaPolyNo}/history/{baaAreaPolyDateValidFrom}/{baaAreaPolyDateValidTo} npdv:dateBaaAreaValidTo {baaAreaPolyDateValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaAreaPolyBlockName\", \"baaAreaPolyNo\", \"baaAreaPolyDateValidFrom\", \"baaAreaPolyDateValidTo\" FROM \"bsns_arr_area_area_poly_hst\" WHERE \"baaAreaPolyDateValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -7216,7 +7216,7 @@ export const npdMappingData = {
       "entityName": "DSTGasDensity",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber}",
       "targetPredicate": "npdv:DSTGasDensity",
-      "targetObject": "{wlbDstGasDensity}^^xsd:decimal ",
+      "targetObject": "{wlbDstGasDensity}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber} npdv:DSTGasDensity {wlbDstGasDensity}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDstTestNumber\", \"wlbDstGasDensity\" FROM \"wellbore_dst\"",
       "sourceTables": [
@@ -7241,7 +7241,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/transfer/{baaTransferDirection}/{cmpNpdidCompany}/history/{baaTransferDateValidFrom}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{baaTransferDateUpdated}^^xsd:date ",
+      "targetObject": "{baaTransferDateUpdated}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/transfer/{baaTransferDirection}/{cmpNpdidCompany}/history/{baaTransferDateValidFrom} npdv:dateUpdated {baaTransferDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaTransferDirection\", \"cmpNpdidCompany\", \"baaTransferDateValidFrom\", \"baaTransferDateUpdated\" FROM \"bsns_arr_area_transfer_hst\" WHERE \"baaTransferDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -7271,7 +7271,7 @@ export const npdMappingData = {
       "entityName": "wellboreCompletionYear",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreCompletionYear",
-      "targetObject": "{wlbCompletionYear}^^xsd:integer ",
+      "targetObject": "{wlbCompletionYear}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreCompletionYear {wlbCompletionYear}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbCompletionYear\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -7294,7 +7294,7 @@ export const npdMappingData = {
       "entityName": "wellboreWaterDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreWaterDepth",
-      "targetObject": "{wlbWaterDepth}^^xsd:decimal ",
+      "targetObject": "{wlbWaterDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreWaterDepth {wlbWaterDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbWaterDepth\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -7317,7 +7317,7 @@ export const npdMappingData = {
       "entityName": "wellboreFinalVerticalDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreFinalVerticalDepth",
-      "targetObject": "{wlbFinalVerticalDepth}^^xsd:decimal ",
+      "targetObject": "{wlbFinalVerticalDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreFinalVerticalDepth {wlbFinalVerticalDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbFinalVerticalDepth\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -7340,7 +7340,7 @@ export const npdMappingData = {
       "entityName": "secondsEW",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:secondsEW",
-      "targetObject": "{fclEwSec}^^xsd:decimal ",
+      "targetObject": "{fclEwSec}^^xsd:decimal",
       "target": "npd:facility/{fclNpdidFacility} npdv:secondsEW {fclEwSec}^^xsd:decimal .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclEwSec\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -7363,7 +7363,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:pipeline/{pipNpdidPipe}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{pipNpdidPipe}^^xsd:integer ",
+      "targetObject": "{pipNpdidPipe}^^xsd:integer",
       "target": "npd:pipeline/{pipNpdidPipe} npdv:idNPD {pipNpdidPipe}^^xsd:integer .",
       "sourceSql": "SELECT \"pipNpdidPipe\" FROM \"pipLine\"",
       "sourceTables": [
@@ -7385,7 +7385,7 @@ export const npdMappingData = {
       "entityName": "dateProductionStart",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:dateProductionStart",
-      "targetObject": "{fclStartupDate}^^xsd:date ",
+      "targetObject": "{fclStartupDate}^^xsd:date",
       "target": "npd:facility/{fclNpdidFacility} npdv:dateProductionStart {fclStartupDate}^^xsd:date .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclStartupDate\" FROM \"facility_fixed\" WHERE \"fclStartupDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -7403,13 +7403,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00302:Literal:bsns_arr_area:baaFactMapUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "factMapURL",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}",
       "targetPredicate": "npdv:factMapURL",
-      "targetObject": "<{baaFactMapUrl}> ",
+      "targetObject": "<{baaFactMapUrl}>",
       "target": "npd:baa/{baaNpdidBsnsArrArea} npdv:factMapURL <{baaFactMapUrl}> .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaFactMapUrl\" FROM \"bsns_arr_area\"",
       "sourceTables": [
@@ -7432,7 +7432,7 @@ export const npdMappingData = {
       "entityName": "secondsEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:secondsEW",
-      "targetObject": "{wlbEwSec}^^xsd:decimal ",
+      "targetObject": "{wlbEwSec}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:secondsEW {wlbEwSec}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwSec\" FROM \"wellbore_coordinates\"",
       "sourceTables": [
@@ -7455,7 +7455,7 @@ export const npdMappingData = {
       "entityName": "recoverableOil",
       "targetSubject": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField}",
       "targetPredicate": "npdv:recoverableOil",
-      "targetObject": "{cmpRecoverableOil}^^xsd:decimal ",
+      "targetObject": "{cmpRecoverableOil}^^xsd:decimal",
       "target": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField} npdv:recoverableOil {cmpRecoverableOil}^^xsd:decimal .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"fldNpdidField\", \"cmpRecoverableOil\" FROM \"company_reserves\"",
       "sourceTables": [
@@ -7474,13 +7474,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00305:Literal:seaMultiline:seaSensorNumbers",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "sensorNumbers",
       "targetSubject": "npd:survey/{seaSurveyName}/multiline",
       "targetPredicate": "npdv:sensorNumbers",
-      "targetObject": "{seaSensorNumbers} ",
+      "targetObject": "{seaSensorNumbers}",
       "target": "npd:survey/{seaSurveyName}/multiline npdv:sensorNumbers {seaSensorNumbers} .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaSensorNumbers\" FROM \"seaMultiline\"",
       "sourceTables": [
@@ -7503,7 +7503,7 @@ export const npdMappingData = {
       "entityName": "minutesNS",
       "targetSubject": "npd:survey/{seaSurveyName}/point/{seaPolygonPointNumber}",
       "targetPredicate": "npdv:minutesNS",
-      "targetObject": "{seaPolygonNSMin}^^xsd:integer ",
+      "targetObject": "{seaPolygonNSMin}^^xsd:integer",
       "target": "npd:survey/{seaSurveyName}/point/{seaPolygonPointNumber} npdv:minutesNS {seaPolygonNSMin}^^xsd:integer .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaPolygonPointNumber\", \"seaPolygonNSMin\" FROM \"seis_acquisition_coordinates_inc_turnarea\"",
       "sourceTables": [
@@ -7528,7 +7528,7 @@ export const npdMappingData = {
       "entityName": "dateSurveyActualCompleted",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:dateSurveyActualCompleted",
-      "targetObject": "{seaDateFinalized}^^xsd:date ",
+      "targetObject": "{seaDateFinalized}^^xsd:date",
       "target": "npd:survey/{seaName} npdv:dateSurveyActualCompleted {seaDateFinalized}^^xsd:date .",
       "sourceSql": "SELECT \"seaName\", \"seaDateFinalized\" FROM \"seis_acquisition\" WHERE \"seaDateFinalized\" <> '9999-12-31'",
       "sourceTables": [
@@ -7552,7 +7552,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart1",
-      "targetObject": "{wlbNamePart1}^^xsd:integer ",
+      "targetObject": "{wlbNamePart1}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart1 {wlbNamePart1}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart1\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -7575,7 +7575,7 @@ export const npdMappingData = {
       "entityName": "dateApproved",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}",
       "targetPredicate": "npdv:dateApproved",
-      "targetObject": "{baaDateApproved}^^xsd:date ",
+      "targetObject": "{baaDateApproved}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea} npdv:dateApproved {baaDateApproved}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaDateApproved\" FROM \"bsns_arr_area\" WHERE \"baaDateApproved\" <> '9999-12-31'",
       "sourceTables": [
@@ -7599,7 +7599,7 @@ export const npdMappingData = {
       "entityName": "casingDiameter",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/casingleakoff/{wellbore_casing_and_lot_id}",
       "targetPredicate": "npdv:casingDiameter",
-      "targetObject": "{wlbCasingDiameter}^^xsd:string ",
+      "targetObject": "{wlbCasingDiameter}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/casingleakoff/{wellbore_casing_and_lot_id} npdv:casingDiameter {wlbCasingDiameter}^^xsd:string .",
       "sourceSql": "SELECT \"wellbore_casing_and_lot_id\", \"wlbNpdidWellbore\", \"wlbCasingDiameter\" FROM \"wellbore_casing_and_lot\"",
       "sourceTables": [
@@ -7624,7 +7624,7 @@ export const npdMappingData = {
       "entityName": "isActive",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:isActive",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:licence/{prlNpdidLicence} npdv:isActive \"true\" .",
       "sourceSql": "SELECT \"prlNpdidLicence\" FROM \"licence\" WHERE \"prlStatus\"='ACTIVE'",
       "sourceTables": [
@@ -7647,7 +7647,7 @@ export const npdMappingData = {
       "entityName": "isActive",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:isActive",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:licence/{prlNpdidLicence} npdv:isActive \"false\" .",
       "sourceSql": "SELECT \"prlNpdidLicence\" FROM \"licence\" WHERE \"prlStatus\"='INACTIVE'",
       "sourceTables": [
@@ -7670,7 +7670,7 @@ export const npdMappingData = {
       "entityName": "taskType",
       "targetSubject": "npd:licence/{prlNpdidLicence}/task/{prlTaskID}",
       "targetPredicate": "npdv:taskType",
-      "targetObject": "{prlTaskTypeEn}^^xsd:string ",
+      "targetObject": "{prlTaskTypeEn}^^xsd:string",
       "target": "npd:licence/{prlNpdidLicence}/task/{prlTaskID} npdv:taskType {prlTaskTypeEn}^^xsd:string .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlTaskID\", \"prlTaskTypeEn\" FROM \"licence_task\"",
       "sourceTables": [
@@ -7689,13 +7689,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00314:Literal:seaArea:seaSourceSize",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "sourceSize",
       "targetSubject": "npd:survey/{seaSurveyName}/area",
       "targetPredicate": "npdv:sourceSize",
-      "targetObject": "{seaSourceSize} ",
+      "targetObject": "{seaSourceSize}",
       "target": "npd:survey/{seaSurveyName}/area npdv:sourceSize {seaSourceSize} .",
       "sourceSql": "SELECT \"seaArea_id\", \"seaSurveyName\", \"seaSourceSize\" FROM \"seaArea\"",
       "sourceTables": [
@@ -7719,7 +7719,7 @@ export const npdMappingData = {
       "entityName": "coreNo",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}",
       "targetPredicate": "npdv:coreNo",
-      "targetObject": "{wlbCoreNumber}^^xsd:integer ",
+      "targetObject": "{wlbCoreNumber}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber} npdv:coreNo {wlbCoreNumber}^^xsd:integer .",
       "sourceSql": "SELECT \"wellbore_core_id\", \"wlbNpdidWellbore\", \"wlbCoreNumber\" FROM \"wellbore_core\"",
       "sourceTables": [
@@ -7744,7 +7744,7 @@ export const npdMappingData = {
       "entityName": "producedNGL",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:producedNGL",
-      "targetObject": "{prfPrdNGLNetMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdNGLNetMillSm3}^^xsd:decimal",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth} npdv:producedNGL {prfPrdNGLNetMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\", \"prfMonth\", \"prfPrdNGLNetMillSm3\" FROM \"field_production_monthly\"",
       "sourceTables": [
@@ -7771,7 +7771,7 @@ export const npdMappingData = {
       "entityName": "dateLicenceValidTo",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:dateLicenceValidTo",
-      "targetObject": "{prlDateValidTo}^^xsd:date ",
+      "targetObject": "{prlDateValidTo}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence} npdv:dateLicenceValidTo {prlDateValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlDateValidTo\" FROM \"licence\" WHERE \"prlDateValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -7795,7 +7795,7 @@ export const npdMappingData = {
       "entityName": "dateStatusValidTo",
       "targetSubject": "npd:licence/{prlNpdidLicence}/phase/{prlPhase}/history/{prlDatePhaseValidFrom}/{prlDatePhaseValidTo}",
       "targetPredicate": "npdv:dateStatusValidTo",
-      "targetObject": "{prlDatePhaseValidTo}^^xsd:date ",
+      "targetObject": "{prlDatePhaseValidTo}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/phase/{prlPhase}/history/{prlDatePhaseValidFrom}/{prlDatePhaseValidTo} npdv:dateStatusValidTo {prlDatePhaseValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlPhase\", \"prlDatePhaseValidFrom\", \"prlDatePhaseValidTo\" FROM \"licence_phase_hst\" WHERE \"prlDatePhaseValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -7824,7 +7824,7 @@ export const npdMappingData = {
       "entityName": "resourcesIncludedInDiscovery",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}/area/hctype/{dscHcType}",
       "targetPredicate": "npdv:resourcesIncludedInDiscovery",
-      "targetObject": "npd:discovery/{dscNpdidResInclInDiscovery} ",
+      "targetObject": "npd:discovery/{dscNpdidResInclInDiscovery}",
       "target": "npd:discovery/{dscNpdidDiscovery}/area/hctype/{dscHcType} npdv:resourcesIncludedInDiscovery npd:discovery/{dscNpdidResInclInDiscovery} .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscHcType\", \"dscNpdidResInclInDiscovery\" FROM \"dscArea\"",
       "sourceTables": [
@@ -7849,7 +7849,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:licence/{prlNpdidLicence}/phase/{prlPhase}/history/{prlDatePhaseValidFrom}/{prlDatePhaseValidTo}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{prlPhaseDateUpdated}^^xsd:date ",
+      "targetObject": "{prlPhaseDateUpdated}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/phase/{prlPhase}/history/{prlDatePhaseValidFrom}/{prlDatePhaseValidTo} npdv:dateUpdated {prlPhaseDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlPhase\", \"prlDatePhaseValidFrom\", \"prlDatePhaseValidTo\", \"prlPhaseDateUpdated\" FROM \"licence_phase_hst\" WHERE \"prlPhaseDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -7879,7 +7879,7 @@ export const npdMappingData = {
       "entityName": "decimalDegreesEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:decimalDegreesEW",
-      "targetObject": "{wlbEwDesDeg}^^xsd:decimal ",
+      "targetObject": "{wlbEwDesDeg}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:decimalDegreesEW {wlbEwDesDeg}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwDesDeg\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -7902,7 +7902,7 @@ export const npdMappingData = {
       "entityName": "dateLicenceValidFrom",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}",
       "targetPredicate": "ptl:dateLicenceValidFrom",
-      "targetObject": "{ptlDateValidFrom}^^xsd:date ",
+      "targetObject": "{ptlDateValidFrom}^^xsd:date",
       "target": "npd:petreg/facility/{tufNpdidTuf} ptl:dateLicenceValidFrom {ptlDateValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"ptlDateValidFrom\" FROM \"tuf_petreg_licence\" WHERE \"ptlDateValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -7926,7 +7926,7 @@ export const npdMappingData = {
       "entityName": "geodeticDatum",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:geodeticDatum",
-      "targetObject": "{wlbGeodeticDatum}^^xsd:string ",
+      "targetObject": "{wlbGeodeticDatum}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:geodeticDatum {wlbGeodeticDatum}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbGeodeticDatum\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -7949,7 +7949,7 @@ export const npdMappingData = {
       "entityName": "messageNo",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}/message/{ptlMessageDocumentNo}",
       "targetPredicate": "ptl:messageNo",
-      "targetObject": "{ptlMessageDocumentNo}^^xsd:integer ",
+      "targetObject": "{ptlMessageDocumentNo}^^xsd:integer",
       "target": "npd:petreg/licence/{prlNpdidLicence}/message/{ptlMessageDocumentNo} ptl:messageNo {ptlMessageDocumentNo}^^xsd:integer .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"ptlMessageDocumentNo\" FROM \"licence_petreg_message\"",
       "sourceTables": [
@@ -7973,7 +7973,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:petreg/facility/{tufNpdidTuf} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"dateSyncNPD\" FROM \"tuf_petreg_licence\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -7997,7 +7997,7 @@ export const npdMappingData = {
       "entityName": "wellboreTotalDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreTotalDepth",
-      "targetObject": "{wlbTotalDepth}^^xsd:decimal ",
+      "targetObject": "{wlbTotalDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreTotalDepth {wlbTotalDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbTotalDepth\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -8020,7 +8020,7 @@ export const npdMappingData = {
       "entityName": "producedOilEquivalents",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}",
       "targetPredicate": "npdv:producedOilEquivalents",
-      "targetObject": "{prfPrdOeNetMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdOeNetMillSm3}^^xsd:decimal",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear} npdv:producedOilEquivalents {prfPrdOeNetMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\", \"prfPrdOeNetMillSm3\" FROM \"field_production_yearly\"",
       "sourceTables": [
@@ -8045,7 +8045,7 @@ export const npdMappingData = {
       "entityName": "dateUpdatedMax",
       "targetSubject": "npd:field/{fldNpdidField}",
       "targetPredicate": "npdv:dateUpdatedMax",
-      "targetObject": "{fldDateUpdatedMax}^^xsd:date ",
+      "targetObject": "{fldDateUpdatedMax}^^xsd:date",
       "target": "npd:field/{fldNpdidField} npdv:dateUpdatedMax {fldDateUpdatedMax}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldDateUpdatedMax\" FROM \"field\" WHERE \"fldDateUpdatedMax\" <> '9999-12-31'",
       "sourceTables": [
@@ -8069,7 +8069,7 @@ export const npdMappingData = {
       "entityName": "secondsNS",
       "targetSubject": "npd:survey/{seaSurveyName}/point/{seaPolygonPointNumber}",
       "targetPredicate": "npdv:secondsNS",
-      "targetObject": "{seaPolygonNSSec}^^xsd:decimal ",
+      "targetObject": "{seaPolygonNSSec}^^xsd:decimal",
       "target": "npd:survey/{seaSurveyName}/point/{seaPolygonPointNumber} npdv:secondsNS {seaPolygonNSSec}^^xsd:decimal .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaPolygonPointNumber\", \"seaPolygonNSSec\" FROM \"seis_acquisition_coordinates_inc_turnarea\"",
       "sourceTables": [
@@ -8094,7 +8094,7 @@ export const npdMappingData = {
       "entityName": "productionYear",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/investment/{prfYear}",
       "targetPredicate": "npdv:productionYear",
-      "targetObject": "{prfYear}^^xsd:integer ",
+      "targetObject": "{prfYear}^^xsd:integer",
       "target": "npd:field/{prfNpdidInformationCarrier}/investment/{prfYear} npdv:productionYear {prfYear}^^xsd:integer .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\" FROM \"field_investment_yearly\"",
       "sourceTables": [
@@ -8118,7 +8118,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/mud/{wellbore_mud_id}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{wlbMudDateUpdated}^^xsd:date ",
+      "targetObject": "{wlbMudDateUpdated}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/mud/{wellbore_mud_id} npdv:dateUpdated {wlbMudDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"wellbore_mud_id\", \"wlbNpdidWellbore\", \"wlbMudDateUpdated\" FROM \"wellbore_mud\" WHERE \"wlbMudDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -8144,7 +8144,7 @@ export const npdMappingData = {
       "entityName": "companyShare",
       "targetSubject": "npd:field/{fldNpdidField}/licensee/{cmpNpdidCompany}/history/{fldLicenseeFrom}/{fldLicenseeTo}",
       "targetPredicate": "npdv:companyShare",
-      "targetObject": "{fldCompanyShare}^^xsd:decimal ",
+      "targetObject": "{fldCompanyShare}^^xsd:decimal",
       "target": "npd:field/{fldNpdidField}/licensee/{cmpNpdidCompany}/history/{fldLicenseeFrom}/{fldLicenseeTo} npdv:companyShare {fldCompanyShare}^^xsd:decimal .",
       "sourceSql": "SELECT \"fldNpdidField\", \"cmpNpdidCompany\", \"fldLicenseeFrom\", \"fldLicenseeTo\", \"fldCompanyShare\" FROM \"field_licensee_hst\"",
       "sourceTables": [
@@ -8173,7 +8173,7 @@ export const npdMappingData = {
       "entityName": "isTurnAreaIncluded",
       "targetSubject": "npd:survey/{seaSurveyName}/area",
       "targetPredicate": "npdv:isTurnAreaIncluded",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:survey/{seaSurveyName}/area npdv:isTurnAreaIncluded \"true\" .",
       "sourceSql": "SELECT \"seaArea_id\", \"seaSurveyName\" FROM \"seaArea\" WHERE \"seaPolygonKind\"='Område inkludert snuområde'",
       "sourceTables": [
@@ -8197,7 +8197,7 @@ export const npdMappingData = {
       "entityName": "isTurnAreaIncluded",
       "targetSubject": "npd:survey/{seaSurveyName}/area",
       "targetPredicate": "npdv:isTurnAreaIncluded",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:survey/{seaSurveyName}/area npdv:isTurnAreaIncluded \"false\" .",
       "sourceSql": "SELECT \"seaArea_id\", \"seaSurveyName\" FROM \"seaArea\" WHERE \"seaPolygonKind\"='Område unntatt snuområde'",
       "sourceTables": [
@@ -8221,7 +8221,7 @@ export const npdMappingData = {
       "entityName": "decimalDegreesEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:decimalDegreesEW",
-      "targetObject": "{wlbEwDesDeg}^^xsd:decimal ",
+      "targetObject": "{wlbEwDesDeg}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:decimalDegreesEW {wlbEwDesDeg}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwDesDeg\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -8244,7 +8244,7 @@ export const npdMappingData = {
       "entityName": "recoverableCondensate",
       "targetSubject": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField}",
       "targetPredicate": "npdv:recoverableCondensate",
-      "targetObject": "{cmpRecoverableCondensate}^^xsd:decimal ",
+      "targetObject": "{cmpRecoverableCondensate}^^xsd:decimal",
       "target": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField} npdv:recoverableCondensate {cmpRecoverableCondensate}^^xsd:decimal .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"fldNpdidField\", \"cmpRecoverableCondensate\" FROM \"company_reserves\"",
       "sourceTables": [
@@ -8269,7 +8269,7 @@ export const npdMappingData = {
       "entityName": "wellborePlannedContent",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellborePlannedContent",
-      "targetObject": "{wlbContentPlanned}^^xsd:string ",
+      "targetObject": "{wlbContentPlanned}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellborePlannedContent {wlbContentPlanned}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbContentPlanned\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -8292,7 +8292,7 @@ export const npdMappingData = {
       "entityName": "remainingNGL",
       "targetSubject": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField}",
       "targetPredicate": "npdv:remainingNGL",
-      "targetObject": "{cmpRemainingNGL}^^xsd:decimal ",
+      "targetObject": "{cmpRemainingNGL}^^xsd:decimal",
       "target": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField} npdv:remainingNGL {cmpRemainingNGL}^^xsd:decimal .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"fldNpdidField\", \"cmpRemainingNGL\" FROM \"company_reserves\"",
       "sourceTables": [
@@ -8311,13 +8311,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00340:Literal:wellbore_coordinates:wlbEwCode",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "空间坐标属性",
       "entityPrefix": "npdv",
       "entityName": "codeEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:codeEW",
-      "targetObject": "{wlbEwCode} ",
+      "targetObject": "{wlbEwCode}",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:codeEW {wlbEwCode} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwCode\" FROM \"wellbore_coordinates\"",
       "sourceTables": [
@@ -8340,7 +8340,7 @@ export const npdMappingData = {
       "entityName": "productionYear",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}",
       "targetPredicate": "npdv:productionYear",
-      "targetObject": "{prfYear}^^xsd:integer ",
+      "targetObject": "{prfYear}^^xsd:integer",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear} npdv:productionYear {prfYear}^^xsd:integer .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\" FROM \"field_production_yearly\"",
       "sourceTables": [
@@ -8358,13 +8358,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00342:Literal:facility_fixed:fclFunctions",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "facilityFunction",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:facilityFunction",
-      "targetObject": "{fclFunctions} ",
+      "targetObject": "{fclFunctions}",
       "target": "npd:facility/{fclNpdidFacility} npdv:facilityFunction {fclFunctions} .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclFunctions\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -8387,7 +8387,7 @@ export const npdMappingData = {
       "entityName": "producedGas",
       "targetSubject": "npd:ncs/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:producedGas",
-      "targetObject": "{prfPrdGasNetBillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdGasNetBillSm3}^^xsd:decimal",
       "target": "npd:ncs/production/{prfYear}/{prfMonth} npdv:producedGas {prfPrdGasNetBillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfYear\", \"prfMonth\", \"prfPrdGasNetBillSm3\" FROM \"field_production_totalt_NCS_month\"",
       "sourceTables": [
@@ -8412,7 +8412,7 @@ export const npdMappingData = {
       "entityName": "wellboreContent",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreContent",
-      "targetObject": "{wlbContent}^^xsd:string ",
+      "targetObject": "{wlbContent}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreContent {wlbContent}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbContent\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -8435,7 +8435,7 @@ export const npdMappingData = {
       "entityName": "utmZone",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:utmZone",
-      "targetObject": "{wlbUtmZone}^^xsd:integer ",
+      "targetObject": "{wlbUtmZone}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:utmZone {wlbUtmZone}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbUtmZone\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -8458,7 +8458,7 @@ export const npdMappingData = {
       "entityName": "mudViscosity",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/mud/{wellbore_mud_id}",
       "targetPredicate": "npdv:mudViscosity",
-      "targetObject": "{wlbMudViscosityAtMD}^^xsd:decimal ",
+      "targetObject": "{wlbMudViscosityAtMD}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/mud/{wellbore_mud_id} npdv:mudViscosity {wlbMudViscosityAtMD}^^xsd:decimal .",
       "sourceSql": "SELECT \"wellbore_mud_id\", \"wlbNpdidWellbore\", \"wlbMudViscosityAtMD\" FROM \"wellbore_mud\"",
       "sourceTables": [
@@ -8483,7 +8483,7 @@ export const npdMappingData = {
       "entityName": "utmZone",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:utmZone",
-      "targetObject": "{wlbUtmZone}^^xsd:integer ",
+      "targetObject": "{wlbUtmZone}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:utmZone {wlbUtmZone}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbUtmZone\" FROM \"wellbore_coordinates\"",
       "sourceTables": [
@@ -8506,7 +8506,7 @@ export const npdMappingData = {
       "entityName": "dateOperatorValidTo",
       "targetSubject": "npd:licence/{prlNpdidLicence}/operator/{cmpNpdidCompany}/history/{prlOperDateValidFrom}/{prlOperDateValidTo}",
       "targetPredicate": "npdv:dateOperatorValidTo",
-      "targetObject": "{prlOperDateValidTo}^^xsd:date ",
+      "targetObject": "{prlOperDateValidTo}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/operator/{cmpNpdidCompany}/history/{prlOperDateValidFrom}/{prlOperDateValidTo} npdv:dateOperatorValidTo {prlOperDateValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"cmpNpdidCompany\", \"prlOperDateValidFrom\", \"prlOperDateValidTo\" FROM \"licence_oper_hst\" WHERE \"prlOperDateValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -8535,7 +8535,7 @@ export const npdMappingData = {
       "entityName": "secondsEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:secondsEW",
-      "targetObject": "{wlbEwSec}^^xsd:decimal ",
+      "targetObject": "{wlbEwSec}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:secondsEW {wlbEwSec}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwSec\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -8558,7 +8558,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/block/{baaAreaPolyBlockName}/polyno/{baaAreaPolyNo}/history/{baaAreaPolyDateValidFrom}/{baaAreaPolyDateValidTo}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/block/{baaAreaPolyBlockName}/polyno/{baaAreaPolyNo}/history/{baaAreaPolyDateValidFrom}/{baaAreaPolyDateValidTo} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaAreaPolyBlockName\", \"baaAreaPolyNo\", \"baaAreaPolyDateValidFrom\", \"baaAreaPolyDateValidTo\", \"dateSyncNPD\" FROM \"bsns_arr_area_area_poly_hst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -8590,7 +8590,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart5",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart5",
-      "targetObject": "{wlbNamePart5}^^xsd:string ",
+      "targetObject": "{wlbNamePart5}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart5 {wlbNamePart5}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart5\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -8613,7 +8613,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}/licencee/{cmpNpdidCompany}",
       "targetPredicate": "ptl:dateUpdated",
-      "targetObject": "{ptlLicenseeDateUpdated}^^xsd:date ",
+      "targetObject": "{ptlLicenseeDateUpdated}^^xsd:date",
       "target": "npd:petreg/facility/{tufNpdidTuf}/licencee/{cmpNpdidCompany} ptl:dateUpdated {ptlLicenseeDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"cmpNpdidCompany\", \"ptlLicenseeDateUpdated\" FROM \"tuf_petreg_licence_licencee\" WHERE \"ptlLicenseeDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -8639,7 +8639,7 @@ export const npdMappingData = {
       "entityName": "minutesEW",
       "targetSubject": "npd:survey/{seaSurveyName}/point/{seaPolygonPointNumber}",
       "targetPredicate": "npdv:minutesEW",
-      "targetObject": "{seaPolygonEWMin}^^xsd:integer ",
+      "targetObject": "{seaPolygonEWMin}^^xsd:integer",
       "target": "npd:survey/{seaSurveyName}/point/{seaPolygonPointNumber} npdv:minutesEW {seaPolygonEWMin}^^xsd:integer .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaPolygonPointNumber\", \"seaPolygonEWMin\" FROM \"seis_acquisition_coordinates_inc_turnarea\"",
       "sourceTables": [
@@ -8664,7 +8664,7 @@ export const npdMappingData = {
       "entityName": "belongsToWell",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:belongsToWell",
-      "targetObject": "npd:well/{wlbWell} ",
+      "targetObject": "npd:well/{wlbWell}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:belongsToWell npd:well/{wlbWell} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbWell\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -8687,7 +8687,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{wlbDateUpdated}^^xsd:date ",
+      "targetObject": "{wlbDateUpdated}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateUpdated {wlbDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDateUpdated\" FROM \"wellbore_development_all\" WHERE \"wlbDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -8711,7 +8711,7 @@ export const npdMappingData = {
       "entityName": "originalAreaSize",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:originalAreaSize",
-      "targetObject": "{prlOriginalArea}^^xsd:decimal ",
+      "targetObject": "{prlOriginalArea}^^xsd:decimal",
       "target": "npd:licence/{prlNpdidLicence} npdv:originalAreaSize {prlOriginalArea}^^xsd:decimal .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlOriginalArea\" FROM \"licence\"",
       "sourceTables": [
@@ -8734,7 +8734,7 @@ export const npdMappingData = {
       "entityName": "areaSize",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:areaSize",
-      "targetObject": "{prlAreaPolyPolyArea}^^xsd:decimal ",
+      "targetObject": "{prlAreaPolyPolyArea}^^xsd:decimal",
       "target": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:areaSize {prlAreaPolyPolyArea}^^xsd:decimal .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"blcName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\", \"prlAreaPolyPolyArea\" FROM \"prlAreaSplitByBlock\"",
       "sourceTables": [
@@ -8765,7 +8765,7 @@ export const npdMappingData = {
       "entityName": "degreesNS",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:degreesNS",
-      "targetObject": "{fclNsDeg}^^xsd:integer ",
+      "targetObject": "{fclNsDeg}^^xsd:integer",
       "target": "npd:facility/{fclNpdidFacility} npdv:degreesNS {fclNsDeg}^^xsd:integer .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclNsDeg\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -8788,7 +8788,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}",
       "targetPredicate": "ptl:dateUpdated",
-      "targetObject": "{ptlDateUpdated}^^xsd:date ",
+      "targetObject": "{ptlDateUpdated}^^xsd:date",
       "target": "npd:petreg/licence/{prlNpdidLicence} ptl:dateUpdated {ptlDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"ptlDateUpdated\" FROM \"licence_petreg_licence\" WHERE \"ptlDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -8812,7 +8812,7 @@ export const npdMappingData = {
       "entityName": "degreesNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:degreesNS",
-      "targetObject": "{wlbNsDeg}^^xsd:integer ",
+      "targetObject": "{wlbNsDeg}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:degreesNS {wlbNsDeg}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsDeg\" FROM \"wellbore_coordinates\"",
       "sourceTables": [
@@ -8835,7 +8835,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"dateSyncNPD\" FROM \"wellbore_development_all\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -8859,7 +8859,7 @@ export const npdMappingData = {
       "entityName": "recoverableNGL",
       "targetSubject": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField}",
       "targetPredicate": "npdv:recoverableNGL",
-      "targetObject": "{cmpRecoverableNGL}^^xsd:decimal ",
+      "targetObject": "{cmpRecoverableNGL}^^xsd:decimal",
       "target": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField} npdv:recoverableNGL {cmpRecoverableNGL}^^xsd:decimal .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"fldNpdidField\", \"cmpRecoverableNGL\" FROM \"company_reserves\"",
       "sourceTables": [
@@ -8884,7 +8884,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{dscDateUpdated}^^xsd:date ",
+      "targetObject": "{dscDateUpdated}^^xsd:date",
       "target": "npd:discovery/{dscNpdidDiscovery} npdv:dateUpdated {dscDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscDateUpdated\" FROM \"discovery\" WHERE \"dscDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -8908,7 +8908,7 @@ export const npdMappingData = {
       "entityName": "blockLocation",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/block/{baaAreaPolyBlockName}/polyno/{baaAreaPolyNo}/history/{baaAreaPolyDateValidFrom}/{baaAreaPolyDateValidTo}",
       "targetPredicate": "npdv:blockLocation",
-      "targetObject": "npd:block/{baaAreaPolyBlockName} ",
+      "targetObject": "npd:block/{baaAreaPolyBlockName}",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/block/{baaAreaPolyBlockName}/polyno/{baaAreaPolyNo}/history/{baaAreaPolyDateValidFrom}/{baaAreaPolyDateValidTo} npdv:blockLocation npd:block/{baaAreaPolyBlockName} .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaAreaPolyBlockName\", \"baaAreaPolyNo\", \"baaAreaPolyDateValidFrom\", \"baaAreaPolyDateValidTo\" FROM \"bsns_arr_area_area_poly_hst\"",
       "sourceTables": [
@@ -8932,13 +8932,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00366:Literal:wellbore_exploration_all:wlbStatus",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "status",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:status",
-      "targetObject": "{wlbStatus} ",
+      "targetObject": "{wlbStatus}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:status {wlbStatus} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbStatus\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -8961,7 +8961,7 @@ export const npdMappingData = {
       "entityName": "degreesNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:degreesNS",
-      "targetObject": "{wlbNsDeg}^^xsd:integer ",
+      "targetObject": "{wlbNsDeg}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:degreesNS {wlbNsDeg}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsDeg\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -8984,7 +8984,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:survey/{seaName} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"seaName\", \"dateSyncNPD\" FROM \"seis_acquisition\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -9008,7 +9008,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}/licencee/{cmpNpdidCompany}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:petreg/facility/{tufNpdidTuf}/licencee/{cmpNpdidCompany} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"cmpNpdidCompany\", \"dateSyncNPD\" FROM \"tuf_petreg_licence_licencee\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -9028,13 +9028,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00370:Literal:wellbore_core_photo:wlbCorePhotoImgUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "corePhotoURL",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}/photo/{wellbore_core_photo_id}/{wlbCorePhotoTitle}",
       "targetPredicate": "npdv:corePhotoURL",
-      "targetObject": "<{wlbCorePhotoImgUrl}> ",
+      "targetObject": "<{wlbCorePhotoImgUrl}>",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}/photo/{wellbore_core_photo_id}/{wlbCorePhotoTitle} npdv:corePhotoURL <{wlbCorePhotoImgUrl}> .",
       "sourceSql": "SELECT \"wellbore_core_photo_id\", \"wlbNpdidWellbore\", \"wlbCoreNumber\", \"wlbCorePhotoTitle\", \"wlbCorePhotoImgUrl\" FROM \"wellbore_core_photo\"",
       "sourceTables": [
@@ -9057,13 +9057,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00371:Literal:wellbore_development_all:wlbNsCode",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "codeNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:codeNS",
-      "targetObject": "{wlbNsCode} ",
+      "targetObject": "{wlbNsCode}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:codeNS {wlbNsCode} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsCode\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -9086,7 +9086,7 @@ export const npdMappingData = {
       "entityName": "degreesEW",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:degreesEW",
-      "targetObject": "{fclEwDeg}^^xsd:integer ",
+      "targetObject": "{fclEwDeg}^^xsd:integer",
       "target": "npd:facility/{fclNpdidFacility} npdv:degreesEW {fclEwDeg}^^xsd:integer .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclEwDeg\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -9103,13 +9103,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00373:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Campanian ",
+      "targetObject": "isc:Campanian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Campanian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='CAMPANIAN'",
       "sourceTables": [
@@ -9126,13 +9126,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00374:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Carboniferous ",
+      "targetObject": "isc:Carboniferous",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Carboniferous .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='CARBONIFEROUS'",
       "sourceTables": [
@@ -9149,13 +9149,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00375:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Cretaceous ",
+      "targetObject": "isc:Cretaceous",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Cretaceous .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='CRETACEOUS'",
       "sourceTables": [
@@ -9172,13 +9172,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00376:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Danian ",
+      "targetObject": "isc:Danian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Danian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='DANIAN'",
       "sourceTables": [
@@ -9195,13 +9195,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00377:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Devonian ",
+      "targetObject": "isc:Devonian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Devonian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='DEVONIAN'",
       "sourceTables": [
@@ -9218,13 +9218,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00378:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Mississippian ",
+      "targetObject": "isc:Mississippian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Mississippian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='EARLY CARBONIFEROUS'",
       "sourceTables": [
@@ -9241,13 +9241,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00379:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:LowerCretaceous ",
+      "targetObject": "isc:LowerCretaceous",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:LowerCretaceous .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='EARLY CRETACEOUS'",
       "sourceTables": [
@@ -9264,13 +9264,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00380:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:LowerJurassic ",
+      "targetObject": "isc:LowerJurassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:LowerJurassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='EARLY JURASSIC'",
       "sourceTables": [
@@ -9287,13 +9287,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00381:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Cisuralian ",
+      "targetObject": "isc:Cisuralian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Cisuralian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='EARLY PERMIAN'",
       "sourceTables": [
@@ -9310,13 +9310,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00382:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:LowerTriassic ",
+      "targetObject": "isc:LowerTriassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:LowerTriassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='EARLY TRIASSIC'",
       "sourceTables": [
@@ -9333,13 +9333,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00383:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Eocene ",
+      "targetObject": "isc:Eocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Eocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='EOCENE'",
       "sourceTables": [
@@ -9356,13 +9356,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00384:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Jurassic ",
+      "targetObject": "isc:Jurassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Jurassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='JURASSIC'",
       "sourceTables": [
@@ -9379,13 +9379,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00385:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Pennsylvanian ",
+      "targetObject": "isc:Pennsylvanian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Pennsylvanian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='LATE CARBONIFEROUS'",
       "sourceTables": [
@@ -9402,13 +9402,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00386:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:UpperCretaceous ",
+      "targetObject": "isc:UpperCretaceous",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:UpperCretaceous .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='LATE CRETACEOUS'",
       "sourceTables": [
@@ -9425,13 +9425,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00387:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:UpperJurassic ",
+      "targetObject": "isc:UpperJurassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:UpperJurassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='LATE JURASSIC'",
       "sourceTables": [
@@ -9448,13 +9448,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00388:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Thanetian ",
+      "targetObject": "isc:Thanetian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Thanetian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='LATE PALEOCENE'",
       "sourceTables": [
@@ -9471,13 +9471,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00389:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Lopingian ",
+      "targetObject": "isc:Lopingian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Lopingian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='LATE PERMIAN'",
       "sourceTables": [
@@ -9494,13 +9494,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00390:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Piacenzian ",
+      "targetObject": "isc:Piacenzian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Piacenzian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='LATE PLIOCENE'",
       "sourceTables": [
@@ -9517,13 +9517,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00391:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:UpperTriassic ",
+      "targetObject": "isc:UpperTriassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:UpperTriassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='LATE TRIASSIC'",
       "sourceTables": [
@@ -9540,13 +9540,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00392:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:MiddleJurassic ",
+      "targetObject": "isc:MiddleJurassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:MiddleJurassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='MIDDLE JURASSIC'",
       "sourceTables": [
@@ -9563,13 +9563,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00393:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:MiddleTriassic ",
+      "targetObject": "isc:MiddleTriassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:MiddleTriassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='MIDDLE TRIASSIC'",
       "sourceTables": [
@@ -9586,13 +9586,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00394:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Miocene ",
+      "targetObject": "isc:Miocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Miocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='MIOCENE'",
       "sourceTables": [
@@ -9609,13 +9609,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00395:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Oligocene ",
+      "targetObject": "isc:Oligocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Oligocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='OLIGOCENE'",
       "sourceTables": [
@@ -9632,13 +9632,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00396:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Paleocene ",
+      "targetObject": "isc:Paleocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Paleocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='PALEOCENE'",
       "sourceTables": [
@@ -9655,13 +9655,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00397:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Permian ",
+      "targetObject": "isc:Permian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Permian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='PERMIAN'",
       "sourceTables": [
@@ -9678,13 +9678,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00398:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Pleistocene ",
+      "targetObject": "isc:Pleistocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Pleistocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='PLEISTOCENE'",
       "sourceTables": [
@@ -9701,13 +9701,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00399:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Pliocene ",
+      "targetObject": "isc:Pliocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Pliocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='PLIOCENE'",
       "sourceTables": [
@@ -9724,13 +9724,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00400:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Silurian ",
+      "targetObject": "isc:Silurian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Silurian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='SILURIAN'",
       "sourceTables": [
@@ -9747,13 +9747,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00401:Literal:Trans:wellbore_exploration_all:wlbAgeAtTd",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeTD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeTD",
-      "targetObject": "isc:Triassic ",
+      "targetObject": "isc:Triassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeTD isc:Triassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeAtTd\"='TRIASSIC'",
       "sourceTables": [
@@ -9776,7 +9776,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{fclDateUpdated}^^xsd:date ",
+      "targetObject": "{fclDateUpdated}^^xsd:date",
       "target": "npd:facility/{fclNpdidFacility} npdv:dateUpdated {fclDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclDateUpdated\" FROM \"facility_moveable\" WHERE \"fclDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -9800,7 +9800,7 @@ export const npdMappingData = {
       "entityName": "dateUpdatedMax",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:dateUpdatedMax",
-      "targetObject": "{prlDateUpdatedMax}^^xsd:date ",
+      "targetObject": "{prlDateUpdatedMax}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence} npdv:dateUpdatedMax {prlDateUpdatedMax}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlDateUpdatedMax\" FROM \"licence\" WHERE \"prlDateUpdatedMax\" <> '9999-12-31'",
       "sourceTables": [
@@ -9824,7 +9824,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:licence/{prlNpdidLicence}/transfer/{prlTransferDirection}/{cmpNpdidCompany}/history/{prlTransferDateValidFrom}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/transfer/{prlTransferDirection}/{cmpNpdidCompany}/history/{prlTransferDateValidFrom} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlTransferDirection\", \"cmpNpdidCompany\", \"prlTransferDateValidFrom\", \"dateSyncNPD\" FROM \"licence_transfer_hst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -9854,7 +9854,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart1",
-      "targetObject": "{wlbNamePart1}^^xsd:integer ",
+      "targetObject": "{wlbNamePart1}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart1 {wlbNamePart1}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart1\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -9877,7 +9877,7 @@ export const npdMappingData = {
       "entityName": "secondsEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:secondsEW",
-      "targetObject": "{wlbEwSec}^^xsd:decimal ",
+      "targetObject": "{wlbEwSec}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:secondsEW {wlbEwSec}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwSec\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -9900,7 +9900,7 @@ export const npdMappingData = {
       "entityName": "dateWellboreEntry",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateWellboreEntry",
-      "targetObject": "{wlbEntryDate}^^xsd:date ",
+      "targetObject": "{wlbEntryDate}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateWellboreEntry {wlbEntryDate}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEntryDate\" FROM \"wellbore_exploration_all\" WHERE \"wlbEntryDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -9924,7 +9924,7 @@ export const npdMappingData = {
       "entityName": "areaSize",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:areaSize",
-      "targetObject": "{prlAreaPolyPolyArea}^^xsd:decimal ",
+      "targetObject": "{prlAreaPolyPolyArea}^^xsd:decimal",
       "target": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:areaSize {prlAreaPolyPolyArea}^^xsd:decimal .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlAreaPolyBlockName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\", \"prlAreaPolyPolyArea\" FROM \"licence_area_poly_hst\"",
       "sourceTables": [
@@ -9955,7 +9955,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"dateSyncNPD\" FROM \"wellbore_shallow_all\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -9979,7 +9979,7 @@ export const npdMappingData = {
       "entityName": "belongsToWell",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:belongsToWell",
-      "targetObject": "npd:well/{wlbWell} ",
+      "targetObject": "npd:well/{wlbWell}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:belongsToWell npd:well/{wlbWell} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbWell\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -9996,13 +9996,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00411:Literal:wellbore_development_all:wlbEwCode",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "codeEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:codeEW",
-      "targetObject": "{wlbEwCode} ",
+      "targetObject": "{wlbEwCode}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:codeEW {wlbEwCode} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwCode\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -10025,7 +10025,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:field/{fldNpdidField}/owner/{fldNpdidOwner}/history/{fldOwnershipFromDate}/{fldOwnershipToDate}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{fldOwnerDateUpdated}^^xsd:date ",
+      "targetObject": "{fldOwnerDateUpdated}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/owner/{fldNpdidOwner}/history/{fldOwnershipFromDate}/{fldOwnershipToDate} npdv:dateUpdated {fldOwnerDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldNpdidOwner\", \"fldOwnershipFromDate\", \"fldOwnershipToDate\", \"fldOwnerDateUpdated\" FROM \"field_owner_hst\" WHERE \"fldOwnerDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -10049,13 +10049,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00413:Literal:licence_phase_hst:prlPhase",
-      "kind": "objectProperty",
-      "abstraction": "历史对象关系",
+      "kind": "dataProperty",
+      "abstraction": "历史属性",
       "entityPrefix": "npdv",
       "entityName": "status",
       "targetSubject": "npd:licence/{prlNpdidLicence}/phase/{prlPhase}/history/{prlDatePhaseValidFrom}/{prlDatePhaseValidTo}",
       "targetPredicate": "npdv:status",
-      "targetObject": "{prlPhase} ",
+      "targetObject": "{prlPhase}",
       "target": "npd:licence/{prlNpdidLicence}/phase/{prlPhase}/history/{prlDatePhaseValidFrom}/{prlDatePhaseValidTo} npdv:status {prlPhase} .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlPhase\", \"prlDatePhaseValidFrom\", \"prlDatePhaseValidTo\" FROM \"licence_phase_hst\"",
       "sourceTables": [
@@ -10083,7 +10083,7 @@ export const npdMappingData = {
       "entityName": "isCurrentLicenceOperator",
       "targetSubject": "npd:company/{cmpNpdidCompany}",
       "targetPredicate": "npdv:isCurrentLicenceOperator",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:company/{cmpNpdidCompany} npdv:isCurrentLicenceOperator \"true\" .",
       "sourceSql": "SELECT \"cmpNpdidCompany\" FROM \"company\" WHERE \"cmpLicenceOperCurrent\"='Y'",
       "sourceTables": [
@@ -10106,7 +10106,7 @@ export const npdMappingData = {
       "entityName": "isCurrentLicenceOperator",
       "targetSubject": "npd:company/{cmpNpdidCompany}",
       "targetPredicate": "npdv:isCurrentLicenceOperator",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:company/{cmpNpdidCompany} npdv:isCurrentLicenceOperator \"false\" .",
       "sourceSql": "SELECT \"cmpNpdidCompany\" FROM \"company\" WHERE \"cmpLicenceOperCurrent\"='N'",
       "sourceTables": [
@@ -10123,13 +10123,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00416:Literal:licence_transfer_hst:prlTransferDirection",
-      "kind": "objectProperty",
-      "abstraction": "历史对象关系",
+      "kind": "dataProperty",
+      "abstraction": "历史属性",
       "entityPrefix": "npdv",
       "entityName": "transferDirection",
       "targetSubject": "npd:licence/{prlNpdidLicence}/transfer/{prlTransferDirection}/{cmpNpdidCompany}/history/{prlTransferDateValidFrom}",
       "targetPredicate": "npdv:transferDirection",
-      "targetObject": "{prlTransferDirection} ",
+      "targetObject": "{prlTransferDirection}",
       "target": "npd:licence/{prlNpdidLicence}/transfer/{prlTransferDirection}/{cmpNpdidCompany}/history/{prlTransferDateValidFrom} npdv:transferDirection {prlTransferDirection} .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlTransferDirection\", \"cmpNpdidCompany\", \"prlTransferDateValidFrom\" FROM \"licence_transfer_hst\"",
       "sourceTables": [
@@ -10157,7 +10157,7 @@ export const npdMappingData = {
       "entityName": "country",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/block/{baaAreaPolyBlockName}/polyno/{baaAreaPolyNo}/history/{baaAreaPolyDateValidFrom}/{baaAreaPolyDateValidTo}",
       "targetPredicate": "npdv:country",
-      "targetObject": "<http://dbpedia.org/resource/Norway> ",
+      "targetObject": "<http://dbpedia.org/resource/Norway>",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/block/{baaAreaPolyBlockName}/polyno/{baaAreaPolyNo}/history/{baaAreaPolyDateValidFrom}/{baaAreaPolyDateValidTo} npdv:country <http://dbpedia.org/resource/Norway> .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaAreaPolyBlockName\", \"baaAreaPolyNo\", \"baaAreaPolyDateValidFrom\", \"baaAreaPolyDateValidTo\" FROM \"bsns_arr_area_area_poly_hst\" WHERE \"baaAreaPolyNationCode2\"='NO'",
       "sourceTables": [
@@ -10188,7 +10188,7 @@ export const npdMappingData = {
       "entityName": "messageType",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}/message/{ptlMessageDocumentNo}",
       "targetPredicate": "ptl:messageType",
-      "targetObject": "{ptlMessageKindDesc}^^xsd:string ",
+      "targetObject": "{ptlMessageKindDesc}^^xsd:string",
       "target": "npd:petreg/facility/{tufNpdidTuf}/message/{ptlMessageDocumentNo} ptl:messageType {ptlMessageKindDesc}^^xsd:string .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"ptlMessageDocumentNo\", \"ptlMessageKindDesc\" FROM \"tuf_petreg_message\"",
       "sourceTables": [
@@ -10213,7 +10213,7 @@ export const npdMappingData = {
       "entityName": "polygonNo",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:polygonNo",
-      "targetObject": "{prlAreaPolyPolyNo}^^xsd:integer ",
+      "targetObject": "{prlAreaPolyPolyNo}^^xsd:integer",
       "target": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:polygonNo {prlAreaPolyPolyNo}^^xsd:integer .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlAreaPolyBlockName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"licence_area_poly_hst\"",
       "sourceTables": [
@@ -10243,7 +10243,7 @@ export const npdMappingData = {
       "entityName": "lengthPlannedBoatKm",
       "targetSubject": "npd:survey/{seaSurveyName}/multiline",
       "targetPredicate": "npdv:lengthPlannedBoatKm",
-      "targetObject": "{seaPlanBoatKm}^^xsd:integer ",
+      "targetObject": "{seaPlanBoatKm}^^xsd:integer",
       "target": "npd:survey/{seaSurveyName}/multiline npdv:lengthPlannedBoatKm {seaPlanBoatKm}^^xsd:integer .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaPlanBoatKm\" FROM \"seaMultiline\"",
       "sourceTables": [
@@ -10266,7 +10266,7 @@ export const npdMappingData = {
       "entityName": "belongsToWell",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:belongsToWell",
-      "targetObject": "npd:well/{wlbWell} ",
+      "targetObject": "npd:well/{wlbWell}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:belongsToWell npd:well/{wlbWell} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbWell\" FROM \"wellbore_npdid_overview\"",
       "sourceTables": [
@@ -10289,7 +10289,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/polygon/{baaNpdidBsnsArrAreaPoly}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{baaNpdidBsnsArrAreaPoly}^^xsd:integer ",
+      "targetObject": "{baaNpdidBsnsArrAreaPoly}^^xsd:integer",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/polygon/{baaNpdidBsnsArrAreaPoly} npdv:idNPD {baaNpdidBsnsArrAreaPoly}^^xsd:integer .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaNpdidBsnsArrAreaPoly\" FROM \"baaArea\"",
       "sourceTables": [
@@ -10313,7 +10313,7 @@ export const npdMappingData = {
       "entityName": "wellborePurpose",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellborePurpose",
-      "targetObject": "{wlbPurpose}^^xsd:string ",
+      "targetObject": "{wlbPurpose}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellborePurpose {wlbPurpose}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbPurpose\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -10336,7 +10336,7 @@ export const npdMappingData = {
       "entityName": "minutesEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:minutesEW",
-      "targetObject": "{wlbEwMin}^^xsd:integer ",
+      "targetObject": "{wlbEwMin}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:minutesEW {wlbEwMin}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwMin\" FROM \"wellbore_coordinates\"",
       "sourceTables": [
@@ -10359,7 +10359,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:licence/{prlNpdidLicence}/task/{prlTaskID}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{prlTaskName}^^xsd:string ",
+      "targetObject": "{prlTaskName}^^xsd:string",
       "target": "npd:licence/{prlNpdidLicence}/task/{prlTaskID} npdv:name {prlTaskName}^^xsd:string .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlTaskID\", \"prlTaskName\" FROM \"licence_task\"",
       "sourceTables": [
@@ -10384,7 +10384,7 @@ export const npdMappingData = {
       "entityName": "dateLicenceAreaValidFrom",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:dateLicenceAreaValidFrom",
-      "targetObject": "{prlAreaPolyDateValidFrom}^^xsd:date ",
+      "targetObject": "{prlAreaPolyDateValidFrom}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:dateLicenceAreaValidFrom {prlAreaPolyDateValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"blcName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"prlAreaSplitByBlock\" WHERE \"prlAreaPolyDateValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -10415,7 +10415,7 @@ export const npdMappingData = {
       "entityName": "dateInitialStatusTo",
       "targetSubject": "npd:licence/{prlNpdidLicence}/phase/{prlPhase}/history/{prlDatePhaseValidFrom}/{prlDatePhaseValidTo}",
       "targetPredicate": "npdv:dateInitialStatusTo",
-      "targetObject": "{prlDateInitialPeriodExpires}^^xsd:date ",
+      "targetObject": "{prlDateInitialPeriodExpires}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/phase/{prlPhase}/history/{prlDatePhaseValidFrom}/{prlDatePhaseValidTo} npdv:dateInitialStatusTo {prlDateInitialPeriodExpires}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlPhase\", \"prlDatePhaseValidFrom\", \"prlDatePhaseValidTo\", \"prlDateInitialPeriodExpires\" FROM \"licence_phase_hst\" WHERE \"prlDateInitialPeriodExpires\" <> '9999-12-31'",
       "sourceTables": [
@@ -10439,13 +10439,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00428:Literal:field:fldFactMapUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "factMapURL",
       "targetSubject": "npd:field/{fldNpdidField}",
       "targetPredicate": "npdv:factMapURL",
-      "targetObject": "<{fldFactMapUrl}> ",
+      "targetObject": "<{fldFactMapUrl}>",
       "target": "npd:field/{fldNpdidField} npdv:factMapURL <{fldFactMapUrl}> .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldFactMapUrl\" FROM \"field\"",
       "sourceTables": [
@@ -10468,7 +10468,7 @@ export const npdMappingData = {
       "entityName": "inLithostratigraphicUnit",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/cores",
       "targetPredicate": "npdv:inLithostratigraphicUnit",
-      "targetObject": "npd:stratum/{lsuNpdidLithoStrat} ",
+      "targetObject": "npd:stratum/{lsuNpdidLithoStrat}",
       "target": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/cores npdv:inLithostratigraphicUnit npd:stratum/{lsuNpdidLithoStrat} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"lsuNpdidLithoStrat\" FROM \"strat_litho_wellbore_core\"",
       "sourceTables": [
@@ -10492,7 +10492,7 @@ export const npdMappingData = {
       "entityName": "dateStatusValidFrom",
       "targetSubject": "npd:licence/{prlNpdidLicence}/phase/{prlPhase}/history/{prlDatePhaseValidFrom}/{prlDatePhaseValidTo}",
       "targetPredicate": "npdv:dateStatusValidFrom",
-      "targetObject": "{prlDatePhaseValidFrom}^^xsd:date ",
+      "targetObject": "{prlDatePhaseValidFrom}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/phase/{prlPhase}/history/{prlDatePhaseValidFrom}/{prlDatePhaseValidTo} npdv:dateStatusValidFrom {prlDatePhaseValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlPhase\", \"prlDatePhaseValidFrom\", \"prlDatePhaseValidTo\" FROM \"licence_phase_hst\" WHERE \"prlDatePhaseValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -10515,13 +10515,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00431:Literal:field:fldCurrentActivitySatus",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "status",
       "targetSubject": "npd:field/{fldNpdidField}",
       "targetPredicate": "npdv:status",
-      "targetObject": "{fldCurrentActivitySatus} ",
+      "targetObject": "{fldCurrentActivitySatus}",
       "target": "npd:field/{fldNpdidField} npdv:status {fldCurrentActivitySatus} .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldCurrentActivitySatus\" FROM \"field\"",
       "sourceTables": [
@@ -10544,7 +10544,7 @@ export const npdMappingData = {
       "entityName": "wellboreSeismicLocation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreSeismicLocation",
-      "targetObject": "{wlbSeismicLocation}^^xsd:string ",
+      "targetObject": "{wlbSeismicLocation}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreSeismicLocation {wlbSeismicLocation}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbSeismicLocation\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -10567,7 +10567,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{dscName}^^xsd:string ",
+      "targetObject": "{dscName}^^xsd:string",
       "target": "npd:discovery/{dscNpdidDiscovery} npdv:name {dscName}^^xsd:string .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscName\" FROM \"discovery\"",
       "sourceTables": [
@@ -10590,7 +10590,7 @@ export const npdMappingData = {
       "entityName": "dateTransferValidFrom",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/transfer/{baaTransferDirection}/{cmpNpdidCompany}/history/{baaTransferDateValidFrom}",
       "targetPredicate": "npdv:dateTransferValidFrom",
-      "targetObject": "{baaTransferDateValidFrom}^^xsd:date ",
+      "targetObject": "{baaTransferDateValidFrom}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/transfer/{baaTransferDirection}/{cmpNpdidCompany}/history/{baaTransferDateValidFrom} npdv:dateTransferValidFrom {baaTransferDateValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaTransferDirection\", \"cmpNpdidCompany\", \"baaTransferDateValidFrom\" FROM \"bsns_arr_area_transfer_hst\" WHERE \"baaTransferDateValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -10619,7 +10619,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:field/{fldNpdidField}/operator/{cmpNpdidCompany}/history/{fldOperatorFrom}/{fldOperatorTo}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{fldOperatorDateUpdated}^^xsd:date ",
+      "targetObject": "{fldOperatorDateUpdated}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/operator/{cmpNpdidCompany}/history/{fldOperatorFrom}/{fldOperatorTo} npdv:dateUpdated {fldOperatorDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"cmpNpdidCompany\", \"fldOperatorFrom\", \"fldOperatorTo\", \"fldOperatorDateUpdated\" FROM \"field_operator_hst\" WHERE \"fldOperatorDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -10649,7 +10649,7 @@ export const npdMappingData = {
       "entityName": "dateLicenceAreaValidTo",
       "targetSubject": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:dateLicenceAreaValidTo",
-      "targetObject": "{prlAreaPolyDateValidTo}^^xsd:date ",
+      "targetObject": "{prlAreaPolyDateValidTo}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:dateLicenceAreaValidTo {prlAreaPolyDateValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"prlArea_id\", \"prlNpdidLicence\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"prlArea\" WHERE \"prlAreaPolyDateValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -10672,13 +10672,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00438:Literal:bsns_arr_area:baaFactPageUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "factPageURL",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}",
       "targetPredicate": "npdv:factPageURL",
-      "targetObject": "<{baaFactPageUrl}> ",
+      "targetObject": "<{baaFactPageUrl}>",
       "target": "npd:baa/{baaNpdidBsnsArrArea} npdv:factPageURL <{baaFactPageUrl}> .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaFactPageUrl\" FROM \"bsns_arr_area\"",
       "sourceTables": [
@@ -10701,7 +10701,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/transfer/{baaTransferDirection}/{cmpNpdidCompany}/history/{baaTransferDateValidFrom}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/transfer/{baaTransferDirection}/{cmpNpdidCompany}/history/{baaTransferDateValidFrom} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaTransferDirection\", \"cmpNpdidCompany\", \"baaTransferDateValidFrom\", \"dateSyncNPD\" FROM \"bsns_arr_area_transfer_hst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -10731,7 +10731,7 @@ export const npdMappingData = {
       "entityName": "dateFieldOwnerTo",
       "targetSubject": "npd:field/{fldNpdidField}/licensee/{cmpNpdidCompany}/history/{fldLicenseeFrom}/{fldLicenseeTo}",
       "targetPredicate": "npdv:dateFieldOwnerTo",
-      "targetObject": "{fldOwnerTo}^^xsd:date ",
+      "targetObject": "{fldOwnerTo}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/licensee/{cmpNpdidCompany}/history/{fldLicenseeFrom}/{fldLicenseeTo} npdv:dateFieldOwnerTo {fldOwnerTo}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"cmpNpdidCompany\", \"fldLicenseeFrom\", \"fldLicenseeTo\", \"fldOwnerTo\" FROM \"field_licensee_hst\" WHERE \"fldOwnerTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -10761,7 +10761,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/1 ",
+      "targetObject": "npd:ncs/mainarea/1",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:mainAreaLocation npd:ncs/mainarea/1 .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_shallow_all\" WHERE \"wlbMainArea\"='Barents sea'",
       "sourceTables": [
@@ -10784,7 +10784,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/2 ",
+      "targetObject": "npd:ncs/mainarea/2",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:mainAreaLocation npd:ncs/mainarea/2 .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_shallow_all\" WHERE \"wlbMainArea\"='Norwegian sea'",
       "sourceTables": [
@@ -10807,7 +10807,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/3 ",
+      "targetObject": "npd:ncs/mainarea/3",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:mainAreaLocation npd:ncs/mainarea/3 .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_shallow_all\" WHERE \"wlbMainArea\"='North sea'",
       "sourceTables": [
@@ -10830,7 +10830,7 @@ export const npdMappingData = {
       "entityName": "wellboreEntryYear",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreEntryYear",
-      "targetObject": "{wlbEntryYear}^^xsd:integer ",
+      "targetObject": "{wlbEntryYear}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreEntryYear {wlbEntryYear}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEntryYear\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -10853,7 +10853,7 @@ export const npdMappingData = {
       "entityName": "pipelineMainGrouping",
       "targetSubject": "npd:pipeline/{pipNpdidPipe}",
       "targetPredicate": "npdv:pipelineMainGrouping",
-      "targetObject": "{pipMainGrouping}^^xsd:string ",
+      "targetObject": "{pipMainGrouping}^^xsd:string",
       "target": "npd:pipeline/{pipNpdidPipe} npdv:pipelineMainGrouping {pipMainGrouping}^^xsd:string .",
       "sourceSql": "SELECT \"pipNpdidPipe\", \"pipMainGrouping\" FROM \"pipLine\"",
       "sourceTables": [
@@ -10876,7 +10876,7 @@ export const npdMappingData = {
       "entityName": "currentStatus",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:currentStatus",
-      "targetObject": "{seaStatus}^^xsd:string ",
+      "targetObject": "{seaStatus}^^xsd:string",
       "target": "npd:survey/{seaName} npdv:currentStatus {seaStatus}^^xsd:string .",
       "sourceSql": "SELECT \"seaName\", \"seaStatus\" FROM \"seis_acquisition\"",
       "sourceTables": [
@@ -10899,7 +10899,7 @@ export const npdMappingData = {
       "entityName": "producedNGL",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}",
       "targetPredicate": "npdv:producedNGL",
-      "targetObject": "{prfPrdNGLNetMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdNGLNetMillSm3}^^xsd:decimal",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear} npdv:producedNGL {prfPrdNGLNetMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\", \"prfPrdNGLNetMillSm3\" FROM \"field_production_yearly\"",
       "sourceTables": [
@@ -10924,7 +10924,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:field/{fldNpdidField}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{fldDateUpdated}^^xsd:date ",
+      "targetObject": "{fldDateUpdated}^^xsd:date",
       "target": "npd:field/{fldNpdidField} npdv:dateUpdated {fldDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldDateUpdated\" FROM \"field\" WHERE \"fldDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -10948,7 +10948,7 @@ export const npdMappingData = {
       "entityName": "recoverableOil",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC}",
       "targetPredicate": "npdv:recoverableOil",
-      "targetObject": "{dscRecoverableOil}^^xsd:decimal ",
+      "targetObject": "{dscRecoverableOil}^^xsd:decimal",
       "target": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC} npdv:recoverableOil {dscRecoverableOil}^^xsd:decimal .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscReservesRC\", \"dscRecoverableOil\" FROM \"discovery_reserves\"",
       "sourceTables": [
@@ -10973,7 +10973,7 @@ export const npdMappingData = {
       "entityName": "degreesEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:degreesEW",
-      "targetObject": "{wlbEwDeg}^^xsd:integer ",
+      "targetObject": "{wlbEwDeg}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:degreesEW {wlbEwDeg}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwDeg\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -10996,7 +10996,7 @@ export const npdMappingData = {
       "entityName": "dateMessageRegistered",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}/message/{ptlMessageDocumentNo}",
       "targetPredicate": "ptl:dateMessageRegistered",
-      "targetObject": "{ptlMessageRegisteredDate}^^xsd:date ",
+      "targetObject": "{ptlMessageRegisteredDate}^^xsd:date",
       "target": "npd:petreg/licence/{prlNpdidLicence}/message/{ptlMessageDocumentNo} ptl:dateMessageRegistered {ptlMessageRegisteredDate}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"ptlMessageDocumentNo\", \"ptlMessageRegisteredDate\" FROM \"licence_petreg_message\" WHERE \"ptlMessageRegisteredDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -11022,7 +11022,7 @@ export const npdMappingData = {
       "entityName": "blockId",
       "targetSubject": "npd:quadrant/{qdrName}/block/{blkName}/award/{prvName}/area/{apaAreaNet_id}",
       "targetPredicate": "npdv:blockId",
-      "targetObject": "{blkId}^^xsd:integer ",
+      "targetObject": "{blkId}^^xsd:integer",
       "target": "npd:quadrant/{qdrName}/block/{blkName}/award/{prvName}/area/{apaAreaNet_id} npdv:blockId {blkId}^^xsd:integer .",
       "sourceSql": "SELECT \"apaAreaNet_id\", \"qdrName\", \"blkName\", \"prvName\", \"blkId\" FROM \"apaAreaNet\"",
       "sourceTables": [
@@ -11051,7 +11051,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:field/{fldNpdidField}/reserve",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/reserve npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"dateSyncNPD\" FROM \"field_reserves\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -11069,13 +11069,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00454:Literal:wellbore_exploration_all:wlbFactMapUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "factMapURL",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:factMapURL",
-      "targetObject": "<{wlbFactMapUrl}> ",
+      "targetObject": "<{wlbFactMapUrl}>",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:factMapURL <{wlbFactMapUrl}> .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbFactMapUrl\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -11098,7 +11098,7 @@ export const npdMappingData = {
       "entityName": "inLithostratigraphicUnit",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/depth/{lsuTopDepth}/{lsuBottomDepth}",
       "targetPredicate": "npdv:inLithostratigraphicUnit",
-      "targetObject": "npd:stratum/{lsuNpdidLithoStrat} ",
+      "targetObject": "npd:stratum/{lsuNpdidLithoStrat}",
       "target": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/depth/{lsuTopDepth}/{lsuBottomDepth} npdv:inLithostratigraphicUnit npd:stratum/{lsuNpdidLithoStrat} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"lsuNpdidLithoStrat\", \"lsuTopDepth\", \"lsuBottomDepth\" FROM \"strat_litho_wellbore\"",
       "sourceTables": [
@@ -11126,7 +11126,7 @@ export const npdMappingData = {
       "entityName": "dateTaskExpiry",
       "targetSubject": "npd:licence/{prlNpdidLicence}/task/{prlTaskID}",
       "targetPredicate": "npdv:dateTaskExpiry",
-      "targetObject": "{prlTaskExpiryDate}^^xsd:date ",
+      "targetObject": "{prlTaskExpiryDate}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/task/{prlTaskID} npdv:dateTaskExpiry {prlTaskExpiryDate}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlTaskID\", \"prlTaskExpiryDate\" FROM \"licence_task\" WHERE \"prlTaskExpiryDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -11152,7 +11152,7 @@ export const npdMappingData = {
       "entityName": "dateUpdatedMax",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}",
       "targetPredicate": "ptl:dateUpdatedMax",
-      "targetObject": "{ptlDateUpdatedMax}^^xsd:date ",
+      "targetObject": "{ptlDateUpdatedMax}^^xsd:date",
       "target": "npd:petreg/facility/{tufNpdidTuf} ptl:dateUpdatedMax {ptlDateUpdatedMax}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"ptlDateUpdatedMax\" FROM \"tuf_petreg_licence\" WHERE \"ptlDateUpdatedMax\" <> '9999-12-31'",
       "sourceTables": [
@@ -11176,7 +11176,7 @@ export const npdMappingData = {
       "entityName": "wellboreTotalDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreTotalDepth",
-      "targetObject": "{wlbTotalDepth}^^xsd:decimal ",
+      "targetObject": "{wlbTotalDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreTotalDepth {wlbTotalDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbTotalDepth\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -11199,7 +11199,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:field/{fldNpdidField}/operator/{cmpNpdidCompany}/history/{fldOperatorFrom}/{fldOperatorTo}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/operator/{cmpNpdidCompany}/history/{fldOperatorFrom}/{fldOperatorTo} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"cmpNpdidCompany\", \"fldOperatorFrom\", \"fldOperatorTo\", \"dateSyncNPD\" FROM \"field_operator_hst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -11229,7 +11229,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:field/{fldNpdidField}/licensee/{cmpNpdidCompany}/history/{fldLicenseeFrom}/{fldLicenseeTo}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{fldLicenseeDateUpdated}^^xsd:date ",
+      "targetObject": "{fldLicenseeDateUpdated}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/licensee/{cmpNpdidCompany}/history/{fldLicenseeFrom}/{fldLicenseeTo} npdv:dateUpdated {fldLicenseeDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"cmpNpdidCompany\", \"fldLicenseeFrom\", \"fldLicenseeTo\", \"fldLicenseeDateUpdated\" FROM \"field_licensee_hst\" WHERE \"fldLicenseeDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -11259,7 +11259,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{fclNpdidFacility}^^xsd:integer ",
+      "targetObject": "{fclNpdidFacility}^^xsd:integer",
       "target": "npd:facility/{fclNpdidFacility} npdv:idNPD {fclNpdidFacility}^^xsd:integer .",
       "sourceSql": "SELECT \"fclNpdidFacility\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -11281,7 +11281,7 @@ export const npdMappingData = {
       "entityName": "degreesEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:degreesEW",
-      "targetObject": "{wlbEwDeg}^^xsd:integer ",
+      "targetObject": "{wlbEwDeg}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:degreesEW {wlbEwDeg}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwDeg\" FROM \"wellbore_coordinates\"",
       "sourceTables": [
@@ -11304,7 +11304,7 @@ export const npdMappingData = {
       "entityName": "wellboreLicensingActivity",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreLicensingActivity",
-      "targetObject": "{wlbLicensingActivity}^^xsd:string ",
+      "targetObject": "{wlbLicensingActivity}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreLicensingActivity {wlbLicensingActivity}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbLicensingActivity\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -11327,7 +11327,7 @@ export const npdMappingData = {
       "entityName": "producedCondensate",
       "targetSubject": "npd:ncs/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:producedCondensate",
-      "targetObject": "{prfPrdCondensateNetMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdCondensateNetMillSm3}^^xsd:decimal",
       "target": "npd:ncs/production/{prfYear}/{prfMonth} npdv:producedCondensate {prfPrdCondensateNetMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfYear\", \"prfMonth\", \"prfPrdCondensateNetMillSm3\" FROM \"field_production_totalt_NCS_month\"",
       "sourceTables": [
@@ -11352,7 +11352,7 @@ export const npdMappingData = {
       "entityName": "pipelineFromFacility",
       "targetSubject": "npd:pipeline/{pipNpdidPipe}",
       "targetPredicate": "npdv:pipelineFromFacility",
-      "targetObject": "npd:facility/{pipNpdidFromFacility} ",
+      "targetObject": "npd:facility/{pipNpdidFromFacility}",
       "target": "npd:pipeline/{pipNpdidPipe} npdv:pipelineFromFacility npd:facility/{pipNpdidFromFacility} .",
       "sourceSql": "SELECT \"pipNpdidPipe\", \"pipNpdidFromFacility\" FROM \"pipLine\"",
       "sourceTables": [
@@ -11375,7 +11375,7 @@ export const npdMappingData = {
       "entityName": "remainingOil",
       "targetSubject": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField}",
       "targetPredicate": "npdv:remainingOil",
-      "targetObject": "{cmpRemainingOil}^^xsd:decimal ",
+      "targetObject": "{cmpRemainingOil}^^xsd:decimal",
       "target": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField} npdv:remainingOil {cmpRemainingOil}^^xsd:decimal .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"fldNpdidField\", \"cmpRemainingOil\" FROM \"company_reserves\"",
       "sourceTables": [
@@ -11400,7 +11400,7 @@ export const npdMappingData = {
       "entityName": "wellboreReentryExplorationActivity",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreReentryExplorationActivity",
-      "targetObject": "{wlbReentryExplorationActivity}^^xsd:string ",
+      "targetObject": "{wlbReentryExplorationActivity}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreReentryExplorationActivity {wlbReentryExplorationActivity}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbReentryExplorationActivity\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -11423,7 +11423,7 @@ export const npdMappingData = {
       "entityName": "dateFieldLicenseeFrom",
       "targetSubject": "npd:field/{fldNpdidField}/licensee/{cmpNpdidCompany}/history/{fldLicenseeFrom}/{fldLicenseeTo}",
       "targetPredicate": "npdv:dateFieldLicenseeFrom",
-      "targetObject": "{fldLicenseeFrom}^^xsd:date ",
+      "targetObject": "{fldLicenseeFrom}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/licensee/{cmpNpdidCompany}/history/{fldLicenseeFrom}/{fldLicenseeTo} npdv:dateFieldLicenseeFrom {fldLicenseeFrom}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"cmpNpdidCompany\", \"fldLicenseeFrom\", \"fldLicenseeTo\" FROM \"field_licensee_hst\" WHERE \"fldLicenseeFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -11452,7 +11452,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:company/{cmpNpdidCompany}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{cmpLongName}^^xsd:string ",
+      "targetObject": "{cmpLongName}^^xsd:string",
       "target": "npd:company/{cmpNpdidCompany} npdv:name {cmpLongName}^^xsd:string .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"cmpLongName\" FROM \"company\"",
       "sourceTables": [
@@ -11475,7 +11475,7 @@ export const npdMappingData = {
       "entityName": "wellboreKellyBushElevation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreKellyBushElevation",
-      "targetObject": "{wlbKellyBushElevation}^^xsd:decimal ",
+      "targetObject": "{wlbKellyBushElevation}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreKellyBushElevation {wlbKellyBushElevation}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbKellyBushElevation\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -11498,7 +11498,7 @@ export const npdMappingData = {
       "entityName": "registeredInCountry",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:registeredInCountry",
-      "targetObject": "<http://dbpedia.org/resource/Denmark> ",
+      "targetObject": "<http://dbpedia.org/resource/Denmark>",
       "target": "npd:facility/{fclNpdidFacility} npdv:registeredInCountry <http://dbpedia.org/resource/Denmark> .",
       "sourceSql": "SELECT \"fclNpdidFacility\" FROM \"facility_moveable\" WHERE \"fclNationName\"='Denmark'",
       "sourceTables": [
@@ -11521,7 +11521,7 @@ export const npdMappingData = {
       "entityName": "registeredInCountry",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:registeredInCountry",
-      "targetObject": "<http://dbpedia.org/resource/Norway> ",
+      "targetObject": "<http://dbpedia.org/resource/Norway>",
       "target": "npd:facility/{fclNpdidFacility} npdv:registeredInCountry <http://dbpedia.org/resource/Norway> .",
       "sourceSql": "SELECT \"fclNpdidFacility\" FROM \"facility_moveable\" WHERE \"fclNationName\"='NORWAY'",
       "sourceTables": [
@@ -11544,7 +11544,7 @@ export const npdMappingData = {
       "entityName": "registeredInCountry",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:registeredInCountry",
-      "targetObject": "<http://dbpedia.org/resource/China> ",
+      "targetObject": "<http://dbpedia.org/resource/China>",
       "target": "npd:facility/{fclNpdidFacility} npdv:registeredInCountry <http://dbpedia.org/resource/China> .",
       "sourceSql": "SELECT \"fclNpdidFacility\" FROM \"facility_moveable\" WHERE \"fclNationName\"='China'",
       "sourceTables": [
@@ -11567,7 +11567,7 @@ export const npdMappingData = {
       "entityName": "registeredInCountry",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:registeredInCountry",
-      "targetObject": "<http://dbpedia.org/resource/Marshall_Islands> ",
+      "targetObject": "<http://dbpedia.org/resource/Marshall_Islands>",
       "target": "npd:facility/{fclNpdidFacility} npdv:registeredInCountry <http://dbpedia.org/resource/Marshall_Islands> .",
       "sourceSql": "SELECT \"fclNpdidFacility\" FROM \"facility_moveable\" WHERE \"fclNationName\"='Marshall islands'",
       "sourceTables": [
@@ -11590,7 +11590,7 @@ export const npdMappingData = {
       "entityName": "registeredInCountry",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:registeredInCountry",
-      "targetObject": "<http://dbpedia.org/resource/The_Bahamas> ",
+      "targetObject": "<http://dbpedia.org/resource/The_Bahamas>",
       "target": "npd:facility/{fclNpdidFacility} npdv:registeredInCountry <http://dbpedia.org/resource/The_Bahamas> .",
       "sourceSql": "SELECT \"fclNpdidFacility\" FROM \"facility_moveable\" WHERE \"fclNationName\"='Bahamas'",
       "sourceTables": [
@@ -11613,7 +11613,7 @@ export const npdMappingData = {
       "entityName": "registeredInCountry",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:registeredInCountry",
-      "targetObject": "<http://dbpedia.org/resource/Russia> ",
+      "targetObject": "<http://dbpedia.org/resource/Russia>",
       "target": "npd:facility/{fclNpdidFacility} npdv:registeredInCountry <http://dbpedia.org/resource/Russia> .",
       "sourceSql": "SELECT \"fclNpdidFacility\" FROM \"facility_moveable\" WHERE \"fclNationName\"='Russian federation'",
       "sourceTables": [
@@ -11636,7 +11636,7 @@ export const npdMappingData = {
       "entityName": "registeredInCountry",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:registeredInCountry",
-      "targetObject": "<http://dbpedia.org/resource/Liberia> ",
+      "targetObject": "<http://dbpedia.org/resource/Liberia>",
       "target": "npd:facility/{fclNpdidFacility} npdv:registeredInCountry <http://dbpedia.org/resource/Liberia> .",
       "sourceSql": "SELECT \"fclNpdidFacility\" FROM \"facility_moveable\" WHERE \"fclNationName\"='Liberia'",
       "sourceTables": [
@@ -11659,7 +11659,7 @@ export const npdMappingData = {
       "entityName": "registeredInCountry",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:registeredInCountry",
-      "targetObject": "<http://dbpedia.org/resource/Panama> ",
+      "targetObject": "<http://dbpedia.org/resource/Panama>",
       "target": "npd:facility/{fclNpdidFacility} npdv:registeredInCountry <http://dbpedia.org/resource/Panama> .",
       "sourceSql": "SELECT \"fclNpdidFacility\" FROM \"facility_moveable\" WHERE \"fclNationName\"='Panama'",
       "sourceTables": [
@@ -11682,7 +11682,7 @@ export const npdMappingData = {
       "entityName": "registeredInCountry",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:registeredInCountry",
-      "targetObject": "<http://dbpedia.org/resource/Great_Britain> ",
+      "targetObject": "<http://dbpedia.org/resource/Great_Britain>",
       "target": "npd:facility/{fclNpdidFacility} npdv:registeredInCountry <http://dbpedia.org/resource/Great_Britain> .",
       "sourceSql": "SELECT \"fclNpdidFacility\" FROM \"facility_moveable\" WHERE \"fclNationName\"='GREAT BRITAIN'",
       "sourceTables": [
@@ -11705,7 +11705,7 @@ export const npdMappingData = {
       "entityName": "registeredInCountry",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:registeredInCountry",
-      "targetObject": "<http://dbpedia.org/resource/Singapore> ",
+      "targetObject": "<http://dbpedia.org/resource/Singapore>",
       "target": "npd:facility/{fclNpdidFacility} npdv:registeredInCountry <http://dbpedia.org/resource/Singapore> .",
       "sourceSql": "SELECT \"fclNpdidFacility\" FROM \"facility_moveable\" WHERE \"fclNationName\"='Singapore'",
       "sourceTables": [
@@ -11728,7 +11728,7 @@ export const npdMappingData = {
       "entityName": "utmNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:utmNS",
-      "targetObject": "{wlbNsUtm}^^xsd:decimal ",
+      "targetObject": "{wlbNsUtm}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:utmNS {wlbNsUtm}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsUtm\" FROM \"wellbore_coordinates\"",
       "sourceTables": [
@@ -11751,7 +11751,7 @@ export const npdMappingData = {
       "entityName": "dateLicenceAreaValidFrom",
       "targetSubject": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:dateLicenceAreaValidFrom",
-      "targetObject": "{prlAreaPolyDateValidFrom}^^xsd:date ",
+      "targetObject": "{prlAreaPolyDateValidFrom}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:dateLicenceAreaValidFrom {prlAreaPolyDateValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"prlArea_id\", \"prlNpdidLicence\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"prlArea\" WHERE \"prlAreaPolyDateValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -11780,7 +11780,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart3",
-      "targetObject": "{wlbNamePart3}^^xsd:string ",
+      "targetObject": "{wlbNamePart3}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart3 {wlbNamePart3}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart3\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -11803,7 +11803,7 @@ export const npdMappingData = {
       "entityName": "producedNGL",
       "targetSubject": "npd:ncs/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:producedNGL",
-      "targetObject": "{prfPrdNGLNetMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdNGLNetMillSm3}^^xsd:decimal",
       "target": "npd:ncs/production/{prfYear}/{prfMonth} npdv:producedNGL {prfPrdNGLNetMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfYear\", \"prfMonth\", \"prfPrdNGLNetMillSm3\" FROM \"field_production_totalt_NCS_month\"",
       "sourceTables": [
@@ -11828,7 +11828,7 @@ export const npdMappingData = {
       "entityName": "sensorType",
       "targetSubject": "npd:survey/{seaSurveyName}/multiline",
       "targetPredicate": "npdv:sensorType",
-      "targetObject": "{seaSensorType}^^xsd:string ",
+      "targetObject": "{seaSensorType}^^xsd:string",
       "target": "npd:survey/{seaSurveyName}/multiline npdv:sensorType {seaSensorType}^^xsd:string .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaSensorType\" FROM \"seaMultiline\"",
       "sourceTables": [
@@ -11851,7 +11851,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:field/{fldNpdidField}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:field/{fldNpdidField} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"dateSyncNPD\" FROM \"field\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -11875,7 +11875,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{prlDateUpdated}^^xsd:date ",
+      "targetObject": "{prlDateUpdated}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence} npdv:dateUpdated {prlDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlDateUpdated\" FROM \"licence\" WHERE \"prlDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -11899,7 +11899,7 @@ export const npdMappingData = {
       "entityName": "isFormerLicenceLicensee",
       "targetSubject": "npd:company/{cmpNpdidCompany}",
       "targetPredicate": "npdv:isFormerLicenceLicensee",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:company/{cmpNpdidCompany} npdv:isFormerLicenceLicensee \"true\" .",
       "sourceSql": "SELECT \"cmpNpdidCompany\" FROM \"company\" WHERE \"cmpLicenceLicenseeFormer\"='Y'",
       "sourceTables": [
@@ -11922,7 +11922,7 @@ export const npdMappingData = {
       "entityName": "isFormerLicenceLicensee",
       "targetSubject": "npd:company/{cmpNpdidCompany}",
       "targetPredicate": "npdv:isFormerLicenceLicensee",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:company/{cmpNpdidCompany} npdv:isFormerLicenceLicensee \"false\" .",
       "sourceSql": "SELECT \"cmpNpdidCompany\" FROM \"company\" WHERE \"cmpLicenceLicenseeFormer\"='N'",
       "sourceTables": [
@@ -11945,7 +11945,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:licence/{prlNpdidLicence}/licensee/{cmpNpdidCompany}/history/{prlLicenseeDateValidFrom}/{prlLicenseeDateValidTo}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/licensee/{cmpNpdidCompany}/history/{prlLicenseeDateValidFrom}/{prlLicenseeDateValidTo} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"cmpNpdidCompany\", \"prlLicenseeDateValidFrom\", \"prlLicenseeDateValidTo\", \"dateSyncNPD\" FROM \"licence_licensee_hst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -11969,13 +11969,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00492:Literal:pipLine:pipCurrentPhase",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "currentStatus",
       "targetSubject": "npd:pipeline/{pipNpdidPipe}",
       "targetPredicate": "npdv:currentStatus",
-      "targetObject": "{pipCurrentPhase} ",
+      "targetObject": "{pipCurrentPhase}",
       "target": "npd:pipeline/{pipNpdidPipe} npdv:currentStatus {pipCurrentPhase} .",
       "sourceSql": "SELECT \"pipNpdidPipe\", \"pipCurrentPhase\" FROM \"pipLine\"",
       "sourceTables": [
@@ -11998,7 +11998,7 @@ export const npdMappingData = {
       "entityName": "licenseeInterest",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/licensee/{cmpNpdidCompany}/history/{baaLicenseeDateValidFrom}/{baaLicenseeDateValidTo}",
       "targetPredicate": "npdv:licenseeInterest",
-      "targetObject": "{baaLicenseeInterest}^^xsd:decimal ",
+      "targetObject": "{baaLicenseeInterest}^^xsd:decimal",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/licensee/{cmpNpdidCompany}/history/{baaLicenseeDateValidFrom}/{baaLicenseeDateValidTo} npdv:licenseeInterest {baaLicenseeInterest}^^xsd:decimal .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"cmpNpdidCompany\", \"baaLicenseeDateValidFrom\", \"baaLicenseeDateValidTo\", \"baaLicenseeInterest\" FROM \"bsns_arr_area_licensee_hst\"",
       "sourceTables": [
@@ -12027,7 +12027,7 @@ export const npdMappingData = {
       "entityName": "coreIntervalTop",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}",
       "targetPredicate": "npdv:coreIntervalTop",
-      "targetObject": "{wlbCoreIntervalTop}^^xsd:decimal ",
+      "targetObject": "{wlbCoreIntervalTop}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber} npdv:coreIntervalTop {wlbCoreIntervalTop}^^xsd:decimal .",
       "sourceSql": "SELECT \"wellbore_core_id\", \"wlbNpdidWellbore\", \"wlbCoreNumber\", \"wlbCoreIntervalTop\" FROM \"wellbore_core\"",
       "sourceTables": [
@@ -12053,7 +12053,7 @@ export const npdMappingData = {
       "entityName": "producedOilEquivalents",
       "targetSubject": "npd:ncs/production/{prfYear}",
       "targetPredicate": "npdv:producedOilEquivalents",
-      "targetObject": "{prfPrdOeNetMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdOeNetMillSm3}^^xsd:decimal",
       "target": "npd:ncs/production/{prfYear} npdv:producedOilEquivalents {prfPrdOeNetMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfYear\", \"prfPrdOeNetMillSm3\" FROM \"field_production_totalt_NCS_year\"",
       "sourceTables": [
@@ -12076,7 +12076,7 @@ export const npdMappingData = {
       "entityName": "isDiscoveryWellbore",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:isDiscoveryWellbore",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:isDiscoveryWellbore \"true\" .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbDiscoveryWellbore\"='YES'",
       "sourceTables": [
@@ -12099,7 +12099,7 @@ export const npdMappingData = {
       "entityName": "isDiscoveryWellbore",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:isDiscoveryWellbore",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:isDiscoveryWellbore \"false\" .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbDiscoveryWellbore\"='NO'",
       "sourceTables": [
@@ -12122,7 +12122,7 @@ export const npdMappingData = {
       "entityName": "decimalDegreesEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:decimalDegreesEW",
-      "targetObject": "{wlbEwDesDeg}^^xsd:decimal ",
+      "targetObject": "{wlbEwDesDeg}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:decimalDegreesEW {wlbEwDesDeg}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwDesDeg\" FROM \"wellbore_coordinates\"",
       "sourceTables": [
@@ -12145,7 +12145,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:field/{fldNpdidField}/activity/{fldStatus}/history/{fldStatusFromDate}/{fldStatusToDate}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{fldStatusDateUpdated}^^xsd:date ",
+      "targetObject": "{fldStatusDateUpdated}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/activity/{fldStatus}/history/{fldStatusFromDate}/{fldStatusToDate} npdv:dateUpdated {fldStatusDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldStatus\", \"fldStatusFromDate\", \"fldStatusToDate\", \"fldStatusDateUpdated\" FROM \"field_activity_status_hst\" WHERE \"fldStatusDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -12175,7 +12175,7 @@ export const npdMappingData = {
       "entityName": "dateIncludedInField",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}",
       "targetPredicate": "npdv:dateIncludedInField",
-      "targetObject": "{dscDateFromInclInField}^^xsd:date ",
+      "targetObject": "{dscDateFromInclInField}^^xsd:date",
       "target": "npd:discovery/{dscNpdidDiscovery} npdv:dateIncludedInField {dscDateFromInclInField}^^xsd:date .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscDateFromInclInField\" FROM \"discovery\" WHERE \"dscDateFromInclInField\" <> '9999-12-31'",
       "sourceTables": [
@@ -12199,7 +12199,7 @@ export const npdMappingData = {
       "entityName": "remainingCondensate",
       "targetSubject": "npd:field/{fldNpdidField}/reserve",
       "targetPredicate": "npdv:remainingCondensate",
-      "targetObject": "{fldRemainingCondensate}^^xsd:decimal ",
+      "targetObject": "{fldRemainingCondensate}^^xsd:decimal",
       "target": "npd:field/{fldNpdidField}/reserve npdv:remainingCondensate {fldRemainingCondensate}^^xsd:decimal .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldRemainingCondensate\" FROM \"field_reserves\"",
       "sourceTables": [
@@ -12222,7 +12222,7 @@ export const npdMappingData = {
       "entityName": "utmEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:utmEW",
-      "targetObject": "{wlbEwUtm}^^xsd:decimal ",
+      "targetObject": "{wlbEwUtm}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:utmEW {wlbEwUtm}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwUtm\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -12245,7 +12245,7 @@ export const npdMappingData = {
       "entityName": "sourceType",
       "targetSubject": "npd:survey/{seaSurveyName}/area",
       "targetPredicate": "npdv:sourceType",
-      "targetObject": "{seaSourceType}^^xsd:string ",
+      "targetObject": "{seaSourceType}^^xsd:string",
       "target": "npd:survey/{seaSurveyName}/area npdv:sourceType {seaSourceType}^^xsd:string .",
       "sourceSql": "SELECT \"seaArea_id\", \"seaSurveyName\", \"seaSourceType\" FROM \"seaArea\"",
       "sourceTables": [
@@ -12269,7 +12269,7 @@ export const npdMappingData = {
       "entityName": "utmZone",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:utmZone",
-      "targetObject": "{wlbUtmZone}^^xsd:integer ",
+      "targetObject": "{wlbUtmZone}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:utmZone {wlbUtmZone}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbUtmZone\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -12292,7 +12292,7 @@ export const npdMappingData = {
       "entityName": "recoverableCondensate",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC}",
       "targetPredicate": "npdv:recoverableCondensate",
-      "targetObject": "{dscRecoverableCondensate}^^xsd:decimal ",
+      "targetObject": "{dscRecoverableCondensate}^^xsd:decimal",
       "target": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC} npdv:recoverableCondensate {dscRecoverableCondensate}^^xsd:decimal .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscReservesRC\", \"dscRecoverableCondensate\" FROM \"discovery_reserves\"",
       "sourceTables": [
@@ -12317,7 +12317,7 @@ export const npdMappingData = {
       "entityName": "dateBaaAreaValidTo",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/polygon/{baaNpdidBsnsArrAreaPoly}",
       "targetPredicate": "npdv:dateBaaAreaValidTo",
-      "targetObject": "{baaAreaPolyDateValidTo}^^xsd:date ",
+      "targetObject": "{baaAreaPolyDateValidTo}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/polygon/{baaNpdidBsnsArrAreaPoly} npdv:dateBaaAreaValidTo {baaAreaPolyDateValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaNpdidBsnsArrAreaPoly\", \"baaAreaPolyDateValidTo\" FROM \"baaArea\" WHERE \"baaAreaPolyDateValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -12343,7 +12343,7 @@ export const npdMappingData = {
       "entityName": "drillingFacility",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:drillingFacility",
-      "targetObject": "npd:facility/{fclNpdidFacilityDrilling} ",
+      "targetObject": "npd:facility/{fclNpdidFacilityDrilling}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:drillingFacility npd:facility/{fclNpdidFacilityDrilling} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"fclNpdidFacilityDrilling\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -12366,7 +12366,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:petreg/licence/{prlNpdidLicence} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"dateSyncNPD\" FROM \"licence_petreg_licence_oper\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -12390,7 +12390,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:facility/{fclNpdidFacility} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"dateSyncNPD\" FROM \"facility_fixed\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -12414,7 +12414,7 @@ export const npdMappingData = {
       "entityName": "SDFI",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/licensee/{cmpNpdidCompany}/history/{baaLicenseeDateValidFrom}/{baaLicenseeDateValidTo}",
       "targetPredicate": "npdv:SDFI",
-      "targetObject": "{baaLicenseeSdfi}^^xsd:decimal ",
+      "targetObject": "{baaLicenseeSdfi}^^xsd:decimal",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/licensee/{cmpNpdidCompany}/history/{baaLicenseeDateValidFrom}/{baaLicenseeDateValidTo} npdv:SDFI {baaLicenseeSdfi}^^xsd:decimal .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"cmpNpdidCompany\", \"baaLicenseeDateValidFrom\", \"baaLicenseeDateValidTo\", \"baaLicenseeSdfi\" FROM \"bsns_arr_area_licensee_hst\"",
       "sourceTables": [
@@ -12443,7 +12443,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}/message/{ptlMessageDocumentNo}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:petreg/licence/{prlNpdidLicence}/message/{ptlMessageDocumentNo} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"ptlMessageDocumentNo\", \"dateSyncNPD\" FROM \"licence_petreg_message\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -12469,7 +12469,7 @@ export const npdMappingData = {
       "entityName": "corePhotoTitle",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}/photo/{wellbore_core_photo_id}/{wlbCorePhotoTitle}",
       "targetPredicate": "npdv:corePhotoTitle",
-      "targetObject": "{wlbCorePhotoTitle}^^xsd:string ",
+      "targetObject": "{wlbCorePhotoTitle}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}/photo/{wellbore_core_photo_id}/{wlbCorePhotoTitle} npdv:corePhotoTitle {wlbCorePhotoTitle}^^xsd:string .",
       "sourceSql": "SELECT \"wellbore_core_photo_id\", \"wlbNpdidWellbore\", \"wlbCoreNumber\", \"wlbCorePhotoTitle\" FROM \"wellbore_core_photo\"",
       "sourceTables": [
@@ -12497,7 +12497,7 @@ export const npdMappingData = {
       "entityName": "isMarketAvailable",
       "targetSubject": "npd:survey/{seaSurveyName}/multiline",
       "targetPredicate": "npdv:isMarketAvailable",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:survey/{seaSurveyName}/multiline npdv:isMarketAvailable \"true\" .",
       "sourceSql": "SELECT \"seaSurveyName\" FROM \"seaMultiline\" WHERE \"seaMarketAvailable\"='Ja'",
       "sourceTables": [
@@ -12520,7 +12520,7 @@ export const npdMappingData = {
       "entityName": "isMarketAvailable",
       "targetSubject": "npd:survey/{seaSurveyName}/multiline",
       "targetPredicate": "npdv:isMarketAvailable",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:survey/{seaSurveyName}/multiline npdv:isMarketAvailable \"false\" .",
       "sourceSql": "SELECT \"seaSurveyName\" FROM \"seaMultiline\" WHERE \"seaMarketAvailable\"='Nei'",
       "sourceTables": [
@@ -12543,7 +12543,7 @@ export const npdMappingData = {
       "entityName": "productionYear",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:productionYear",
-      "targetObject": "{prfYear}^^xsd:integer ",
+      "targetObject": "{prfYear}^^xsd:integer",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth} npdv:productionYear {prfYear}^^xsd:integer .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\", \"prfMonth\" FROM \"field_production_monthly\"",
       "sourceTables": [
@@ -12569,7 +12569,7 @@ export const npdMappingData = {
       "entityName": "licensingActivityName",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:licensingActivityName",
-      "targetObject": "{prlLicensingActivityName}^^xsd:string ",
+      "targetObject": "{prlLicensingActivityName}^^xsd:string",
       "target": "npd:licence/{prlNpdidLicence} npdv:licensingActivityName {prlLicensingActivityName}^^xsd:string .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlLicensingActivityName\" FROM \"licence\"",
       "sourceTables": [
@@ -12592,7 +12592,7 @@ export const npdMappingData = {
       "entityName": "documentSize",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/document/{wellbore_document_id}/{wlbDocumentName}",
       "targetPredicate": "npdv:documentSize",
-      "targetObject": "{wlbDocumentSize}^^xsd:decimal ",
+      "targetObject": "{wlbDocumentSize}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/document/{wellbore_document_id}/{wlbDocumentName} npdv:documentSize {wlbDocumentSize}^^xsd:decimal .",
       "sourceSql": "SELECT \"wellbore_document_id\", \"wlbNpdidWellbore\", \"wlbDocumentName\", \"wlbDocumentSize\" FROM \"wellbore_document\"",
       "sourceTables": [
@@ -12619,7 +12619,7 @@ export const npdMappingData = {
       "entityName": "dateTUFOwnerValidFrom",
       "targetSubject": "npd:facility/{tufNpdidTuf}/owner/{cmpNpdidCompany}/history/{tufOwnerDateValidFrom}/{tufOwnerDateValidTo}",
       "targetPredicate": "npdv:dateTUFOwnerValidFrom",
-      "targetObject": "{tufOwnerDateValidFrom}^^xsd:date ",
+      "targetObject": "{tufOwnerDateValidFrom}^^xsd:date",
       "target": "npd:facility/{tufNpdidTuf}/owner/{cmpNpdidCompany}/history/{tufOwnerDateValidFrom}/{tufOwnerDateValidTo} npdv:dateTUFOwnerValidFrom {tufOwnerDateValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"cmpNpdidCompany\", \"tufOwnerDateValidFrom\", \"tufOwnerDateValidTo\" FROM \"tuf_owner_hst\" WHERE \"tufOwnerDateValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -12648,7 +12648,7 @@ export const npdMappingData = {
       "entityName": "isCurrentLicenceLicensee",
       "targetSubject": "npd:company/{cmpNpdidCompany}",
       "targetPredicate": "npdv:isCurrentLicenceLicensee",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:company/{cmpNpdidCompany} npdv:isCurrentLicenceLicensee \"true\" .",
       "sourceSql": "SELECT \"cmpNpdidCompany\" FROM \"company\" WHERE \"cmpLicenceLicenseeCurrent\"='Y'",
       "sourceTables": [
@@ -12671,7 +12671,7 @@ export const npdMappingData = {
       "entityName": "isCurrentLicenceLicensee",
       "targetSubject": "npd:company/{cmpNpdidCompany}",
       "targetPredicate": "npdv:isCurrentLicenceLicensee",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:company/{cmpNpdidCompany} npdv:isCurrentLicenceLicensee \"false\" .",
       "sourceSql": "SELECT \"cmpNpdidCompany\" FROM \"company\" WHERE \"cmpLicenceLicenseeCurrent\"='N'",
       "sourceTables": [
@@ -12694,7 +12694,7 @@ export const npdMappingData = {
       "entityName": "producedOil",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:producedOil",
-      "targetObject": "{prfPrdOilNetMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdOilNetMillSm3}^^xsd:decimal",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth} npdv:producedOil {prfPrdOilNetMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\", \"prfMonth\", \"prfPrdOilNetMillSm3\" FROM \"field_production_monthly\"",
       "sourceTables": [
@@ -12721,7 +12721,7 @@ export const npdMappingData = {
       "entityName": "producedOilEquivalents",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:producedOilEquivalents",
-      "targetObject": "{prfPrdOeNetMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdOeNetMillSm3}^^xsd:decimal",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth} npdv:producedOilEquivalents {prfPrdOeNetMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\", \"prfMonth\", \"prfPrdOeNetMillSm3\" FROM \"field_production_monthly\"",
       "sourceTables": [
@@ -12748,7 +12748,7 @@ export const npdMappingData = {
       "entityName": "oilSampleTestType",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id}",
       "targetPredicate": "npdv:oilSampleTestType",
-      "targetObject": "{wlbOilSampleTestType}^^xsd:string ",
+      "targetObject": "{wlbOilSampleTestType}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id} npdv:oilSampleTestType {wlbOilSampleTestType}^^xsd:string .",
       "sourceSql": "SELECT \"wellbore_oil_sample_id\", \"wlbNpdidWellbore\", \"wlbOilSampleTestType\" FROM \"wellbore_oil_sample\"",
       "sourceTables": [
@@ -12767,13 +12767,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00525:Literal:licence_task:prlTaskStatusEn",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "status",
       "targetSubject": "npd:licence/{prlNpdidLicence}/task/{prlTaskID}",
       "targetPredicate": "npdv:status",
-      "targetObject": "{prlTaskStatusEn} ",
+      "targetObject": "{prlTaskStatusEn}",
       "target": "npd:licence/{prlNpdidLicence}/task/{prlTaskID} npdv:status {prlTaskStatusEn} .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlTaskID\", \"prlTaskStatusEn\" FROM \"licence_task\"",
       "sourceTables": [
@@ -12792,13 +12792,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00526:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Campanian ",
+      "targetObject": "isc:Campanian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Campanian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='CAMPANIAN'",
       "sourceTables": [
@@ -12815,13 +12815,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00527:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Carboniferous ",
+      "targetObject": "isc:Carboniferous",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Carboniferous .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='CARBONIFEROUS'",
       "sourceTables": [
@@ -12838,13 +12838,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00528:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Cretaceous ",
+      "targetObject": "isc:Cretaceous",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Cretaceous .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='CRETACEOUS'",
       "sourceTables": [
@@ -12861,13 +12861,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00529:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Danian ",
+      "targetObject": "isc:Danian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Danian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='DANIAN'",
       "sourceTables": [
@@ -12884,13 +12884,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00530:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Devonian ",
+      "targetObject": "isc:Devonian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Devonian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='DEVONIAN'",
       "sourceTables": [
@@ -12907,13 +12907,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00531:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Mississippian ",
+      "targetObject": "isc:Mississippian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Mississippian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='EARLY CARBONIFEROUS'",
       "sourceTables": [
@@ -12930,13 +12930,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00532:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:LowerCretaceous ",
+      "targetObject": "isc:LowerCretaceous",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:LowerCretaceous .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='EARLY CRETACEOUS'",
       "sourceTables": [
@@ -12953,13 +12953,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00533:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:LowerJurassic ",
+      "targetObject": "isc:LowerJurassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:LowerJurassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='EARLY JURASSIC'",
       "sourceTables": [
@@ -12976,13 +12976,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00534:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Cisuralian ",
+      "targetObject": "isc:Cisuralian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Cisuralian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='EARLY PERMIAN'",
       "sourceTables": [
@@ -12999,13 +12999,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00535:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:LowerTriassic ",
+      "targetObject": "isc:LowerTriassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:LowerTriassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='EARLY TRIASSIC'",
       "sourceTables": [
@@ -13022,13 +13022,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00536:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Eocene ",
+      "targetObject": "isc:Eocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Eocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='EOCENE'",
       "sourceTables": [
@@ -13045,13 +13045,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00537:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Jurassic ",
+      "targetObject": "isc:Jurassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Jurassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='JURASSIC'",
       "sourceTables": [
@@ -13068,13 +13068,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00538:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Pennsylvanian ",
+      "targetObject": "isc:Pennsylvanian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Pennsylvanian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='LATE CARBONIFEROUS'",
       "sourceTables": [
@@ -13091,13 +13091,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00539:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:UpperCretaceous ",
+      "targetObject": "isc:UpperCretaceous",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:UpperCretaceous .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='LATE CRETACEOUS'",
       "sourceTables": [
@@ -13114,13 +13114,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00540:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:UpperJurassic ",
+      "targetObject": "isc:UpperJurassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:UpperJurassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='LATE JURASSIC'",
       "sourceTables": [
@@ -13137,13 +13137,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00541:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Thanetian ",
+      "targetObject": "isc:Thanetian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Thanetian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='LATE PALEOCENE'",
       "sourceTables": [
@@ -13160,13 +13160,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00542:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Lopingian ",
+      "targetObject": "isc:Lopingian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Lopingian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='LATE PERMIAN'",
       "sourceTables": [
@@ -13183,13 +13183,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00543:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Piacenzian ",
+      "targetObject": "isc:Piacenzian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Piacenzian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='LATE PLIOCENE'",
       "sourceTables": [
@@ -13206,13 +13206,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00544:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:UpperTriassic ",
+      "targetObject": "isc:UpperTriassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:UpperTriassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='LATE TRIASSIC'",
       "sourceTables": [
@@ -13229,13 +13229,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00545:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:MiddleJurassic ",
+      "targetObject": "isc:MiddleJurassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:MiddleJurassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='MIDDLE JURASSIC'",
       "sourceTables": [
@@ -13252,13 +13252,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00546:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:MiddleTriassic ",
+      "targetObject": "isc:MiddleTriassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:MiddleTriassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='MIDDLE TRIASSIC'",
       "sourceTables": [
@@ -13275,13 +13275,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00547:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Miocene ",
+      "targetObject": "isc:Miocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Miocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='MIOCENE'",
       "sourceTables": [
@@ -13298,13 +13298,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00548:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Oligocene ",
+      "targetObject": "isc:Oligocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Oligocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='OLIGOCENE'",
       "sourceTables": [
@@ -13321,13 +13321,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00549:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Paleocene ",
+      "targetObject": "isc:Paleocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Paleocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='PALEOCENE'",
       "sourceTables": [
@@ -13344,13 +13344,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00550:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Permian ",
+      "targetObject": "isc:Permian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Permian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='PERMIAN'",
       "sourceTables": [
@@ -13367,13 +13367,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00551:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Pleistocene ",
+      "targetObject": "isc:Pleistocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Pleistocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='PLEISTOCENE'",
       "sourceTables": [
@@ -13390,13 +13390,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00552:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Pliocene ",
+      "targetObject": "isc:Pliocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Pliocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='PLIOCENE'",
       "sourceTables": [
@@ -13413,13 +13413,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00553:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Silurian ",
+      "targetObject": "isc:Silurian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Silurian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='SILURIAN'",
       "sourceTables": [
@@ -13436,13 +13436,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00554:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel3",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel3",
-      "targetObject": "isc:Triassic ",
+      "targetObject": "isc:Triassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel3 isc:Triassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc3\"='TRIASSIC'",
       "sourceTables": [
@@ -13459,13 +13459,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00555:Literal:seaArea:seaSensorLength",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "sensorLength",
       "targetSubject": "npd:survey/{seaSurveyName}/area",
       "targetPredicate": "npdv:sensorLength",
-      "targetObject": "{seaSensorLength} ",
+      "targetObject": "{seaSensorLength}",
       "target": "npd:survey/{seaSurveyName}/area npdv:sensorLength {seaSensorLength} .",
       "sourceSql": "SELECT \"seaArea_id\", \"seaSurveyName\", \"seaSensorLength\" FROM \"seaArea\"",
       "sourceTables": [
@@ -13489,7 +13489,7 @@ export const npdMappingData = {
       "entityName": "decimalDegreesNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:decimalDegreesNS",
-      "targetObject": "{wlbNsDecDeg}^^xsd:decimal ",
+      "targetObject": "{wlbNsDecDeg}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:decimalDegreesNS {wlbNsDecDeg}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsDecDeg\" FROM \"wellbore_coordinates\"",
       "sourceTables": [
@@ -13512,7 +13512,7 @@ export const npdMappingData = {
       "entityName": "isGeotechnicalMeasurement",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:isGeotechnicalMeasurement",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:survey/{seaName} npdv:isGeotechnicalMeasurement \"true\" .",
       "sourceSql": "SELECT \"seaName\" FROM \"seis_acquisition\" WHERE \"seaGeotechnical\"='Ja'",
       "sourceTables": [
@@ -13535,7 +13535,7 @@ export const npdMappingData = {
       "entityName": "isGeotechnicalMeasurement",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:isGeotechnicalMeasurement",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:survey/{seaName} npdv:isGeotechnicalMeasurement \"false\" .",
       "sourceSql": "SELECT \"seaName\" FROM \"seis_acquisition\" WHERE \"seaGeotechnical\"='Nei'",
       "sourceTables": [
@@ -13558,7 +13558,7 @@ export const npdMappingData = {
       "entityName": "isActive",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/polygon/{baaNpdidBsnsArrAreaPoly}",
       "targetPredicate": "npdv:isActive",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/polygon/{baaNpdidBsnsArrAreaPoly} npdv:isActive \"true\" .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaNpdidBsnsArrAreaPoly\" FROM \"baaArea\" WHERE \"baaAreaPolyActive\"='ACTIVE'",
       "sourceTables": [
@@ -13583,7 +13583,7 @@ export const npdMappingData = {
       "entityName": "isActive",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/polygon/{baaNpdidBsnsArrAreaPoly}",
       "targetPredicate": "npdv:isActive",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/polygon/{baaNpdidBsnsArrAreaPoly} npdv:isActive \"false\" .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaNpdidBsnsArrAreaPoly\" FROM \"baaArea\" WHERE \"baaAreaPolyActive\"='INACTIVE'",
       "sourceTables": [
@@ -13608,7 +13608,7 @@ export const npdMappingData = {
       "entityName": "producedGas",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:producedGas",
-      "targetObject": "{prfPrdGasNetBillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdGasNetBillSm3}^^xsd:decimal",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth} npdv:producedGas {prfPrdGasNetBillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\", \"prfMonth\", \"prfPrdGasNetBillSm3\" FROM \"field_production_monthly\"",
       "sourceTables": [
@@ -13635,7 +13635,7 @@ export const npdMappingData = {
       "entityName": "isSamplingPerformed",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:isSamplingPerformed",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:survey/{seaName} npdv:isSamplingPerformed \"true\" .",
       "sourceSql": "SELECT \"seaName\" FROM \"seis_acquisition\" WHERE \"seaSampling\"='Ja'",
       "sourceTables": [
@@ -13658,7 +13658,7 @@ export const npdMappingData = {
       "entityName": "isSamplingPerformed",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:isSamplingPerformed",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:survey/{seaName} npdv:isSamplingPerformed \"false\" .",
       "sourceSql": "SELECT \"seaName\" FROM \"seis_acquisition\" WHERE \"seaSampling\"='Nei'",
       "sourceTables": [
@@ -13681,7 +13681,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{seaName}^^xsd:string ",
+      "targetObject": "{seaName}^^xsd:string",
       "target": "npd:survey/{seaName} npdv:name {seaName}^^xsd:string .",
       "sourceSql": "SELECT \"seaName\" FROM \"seis_acquisition\"",
       "sourceTables": [
@@ -13703,7 +13703,7 @@ export const npdMappingData = {
       "entityName": "recoverableGas",
       "targetSubject": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField}",
       "targetPredicate": "npdv:recoverableGas",
-      "targetObject": "{cmpRecoverableGas}^^xsd:decimal ",
+      "targetObject": "{cmpRecoverableGas}^^xsd:decimal",
       "target": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField} npdv:recoverableGas {cmpRecoverableGas}^^xsd:decimal .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"fldNpdidField\", \"cmpRecoverableGas\" FROM \"company_reserves\"",
       "sourceTables": [
@@ -13728,7 +13728,7 @@ export const npdMappingData = {
       "entityName": "status",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}",
       "targetPredicate": "npdv:status",
-      "targetObject": "{dscCurrentActivityStatus}^^xsd:string ",
+      "targetObject": "{dscCurrentActivityStatus}^^xsd:string",
       "target": "npd:discovery/{dscNpdidDiscovery} npdv:status {dscCurrentActivityStatus}^^xsd:string .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscCurrentActivityStatus\" FROM \"discovery\"",
       "sourceTables": [
@@ -13751,7 +13751,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:company/{cmpNpdidCompany}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{cmpNpdidCompany}^^xsd:integer ",
+      "targetObject": "{cmpNpdidCompany}^^xsd:integer",
       "target": "npd:company/{cmpNpdidCompany} npdv:idNPD {cmpNpdidCompany}^^xsd:integer .",
       "sourceSql": "SELECT \"cmpNpdidCompany\" FROM \"company\"",
       "sourceTables": [
@@ -13773,7 +13773,7 @@ export const npdMappingData = {
       "entityName": "wellboreKellyBushElevation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreKellyBushElevation",
-      "targetObject": "{wlbKellyBushElevation}^^xsd:decimal ",
+      "targetObject": "{wlbKellyBushElevation}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreKellyBushElevation {wlbKellyBushElevation}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbKellyBushElevation\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -13796,7 +13796,7 @@ export const npdMappingData = {
       "entityName": "degreesEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:degreesEW",
-      "targetObject": "{wlbEwDeg}^^xsd:integer ",
+      "targetObject": "{wlbEwDeg}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:degreesEW {wlbEwDeg}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwDeg\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -13813,13 +13813,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00570:Literal:wellbore_coordinates:wlbNsCode",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "空间坐标属性",
       "entityPrefix": "npdv",
       "entityName": "codeNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:codeNS",
-      "targetObject": "{wlbNsCode} ",
+      "targetObject": "{wlbNsCode}",
       "target": "npd:wellbore/{wlbNpdidWellbore}/point npdv:codeNS {wlbNsCode} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsCode\" FROM \"wellbore_coordinates\"",
       "sourceTables": [
@@ -13842,7 +13842,7 @@ export const npdMappingData = {
       "entityName": "waterDepth",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:waterDepth",
-      "targetObject": "{fclWaterDepth}^^xsd:decimal ",
+      "targetObject": "{fclWaterDepth}^^xsd:decimal",
       "target": "npd:facility/{fclNpdidFacility} npdv:waterDepth {fclWaterDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclWaterDepth\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -13865,7 +13865,7 @@ export const npdMappingData = {
       "entityName": "minutesEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:minutesEW",
-      "targetObject": "{wlbEwMin}^^xsd:integer ",
+      "targetObject": "{wlbEwMin}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:minutesEW {wlbEwMin}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwMin\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -13888,7 +13888,7 @@ export const npdMappingData = {
       "entityName": "productionMonth",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:productionMonth",
-      "targetObject": "{prfMonth}^^xsd:integer ",
+      "targetObject": "{prfMonth}^^xsd:integer",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth} npdv:productionMonth {prfMonth}^^xsd:integer .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\", \"prfMonth\" FROM \"field_production_monthly\"",
       "sourceTables": [
@@ -13914,7 +13914,7 @@ export const npdMappingData = {
       "entityName": "wellboreStratumBottomDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/depth/{lsuTopDepth}/{lsuBottomDepth}",
       "targetPredicate": "npdv:wellboreStratumBottomDepth",
-      "targetObject": "{lsuBottomDepth}^^xsd:decimal ",
+      "targetObject": "{lsuBottomDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/depth/{lsuTopDepth}/{lsuBottomDepth} npdv:wellboreStratumBottomDepth {lsuBottomDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"lsuNpdidLithoStrat\", \"lsuTopDepth\", \"lsuBottomDepth\" FROM \"strat_litho_wellbore\"",
       "sourceTables": [
@@ -13942,7 +13942,7 @@ export const npdMappingData = {
       "entityName": "wellboreEntryYear",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreEntryYear",
-      "targetObject": "{wlbEntryYear}^^xsd:integer ",
+      "targetObject": "{wlbEntryYear}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreEntryYear {wlbEntryYear}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEntryYear\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -13965,7 +13965,7 @@ export const npdMappingData = {
       "entityName": "minutesNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:minutesNS",
-      "targetObject": "{wlbNsMin}^^xsd:integer ",
+      "targetObject": "{wlbNsMin}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:minutesNS {wlbNsMin}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsMin\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -13988,7 +13988,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{baaNpdidBsnsArrArea}^^xsd:integer ",
+      "targetObject": "{baaNpdidBsnsArrArea}^^xsd:integer",
       "target": "npd:baa/{baaNpdidBsnsArrArea} npdv:idNPD {baaNpdidBsnsArrArea}^^xsd:integer .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\" FROM \"bsns_arr_area\"",
       "sourceTables": [
@@ -14010,7 +14010,7 @@ export const npdMappingData = {
       "entityName": "producedOil",
       "targetSubject": "npd:ncs/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:producedOil",
-      "targetObject": "{prfPrdOilNetMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdOilNetMillSm3}^^xsd:decimal",
       "target": "npd:ncs/production/{prfYear}/{prfMonth} npdv:producedOil {prfPrdOilNetMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfYear\", \"prfMonth\", \"prfPrdOilNetMillSm3\" FROM \"field_production_totalt_NCS_month\"",
       "sourceTables": [
@@ -14035,7 +14035,7 @@ export const npdMappingData = {
       "entityName": "isSurfaceFacility",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:isSurfaceFacility",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:facility/{fclNpdidFacility} npdv:isSurfaceFacility \"true\" .",
       "sourceSql": "SELECT \"fclNpdidFacility\" FROM \"facility_fixed\" WHERE \"fclSurface\"='Y'",
       "sourceTables": [
@@ -14058,7 +14058,7 @@ export const npdMappingData = {
       "entityName": "isSurfaceFacility",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:isSurfaceFacility",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:facility/{fclNpdidFacility} npdv:isSurfaceFacility \"false\" .",
       "sourceSql": "SELECT \"fclNpdidFacility\" FROM \"facility_fixed\" WHERE \"fclSurface\"='N'",
       "sourceTables": [
@@ -14081,7 +14081,7 @@ export const npdMappingData = {
       "entityName": "minutesEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:minutesEW",
-      "targetObject": "{wlbEwMin}^^xsd:integer ",
+      "targetObject": "{wlbEwMin}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:minutesEW {wlbEwMin}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwMin\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -14104,7 +14104,7 @@ export const npdMappingData = {
       "entityName": "companyGroup",
       "targetSubject": "npd:company/{cmpNpdidCompany}",
       "targetPredicate": "npdv:companyGroup",
-      "targetObject": "{cmpGroup}^^xsd:string ",
+      "targetObject": "{cmpGroup}^^xsd:string",
       "target": "npd:company/{cmpNpdidCompany} npdv:companyGroup {cmpGroup}^^xsd:string .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"cmpGroup\" FROM \"company\"",
       "sourceTables": [
@@ -14127,7 +14127,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/casingleakoff/{wellbore_casing_and_lot_id}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{wlbCasingDateUpdated}^^xsd:date ",
+      "targetObject": "{wlbCasingDateUpdated}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/casingleakoff/{wellbore_casing_and_lot_id} npdv:dateUpdated {wlbCasingDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"wellbore_casing_and_lot_id\", \"wlbNpdidWellbore\", \"wlbCasingDateUpdated\" FROM \"wellbore_casing_and_lot\" WHERE \"wlbCasingDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -14153,7 +14153,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{wlbWellboreName}^^xsd:string ",
+      "targetObject": "{wlbWellboreName}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:name {wlbWellboreName}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbWellboreName\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -14176,7 +14176,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart6",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart6",
-      "targetObject": "{wlbNamePart6}^^xsd:string ",
+      "targetObject": "{wlbNamePart6}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart6 {wlbNamePart6}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart6\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -14199,7 +14199,7 @@ export const npdMappingData = {
       "entityName": "casingType",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/casingleakoff/{wellbore_casing_and_lot_id}",
       "targetPredicate": "npdv:casingType",
-      "targetObject": "{wlbCasingType}^^xsd:string ",
+      "targetObject": "{wlbCasingType}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/casingleakoff/{wellbore_casing_and_lot_id} npdv:casingType {wlbCasingType}^^xsd:string .",
       "sourceSql": "SELECT \"wellbore_casing_and_lot_id\", \"wlbNpdidWellbore\", \"wlbCasingType\" FROM \"wellbore_casing_and_lot\"",
       "sourceTables": [
@@ -14224,7 +14224,7 @@ export const npdMappingData = {
       "entityName": "wellborePlannedPurpose",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellborePlannedPurpose",
-      "targetObject": "{wlbPurposePlanned}^^xsd:string ",
+      "targetObject": "{wlbPurposePlanned}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellborePlannedPurpose {wlbPurposePlanned}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbPurposePlanned\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -14247,7 +14247,7 @@ export const npdMappingData = {
       "entityName": "SDFI",
       "targetSubject": "npd:licence/{prlNpdidLicence}/licensee/{cmpNpdidCompany}/history/{prlLicenseeDateValidFrom}/{prlLicenseeDateValidTo}",
       "targetPredicate": "npdv:SDFI",
-      "targetObject": "{prlLicenseeSdfi}^^xsd:decimal ",
+      "targetObject": "{prlLicenseeSdfi}^^xsd:decimal",
       "target": "npd:licence/{prlNpdidLicence}/licensee/{cmpNpdidCompany}/history/{prlLicenseeDateValidFrom}/{prlLicenseeDateValidTo} npdv:SDFI {prlLicenseeSdfi}^^xsd:decimal .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"cmpNpdidCompany\", \"prlLicenseeDateValidFrom\", \"prlLicenseeDateValidTo\", \"prlLicenseeSdfi\" FROM \"licence_licensee_hst\"",
       "sourceTables": [
@@ -14270,13 +14270,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00590:Literal:wellbore_npdid_overview:wlbWellType",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "wellboreWellType",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreWellType",
-      "targetObject": "{wlbWellType} ",
+      "targetObject": "{wlbWellType}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreWellType {wlbWellType} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbWellType\" FROM \"wellbore_npdid_overview\"",
       "sourceTables": [
@@ -14299,7 +14299,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/document/{wellbore_document_id}/{wlbDocumentName}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/document/{wellbore_document_id}/{wlbDocumentName} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wellbore_document_id\", \"wlbNpdidWellbore\", \"wlbDocumentName\", \"dateSyncNPD\" FROM \"wellbore_document\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -14327,7 +14327,7 @@ export const npdMappingData = {
       "entityName": "ZValueTo",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:ZValueTo",
-      "targetObject": "{prlAreaPolyToZvalue}^^xsd:integer ",
+      "targetObject": "{prlAreaPolyToZvalue}^^xsd:integer",
       "target": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:ZValueTo {prlAreaPolyToZvalue}^^xsd:integer .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"blcName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\", \"prlAreaPolyToZvalue\" FROM \"prlAreaSplitByBlock\"",
       "sourceTables": [
@@ -14358,7 +14358,7 @@ export const npdMappingData = {
       "entityName": "isReentryWellbore",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:isReentryWellbore",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:isReentryWellbore \"true\" .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbReentry\"='YES'",
       "sourceTables": [
@@ -14381,7 +14381,7 @@ export const npdMappingData = {
       "entityName": "isReentryWellbore",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:isReentryWellbore",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:isReentryWellbore \"false\" .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbReentry\"='NO'",
       "sourceTables": [
@@ -14404,7 +14404,7 @@ export const npdMappingData = {
       "entityName": "producedCondensate",
       "targetSubject": "npd:ncs/production/{prfYear}",
       "targetPredicate": "npdv:producedCondensate",
-      "targetObject": "{prfPrdCondensateNetMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdCondensateNetMillSm3}^^xsd:decimal",
       "target": "npd:ncs/production/{prfYear} npdv:producedCondensate {prfPrdCondensateNetMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfYear\", \"prfPrdCondensateNetMillSm3\" FROM \"field_production_totalt_NCS_year\"",
       "sourceTables": [
@@ -14427,7 +14427,7 @@ export const npdMappingData = {
       "entityName": "remainingGas",
       "targetSubject": "npd:field/{fldNpdidField}/reserve",
       "targetPredicate": "npdv:remainingGas",
-      "targetObject": "{fldRemainingGas}^^xsd:decimal ",
+      "targetObject": "{fldRemainingGas}^^xsd:decimal",
       "target": "npd:field/{fldNpdidField}/reserve npdv:remainingGas {fldRemainingGas}^^xsd:decimal .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldRemainingGas\" FROM \"field_reserves\"",
       "sourceTables": [
@@ -14450,7 +14450,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{fclDateUpdated}^^xsd:date ",
+      "targetObject": "{fclDateUpdated}^^xsd:date",
       "target": "npd:facility/{fclNpdidFacility} npdv:dateUpdated {fclDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclDateUpdated\" FROM \"facility_fixed\" WHERE \"fclDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -14474,7 +14474,7 @@ export const npdMappingData = {
       "entityName": "recoverableOilEquivalents",
       "targetSubject": "npd:field/{fldNpdidField}/reserve",
       "targetPredicate": "npdv:recoverableOilEquivalents",
-      "targetObject": "{fldRecoverableOE}^^xsd:decimal ",
+      "targetObject": "{fldRecoverableOE}^^xsd:decimal",
       "target": "npd:field/{fldNpdidField}/reserve npdv:recoverableOilEquivalents {fldRecoverableOE}^^xsd:decimal .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldRecoverableOE\" FROM \"field_reserves\"",
       "sourceTables": [
@@ -14497,7 +14497,7 @@ export const npdMappingData = {
       "entityName": "producedWater",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:producedWater",
-      "targetObject": "{prfPrdProducedWaterInFieldMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdProducedWaterInFieldMillSm3}^^xsd:decimal",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth} npdv:producedWater {prfPrdProducedWaterInFieldMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\", \"prfMonth\", \"prfPrdProducedWaterInFieldMillSm3\" FROM \"field_production_monthly\"",
       "sourceTables": [
@@ -14524,7 +14524,7 @@ export const npdMappingData = {
       "entityName": "country",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:country",
-      "targetObject": "<http://dbpedia.org/resource/Norway> ",
+      "targetObject": "<http://dbpedia.org/resource/Norway>",
       "target": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:country <http://dbpedia.org/resource/Norway> .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlAreaPolyBlockName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"licence_area_poly_hst\" WHERE \"prlAreaPolyNationCode\"='NO'",
       "sourceTables": [
@@ -14555,7 +14555,7 @@ export const npdMappingData = {
       "entityName": "remainingOil",
       "targetSubject": "npd:field/{fldNpdidField}/reserve",
       "targetPredicate": "npdv:remainingOil",
-      "targetObject": "{fldRemainingOil}^^xsd:decimal ",
+      "targetObject": "{fldRemainingOil}^^xsd:decimal",
       "target": "npd:field/{fldNpdidField}/reserve npdv:remainingOil {fldRemainingOil}^^xsd:decimal .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldRemainingOil\" FROM \"field_reserves\"",
       "sourceTables": [
@@ -14578,7 +14578,7 @@ export const npdMappingData = {
       "entityName": "oilSampleTopDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id}",
       "targetPredicate": "npdv:oilSampleTopDepth",
-      "targetObject": "{wlbOilSampleTopDepth}^^xsd:decimal ",
+      "targetObject": "{wlbOilSampleTopDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id} npdv:oilSampleTopDepth {wlbOilSampleTopDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wellbore_oil_sample_id\", \"wlbNpdidWellbore\", \"wlbOilSampleTopDepth\" FROM \"wellbore_oil_sample\"",
       "sourceTables": [
@@ -14603,7 +14603,7 @@ export const npdMappingData = {
       "entityName": "producedNGL",
       "targetSubject": "npd:ncs/production/{prfYear}",
       "targetPredicate": "npdv:producedNGL",
-      "targetObject": "{prfPrdNGLNetMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdNGLNetMillSm3}^^xsd:decimal",
       "target": "npd:ncs/production/{prfYear} npdv:producedNGL {prfPrdNGLNetMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfYear\", \"prfPrdNGLNetMillSm3\" FROM \"field_production_totalt_NCS_year\"",
       "sourceTables": [
@@ -14626,7 +14626,7 @@ export const npdMappingData = {
       "entityName": "recoverableOil",
       "targetSubject": "npd:field/{fldNpdidField}/reserve",
       "targetPredicate": "npdv:recoverableOil",
-      "targetObject": "{fldRecoverableOil}^^xsd:decimal ",
+      "targetObject": "{fldRecoverableOil}^^xsd:decimal",
       "target": "npd:field/{fldNpdidField}/reserve npdv:recoverableOil {fldRecoverableOil}^^xsd:decimal .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldRecoverableOil\" FROM \"field_reserves\"",
       "sourceTables": [
@@ -14649,7 +14649,7 @@ export const npdMappingData = {
       "entityName": "recoverableCondensate",
       "targetSubject": "npd:field/{fldNpdidField}/reserve",
       "targetPredicate": "npdv:recoverableCondensate",
-      "targetObject": "{fldRecoverableCondensate}^^xsd:decimal ",
+      "targetObject": "{fldRecoverableCondensate}^^xsd:decimal",
       "target": "npd:field/{fldNpdidField}/reserve npdv:recoverableCondensate {fldRecoverableCondensate}^^xsd:decimal .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldRecoverableCondensate\" FROM \"field_reserves\"",
       "sourceTables": [
@@ -14672,7 +14672,7 @@ export const npdMappingData = {
       "entityName": "dateLicenceAreaValidFrom",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:dateLicenceAreaValidFrom",
-      "targetObject": "{prlAreaPolyDateValidFrom}^^xsd:date ",
+      "targetObject": "{prlAreaPolyDateValidFrom}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:dateLicenceAreaValidFrom {prlAreaPolyDateValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlAreaPolyBlockName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"licence_area_poly_hst\" WHERE \"prlAreaPolyDateValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -14703,7 +14703,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}/photo/{wellbore_core_photo_id}/{wlbCorePhotoTitle}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{wlbCorePhotoDateUpdated}^^xsd:date ",
+      "targetObject": "{wlbCorePhotoDateUpdated}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}/photo/{wellbore_core_photo_id}/{wlbCorePhotoTitle} npdv:dateUpdated {wlbCorePhotoDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"wellbore_core_photo_id\", \"wlbNpdidWellbore\", \"wlbCoreNumber\", \"wlbCorePhotoTitle\", \"wlbCorePhotoDateUpdated\" FROM \"wellbore_core_photo\" WHERE \"wlbCorePhotoDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -14733,7 +14733,7 @@ export const npdMappingData = {
       "entityName": "DSTGasOilRelation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber}",
       "targetPredicate": "npdv:DSTGasOilRelation",
-      "targetObject": "{wlbDstGasOilRelation}^^xsd:integer ",
+      "targetObject": "{wlbDstGasOilRelation}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber} npdv:DSTGasOilRelation {wlbDstGasOilRelation}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDstTestNumber\", \"wlbDstGasOilRelation\" FROM \"wellbore_dst\"",
       "sourceTables": [
@@ -14758,7 +14758,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{wlbNpdidWellbore}^^xsd:integer ",
+      "targetObject": "{wlbNpdidWellbore}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:idNPD {wlbNpdidWellbore}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -14780,7 +14780,7 @@ export const npdMappingData = {
       "entityName": "wellboreContent",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreContent",
-      "targetObject": "{wlbContent}^^xsd:string ",
+      "targetObject": "{wlbContent}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreContent {wlbContent}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbContent\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -14797,13 +14797,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00611:Literal:licence:prlFactPageUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "factPageURL",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:factPageURL",
-      "targetObject": "<{prlFactPageUrl}> ",
+      "targetObject": "<{prlFactPageUrl}>",
       "target": "npd:licence/{prlNpdidLicence} npdv:factPageURL <{prlFactPageUrl}> .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlFactPageUrl\" FROM \"licence\"",
       "sourceTables": [
@@ -14826,7 +14826,7 @@ export const npdMappingData = {
       "entityName": "oilSampleFluidType",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id}",
       "targetPredicate": "npdv:oilSampleFluidType",
-      "targetObject": "{wlbOilSampleFluidType}^^xsd:string ",
+      "targetObject": "{wlbOilSampleFluidType}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/oilsample/{wellbore_oil_sample_id} npdv:oilSampleFluidType {wlbOilSampleFluidType}^^xsd:string .",
       "sourceSql": "SELECT \"wellbore_oil_sample_id\", \"wlbNpdidWellbore\", \"wlbOilSampleFluidType\" FROM \"wellbore_oil_sample\"",
       "sourceTables": [
@@ -14851,7 +14851,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{tufName}^^xsd:string ",
+      "targetObject": "{tufName}^^xsd:string",
       "target": "npd:petreg/facility/{tufNpdidTuf} npdv:name {tufName}^^xsd:string .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"tufName\" FROM \"tuf_petreg_licence\"",
       "sourceTables": [
@@ -14874,7 +14874,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/block/{baaAreaPolyBlockName}/polyno/{baaAreaPolyNo}/history/{baaAreaPolyDateValidFrom}/{baaAreaPolyDateValidTo}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{baaAreaPolyDateUpdated}^^xsd:date ",
+      "targetObject": "{baaAreaPolyDateUpdated}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/block/{baaAreaPolyBlockName}/polyno/{baaAreaPolyNo}/history/{baaAreaPolyDateValidFrom}/{baaAreaPolyDateValidTo} npdv:dateUpdated {baaAreaPolyDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaAreaPolyBlockName\", \"baaAreaPolyNo\", \"baaAreaPolyDateValidFrom\", \"baaAreaPolyDateValidTo\", \"baaAreaPolyDateUpdated\" FROM \"bsns_arr_area_area_poly_hst\" WHERE \"baaAreaPolyDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -14906,7 +14906,7 @@ export const npdMappingData = {
       "entityName": "dateSurveyPlannedCompleted",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:dateSurveyPlannedCompleted",
-      "targetObject": "{seaPlanToDate}^^xsd:date ",
+      "targetObject": "{seaPlanToDate}^^xsd:date",
       "target": "npd:survey/{seaName} npdv:dateSurveyPlannedCompleted {seaPlanToDate}^^xsd:date .",
       "sourceSql": "SELECT \"seaName\", \"seaPlanToDate\" FROM \"seis_acquisition\" WHERE \"seaPlanToDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -14930,7 +14930,7 @@ export const npdMappingData = {
       "entityName": "isMultilateral",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:isMultilateral",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:isMultilateral \"true\" .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbMultilateral\"='YES'",
       "sourceTables": [
@@ -14953,7 +14953,7 @@ export const npdMappingData = {
       "entityName": "isMultilateral",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:isMultilateral",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:isMultilateral \"false\" .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbMultilateral\"='NO'",
       "sourceTables": [
@@ -14976,7 +14976,7 @@ export const npdMappingData = {
       "entityName": "isStratigraphical",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:isStratigraphical",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:isStratigraphical \"true\" .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"blcName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"prlAreaSplitByBlock\" WHERE \"prlAreaPolyStratigraphical\"='YES'",
       "sourceTables": [
@@ -15007,7 +15007,7 @@ export const npdMappingData = {
       "entityName": "isStratigraphical",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:isStratigraphical",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:isStratigraphical \"false\" .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"blcName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"prlAreaSplitByBlock\" WHERE \"prlAreaPolyStratigraphical\"='NO'",
       "sourceTables": [
@@ -15038,7 +15038,7 @@ export const npdMappingData = {
       "entityName": "dateSurveyActualStart",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:dateSurveyActualStart",
-      "targetObject": "{seaDateStarting}^^xsd:date ",
+      "targetObject": "{seaDateStarting}^^xsd:date",
       "target": "npd:survey/{seaName} npdv:dateSurveyActualStart {seaDateStarting}^^xsd:date .",
       "sourceSql": "SELECT \"seaName\", \"seaDateStarting\" FROM \"seis_acquisition\" WHERE \"seaDateStarting\" <> '9999-12-31'",
       "sourceTables": [
@@ -15062,7 +15062,7 @@ export const npdMappingData = {
       "entityName": "geodeticDatum",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:geodeticDatum",
-      "targetObject": "{wlbGeodeticDatum}^^xsd:string ",
+      "targetObject": "{wlbGeodeticDatum}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:geodeticDatum {wlbGeodeticDatum}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbGeodeticDatum\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -15085,7 +15085,7 @@ export const npdMappingData = {
       "entityName": "facilityType",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:facilityType",
-      "targetObject": "{fclKind}^^xsd:string ",
+      "targetObject": "{fclKind}^^xsd:string",
       "target": "npd:facility/{fclNpdidFacility} npdv:facilityType {fclKind}^^xsd:string .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclKind\" FROM \"facility_moveable\"",
       "sourceTables": [
@@ -15102,13 +15102,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00623:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Campanian ",
+      "targetObject": "isc:Campanian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Campanian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='CAMPANIAN'",
       "sourceTables": [
@@ -15125,13 +15125,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00624:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Carboniferous ",
+      "targetObject": "isc:Carboniferous",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Carboniferous .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='CARBONIFEROUS'",
       "sourceTables": [
@@ -15148,13 +15148,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00625:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Cretaceous ",
+      "targetObject": "isc:Cretaceous",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Cretaceous .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='CRETACEOUS'",
       "sourceTables": [
@@ -15171,13 +15171,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00626:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Danian ",
+      "targetObject": "isc:Danian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Danian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='DANIAN'",
       "sourceTables": [
@@ -15194,13 +15194,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00627:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Devonian ",
+      "targetObject": "isc:Devonian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Devonian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='DEVONIAN'",
       "sourceTables": [
@@ -15217,13 +15217,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00628:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Mississippian ",
+      "targetObject": "isc:Mississippian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Mississippian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='EARLY CARBONIFEROUS'",
       "sourceTables": [
@@ -15240,13 +15240,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00629:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:LowerCretaceous ",
+      "targetObject": "isc:LowerCretaceous",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:LowerCretaceous .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='EARLY CRETACEOUS'",
       "sourceTables": [
@@ -15263,13 +15263,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00630:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:LowerJurassic ",
+      "targetObject": "isc:LowerJurassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:LowerJurassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='EARLY JURASSIC'",
       "sourceTables": [
@@ -15286,13 +15286,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00631:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Cisuralian ",
+      "targetObject": "isc:Cisuralian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Cisuralian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='EARLY PERMIAN'",
       "sourceTables": [
@@ -15309,13 +15309,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00632:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:LowerTriassic ",
+      "targetObject": "isc:LowerTriassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:LowerTriassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='EARLY TRIASSIC'",
       "sourceTables": [
@@ -15332,13 +15332,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00633:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Eocene ",
+      "targetObject": "isc:Eocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Eocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='EOCENE'",
       "sourceTables": [
@@ -15355,13 +15355,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00634:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Jurassic ",
+      "targetObject": "isc:Jurassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Jurassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='JURASSIC'",
       "sourceTables": [
@@ -15378,13 +15378,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00635:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Pennsylvanian ",
+      "targetObject": "isc:Pennsylvanian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Pennsylvanian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='LATE CARBONIFEROUS'",
       "sourceTables": [
@@ -15401,13 +15401,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00636:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:UpperCretaceous ",
+      "targetObject": "isc:UpperCretaceous",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:UpperCretaceous .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='LATE CRETACEOUS'",
       "sourceTables": [
@@ -15424,13 +15424,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00637:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:UpperJurassic ",
+      "targetObject": "isc:UpperJurassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:UpperJurassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='LATE JURASSIC'",
       "sourceTables": [
@@ -15447,13 +15447,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00638:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Thanetian ",
+      "targetObject": "isc:Thanetian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Thanetian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='LATE PALEOCENE'",
       "sourceTables": [
@@ -15470,13 +15470,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00639:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Lopingian ",
+      "targetObject": "isc:Lopingian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Lopingian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='LATE PERMIAN'",
       "sourceTables": [
@@ -15493,13 +15493,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00640:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Piacenzian ",
+      "targetObject": "isc:Piacenzian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Piacenzian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='LATE PLIOCENE'",
       "sourceTables": [
@@ -15516,13 +15516,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00641:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:UpperTriassic ",
+      "targetObject": "isc:UpperTriassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:UpperTriassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='LATE TRIASSIC'",
       "sourceTables": [
@@ -15539,13 +15539,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00642:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:MiddleJurassic ",
+      "targetObject": "isc:MiddleJurassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:MiddleJurassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='MIDDLE JURASSIC'",
       "sourceTables": [
@@ -15562,13 +15562,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00643:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:MiddleTriassic ",
+      "targetObject": "isc:MiddleTriassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:MiddleTriassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='MIDDLE TRIASSIC'",
       "sourceTables": [
@@ -15585,13 +15585,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00644:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Miocene ",
+      "targetObject": "isc:Miocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Miocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='MIOCENE'",
       "sourceTables": [
@@ -15608,13 +15608,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00645:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Oligocene ",
+      "targetObject": "isc:Oligocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Oligocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='OLIGOCENE'",
       "sourceTables": [
@@ -15631,13 +15631,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00646:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Paleocene ",
+      "targetObject": "isc:Paleocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Paleocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='PALEOCENE'",
       "sourceTables": [
@@ -15654,13 +15654,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00647:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Permian ",
+      "targetObject": "isc:Permian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Permian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='PERMIAN'",
       "sourceTables": [
@@ -15677,13 +15677,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00648:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Pleistocene ",
+      "targetObject": "isc:Pleistocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Pleistocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='PLEISTOCENE'",
       "sourceTables": [
@@ -15700,13 +15700,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00649:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Pliocene ",
+      "targetObject": "isc:Pliocene",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Pliocene .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='PLIOCENE'",
       "sourceTables": [
@@ -15723,13 +15723,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00650:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Silurian ",
+      "targetObject": "isc:Silurian",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Silurian .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='SILURIAN'",
       "sourceTables": [
@@ -15746,13 +15746,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00651:Literal:Trans:wellbore_exploration_all:wlbAgeWithHc1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "wellboreAgeHcLevel1",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreAgeHcLevel1",
-      "targetObject": "isc:Triassic ",
+      "targetObject": "isc:Triassic",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreAgeHcLevel1 isc:Triassic .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbAgeWithHc1\"='TRIASSIC'",
       "sourceTables": [
@@ -15775,7 +15775,7 @@ export const npdMappingData = {
       "entityName": "wellboreMaxInclation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreMaxInclation",
-      "targetObject": "{wlbMaxInclation}^^xsd:decimal ",
+      "targetObject": "{wlbMaxInclation}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreMaxInclation {wlbMaxInclation}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbMaxInclation\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -15798,7 +15798,7 @@ export const npdMappingData = {
       "entityName": "producedOilEquivalents",
       "targetSubject": "npd:ncs/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:producedOilEquivalents",
-      "targetObject": "{prfPrdOeNetMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdOeNetMillSm3}^^xsd:decimal",
       "target": "npd:ncs/production/{prfYear}/{prfMonth} npdv:producedOilEquivalents {prfPrdOeNetMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfYear\", \"prfMonth\", \"prfPrdOeNetMillSm3\" FROM \"field_production_totalt_NCS_month\"",
       "sourceTables": [
@@ -15823,7 +15823,7 @@ export const npdMappingData = {
       "entityName": "producedWater",
       "targetSubject": "npd:ncs/production/{prfYear}",
       "targetPredicate": "npdv:producedWater",
-      "targetObject": "{prfPrdProducedWaterInFieldMillSm3}^^xsd:decimal ",
+      "targetObject": "{prfPrdProducedWaterInFieldMillSm3}^^xsd:decimal",
       "target": "npd:ncs/production/{prfYear} npdv:producedWater {prfPrdProducedWaterInFieldMillSm3}^^xsd:decimal .",
       "sourceSql": "SELECT \"prfYear\", \"prfPrdProducedWaterInFieldMillSm3\" FROM \"field_production_totalt_NCS_year\"",
       "sourceTables": [
@@ -15840,13 +15840,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00657:Literal:apaAreaNet:urlNPD",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "npdPageURL",
       "targetSubject": "npd:quadrant/{qdrName}/block/{blkName}/award/{prvName}/area/{apaAreaNet_id}",
       "targetPredicate": "npdv:npdPageURL",
-      "targetObject": "<{urlNPD}> ",
+      "targetObject": "<{urlNPD}>",
       "target": "npd:quadrant/{qdrName}/block/{blkName}/award/{prvName}/area/{apaAreaNet_id} npdv:npdPageURL  <{urlNPD}> .",
       "sourceSql": "SELECT \"apaAreaNet_id\", \"qdrName\", \"blkName\", \"prvName\", \"blkId\", \"urlNPD\" FROM \"apaAreaNet\"",
       "sourceTables": [
@@ -15876,7 +15876,7 @@ export const npdMappingData = {
       "entityName": "recoverableGas",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC}",
       "targetPredicate": "npdv:recoverableGas",
-      "targetObject": "{dscRecoverableGas}^^xsd:decimal ",
+      "targetObject": "{dscRecoverableGas}^^xsd:decimal",
       "target": "npd:discovery/{dscNpdidDiscovery}/{dscReservesRC} npdv:recoverableGas {dscRecoverableGas}^^xsd:decimal .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\", \"dscReservesRC\", \"dscRecoverableGas\" FROM \"discovery_reserves\"",
       "sourceTables": [
@@ -15901,7 +15901,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart2",
-      "targetObject": "{wlbNamePart2}^^xsd:integer ",
+      "targetObject": "{wlbNamePart2}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart2 {wlbNamePart2}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart2\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -15924,7 +15924,7 @@ export const npdMappingData = {
       "entityName": "drillPermit",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:drillPermit",
-      "targetObject": "{wlbDrillPermit}^^xsd:string ",
+      "targetObject": "{wlbDrillPermit}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:drillPermit {wlbDrillPermit}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDrillPermit\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -15947,7 +15947,7 @@ export const npdMappingData = {
       "entityName": "documentFormat",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/document/{wellbore_document_id}/{wlbDocumentName}",
       "targetPredicate": "npdv:documentFormat",
-      "targetObject": "{wlbDocumentFormat}^^xsd:string ",
+      "targetObject": "{wlbDocumentFormat}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore}/document/{wellbore_document_id}/{wlbDocumentName} npdv:documentFormat {wlbDocumentFormat}^^xsd:string .",
       "sourceSql": "SELECT \"wellbore_document_id\", \"wlbNpdidWellbore\", \"wlbDocumentName\", \"wlbDocumentFormat\" FROM \"wellbore_document\"",
       "sourceTables": [
@@ -15974,7 +15974,7 @@ export const npdMappingData = {
       "entityName": "taskID",
       "targetSubject": "npd:licence/{prlNpdidLicence}/task/{prlTaskID}",
       "targetPredicate": "npdv:taskID",
-      "targetObject": "{prlTaskID}^^xsd:integer ",
+      "targetObject": "{prlTaskID}^^xsd:integer",
       "target": "npd:licence/{prlNpdidLicence}/task/{prlTaskID} npdv:taskID {prlTaskID}^^xsd:integer .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlTaskID\" FROM \"licence_task\"",
       "sourceTables": [
@@ -15998,7 +15998,7 @@ export const npdMappingData = {
       "entityName": "dateTUFOperatorValidFrom",
       "targetSubject": "npd:facility/{tufNpdidTuf}/operator/{cmpNpdidCompany}/history/{tufOperDateValidFrom}/{tufOperDateValidTo}",
       "targetPredicate": "npdv:dateTUFOperatorValidFrom",
-      "targetObject": "{tufOperDateValidFrom}^^xsd:date ",
+      "targetObject": "{tufOperDateValidFrom}^^xsd:date",
       "target": "npd:facility/{tufNpdidTuf}/operator/{cmpNpdidCompany}/history/{tufOperDateValidFrom}/{tufOperDateValidTo} npdv:dateTUFOperatorValidFrom {tufOperDateValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"cmpNpdidCompany\", \"tufOperDateValidFrom\", \"tufOperDateValidTo\" FROM \"tuf_operator_hst\" WHERE \"tufOperDateValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -16027,7 +16027,7 @@ export const npdMappingData = {
       "entityName": "wellborePlannedPurpose",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellborePlannedPurpose",
-      "targetObject": "{wlbPurposePlanned}^^xsd:string ",
+      "targetObject": "{wlbPurposePlanned}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellborePlannedPurpose {wlbPurposePlanned}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbPurposePlanned\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -16050,7 +16050,7 @@ export const npdMappingData = {
       "entityName": "SDFI",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/transfer/{baaTransferDirection}/{cmpNpdidCompany}/history/{baaTransferDateValidFrom}",
       "targetPredicate": "npdv:SDFI",
-      "targetObject": "{baaTransferSdfi}^^xsd:decimal ",
+      "targetObject": "{baaTransferSdfi}^^xsd:decimal",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/transfer/{baaTransferDirection}/{cmpNpdidCompany}/history/{baaTransferDateValidFrom} npdv:SDFI {baaTransferSdfi}^^xsd:decimal .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaTransferDirection\", \"cmpNpdidCompany\", \"baaTransferDateValidFrom\", \"baaTransferSdfi\" FROM \"bsns_arr_area_transfer_hst\"",
       "sourceTables": [
@@ -16079,7 +16079,7 @@ export const npdMappingData = {
       "entityName": "transferDirection",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/transfer/{baaTransferDirection}/{cmpNpdidCompany}/history/{baaTransferDateValidFrom}",
       "targetPredicate": "npdv:transferDirection",
-      "targetObject": "{baaTransferDirection}^^xsd:string ",
+      "targetObject": "{baaTransferDirection}^^xsd:string",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/transfer/{baaTransferDirection}/{cmpNpdidCompany}/history/{baaTransferDateValidFrom} npdv:transferDirection {baaTransferDirection}^^xsd:string .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaTransferDirection\", \"cmpNpdidCompany\", \"baaTransferDateValidFrom\" FROM \"bsns_arr_area_transfer_hst\"",
       "sourceTables": [
@@ -16107,7 +16107,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}/message/{ptlMessageDocumentNo}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:petreg/facility/{tufNpdidTuf}/message/{ptlMessageDocumentNo} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"ptlMessageDocumentNo\", \"dateSyncNPD\" FROM \"tuf_petreg_message\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -16127,13 +16127,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00670:Literal:wellbore_exploration_all:wlbPressReleaseUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "pressReleaseURL",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:pressReleaseURL",
-      "targetObject": "<{wlbPressReleaseUrl}> ",
+      "targetObject": "<{wlbPressReleaseUrl}>",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:pressReleaseURL <{wlbPressReleaseUrl}> .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbPressReleaseUrl\" FROM \"wellbore_exploration_all\" WHERE \"wlbPressReleaseUrl\" LIKE 'http_%'",
       "sourceTables": [
@@ -16157,7 +16157,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:discovery/{dscNpdidDiscovery}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{dscNpdidDiscovery}^^xsd:integer ",
+      "targetObject": "{dscNpdidDiscovery}^^xsd:integer",
       "target": "npd:discovery/{dscNpdidDiscovery} npdv:idNPD {dscNpdidDiscovery}^^xsd:integer .",
       "sourceSql": "SELECT \"dscNpdidDiscovery\" FROM \"discovery\"",
       "sourceTables": [
@@ -16179,7 +16179,7 @@ export const npdMappingData = {
       "entityName": "messageNo",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}/message/{ptlMessageDocumentNo}",
       "targetPredicate": "ptl:messageNo",
-      "targetObject": "{ptlMessageDocumentNo}^^xsd:integer ",
+      "targetObject": "{ptlMessageDocumentNo}^^xsd:integer",
       "target": "npd:petreg/facility/{tufNpdidTuf}/message/{ptlMessageDocumentNo} ptl:messageNo {ptlMessageDocumentNo}^^xsd:integer .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"ptlMessageDocumentNo\" FROM \"tuf_petreg_message\"",
       "sourceTables": [
@@ -16203,7 +16203,7 @@ export const npdMappingData = {
       "entityName": "dateStatusTo",
       "targetSubject": "npd:field/{fldNpdidField}/activity/{fldStatus}/history/{fldStatusFromDate}/{fldStatusToDate}",
       "targetPredicate": "npdv:dateStatusTo",
-      "targetObject": "{fldStatusToDate}^^xsd:date ",
+      "targetObject": "{fldStatusToDate}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/activity/{fldStatus}/history/{fldStatusFromDate}/{fldStatusToDate} npdv:dateStatusTo {fldStatusToDate}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldStatus\", \"fldStatusFromDate\", \"fldStatusToDate\" FROM \"field_activity_status_hst\" WHERE \"fldStatusToDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -16232,7 +16232,7 @@ export const npdMappingData = {
       "entityName": "dateMessageRegistered",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}/message/{ptlMessageDocumentNo}",
       "targetPredicate": "ptl:dateMessageRegistered",
-      "targetObject": "{ptlMessageRegisteredDate}^^xsd:date ",
+      "targetObject": "{ptlMessageRegisteredDate}^^xsd:date",
       "target": "npd:petreg/facility/{tufNpdidTuf}/message/{ptlMessageDocumentNo} ptl:dateMessageRegistered {ptlMessageRegisteredDate}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"ptlMessageDocumentNo\", \"ptlMessageRegisteredDate\" FROM \"tuf_petreg_message\" WHERE \"ptlMessageRegisteredDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -16258,7 +16258,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:field/{fldNpdidField}/reserve",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{fldNpdidField}^^xsd:integer ",
+      "targetObject": "{fldNpdidField}^^xsd:integer",
       "target": "npd:field/{fldNpdidField}/reserve npdv:idNPD {fldNpdidField}^^xsd:integer .",
       "sourceSql": "SELECT \"fldNpdidField\" FROM \"field_reserves\"",
       "sourceTables": [
@@ -16280,7 +16280,7 @@ export const npdMappingData = {
       "entityName": "degreesNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:degreesNS",
-      "targetObject": "{wlbNsDeg}^^xsd:integer ",
+      "targetObject": "{wlbNsDeg}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:degreesNS {wlbNsDeg}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsDeg\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -16297,13 +16297,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00677:Literal:wellbore_exploration_all:wlbNsCode",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "codeNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:codeNS",
-      "targetObject": "{wlbNsCode} ",
+      "targetObject": "{wlbNsCode}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:codeNS {wlbNsCode} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsCode\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -16326,7 +16326,7 @@ export const npdMappingData = {
       "entityName": "wellboreStratumTopDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/depth/{lsuTopDepth}/{lsuBottomDepth}",
       "targetPredicate": "npdv:wellboreStratumTopDepth",
-      "targetObject": "{lsuTopDepth}^^xsd:decimal ",
+      "targetObject": "{lsuTopDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/depth/{lsuTopDepth}/{lsuBottomDepth} npdv:wellboreStratumTopDepth {lsuTopDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"lsuNpdidLithoStrat\", \"lsuTopDepth\", \"lsuBottomDepth\" FROM \"wellbore_formation_top\"",
       "sourceTables": [
@@ -16354,7 +16354,7 @@ export const npdMappingData = {
       "entityName": "dateBaaValidTo",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}",
       "targetPredicate": "npdv:dateBaaValidTo",
-      "targetObject": "{baaDateValidTo}^^xsd:date ",
+      "targetObject": "{baaDateValidTo}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea} npdv:dateBaaValidTo {baaDateValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaDateValidTo\" FROM \"bsns_arr_area\" WHERE \"baaDateValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -16378,7 +16378,7 @@ export const npdMappingData = {
       "entityName": "dateFieldOwnerTo",
       "targetSubject": "npd:field/{fldNpdidField}/owner/{fldNpdidOwner}/history/{fldOwnershipFromDate}/{fldOwnershipToDate}",
       "targetPredicate": "npdv:dateFieldOwnerTo",
-      "targetObject": "{fldOwnershipToDate}^^xsd:date ",
+      "targetObject": "{fldOwnershipToDate}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/owner/{fldNpdidOwner}/history/{fldOwnershipFromDate}/{fldOwnershipToDate} npdv:dateFieldOwnerTo {fldOwnershipToDate}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldNpdidOwner\", \"fldOwnershipFromDate\", \"fldOwnershipToDate\" FROM \"field_owner_hst\" WHERE \"fldOwnershipToDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -16407,7 +16407,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"dateSyncNPD\" FROM \"licence\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -16431,7 +16431,7 @@ export const npdMappingData = {
       "entityName": "dateWellboreCompletion",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateWellboreCompletion",
-      "targetObject": "{wlbCompletionDate}^^xsd:date ",
+      "targetObject": "{wlbCompletionDate}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateWellboreCompletion {wlbCompletionDate}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbCompletionDate\" FROM \"wellbore_development_all\" WHERE \"wlbCompletionDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -16455,7 +16455,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/licensee/{cmpNpdidCompany}/history/{baaLicenseeDateValidFrom}/{baaLicenseeDateValidTo}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/licensee/{cmpNpdidCompany}/history/{baaLicenseeDateValidFrom}/{baaLicenseeDateValidTo} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"cmpNpdidCompany\", \"baaLicenseeDateValidFrom\", \"baaLicenseeDateValidTo\", \"dateSyncNPD\" FROM \"bsns_arr_area_licensee_hst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -16485,7 +16485,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart2",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart2",
-      "targetObject": "{wlbNamePart2}^^xsd:integer ",
+      "targetObject": "{wlbNamePart2}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart2 {wlbNamePart2}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart2\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -16508,7 +16508,7 @@ export const npdMappingData = {
       "entityName": "recoverableOilEquivalents",
       "targetSubject": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField}",
       "targetPredicate": "npdv:recoverableOilEquivalents",
-      "targetObject": "{cmpRecoverableOE}^^xsd:decimal ",
+      "targetObject": "{cmpRecoverableOE}^^xsd:decimal",
       "target": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField} npdv:recoverableOilEquivalents {cmpRecoverableOE}^^xsd:decimal .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"fldNpdidField\", \"cmpRecoverableOE\" FROM \"company_reserves\"",
       "sourceTables": [
@@ -16533,7 +16533,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:facility/{tufNpdidTuf}/operator/{cmpNpdidCompany}/history/{tufOperDateValidFrom}/{tufOperDateValidTo}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:facility/{tufNpdidTuf}/operator/{cmpNpdidCompany}/history/{tufOperDateValidFrom}/{tufOperDateValidTo} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"cmpNpdidCompany\", \"tufOperDateValidFrom\", \"tufOperDateValidTo\", \"dateSyncNPD\" FROM \"tuf_operator_hst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -16563,7 +16563,7 @@ export const npdMappingData = {
       "entityName": "secondsNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:secondsNS",
-      "targetObject": "{wlbNsSec}^^xsd:decimal ",
+      "targetObject": "{wlbNsSec}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:secondsNS {wlbNsSec}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsSec\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -16586,7 +16586,7 @@ export const npdMappingData = {
       "entityName": "drillingFacility",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:drillingFacility",
-      "targetObject": "npd:facility/{fclNpdidFacilityDrilling} ",
+      "targetObject": "npd:facility/{fclNpdidFacilityDrilling}",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:drillingFacility npd:facility/{fclNpdidFacilityDrilling} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"fclNpdidFacilityDrilling\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -16609,7 +16609,7 @@ export const npdMappingData = {
       "entityName": "degreesEW",
       "targetSubject": "npd:survey/{seaSurveyName}/point/{seaPolygonPointNumber}",
       "targetPredicate": "npdv:degreesEW",
-      "targetObject": "{seaPolygonEWDeg}^^xsd:integer ",
+      "targetObject": "{seaPolygonEWDeg}^^xsd:integer",
       "target": "npd:survey/{seaSurveyName}/point/{seaPolygonPointNumber} npdv:degreesEW {seaPolygonEWDeg}^^xsd:integer .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaPolygonPointNumber\", \"seaPolygonEWDeg\" FROM \"seis_acquisition_coordinates_inc_turnarea\"",
       "sourceTables": [
@@ -16634,7 +16634,7 @@ export const npdMappingData = {
       "entityName": "dateWellboreCompletion",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateWellboreCompletion",
-      "targetObject": "{wlbCompletionDate}^^xsd:date ",
+      "targetObject": "{wlbCompletionDate}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateWellboreCompletion {wlbCompletionDate}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbCompletionDate\" FROM \"wellbore_shallow_all\" WHERE \"wlbCompletionDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -16658,7 +16658,7 @@ export const npdMappingData = {
       "entityName": "provinceLocation",
       "targetSubject": "npd:quadrant/{qdrName}/block/{blkName}/award/{prvName}/area/{apaAreaNet_id}",
       "targetPredicate": "npdv:provinceLocation",
-      "targetObject": "npd:province/{prvName} ",
+      "targetObject": "npd:province/{prvName}",
       "target": "npd:quadrant/{qdrName}/block/{blkName}/award/{prvName}/area/{apaAreaNet_id} npdv:provinceLocation npd:province/{prvName} .",
       "sourceSql": "SELECT \"apaAreaNet_id\", \"qdrName\", \"blkName\", \"prvName\", \"blkId\" FROM \"apaAreaNet\"",
       "sourceTables": [
@@ -16687,7 +16687,7 @@ export const npdMappingData = {
       "entityName": "dateLicenceAreaValidTo",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:dateLicenceAreaValidTo",
-      "targetObject": "{prlAreaPolyDateValidTo}^^xsd:date ",
+      "targetObject": "{prlAreaPolyDateValidTo}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:dateLicenceAreaValidTo {prlAreaPolyDateValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"blcName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"prlAreaSplitByBlock\" WHERE \"prlAreaPolyDateValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -16718,7 +16718,7 @@ export const npdMappingData = {
       "entityName": "dateUpdatedMax",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}",
       "targetPredicate": "npdv:dateUpdatedMax",
-      "targetObject": "{baaDateUpdatedMax}^^xsd:date ",
+      "targetObject": "{baaDateUpdatedMax}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea} npdv:dateUpdatedMax {baaDateUpdatedMax}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaDateUpdatedMax\" FROM \"bsns_arr_area\" WHERE \"baaDateUpdatedMax\" <> '9999-12-31'",
       "sourceTables": [
@@ -16742,7 +16742,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{prlNpdidLicence}^^xsd:integer ",
+      "targetObject": "{prlNpdidLicence}^^xsd:integer",
       "target": "npd:licence/{prlNpdidLicence} npdv:idNPD {prlNpdidLicence}^^xsd:integer .",
       "sourceSql": "SELECT \"prlNpdidLicence\" FROM \"licence\"",
       "sourceTables": [
@@ -16758,13 +16758,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00695:Literal:facility_fixed:fclFactPageUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "factPageURL",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:factPageURL",
-      "targetObject": "<{fclFactPageUrl}> ",
+      "targetObject": "<{fclFactPageUrl}>",
       "target": "npd:facility/{fclNpdidFacility} npdv:factPageURL <{fclFactPageUrl}> .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclFactPageUrl\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -16787,7 +16787,7 @@ export const npdMappingData = {
       "entityName": "secondsEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:secondsEW",
-      "targetObject": "{wlbEwSec}^^xsd:decimal ",
+      "targetObject": "{wlbEwSec}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:secondsEW {wlbEwSec}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwSec\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -16810,7 +16810,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{prlName}^^xsd:string ",
+      "targetObject": "{prlName}^^xsd:string",
       "target": "npd:licence/{prlNpdidLicence} npdv:name {prlName}^^xsd:string .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlName\" FROM \"licence\"",
       "sourceTables": [
@@ -16833,7 +16833,7 @@ export const npdMappingData = {
       "entityName": "dateWellboreEntry",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateWellboreEntry",
-      "targetObject": "{wlbEntryDate}^^xsd:date ",
+      "targetObject": "{wlbEntryDate}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateWellboreEntry {wlbEntryDate}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEntryDate\" FROM \"wellbore_development_all\" WHERE \"wlbEntryDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -16851,13 +16851,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00699:Literal:licence_task:prlTaskStatusNo",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "status",
       "targetSubject": "npd:licence/{prlNpdidLicence}/task/{prlTaskID}",
       "targetPredicate": "npdv:status",
-      "targetObject": "{prlTaskStatusNo} ",
+      "targetObject": "{prlTaskStatusNo}",
       "target": "npd:licence/{prlNpdidLicence}/task/{prlTaskID} npdv:status {prlTaskStatusNo} .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlTaskID\", \"prlTaskStatusNo\" FROM \"licence_task\"",
       "sourceTables": [
@@ -16882,7 +16882,7 @@ export const npdMappingData = {
       "entityName": "dateLicenceAreaValidTo",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:dateLicenceAreaValidTo",
-      "targetObject": "{prlAreaPolyDateValidTo}^^xsd:date ",
+      "targetObject": "{prlAreaPolyDateValidTo}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:dateLicenceAreaValidTo {prlAreaPolyDateValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlAreaPolyBlockName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"licence_area_poly_hst\" WHERE \"prlAreaPolyDateValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -16913,7 +16913,7 @@ export const npdMappingData = {
       "entityName": "wellboreWaterDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreWaterDepth",
-      "targetObject": "{wlbWaterDepth}^^xsd:decimal ",
+      "targetObject": "{wlbWaterDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreWaterDepth {wlbWaterDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbWaterDepth\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -16936,7 +16936,7 @@ export const npdMappingData = {
       "entityName": "blockLocation",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:blockLocation",
-      "targetObject": "npd:block/{prlAreaPolyBlockName} ",
+      "targetObject": "npd:block/{prlAreaPolyBlockName}",
       "target": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:blockLocation npd:block/{prlAreaPolyBlockName} .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlAreaPolyBlockName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"licence_area_poly_hst\"",
       "sourceTables": [
@@ -16960,13 +16960,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00704:Literal:wellbore_document:wlbDocumentUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "documentURL",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/document/{wellbore_document_id}/{wlbDocumentName}",
       "targetPredicate": "npdv:documentURL",
-      "targetObject": "<{wlbDocumentUrl}> ",
+      "targetObject": "<{wlbDocumentUrl}>",
       "target": "npd:wellbore/{wlbNpdidWellbore}/document/{wellbore_document_id}/{wlbDocumentName} npdv:documentURL <{wlbDocumentUrl}> .",
       "sourceSql": "SELECT \"wellbore_document_id\", \"wlbNpdidWellbore\", \"wlbDocumentName\", \"wlbDocumentUrl\" FROM \"wellbore_document\"",
       "sourceTables": [
@@ -16993,7 +16993,7 @@ export const npdMappingData = {
       "entityName": "dateLicenceValidTo",
       "targetSubject": "npd:licence/{prlNpdidLicence}/phase/{prlPhase}/history/{prlDatePhaseValidFrom}/{prlDatePhaseValidTo}",
       "targetPredicate": "npdv:dateLicenceValidTo",
-      "targetObject": "{prlDateValidTo}^^xsd:date ",
+      "targetObject": "{prlDateValidTo}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/phase/{prlPhase}/history/{prlDatePhaseValidFrom}/{prlDatePhaseValidTo} npdv:dateLicenceValidTo {prlDateValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlPhase\", \"prlDatePhaseValidFrom\", \"prlDatePhaseValidTo\", \"prlDateValidTo\" FROM \"licence_phase_hst\" WHERE \"prlDateValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -17023,7 +17023,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}/licencee/{cmpNpdidCompany}",
       "targetPredicate": "ptl:dateUpdated",
-      "targetObject": "{ptlLicenseeDateUpdated}^^xsd:date ",
+      "targetObject": "{ptlLicenseeDateUpdated}^^xsd:date",
       "target": "npd:petreg/licence/{prlNpdidLicence}/licencee/{cmpNpdidCompany} ptl:dateUpdated {ptlLicenseeDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"cmpNpdidCompany\", \"ptlLicenseeDateUpdated\" FROM \"licence_petreg_licence_licencee\" WHERE \"ptlLicenseeDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -17049,7 +17049,7 @@ export const npdMappingData = {
       "entityName": "codeNS",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:codeNS",
-      "targetObject": "{fclNsCode}^^xsd:string ",
+      "targetObject": "{fclNsCode}^^xsd:string",
       "target": "npd:facility/{fclNpdidFacility} npdv:codeNS {fclNsCode}^^xsd:string .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclNsCode\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -17066,13 +17066,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00708:Literal:facility_fixed:fclFactMapUrl",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "factMapURL",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:factMapURL",
-      "targetObject": "<{fclFactMapUrl}> ",
+      "targetObject": "<{fclFactMapUrl}>",
       "target": "npd:facility/{fclNpdidFacility} npdv:factMapURL <{fclFactMapUrl}> .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclFactMapUrl\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -17095,7 +17095,7 @@ export const npdMappingData = {
       "entityName": "TUFOwnerShare",
       "targetSubject": "npd:facility/{tufNpdidTuf}/owner/{cmpNpdidCompany}/history/{tufOwnerDateValidFrom}/{tufOwnerDateValidTo}",
       "targetPredicate": "npdv:TUFOwnerShare",
-      "targetObject": "{tufOwnerShare}^^xsd:decimal ",
+      "targetObject": "{tufOwnerShare}^^xsd:decimal",
       "target": "npd:facility/{tufNpdidTuf}/owner/{cmpNpdidCompany}/history/{tufOwnerDateValidFrom}/{tufOwnerDateValidTo} npdv:TUFOwnerShare {tufOwnerShare}^^xsd:decimal .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"cmpNpdidCompany\", \"tufOwnerDateValidFrom\", \"tufOwnerDateValidTo\", \"tufOwnerShare\" FROM \"tuf_owner_hst\"",
       "sourceTables": [
@@ -17124,7 +17124,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{prlAreaDateUpdated}^^xsd:date ",
+      "targetObject": "{prlAreaDateUpdated}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:dateUpdated {prlAreaDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlAreaPolyBlockName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\", \"prlAreaDateUpdated\" FROM \"licence_area_poly_hst\" WHERE \"prlAreaDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -17156,7 +17156,7 @@ export const npdMappingData = {
       "entityName": "messageType",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}/message/{ptlMessageDocumentNo}",
       "targetPredicate": "ptl:messageType",
-      "targetObject": "{ptlMessageKindDesc}^^xsd:string ",
+      "targetObject": "{ptlMessageKindDesc}^^xsd:string",
       "target": "npd:petreg/licence/{prlNpdidLicence}/message/{ptlMessageDocumentNo} ptl:messageType {ptlMessageKindDesc}^^xsd:string .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"ptlMessageDocumentNo\", \"ptlMessageKindDesc\" FROM \"licence_petreg_message\"",
       "sourceTables": [
@@ -17181,7 +17181,7 @@ export const npdMappingData = {
       "entityName": "DSTGasProducedRate",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber}",
       "targetPredicate": "npdv:DSTGasProducedRate",
-      "targetObject": "{wlbDstGasProd}^^xsd:integer ",
+      "targetObject": "{wlbDstGasProd}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/drillstem/{wlbDstTestNumber} npdv:DSTGasProducedRate {wlbDstGasProd}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDstTestNumber\", \"wlbDstGasProd\" FROM \"wellbore_dst\"",
       "sourceTables": [
@@ -17206,7 +17206,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"dateSyncNPD\" FROM \"wellbore_npdid_overview\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -17230,7 +17230,7 @@ export const npdMappingData = {
       "entityName": "blockLocation",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:blockLocation",
-      "targetObject": "npd:block/{blcName} ",
+      "targetObject": "npd:block/{blcName}",
       "target": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:blockLocation npd:block/{blcName} .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"blcName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"prlAreaSplitByBlock\"",
       "sourceTables": [
@@ -17260,7 +17260,7 @@ export const npdMappingData = {
       "entityName": "sensorType",
       "targetSubject": "npd:survey/{seaSurveyName}/area",
       "targetPredicate": "npdv:sensorType",
-      "targetObject": "{seaSensorType}^^xsd:string ",
+      "targetObject": "{seaSensorType}^^xsd:string",
       "target": "npd:survey/{seaSurveyName}/area npdv:sensorType {seaSensorType}^^xsd:string .",
       "sourceSql": "SELECT \"seaArea_id\", \"seaSurveyName\", \"seaSensorType\" FROM \"seaArea\"",
       "sourceTables": [
@@ -17284,7 +17284,7 @@ export const npdMappingData = {
       "entityName": "utmEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:utmEW",
-      "targetObject": "{wlbEwUtm}^^xsd:decimal ",
+      "targetObject": "{wlbEwUtm}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:utmEW {wlbEwUtm}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwUtm\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -17307,7 +17307,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}/message/{ptlMessageDocumentNo}",
       "targetPredicate": "ptl:dateUpdated",
-      "targetObject": "{ptlMessageDateUpdated}^^xsd:date ",
+      "targetObject": "{ptlMessageDateUpdated}^^xsd:date",
       "target": "npd:petreg/licence/{prlNpdidLicence}/message/{ptlMessageDocumentNo} ptl:dateUpdated {ptlMessageDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"ptlMessageDocumentNo\", \"ptlMessageDateUpdated\" FROM \"licence_petreg_message\" WHERE \"ptlMessageDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -17333,7 +17333,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/1 ",
+      "targetObject": "npd:ncs/mainarea/1",
       "target": "npd:survey/{seaName} npdv:mainAreaLocation npd:ncs/mainarea/1 .",
       "sourceSql": "SELECT \"seaName\" FROM \"seis_acquisition\" WHERE \"seaGeographicalArea\"='Barentshavet'",
       "sourceTables": [
@@ -17356,7 +17356,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/2 ",
+      "targetObject": "npd:ncs/mainarea/2",
       "target": "npd:survey/{seaName} npdv:mainAreaLocation npd:ncs/mainarea/2 .",
       "sourceSql": "SELECT \"seaName\" FROM \"seis_acquisition\" WHERE \"seaGeographicalArea\"='Norskehavet'",
       "sourceTables": [
@@ -17379,7 +17379,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/3 ",
+      "targetObject": "npd:ncs/mainarea/3",
       "target": "npd:survey/{seaName} npdv:mainAreaLocation npd:ncs/mainarea/3 .",
       "sourceSql": "SELECT \"seaName\" FROM \"seis_acquisition\" WHERE \"seaGeographicalArea\"='Nordsjøen'",
       "sourceTables": [
@@ -17402,7 +17402,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart4",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart4",
-      "targetObject": "{wlbNamePart4}^^xsd:integer ",
+      "targetObject": "{wlbNamePart4}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart4 {wlbNamePart4}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart4\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -17425,7 +17425,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{wlbCoreDateUpdated}^^xsd:date ",
+      "targetObject": "{wlbCoreDateUpdated}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber} npdv:dateUpdated {wlbCoreDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"wellbore_core_id\", \"wlbNpdidWellbore\", \"wlbCoreNumber\", \"wlbCoreDateUpdated\" FROM \"wellbore_core\" WHERE \"wlbCoreDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -17452,7 +17452,7 @@ export const npdMappingData = {
       "entityName": "decimalDegreesNS",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:decimalDegreesNS",
-      "targetObject": "{wlbNsDecDeg}^^xsd:decimal ",
+      "targetObject": "{wlbNsDecDeg}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:decimalDegreesNS {wlbNsDecDeg}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNsDecDeg\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -17475,7 +17475,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/investment/{prfYear}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:field/{prfNpdidInformationCarrier}/investment/{prfYear} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\", \"prfYear\", \"dateSyncNPD\" FROM \"field_investment_yearly\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -17501,7 +17501,7 @@ export const npdMappingData = {
       "entityName": "pipelineDimension",
       "targetSubject": "npd:pipeline/{pipNpdidPipe}",
       "targetPredicate": "npdv:pipelineDimension",
-      "targetObject": "{pipDimension}^^xsd:decimal ",
+      "targetObject": "{pipDimension}^^xsd:decimal",
       "target": "npd:pipeline/{pipNpdidPipe} npdv:pipelineDimension {pipDimension}^^xsd:decimal .",
       "sourceSql": "SELECT \"pipNpdidPipe\", \"pipDimension\" FROM \"pipLine\"",
       "sourceTables": [
@@ -17524,7 +17524,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/1 ",
+      "targetObject": "npd:ncs/mainarea/1",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:mainAreaLocation npd:ncs/mainarea/1 .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbMainArea\"='Barents sea'",
       "sourceTables": [
@@ -17547,7 +17547,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/2 ",
+      "targetObject": "npd:ncs/mainarea/2",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:mainAreaLocation npd:ncs/mainarea/2 .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbMainArea\"='Norwegian sea'",
       "sourceTables": [
@@ -17570,7 +17570,7 @@ export const npdMappingData = {
       "entityName": "mainAreaLocation",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:mainAreaLocation",
-      "targetObject": "npd:ncs/mainarea/3 ",
+      "targetObject": "npd:ncs/mainarea/3",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:mainAreaLocation npd:ncs/mainarea/3 .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\" WHERE \"wlbMainArea\"='North sea'",
       "sourceTables": [
@@ -17593,7 +17593,7 @@ export const npdMappingData = {
       "entityName": "remainingGas",
       "targetSubject": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField}",
       "targetPredicate": "npdv:remainingGas",
-      "targetObject": "{cmpRemainingGas}^^xsd:decimal ",
+      "targetObject": "{cmpRemainingGas}^^xsd:decimal",
       "target": "npd:company/{cmpNpdidCompany}/reserve/{fldNpdidField} npdv:remainingGas {cmpRemainingGas}^^xsd:decimal .",
       "sourceSql": "SELECT \"cmpNpdidCompany\", \"fldNpdidField\", \"cmpRemainingGas\" FROM \"company_reserves\"",
       "sourceTables": [
@@ -17618,7 +17618,7 @@ export const npdMappingData = {
       "entityName": "dateBaaAreaValidFrom",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/polygon/{baaNpdidBsnsArrAreaPoly}",
       "targetPredicate": "npdv:dateBaaAreaValidFrom",
-      "targetObject": "{baaAreaPolyDateValidFrom}^^xsd:date ",
+      "targetObject": "{baaAreaPolyDateValidFrom}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/polygon/{baaNpdidBsnsArrAreaPoly} npdv:dateBaaAreaValidFrom {baaAreaPolyDateValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaNpdidBsnsArrAreaPoly\", \"baaAreaPolyDateValidFrom\" FROM \"baaArea\" WHERE \"baaAreaPolyDateValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -17644,7 +17644,7 @@ export const npdMappingData = {
       "entityName": "pipelineToFacility",
       "targetSubject": "npd:pipeline/{pipNpdidPipe}",
       "targetPredicate": "npdv:pipelineToFacility",
-      "targetObject": "npd:facility/{pipNpdidToFacility} ",
+      "targetObject": "npd:facility/{pipNpdidToFacility}",
       "target": "npd:pipeline/{pipNpdidPipe} npdv:pipelineToFacility npd:facility/{pipNpdidToFacility} .",
       "sourceSql": "SELECT \"pipNpdidPipe\", \"pipNpdidToFacility\" FROM \"pipLine\"",
       "sourceTables": [
@@ -17661,13 +17661,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00732:Literal:seaMultiline:seaSourceSize",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "sourceSize",
       "targetSubject": "npd:survey/{seaSurveyName}/multiline",
       "targetPredicate": "npdv:sourceSize",
-      "targetObject": "{seaSourceSize} ",
+      "targetObject": "{seaSourceSize}",
       "target": "npd:survey/{seaSurveyName}/multiline npdv:sourceSize {seaSourceSize} .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaSourceSize\" FROM \"seaMultiline\"",
       "sourceTables": [
@@ -17690,7 +17690,7 @@ export const npdMappingData = {
       "entityName": "dateMudMeasured",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/mud/{wellbore_mud_id}",
       "targetPredicate": "npdv:dateMudMeasured",
-      "targetObject": "{wlbMudDateMeasured}^^xsd:date ",
+      "targetObject": "{wlbMudDateMeasured}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/mud/{wellbore_mud_id} npdv:dateMudMeasured {wlbMudDateMeasured}^^xsd:date .",
       "sourceSql": "SELECT \"wellbore_mud_id\", \"wlbNpdidWellbore\", \"wlbMudDateMeasured\" FROM \"wellbore_mud\" WHERE \"wlbMudDateMeasured\" <> '9999-12-31'",
       "sourceTables": [
@@ -17716,7 +17716,7 @@ export const npdMappingData = {
       "entityName": "mudYieldPoint",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/mud/{wellbore_mud_id}",
       "targetPredicate": "npdv:mudYieldPoint",
-      "targetObject": "{wlbYieldPointAtMD}^^xsd:decimal ",
+      "targetObject": "{wlbYieldPointAtMD}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/mud/{wellbore_mud_id} npdv:mudYieldPoint {wlbYieldPointAtMD}^^xsd:decimal .",
       "sourceSql": "SELECT \"wellbore_mud_id\", \"wlbNpdidWellbore\", \"wlbYieldPointAtMD\" FROM \"wellbore_mud\"",
       "sourceTables": [
@@ -17741,7 +17741,7 @@ export const npdMappingData = {
       "entityName": "recoverableNGL",
       "targetSubject": "npd:field/{fldNpdidField}/reserve",
       "targetPredicate": "npdv:recoverableNGL",
-      "targetObject": "{fldRecoverableNGL}^^xsd:decimal ",
+      "targetObject": "{fldRecoverableNGL}^^xsd:decimal",
       "target": "npd:field/{fldNpdidField}/reserve npdv:recoverableNGL {fldRecoverableNGL}^^xsd:decimal .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldRecoverableNGL\" FROM \"field_reserves\"",
       "sourceTables": [
@@ -17764,7 +17764,7 @@ export const npdMappingData = {
       "entityName": "designLifetime",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:designLifetime",
-      "targetObject": "{fclDesignLifetime}^^xsd:integer ",
+      "targetObject": "{fclDesignLifetime}^^xsd:integer",
       "target": "npd:facility/{fclNpdidFacility} npdv:designLifetime {fclDesignLifetime}^^xsd:integer .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclDesignLifetime\" FROM \"facility_fixed\"",
       "sourceTables": [
@@ -17787,7 +17787,7 @@ export const npdMappingData = {
       "entityName": "isStratigraphical",
       "targetSubject": "npd:quadrant/{qdrName}/block/{blkName}/award/{prvName}/area/{apaAreaNet_id}",
       "targetPredicate": "npdv:isStratigraphical",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:quadrant/{qdrName}/block/{blkName}/award/{prvName}/area/{apaAreaNet_id} npdv:isStratigraphical \"true\" .",
       "sourceSql": "SELECT \"apaAreaNet_id\", \"qdrName\", \"blkName\", \"prvName\", \"blkId\" FROM \"apaAreaNet\" WHERE \"apaAreaType\"='Stratigraphic'",
       "sourceTables": [
@@ -17817,7 +17817,7 @@ export const npdMappingData = {
       "entityName": "isStratigraphical",
       "targetSubject": "npd:quadrant/{qdrName}/block/{blkName}/award/{prvName}/area/{apaAreaNet_id}",
       "targetPredicate": "npdv:isStratigraphical",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:quadrant/{qdrName}/block/{blkName}/award/{prvName}/area/{apaAreaNet_id} npdv:isStratigraphical \"false\" .",
       "sourceSql": "SELECT \"apaAreaNet_id\", \"qdrName\", \"blkName\", \"prvName\", \"blkId\" FROM \"apaAreaNet\" WHERE \"apaAreaType\"='null'",
       "sourceTables": [
@@ -17847,7 +17847,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:petreg/facility/{tufNpdidTuf}",
       "targetPredicate": "ptl:dateUpdated",
-      "targetObject": "{ptlOperDateUpdated}^^xsd:date ",
+      "targetObject": "{ptlOperDateUpdated}^^xsd:date",
       "target": "npd:petreg/facility/{tufNpdidTuf} ptl:dateUpdated {ptlOperDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"ptlOperDateUpdated\" FROM \"tuf_petreg_licence_oper\" WHERE \"ptlOperDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -17871,7 +17871,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"dateSyncNPD\" FROM \"bsns_arr_area_operator\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -17895,7 +17895,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:field/{fldNpdidField}/activity/{fldStatus}/history/{fldStatusFromDate}/{fldStatusToDate}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/activity/{fldStatus}/history/{fldStatusFromDate}/{fldStatusToDate} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldStatus\", \"fldStatusFromDate\", \"fldStatusToDate\", \"dateSyncNPD\" FROM \"field_activity_status_hst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -17925,7 +17925,7 @@ export const npdMappingData = {
       "entityName": "dateStatusFrom",
       "targetSubject": "npd:field/{fldNpdidField}/activity/{fldStatus}/history/{fldStatusFromDate}/{fldStatusToDate}",
       "targetPredicate": "npdv:dateStatusFrom",
-      "targetObject": "{fldStatusFromDate}^^xsd:date ",
+      "targetObject": "{fldStatusFromDate}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/activity/{fldStatus}/history/{fldStatusFromDate}/{fldStatusToDate} npdv:dateStatusFrom {fldStatusFromDate}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"fldStatus\", \"fldStatusFromDate\", \"fldStatusToDate\" FROM \"field_activity_status_hst\" WHERE \"fldStatusFromDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -17954,7 +17954,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/depth/{lsuTopDepth}/{lsuBottomDepth}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/depth/{lsuTopDepth}/{lsuBottomDepth} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"lsuNpdidLithoStrat\", \"lsuTopDepth\", \"lsuBottomDepth\", \"dateSyncNPD\" FROM \"strat_litho_wellbore\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -17984,7 +17984,7 @@ export const npdMappingData = {
       "entityName": "dateBaaAreaValidFrom",
       "targetSubject": "npd:baa/{baaNpdidBsnsArrArea}/block/{baaAreaPolyBlockName}/polyno/{baaAreaPolyNo}/history/{baaAreaPolyDateValidFrom}/{baaAreaPolyDateValidTo}",
       "targetPredicate": "npdv:dateBaaAreaValidFrom",
-      "targetObject": "{baaAreaPolyDateValidFrom}^^xsd:date ",
+      "targetObject": "{baaAreaPolyDateValidFrom}^^xsd:date",
       "target": "npd:baa/{baaNpdidBsnsArrArea}/block/{baaAreaPolyBlockName}/polyno/{baaAreaPolyNo}/history/{baaAreaPolyDateValidFrom}/{baaAreaPolyDateValidTo} npdv:dateBaaAreaValidFrom {baaAreaPolyDateValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"baaNpdidBsnsArrArea\", \"baaAreaPolyBlockName\", \"baaAreaPolyNo\", \"baaAreaPolyDateValidFrom\", \"baaAreaPolyDateValidTo\" FROM \"bsns_arr_area_area_poly_hst\" WHERE \"baaAreaPolyDateValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -18015,7 +18015,7 @@ export const npdMappingData = {
       "entityName": "wellboreStratumBottomDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/depth/{lsuTopDepth}/{lsuBottomDepth}",
       "targetPredicate": "npdv:wellboreStratumBottomDepth",
-      "targetObject": "{lsuBottomDepth}^^xsd:decimal ",
+      "targetObject": "{lsuBottomDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/depth/{lsuTopDepth}/{lsuBottomDepth} npdv:wellboreStratumBottomDepth {lsuBottomDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"lsuNpdidLithoStrat\", \"lsuTopDepth\", \"lsuBottomDepth\" FROM \"wellbore_formation_top\"",
       "sourceTables": [
@@ -18043,7 +18043,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{wlbDateUpdated}^^xsd:date ",
+      "targetObject": "{wlbDateUpdated}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateUpdated {wlbDateUpdated}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbDateUpdated\" FROM \"wellbore_shallow_all\" WHERE \"wlbDateUpdated\" <> '9999-12-31'",
       "sourceTables": [
@@ -18067,7 +18067,7 @@ export const npdMappingData = {
       "entityName": "isStratigraphical",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:isStratigraphical",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:isStratigraphical \"true\" .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlAreaPolyBlockName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"licence_area_poly_hst\" WHERE \"prlAreaPolyStratigraphical\"='YES'",
       "sourceTables": [
@@ -18098,7 +18098,7 @@ export const npdMappingData = {
       "entityName": "isStratigraphical",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:isStratigraphical",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:isStratigraphical \"false\" .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlAreaPolyBlockName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"licence_area_poly_hst\" WHERE \"prlAreaPolyStratigraphical\"='NO'",
       "sourceTables": [
@@ -18129,7 +18129,7 @@ export const npdMappingData = {
       "entityName": "coresTotalLength",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/cores",
       "targetPredicate": "npdv:coresTotalLength",
-      "targetObject": "{lsuCoreLenght}^^xsd:decimal ",
+      "targetObject": "{lsuCoreLenght}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/stratum/{lsuNpdidLithoStrat}/cores npdv:coresTotalLength {lsuCoreLenght}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"lsuNpdidLithoStrat\", \"lsuCoreLenght\" FROM \"strat_litho_wellbore_core\"",
       "sourceTables": [
@@ -18154,7 +18154,7 @@ export const npdMappingData = {
       "entityName": "licenseeInterest",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}/licencee/{cmpNpdidCompany}",
       "targetPredicate": "ptl:licenseeInterest",
-      "targetObject": "{ptlLicenseeInterest}^^xsd:decimal ",
+      "targetObject": "{ptlLicenseeInterest}^^xsd:decimal",
       "target": "npd:petreg/licence/{prlNpdidLicence}/licencee/{cmpNpdidCompany} ptl:licenseeInterest {ptlLicenseeInterest}^^xsd:decimal .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"cmpNpdidCompany\", \"ptlLicenseeInterest\" FROM \"licence_petreg_licence_licencee\"",
       "sourceTables": [
@@ -18179,7 +18179,7 @@ export const npdMappingData = {
       "entityName": "sourceType",
       "targetSubject": "npd:survey/{seaSurveyName}/multiline",
       "targetPredicate": "npdv:sourceType",
-      "targetObject": "{seaSourceType}^^xsd:string ",
+      "targetObject": "{seaSourceType}^^xsd:string",
       "target": "npd:survey/{seaSurveyName}/multiline npdv:sourceType {seaSourceType}^^xsd:string .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaSourceType\" FROM \"seaMultiline\"",
       "sourceTables": [
@@ -18202,7 +18202,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"dateSyncNPD\" FROM \"wellbore_exploration_all\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -18226,7 +18226,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:survey/{seaName}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{seaNpdidSurvey}^^xsd:integer ",
+      "targetObject": "{seaNpdidSurvey}^^xsd:integer",
       "target": "npd:survey/{seaName} npdv:idNPD {seaNpdidSurvey}^^xsd:integer .",
       "sourceSql": "SELECT \"seaName\", \"seaNpdidSurvey\" FROM \"seis_acquisition\"",
       "sourceTables": [
@@ -18249,7 +18249,7 @@ export const npdMappingData = {
       "entityName": "dateTransferValidFrom",
       "targetSubject": "npd:licence/{prlNpdidLicence}/transfer/{prlTransferDirection}/{cmpNpdidCompany}/history/{prlTransferDateValidFrom}",
       "targetPredicate": "npdv:dateTransferValidFrom",
-      "targetObject": "{prlTransferDateValidFrom}^^xsd:date ",
+      "targetObject": "{prlTransferDateValidFrom}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/transfer/{prlTransferDirection}/{cmpNpdidCompany}/history/{prlTransferDateValidFrom} npdv:dateTransferValidFrom {prlTransferDateValidFrom}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlTransferDirection\", \"cmpNpdidCompany\", \"prlTransferDateValidFrom\" FROM \"licence_transfer_hst\" WHERE \"prlTransferDateValidFrom\" <> '9999-12-31'",
       "sourceTables": [
@@ -18278,7 +18278,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:facility/{fclNpdidFacility}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{fclName}^^xsd:string ",
+      "targetObject": "{fclName}^^xsd:string",
       "target": "npd:facility/{fclNpdidFacility} npdv:name {fclName}^^xsd:string .",
       "sourceSql": "SELECT \"fclNpdidFacility\", \"fclName\" FROM \"facility_moveable\"",
       "sourceTables": [
@@ -18301,7 +18301,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:field/{fldNpdidField}/licensee/{cmpNpdidCompany}/history/{fldLicenseeFrom}/{fldLicenseeTo}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:field/{fldNpdidField}/licensee/{cmpNpdidCompany}/history/{fldLicenseeFrom}/{fldLicenseeTo} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"fldNpdidField\", \"cmpNpdidCompany\", \"fldLicenseeFrom\", \"fldLicenseeTo\", \"dateSyncNPD\" FROM \"field_licensee_hst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -18331,7 +18331,7 @@ export const npdMappingData = {
       "entityName": "polygonNo",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:polygonNo",
-      "targetObject": "{prlAreaPolyPolyNo}^^xsd:integer ",
+      "targetObject": "{prlAreaPolyPolyNo}^^xsd:integer",
       "target": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:polygonNo {prlAreaPolyPolyNo}^^xsd:integer .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"blcName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"prlAreaSplitByBlock\"",
       "sourceTables": [
@@ -18361,7 +18361,7 @@ export const npdMappingData = {
       "entityName": "dateLicenseeValidTo",
       "targetSubject": "npd:licence/{prlNpdidLicence}/licensee/{cmpNpdidCompany}/history/{prlLicenseeDateValidFrom}/{prlLicenseeDateValidTo}",
       "targetPredicate": "npdv:dateLicenseeValidTo",
-      "targetObject": "{prlLicenseeDateValidTo}^^xsd:date ",
+      "targetObject": "{prlLicenseeDateValidTo}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/licensee/{cmpNpdidCompany}/history/{prlLicenseeDateValidFrom}/{prlLicenseeDateValidTo} npdv:dateLicenseeValidTo {prlLicenseeDateValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"cmpNpdidCompany\", \"prlLicenseeDateValidFrom\", \"prlLicenseeDateValidTo\" FROM \"licence_licensee_hst\" WHERE \"prlLicenseeDateValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -18390,7 +18390,7 @@ export const npdMappingData = {
       "entityName": "wellboreFinalVerticalDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreFinalVerticalDepth",
-      "targetObject": "{wlbFinalVerticalDepth}^^xsd:decimal ",
+      "targetObject": "{wlbFinalVerticalDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreFinalVerticalDepth {wlbFinalVerticalDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbFinalVerticalDepth\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -18413,7 +18413,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart4",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart4",
-      "targetObject": "{wlbNamePart4}^^xsd:integer ",
+      "targetObject": "{wlbNamePart4}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart4 {wlbNamePart4}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart4\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -18436,7 +18436,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:licence/{prlNpdidLicence}/block/{prlAreaPolyBlockName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlAreaPolyBlockName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\", \"dateSyncNPD\" FROM \"licence_area_poly_hst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -18468,7 +18468,7 @@ export const npdMappingData = {
       "entityName": "dateTUFOperatorValidTo",
       "targetSubject": "npd:facility/{tufNpdidTuf}/operator/{cmpNpdidCompany}/history/{tufOperDateValidFrom}/{tufOperDateValidTo}",
       "targetPredicate": "npdv:dateTUFOperatorValidTo",
-      "targetObject": "{tufOperDateValidTo}^^xsd:date ",
+      "targetObject": "{tufOperDateValidTo}^^xsd:date",
       "target": "npd:facility/{tufNpdidTuf}/operator/{cmpNpdidCompany}/history/{tufOperDateValidFrom}/{tufOperDateValidTo} npdv:dateTUFOperatorValidTo {tufOperDateValidTo}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"cmpNpdidCompany\", \"tufOperDateValidFrom\", \"tufOperDateValidTo\" FROM \"tuf_operator_hst\" WHERE \"tufOperDateValidTo\" <> '9999-12-31'",
       "sourceTables": [
@@ -18497,7 +18497,7 @@ export const npdMappingData = {
       "entityName": "decimalDegreesEW",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:decimalDegreesEW",
-      "targetObject": "{wlbEwDesDeg}^^xsd:decimal ",
+      "targetObject": "{wlbEwDesDeg}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:decimalDegreesEW {wlbEwDesDeg}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbEwDesDeg\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -18520,7 +18520,7 @@ export const npdMappingData = {
       "entityName": "wellboreNamePart5",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreNamePart5",
-      "targetObject": "{wlbNamePart5}^^xsd:string ",
+      "targetObject": "{wlbNamePart5}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore} npdv:wellboreNamePart5 {wlbNamePart5}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNamePart5\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -18543,7 +18543,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:survey/{seaSurveyName}/point/{seaPolygonPointNumber}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:survey/{seaSurveyName}/point/{seaPolygonPointNumber} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"seaSurveyName\", \"seaPolygonPointNumber\", \"dateSyncNPD\" FROM \"seis_acquisition_coordinates_inc_turnarea\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -18569,7 +18569,7 @@ export const npdMappingData = {
       "entityName": "dateUpdatedMax",
       "targetSubject": "npd:petreg/licence/{prlNpdidLicence}",
       "targetPredicate": "ptl:dateUpdatedMax",
-      "targetObject": "{ptlDateUpdatedMax}^^xsd:date ",
+      "targetObject": "{ptlDateUpdatedMax}^^xsd:date",
       "target": "npd:petreg/licence/{prlNpdidLicence} ptl:dateUpdatedMax {ptlDateUpdatedMax}^^xsd:date .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"ptlDateUpdatedMax\" FROM \"licence_petreg_licence\" WHERE \"ptlDateUpdatedMax\" <> '9999-12-31'",
       "sourceTables": [
@@ -18593,7 +18593,7 @@ export const npdMappingData = {
       "entityName": "wellboreHoleDepth",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/test/casingleakoff/{wellbore_casing_and_lot_id}",
       "targetPredicate": "npdv:wellboreHoleDepth",
-      "targetObject": "{wlbHoleDepth}^^xsd:decimal ",
+      "targetObject": "{wlbHoleDepth}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/test/casingleakoff/{wellbore_casing_and_lot_id} npdv:wellboreHoleDepth {wlbHoleDepth}^^xsd:decimal .",
       "sourceSql": "SELECT \"wellbore_casing_and_lot_id\", \"wlbNpdidWellbore\", \"wlbHoleDepth\" FROM \"wellbore_casing_and_lot\"",
       "sourceTables": [
@@ -18618,7 +18618,7 @@ export const npdMappingData = {
       "entityName": "ZValueTo",
       "targetSubject": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:ZValueTo",
-      "targetObject": "{prlAreaPolyToZvalue}^^xsd:integer ",
+      "targetObject": "{prlAreaPolyToZvalue}^^xsd:integer",
       "target": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:ZValueTo {prlAreaPolyToZvalue}^^xsd:integer .",
       "sourceSql": "SELECT \"prlArea_id\", \"prlNpdidLicence\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\", \"prlAreaPolyToZvalue\" FROM \"prlArea\"",
       "sourceTables": [
@@ -18647,7 +18647,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:quadrant/{wlbNamePart1}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:quadrant/{wlbNamePart1} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNamePart1\", \"dateSyncNPD\" FROM \"wellbore_shallow_all\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -18671,7 +18671,7 @@ export const npdMappingData = {
       "entityName": "quadrantLocation",
       "targetSubject": "npd:block/{wlbNamePart1}/{wlbNamePart2}",
       "targetPredicate": "npdv:quadrantLocation",
-      "targetObject": "npd:quadrant/{wlbNamePart1} ",
+      "targetObject": "npd:quadrant/{wlbNamePart1}",
       "target": "npd:block/{wlbNamePart1}/{wlbNamePart2} npdv:quadrantLocation npd:quadrant/{wlbNamePart1} .",
       "sourceSql": "SELECT \"wlbNamePart1\", \"wlbNamePart2\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -18695,7 +18695,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:block/{wlbNamePart1}/{wlbNamePart2}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:block/{wlbNamePart1}/{wlbNamePart2} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNamePart1\", \"wlbNamePart2\", \"dateSyncNPD\" FROM \"wellbore_shallow_all\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -18721,7 +18721,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:quadrant/{wlbNamePart1}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{wlbNamePart1}^^xsd:string ",
+      "targetObject": "{wlbNamePart1}^^xsd:string",
       "target": "npd:quadrant/{wlbNamePart1} npdv:name {wlbNamePart1}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNamePart1\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -18743,7 +18743,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:facility/{tufNpdidTuf}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:facility/{tufNpdidTuf} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"dateSyncNPD\" FROM \"tuf_operator_hst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -18767,7 +18767,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:facility/{tufNpdidTuf}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{tufName}^^xsd:string ",
+      "targetObject": "{tufName}^^xsd:string",
       "target": "npd:facility/{tufNpdidTuf} npdv:name {tufName}^^xsd:string .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"tufName\" FROM \"tuf_operator_hst\"",
       "sourceTables": [
@@ -18790,7 +18790,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:block/{wlbNamePart1}/{wlbNamePart2}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:block/{wlbNamePart1}/{wlbNamePart2} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNamePart1\", \"wlbNamePart2\", \"dateSyncNPD\" FROM \"wellbore_exploration_all\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -18816,7 +18816,7 @@ export const npdMappingData = {
       "entityName": "coresForWellbore",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/cores",
       "targetPredicate": "npdv:coresForWellbore",
-      "targetObject": "npd:wellbore/{wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wlbNpdidWellbore}",
       "target": "npd:wellbore/{wlbNpdidWellbore}/cores npdv:coresForWellbore npd:wellbore/{wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\" FROM \"wellbore_core\"",
       "sourceTables": [
@@ -18838,7 +18838,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:facility/{tufNpdidTuf}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:facility/{tufNpdidTuf} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"dateSyncNPD\" FROM \"tuf_owner_hst\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -18862,7 +18862,7 @@ export const npdMappingData = {
       "entityName": "containsWellbore",
       "targetSubject": "npd:block/{wlbNamePart1}/{wlbNamePart2}",
       "targetPredicate": "npdv:containsWellbore",
-      "targetObject": "npd:wellbore/{wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wlbNpdidWellbore}",
       "target": "npd:block/{wlbNamePart1}/{wlbNamePart2} npdv:containsWellbore npd:wellbore/{wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"wlbNamePart1\", \"wlbNamePart2\", \"wlbNpdidWellbore\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -18887,7 +18887,7 @@ export const npdMappingData = {
       "entityName": "quadrantLocation",
       "targetSubject": "npd:block/{wlbNamePart1}/{wlbNamePart2}",
       "targetPredicate": "npdv:quadrantLocation",
-      "targetObject": "npd:quadrant/{wlbNamePart1} ",
+      "targetObject": "npd:quadrant/{wlbNamePart1}",
       "target": "npd:block/{wlbNamePart1}/{wlbNamePart2} npdv:quadrantLocation npd:quadrant/{wlbNamePart1} .",
       "sourceSql": "SELECT \"wlbNamePart1\", \"wlbNamePart2\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -18905,13 +18905,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00780:Literal:Extra:ex3:lsuLevel",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "stratigraphicLevel",
       "targetSubject": "npd:stratum/{lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:stratigraphicLevel",
-      "targetObject": "{lsuLevel} ",
+      "targetObject": "{lsuLevel}",
       "target": "npd:stratum/{lsuNpdidLithoStrat} npdv:stratigraphicLevel {lsuLevel} .",
       "sourceSql": "SELECT \"lsuNpdidLithoStrat\", \"lsuLevel\" FROM \"wellbore_formation_top\"",
       "sourceTables": [
@@ -18934,7 +18934,7 @@ export const npdMappingData = {
       "entityName": "stratigraphicParent",
       "targetSubject": "npd:stratum/{lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:stratigraphicParent",
-      "targetObject": "npd:stratum/{lsuNpdidLithoStratParent} ",
+      "targetObject": "npd:stratum/{lsuNpdidLithoStratParent}",
       "target": "npd:stratum/{lsuNpdidLithoStrat} npdv:stratigraphicParent npd:stratum/{lsuNpdidLithoStratParent} .",
       "sourceSql": "SELECT \"lsuNpdidLithoStrat\", \"lsuNpdidLithoStratParent\" FROM \"wellbore_formation_top\"",
       "sourceTables": [
@@ -18957,7 +18957,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:block/{wlbNamePart1}/{wlbNamePart2}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{wlbNamePart2}^^xsd:string ",
+      "targetObject": "{wlbNamePart2}^^xsd:string",
       "target": "npd:block/{wlbNamePart1}/{wlbNamePart2} npdv:name {wlbNamePart2}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNamePart1\", \"wlbNamePart2\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -18981,7 +18981,7 @@ export const npdMappingData = {
       "entityName": "quadrantLocation",
       "targetSubject": "npd:block/{wlbNamePart1}/{wlbNamePart2}",
       "targetPredicate": "npdv:quadrantLocation",
-      "targetObject": "npd:quadrant/{wlbNamePart1} ",
+      "targetObject": "npd:quadrant/{wlbNamePart1}",
       "target": "npd:block/{wlbNamePart1}/{wlbNamePart2} npdv:quadrantLocation npd:quadrant/{wlbNamePart1} .",
       "sourceSql": "SELECT \"wlbNamePart1\", \"wlbNamePart2\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -19005,7 +19005,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:quadrant/{wlbNamePart1}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{wlbNamePart1}^^xsd:string ",
+      "targetObject": "{wlbNamePart1}^^xsd:string",
       "target": "npd:quadrant/{wlbNamePart1} npdv:name {wlbNamePart1}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNamePart1\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -19027,7 +19027,7 @@ export const npdMappingData = {
       "entityName": "containsWellbore",
       "targetSubject": "npd:block/{wlbNamePart1}/{wlbNamePart2}",
       "targetPredicate": "npdv:containsWellbore",
-      "targetObject": "npd:wellbore/{wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wlbNpdidWellbore}",
       "target": "npd:block/{wlbNamePart1}/{wlbNamePart2} npdv:containsWellbore npd:wellbore/{wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"wlbNamePart1\", \"wlbNamePart2\", \"wlbNpdidWellbore\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -19052,7 +19052,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:quadrant/{wlbNamePart1}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:quadrant/{wlbNamePart1} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNamePart1\", \"dateSyncNPD\" FROM \"wellbore_development_all\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -19076,7 +19076,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:stratum/{lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:stratum/{lsuNpdidLithoStrat} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"lsuNpdidLithoStrat\", \"dateSyncNPD\" FROM \"wellbore_formation_top\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -19100,7 +19100,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:well/{wlbWell}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:well/{wlbWell} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wlbWell\", \"dateSyncNPD\" FROM \"wellbore_npdid_overview\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -19124,7 +19124,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:stratum/{lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{lsuNpdidLithoStrat}^^xsd:integer ",
+      "targetObject": "{lsuNpdidLithoStrat}^^xsd:integer",
       "target": "npd:stratum/{lsuNpdidLithoStrat} npdv:idNPD {lsuNpdidLithoStrat}^^xsd:integer .",
       "sourceSql": "SELECT \"lsuNpdidLithoStrat\" FROM \"wellbore_formation_top\"",
       "sourceTables": [
@@ -19140,13 +19140,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:00791:Literal:Extra:ex4:wlbWellType",
-      "kind": "objectProperty",
-      "abstraction": "对象属性关系",
+      "kind": "dataProperty",
+      "abstraction": "数据属性",
       "entityPrefix": "npdv",
       "entityName": "wellType",
       "targetSubject": "npd:well/{wlbWell}",
       "targetPredicate": "npdv:wellType",
-      "targetObject": "{wlbWellType} ",
+      "targetObject": "{wlbWellType}",
       "target": "npd:well/{wlbWell} npdv:wellType {wlbWellType} .",
       "sourceSql": "SELECT \"wlbWell\", \"wlbWellType\" FROM \"wellbore_npdid_overview\"",
       "sourceTables": [
@@ -19169,7 +19169,7 @@ export const npdMappingData = {
       "entityName": "containsWellbore",
       "targetSubject": "npd:block/{wlbNamePart1}/{wlbNamePart2}",
       "targetPredicate": "npdv:containsWellbore",
-      "targetObject": "npd:wellbore/{wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wlbNpdidWellbore}",
       "target": "npd:block/{wlbNamePart1}/{wlbNamePart2} npdv:containsWellbore npd:wellbore/{wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"wlbNamePart1\", \"wlbNamePart2\", \"wlbNpdidWellbore\" FROM \"wellbore_exploration_all\"",
       "sourceTables": [
@@ -19194,7 +19194,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:stratum/{lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{lsuName}^^xsd:string ",
+      "targetObject": "{lsuName}^^xsd:string",
       "target": "npd:stratum/{lsuNpdidLithoStrat} npdv:name {lsuName}^^xsd:string .",
       "sourceSql": "SELECT \"lsuNpdidLithoStrat\", \"lsuName\" FROM \"wellbore_formation_top\"",
       "sourceTables": [
@@ -19217,7 +19217,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:facility/{tufNpdidTuf}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{tufNpdidTuf}^^xsd:integer ",
+      "targetObject": "{tufNpdidTuf}^^xsd:integer",
       "target": "npd:facility/{tufNpdidTuf} npdv:idNPD {tufNpdidTuf}^^xsd:integer .",
       "sourceSql": "SELECT \"tufNpdidTuf\" FROM \"tuf_operator_hst\"",
       "sourceTables": [
@@ -19239,7 +19239,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:facility/{tufNpdidTuf}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{tufName}^^xsd:string ",
+      "targetObject": "{tufName}^^xsd:string",
       "target": "npd:facility/{tufNpdidTuf} npdv:name {tufName}^^xsd:string .",
       "sourceSql": "SELECT \"tufNpdidTuf\", \"tufName\" FROM \"tuf_owner_hst\"",
       "sourceTables": [
@@ -19262,7 +19262,7 @@ export const npdMappingData = {
       "entityName": "dateUpdated",
       "targetSubject": "npd:stratum/{lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:dateUpdated",
-      "targetObject": "{lsuWellboreUpdatedDate}^^xsd:date ",
+      "targetObject": "{lsuWellboreUpdatedDate}^^xsd:date",
       "target": "npd:stratum/{lsuNpdidLithoStrat} npdv:dateUpdated {lsuWellboreUpdatedDate}^^xsd:date .",
       "sourceSql": "SELECT \"lsuNpdidLithoStrat\", \"lsuWellboreUpdatedDate\" FROM \"wellbore_formation_top\" WHERE \"lsuWellboreUpdatedDate\" <> '9999-12-31'",
       "sourceTables": [
@@ -19286,7 +19286,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:quadrant/{wlbNamePart1}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:quadrant/{wlbNamePart1} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNamePart1\", \"dateSyncNPD\" FROM \"wellbore_exploration_all\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -19310,7 +19310,7 @@ export const npdMappingData = {
       "entityName": "idNPD",
       "targetSubject": "npd:facility/{tufNpdidTuf}",
       "targetPredicate": "npdv:idNPD",
-      "targetObject": "{tufNpdidTuf}^^xsd:integer ",
+      "targetObject": "{tufNpdidTuf}^^xsd:integer",
       "target": "npd:facility/{tufNpdidTuf} npdv:idNPD {tufNpdidTuf}^^xsd:integer .",
       "sourceSql": "SELECT \"tufNpdidTuf\" FROM \"tuf_owner_hst\"",
       "sourceTables": [
@@ -19332,7 +19332,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:well/{wlbWell}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{wlbWell}^^xsd:string ",
+      "targetObject": "{wlbWell}^^xsd:string",
       "target": "npd:well/{wlbWell} npdv:name {wlbWell}^^xsd:string .",
       "sourceSql": "SELECT \"wlbWell\" FROM \"wellbore_npdid_overview\"",
       "sourceTables": [
@@ -19354,7 +19354,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:block/{wlbNamePart1}/{wlbNamePart2}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{wlbNamePart2}^^xsd:string ",
+      "targetObject": "{wlbNamePart2}^^xsd:string",
       "target": "npd:block/{wlbNamePart1}/{wlbNamePart2} npdv:name {wlbNamePart2}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNamePart1\", \"wlbNamePart2\" FROM \"wellbore_shallow_all\"",
       "sourceTables": [
@@ -19378,7 +19378,7 @@ export const npdMappingData = {
       "entityName": "coresTotalNo",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/cores",
       "targetPredicate": "npdv:coresTotalNo",
-      "targetObject": "{wlbNumberOfCores}^^xsd:integer ",
+      "targetObject": "{wlbNumberOfCores}^^xsd:integer",
       "target": "npd:wellbore/{wlbNpdidWellbore}/cores npdv:coresTotalNo {wlbNumberOfCores}^^xsd:integer .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbNumberOfCores\" FROM \"wellbore_core\"",
       "sourceTables": [
@@ -19401,7 +19401,7 @@ export const npdMappingData = {
       "entityName": "name",
       "targetSubject": "npd:block/{wlbNamePart1}/{wlbNamePart2}",
       "targetPredicate": "npdv:name",
-      "targetObject": "{wlbNamePart2}^^xsd:string ",
+      "targetObject": "{wlbNamePart2}^^xsd:string",
       "target": "npd:block/{wlbNamePart1}/{wlbNamePart2} npdv:name {wlbNamePart2}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNamePart1\", \"wlbNamePart2\" FROM \"wellbore_development_all\"",
       "sourceTables": [
@@ -19425,7 +19425,7 @@ export const npdMappingData = {
       "entityName": "dateSyncNPD",
       "targetSubject": "npd:block/{wlbNamePart1}/{wlbNamePart2}",
       "targetPredicate": "npdv:dateSyncNPD",
-      "targetObject": "{dateSyncNPD}^^xsd:date ",
+      "targetObject": "{dateSyncNPD}^^xsd:date",
       "target": "npd:block/{wlbNamePart1}/{wlbNamePart2} npdv:dateSyncNPD {dateSyncNPD}^^xsd:date .",
       "sourceSql": "SELECT \"wlbNamePart1\", \"wlbNamePart2\", \"dateSyncNPD\" FROM \"wellbore_development_all\" WHERE \"dateSyncNPD\" <> '9999-12-31'",
       "sourceTables": [
@@ -21316,7 +21316,7 @@ export const npdMappingData = {
       "entityName": "developmentWellboreForLicence",
       "targetSubject": "npd:wellbore/{wdl_wlbNpdidWellbore}",
       "targetPredicate": "npdv:developmentWellboreForLicence",
-      "targetObject": "npd:licence/{l_prlNpdidLicence} ",
+      "targetObject": "npd:licence/{l_prlNpdidLicence}",
       "target": "npd:wellbore/{wdl_wlbNpdidWellbore} npdv:developmentWellboreForLicence npd:licence/{l_prlNpdidLicence} .",
       "sourceSql": "SELECT \"wellbore_development_all\".\"wlbNpdidWellbore\" wdl_wlbNpdidWellbore, \"licence\".\"prlNpdidLicence\" l_prlNpdidLicence FROM \"wellbore_development_all\" INNER JOIN \"licence\" ON \"wellbore_development_all\".\"prlNpdidProductionLicence\" = \"licence\".\"prlNpdidLicence\"",
       "sourceTables": [
@@ -21344,7 +21344,7 @@ export const npdMappingData = {
       "entityName": "lastOperatorCompany",
       "targetSubject": "npd:licence/{pASB_prlNpdidLicence}/block/{pASB_blcName}/polyno/{pASB_prlAreaPolyPolyNo}/history/{pASBB_prlAreaPolyDateValidFrom}/{pASB_prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:lastOperatorCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:licence/{pASB_prlNpdidLicence}/block/{pASB_blcName}/polyno/{pASB_prlAreaPolyPolyNo}/history/{pASBB_prlAreaPolyDateValidFrom}/{pASB_prlAreaPolyDateValidTo} npdv:lastOperatorCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"prlAreaSplitByBlock\".\"prlNpdidLicence\" pASB_prlNpdidLicence, \"prlAreaSplitByBlock\".\"blcName\" pASB_blcName, \"prlAreaSplitByBlock\".\"prlAreaPolyPolyNo\" pASB_prlAreaPolyPolyNo, \"prlAreaSplitByBlock\".\"prlAreaPolyDateValidFrom\" pASBB_prlAreaPolyDateValidFrom, \"prlAreaSplitByBlock\".\"prlAreaPolyDateValidTo\" pASB_prlAreaPolyDateValidTo, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"prlAreaSplitByBlock\"  INNER JOIN \"company\" ON \"prlAreaSplitByBlock\".\"prlLastOperatorNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -21384,7 +21384,7 @@ export const npdMappingData = {
       "entityName": "transferredLicence",
       "targetSubject": "npd:licence/{lth_prlNpdidLicence}/transfer/{lth_prlTransferDirection}/{lth_cmpNpdidCompany}/history/{lth_prlTransferDateValidFrom}",
       "targetPredicate": "npdv:transferredLicence",
-      "targetObject": "npd:licence/{l_prlNpdidLicence} ",
+      "targetObject": "npd:licence/{l_prlNpdidLicence}",
       "target": "npd:licence/{lth_prlNpdidLicence}/transfer/{lth_prlTransferDirection}/{lth_cmpNpdidCompany}/history/{lth_prlTransferDateValidFrom} npdv:transferredLicence npd:licence/{l_prlNpdidLicence} .",
       "sourceSql": "SELECT \"licence_transfer_hst\".\"prlNpdidLicence\" lth_prlNpdidLicence, \"licence_transfer_hst\".\"prlTransferDirection\" lth_prlTransferDirection, \"licence_transfer_hst\".\"cmpNpdidCompany\" lth_cmpNpdidCompany, \"licence_transfer_hst\".\"prlTransferDateValidFrom\" lth_prlTransferDateValidFrom, \"licence\".\"prlNpdidLicence\" l_prlNpdidLicence FROM \"licence_transfer_hst\"  INNER JOIN \"licence\" ON \"licence_transfer_hst\".\"prlNpdidLicence\" = \"licence\".\"prlNpdidLicence\"",
       "sourceTables": [
@@ -21418,7 +21418,7 @@ export const npdMappingData = {
       "entityName": "drillingOperatorCompany",
       "targetSubject": "npd:wellbore/{wdl_wlbNpdidWellbore}",
       "targetPredicate": "npdv:drillingOperatorCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:wellbore/{wdl_wlbNpdidWellbore} npdv:drillingOperatorCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"wellbore_development_all\".\"wlbNpdidWellbore\" wdl_wlbNpdidWellbore, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"wellbore_development_all\" INNER JOIN \"company\" ON \"wellbore_development_all\".\"wlbDrillingOperator\" = \"company\".\"cmpLongName\"",
       "sourceTables": [
@@ -21448,7 +21448,7 @@ export const npdMappingData = {
       "entityName": "TUFOperatorCompany",
       "targetSubject": "npd:petreg/facility/{tplo_tufNpdidTuf}",
       "targetPredicate": "ptl:TUFOperatorCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:petreg/facility/{tplo_tufNpdidTuf} ptl:TUFOperatorCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"tuf_petreg_licence_oper\".\"tufNpdidTuf\" tplo_tufNpdidTuf, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"tuf_petreg_licence_oper\" INNER JOIN \"company\" ON \"tuf_petreg_licence_oper\".\"cmpNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -21475,7 +21475,7 @@ export const npdMappingData = {
       "entityName": "pipelineOperator",
       "targetSubject": "npd:pipeline/{pL_pipNpdidPipe}",
       "targetPredicate": "npdv:pipelineOperator",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:pipeline/{pL_pipNpdidPipe} npdv:pipelineOperator npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"pipLine\".\"pipNpdidPipe\" pL_pipNpdidPipe, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"pipLine\" INNER JOIN \"company\" ON \"pipLine\".\"pipNpdidOperator\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -21503,7 +21503,7 @@ export const npdMappingData = {
       "entityName": "explorationWellboreForField",
       "targetSubject": "npd:wellbore/{wea_wlbNpdidWellbore}",
       "targetPredicate": "npdv:explorationWellboreForField",
-      "targetObject": "npd:field/{f_fldNpdidField} ",
+      "targetObject": "npd:field/{f_fldNpdidField}",
       "target": "npd:wellbore/{wea_wlbNpdidWellbore} npdv:explorationWellboreForField npd:field/{f_fldNpdidField} .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore, \"field\".\"fldNpdidField\" f_fldNpdidField FROM \"wellbore_exploration_all\" INNER JOIN \"field\" ON \"wellbore_exploration_all\".\"fldNpdidField\" = \"field\".\"fldNpdidField\"",
       "sourceTables": [
@@ -21530,7 +21530,7 @@ export const npdMappingData = {
       "entityName": "DSTForWellbore",
       "targetSubject": "npd:wellbore/{wd_wlbNpdidWellbore}/test/drillstem/{wd_wlbDstTestNumber}",
       "targetPredicate": "npdv:DSTForWellbore",
-      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore}",
       "target": "npd:wellbore/{wd_wlbNpdidWellbore}/test/drillstem/{wd_wlbDstTestNumber} npdv:DSTForWellbore npd:wellbore/{wNOo_wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"wellbore_dst\".\"wlbNpdidWellbore\" wd_wlbNpdidWellbore, \"wellbore_dst\".\"wlbDstTestNumber\" wd_wlbDstTestNumber, \"wellbore_npdid_overview\".\"wlbNpdidWellbore\" wNOo_wlbNpdidWellbore FROM \"wellbore_dst\"  INNER JOIN \"wellbore_npdid_overview\" ON \"wellbore_dst\".\"wlbNpdidWellbore\" = \"wellbore_npdid_overview\".\"wlbNpdidWellbore\"",
       "sourceTables": [
@@ -21558,7 +21558,7 @@ export const npdMappingData = {
       "entityName": "wellboreForDiscovery",
       "targetSubject": "npd:wellbore/{wdl_wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreForDiscovery",
-      "targetObject": "npd:discovery/{d_dscNpdidDiscovery} ",
+      "targetObject": "npd:discovery/{d_dscNpdidDiscovery}",
       "target": "npd:wellbore/{wdl_wlbNpdidWellbore} npdv:wellboreForDiscovery npd:discovery/{d_dscNpdidDiscovery} .",
       "sourceSql": "SELECT \"wellbore_development_all\".\"wlbNpdidWellbore\" wdl_wlbNpdidWellbore, \"discovery\".\"dscNpdidDiscovery\" d_dscNpdidDiscovery FROM \"wellbore_development_all\" INNER JOIN \"discovery\" ON \"wellbore_development_all\".\"dscNpdidDiscovery\" = \"discovery\".\"dscNpdidDiscovery\"",
       "sourceTables": [
@@ -21585,7 +21585,7 @@ export const npdMappingData = {
       "entityName": "resourcesIncludedInDiscovery",
       "targetSubject": "npd:discovery/{dA_dscNpdidDiscovery}/area/hctype/{dA_dscHcType}",
       "targetPredicate": "npdv:resourcesIncludedInDiscovery",
-      "targetObject": "npd:discovery/{d_dscNpdidDiscovery} ",
+      "targetObject": "npd:discovery/{d_dscNpdidDiscovery}",
       "target": "npd:discovery/{dA_dscNpdidDiscovery}/area/hctype/{dA_dscHcType} npdv:resourcesIncludedInDiscovery npd:discovery/{d_dscNpdidDiscovery} .",
       "sourceSql": "SELECT \"dscArea\".\"dscNpdidDiscovery\" dA_dscNpdidDiscovery, \"dscArea\".\"dscHcType\" dA_dscHcType, \"discovery\".\"dscNpdidDiscovery\" d_dscNpdidDiscovery FROM \"dscArea\"  INNER JOIN \"discovery\" ON \"dscArea\".\"dscNpdidResInclInDiscovery\" = \"discovery\".\"dscNpdidDiscovery\"",
       "sourceTables": [
@@ -21615,7 +21615,7 @@ export const npdMappingData = {
       "entityName": "baaTransferCompany",
       "targetSubject": "npd:baa/{baath_baaNpdidBsnsArrArea}/transfer/{baath_baaTransferDirection}/{baathcmpNpdidCompany}/history/{baath_baaTransferDateValidFrom}",
       "targetPredicate": "npdv:baaTransferCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:baa/{baath_baaNpdidBsnsArrArea}/transfer/{baath_baaTransferDirection}/{baathcmpNpdidCompany}/history/{baath_baaTransferDateValidFrom} npdv:baaTransferCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"bsns_arr_area_transfer_hst\".\"baaNpdidBsnsArrArea\" baath_baaNpdidBsnsArrArea, \"bsns_arr_area_transfer_hst\".\"baaTransferDirection\" baath_baaTransferDirection, \"bsns_arr_area_transfer_hst\".\"cmpNpdidCompany\" baathcmpNpdidCompany, \"bsns_arr_area_transfer_hst\".\"baaTransferDateValidFrom\" baath_baaTransferDateValidFrom, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"bsns_arr_area_transfer_hst\"  INNER JOIN \"company\" ON \"bsns_arr_area_transfer_hst\".\"cmpNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -21649,7 +21649,7 @@ export const npdMappingData = {
       "entityName": "isGeometryOfFeature",
       "targetSubject": "npd:discovery/{f_dscNpdidDiscovery}/area/hctype/{f_dscHcType}",
       "targetPredicate": "npdv:isGeometryOfFeature",
-      "targetObject": "npd:discovery/{d_dscNpdidDiscovery} ",
+      "targetObject": "npd:discovery/{d_dscNpdidDiscovery}",
       "target": "npd:discovery/{f_dscNpdidDiscovery}/area/hctype/{f_dscHcType} npdv:isGeometryOfFeature npd:discovery/{d_dscNpdidDiscovery} .",
       "sourceSql": "SELECT \"fldArea\".\"dscNpdidDiscovery\" f_dscNpdidDiscovery, \"fldArea\".\"dscHcType\" f_dscHcType, \"discovery\".\"dscNpdidDiscovery\" d_dscNpdidDiscovery FROM \"fldArea\"  INNER JOIN \"discovery\" ON \"fldArea\".\"dscNpdidDiscovery\" = \"discovery\".\"dscNpdidDiscovery\"",
       "sourceTables": [
@@ -21677,7 +21677,7 @@ export const npdMappingData = {
       "entityName": "reservesForCompany",
       "targetSubject": "npd:company/{cr_cmpNpdidCompany}/reserve/{cr_fldNpdidField}",
       "targetPredicate": "npdv:reservesForCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:company/{cr_cmpNpdidCompany}/reserve/{cr_fldNpdidField} npdv:reservesForCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"company_reserves\".\"cmpNpdidCompany\" cr_cmpNpdidCompany, \"company_reserves\".\"fldNpdidField\" cr_fldNpdidField, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"company_reserves\"  INNER JOIN \"company\" ON \"company_reserves\".\"cmpNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -21705,7 +21705,7 @@ export const npdMappingData = {
       "entityName": "currentFieldOwner",
       "targetSubject": "npd:field/{f_fldNpdidField}",
       "targetPredicate": "npdv:currentFieldOwner",
-      "targetObject": "npd:licence/{l_prlNpdidLicence} ",
+      "targetObject": "npd:licence/{l_prlNpdidLicence}",
       "target": "npd:field/{f_fldNpdidField} npdv:currentFieldOwner npd:licence/{l_prlNpdidLicence} .",
       "sourceSql": "SELECT \"field\".\"fldNpdidField\" f_fldNpdidField, \"licence\".\"prlNpdidLicence\" l_prlNpdidLicence FROM \"field\" INNER JOIN \"licence\" ON \"field\".\"fldNpdidOwner\" = \"licence\".\"prlNpdidLicence\"",
       "sourceTables": [
@@ -21733,7 +21733,7 @@ export const npdMappingData = {
       "entityName": "developmentWellboreForLicence",
       "targetSubject": "npd:wellbore/{wdl_wlbNpdidWellbore}",
       "targetPredicate": "npdv:developmentWellboreForLicence",
-      "targetObject": "npd:licence/{l_prlNpdidLicence} ",
+      "targetObject": "npd:licence/{l_prlNpdidLicence}",
       "target": "npd:wellbore/{wdl_wlbNpdidWellbore} npdv:developmentWellboreForLicence npd:licence/{l_prlNpdidLicence} .",
       "sourceSql": "SELECT \"wellbore_development_all\".\"wlbNpdidWellbore\" wdl_wlbNpdidWellbore, \"licence\".\"prlNpdidLicence\" l_prlNpdidLicence FROM \"wellbore_development_all\" INNER JOIN \"licence\" ON \"wellbore_development_all\".\"wlbProductionLicence\" = \"licence\".\"prlName\"",
       "sourceTables": [
@@ -21763,7 +21763,7 @@ export const npdMappingData = {
       "entityName": "LOTForWellbore",
       "targetSubject": "npd:wellbore/{wcal_wlbNpdidWellbore}/test/casingleakoff/{wcal_wellbore_casing_and_lot_id}",
       "targetPredicate": "npdv:LOTForWellbore",
-      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore}",
       "target": "npd:wellbore/{wcal_wlbNpdidWellbore}/test/casingleakoff/{wcal_wellbore_casing_and_lot_id} npdv:LOTForWellbore npd:wellbore/{wNOo_wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"wellbore_casing_and_lot\".\"wellbore_casing_and_lot_id\" wcal_wellbore_casing_and_lot_id, \"wellbore_casing_and_lot\".\"wlbNpdidWellbore\" wcal_wlbNpdidWellbore, \"wellbore_npdid_overview\".\"wlbNpdidWellbore\" wNOo_wlbNpdidWellbore FROM \"wellbore_casing_and_lot\"  INNER JOIN \"wellbore_npdid_overview\" ON \"wellbore_casing_and_lot\".\"wlbNpdidWellbore\" = \"wellbore_npdid_overview\".\"wlbNpdidWellbore\"",
       "sourceTables": [
@@ -21791,7 +21791,7 @@ export const npdMappingData = {
       "entityName": "investmentForField",
       "targetSubject": "npd:field/{fiy_prfNpdidInformationCarrier}/investment/{fiy_prfYear}",
       "targetPredicate": "npdv:investmentForField",
-      "targetObject": "npd:field/{f_fldNpdidField} ",
+      "targetObject": "npd:field/{f_fldNpdidField}",
       "target": "npd:field/{fiy_prfNpdidInformationCarrier}/investment/{fiy_prfYear} npdv:investmentForField npd:field/{f_fldNpdidField} .",
       "sourceSql": "SELECT \"field_investment_yearly\".\"prfNpdidInformationCarrier\" fiy_prfNpdidInformationCarrier, \"field_investment_yearly\".\"prfYear\" fiy_prfYear, \"field\".\"fldNpdidField\" f_fldNpdidField FROM \"field_investment_yearly\"  INNER JOIN \"field\" ON \"field_investment_yearly\".\"prfNpdidInformationCarrier\" = \"field\".\"fldNpdidField\"",
       "sourceTables": [
@@ -21820,7 +21820,7 @@ export const npdMappingData = {
       "entityName": "fieldOperator",
       "targetSubject": "npd:field/{foh_fldNpdidField}/operator/{foh_cmpNpdidCompany}/history/{foh_fldOperatorFrom}/{foh_fldOperatorTo}",
       "targetPredicate": "npdv:fieldOperator",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:field/{foh_fldNpdidField}/operator/{foh_cmpNpdidCompany}/history/{foh_fldOperatorFrom}/{foh_fldOperatorTo} npdv:fieldOperator npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"field_operator_hst\".\"fldNpdidField\" foh_fldNpdidField, \"field_operator_hst\".\"cmpNpdidCompany\" foh_cmpNpdidCompany, \"field_operator_hst\".\"fldOperatorFrom\" foh_fldOperatorFrom, \"field_operator_hst\".\"fldOperatorTo\" foh_fldOperatorTo, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"field_operator_hst\"  INNER JOIN \"company\" ON \"field_operator_hst\".\"cmpNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -21854,7 +21854,7 @@ export const npdMappingData = {
       "entityName": "lastOperatorCompany",
       "targetSubject": "npd:licence/{pA_prlNpdidLicence}/area/{pA_prlArea_id}/history/{pA_prlAreaPolyDateValidFrom}/{pA_prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:lastOperatorCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:licence/{pA_prlNpdidLicence}/area/{pA_prlArea_id}/history/{pA_prlAreaPolyDateValidFrom}/{pA_prlAreaPolyDateValidTo} npdv:lastOperatorCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"prlArea\".\"prlArea_id\" pA_prlArea_id, \"prlArea\".\"prlNpdidLicence\" pA_prlNpdidLicence, \"prlArea\".\"prlAreaPolyDateValidFrom\" pA_prlAreaPolyDateValidFrom, \"prlArea\".\"prlAreaPolyDateValidTo\" pA_prlAreaPolyDateValidTo, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"prlArea\"  INNER JOIN \"company\" ON \"prlArea\".\"prlLastOperatorNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -21891,7 +21891,7 @@ export const npdMappingData = {
       "entityName": "developmentWellboreForField",
       "targetSubject": "npd:wellbore/{wdl_wlbNpdidWellbore}",
       "targetPredicate": "npdv:developmentWellboreForField",
-      "targetObject": "npd:field/{f_fldNpdidField} ",
+      "targetObject": "npd:field/{f_fldNpdidField}",
       "target": "npd:wellbore/{wdl_wlbNpdidWellbore} npdv:developmentWellboreForField npd:field/{f_fldNpdidField} .",
       "sourceSql": "SELECT \"wellbore_development_all\".\"wlbNpdidWellbore\" wdl_wlbNpdidWellbore, \"field\".\"fldNpdidField\" f_fldNpdidField FROM \"wellbore_development_all\" INNER JOIN \"field\" ON \"wellbore_development_all\".\"fldNpdidField\" = \"field\".\"fldNpdidField\"",
       "sourceTables": [
@@ -21918,7 +21918,7 @@ export const npdMappingData = {
       "entityName": "statusForLicence",
       "targetSubject": "npd:licence/{lph_prlNpdidLicence}/phase/{lph_prlPhase}/history/{lph_prlDatePhaseValidFrom}/{lph_prlDatePhaseValidTo}",
       "targetPredicate": "npdv:statusForLicence",
-      "targetObject": "npd:licence/{l_prlNpdidLicence} ",
+      "targetObject": "npd:licence/{l_prlNpdidLicence}",
       "target": "npd:licence/{lph_prlNpdidLicence}/phase/{lph_prlPhase}/history/{lph_prlDatePhaseValidFrom}/{lph_prlDatePhaseValidTo} npdv:statusForLicence npd:licence/{l_prlNpdidLicence} .",
       "sourceSql": "SELECT \"licence_phase_hst\".\"prlNpdidLicence\" lph_prlNpdidLicence, \"licence_phase_hst\".\"prlPhase\" lph_prlPhase, \"licence_phase_hst\".\"prlDatePhaseValidFrom\" lph_prlDatePhaseValidFrom, \"licence_phase_hst\".\"prlDatePhaseValidTo\" lph_prlDatePhaseValidTo, \"licence\".\"prlNpdidLicence\" l_prlNpdidLicence FROM \"licence_phase_hst\"  INNER JOIN \"licence\" ON \"licence_phase_hst\".\"prlNpdidLicence\" = \"licence\".\"prlNpdidLicence\"",
       "sourceTables": [
@@ -21952,7 +21952,7 @@ export const npdMappingData = {
       "entityName": "statusForSurvey",
       "targetSubject": "npd:survey/{sap_seaProgressText2}/status/{sap_seis_acquisition_progress_id}",
       "targetPredicate": "npdv:statusForSurvey",
-      "targetObject": "npd:survey/{sa_seaName} ",
+      "targetObject": "npd:survey/{sa_seaName}",
       "target": "npd:survey/{sap_seaProgressText2}/status/{sap_seis_acquisition_progress_id} npdv:statusForSurvey npd:survey/{sa_seaName} .",
       "sourceSql": "SELECT \"seis_acquisition_progress\".\"seis_acquisition_progress_id\" sap_seis_acquisition_progress_id, \"seis_acquisition_progress\".\"seaProgressText2\" sap_seaProgressText2, \"seis_acquisition\".\"seaName\" sa_seaName FROM \"seis_acquisition_progress\"  INNER JOIN \"seis_acquisition\" ON \"seis_acquisition_progress\".\"seaNpdidSurvey\" = \"seis_acquisition\".\"seaNpdidSurvey\"",
       "sourceTables": [
@@ -21984,7 +21984,7 @@ export const npdMappingData = {
       "entityName": "isGeometryOfFeature",
       "targetSubject": "npd:survey/{sM_seaSurveyName}/multiline",
       "targetPredicate": "npdv:isGeometryOfFeature",
-      "targetObject": "npd:survey/{sa_seaName} ",
+      "targetObject": "npd:survey/{sa_seaName}",
       "target": "npd:survey/{sM_seaSurveyName}/multiline npdv:isGeometryOfFeature npd:survey/{sa_seaName} .",
       "sourceSql": "SELECT \"seaMultiline\".\"seaSurveyName\" sM_seaSurveyName, \"seis_acquisition\".\"seaName\" sa_seaName FROM \"seaMultiline\" INNER JOIN \"seis_acquisition\" ON \"seaMultiline\".\"seaSurveyName\" = \"seis_acquisition\".\"seaName\"",
       "sourceTables": [
@@ -22010,7 +22010,7 @@ export const npdMappingData = {
       "entityName": "TUFOwnerCompany",
       "targetSubject": "npd:facility/{toh_tufNpdidTuf}/owner/{toh_cmpNpdidCompany}/history/{toh_tufOwnerDateValidFrom}/{toh_tufOwnerDateValidTo}",
       "targetPredicate": "ptl:TUFOwnerCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:facility/{toh_tufNpdidTuf}/owner/{toh_cmpNpdidCompany}/history/{toh_tufOwnerDateValidFrom}/{toh_tufOwnerDateValidTo} ptl:TUFOwnerCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"tuf_owner_hst\".\"tufNpdidTuf\" toh_tufNpdidTuf, \"tuf_owner_hst\".\"cmpNpdidCompany\" toh_cmpNpdidCompany, \"tuf_owner_hst\".\"tufOwnerDateValidFrom\" toh_tufOwnerDateValidFrom, \"tuf_owner_hst\".\"tufOwnerDateValidTo\" toh_tufOwnerDateValidTo, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"tuf_owner_hst\"  INNER JOIN \"company\" ON \"tuf_owner_hst\".\"cmpNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -22044,7 +22044,7 @@ export const npdMappingData = {
       "entityName": "ownerForField",
       "targetSubject": "npd:field/{foh_fldNpdidField}/owner/{foh_fldNpdidOwner}/history/{foh_fldOwnershipFromDate}/{foh_fldOwnershipToDate}",
       "targetPredicate": "npdv:ownerForField",
-      "targetObject": "npd:field/{f_fldNpdidField} ",
+      "targetObject": "npd:field/{f_fldNpdidField}",
       "target": "npd:field/{foh_fldNpdidField}/owner/{foh_fldNpdidOwner}/history/{foh_fldOwnershipFromDate}/{foh_fldOwnershipToDate} npdv:ownerForField npd:field/{f_fldNpdidField} .",
       "sourceSql": "SELECT \"field_owner_hst\".\"fldNpdidField\" foh_fldNpdidField, \"field_owner_hst\".\"fldNpdidOwner\" foh_fldNpdidOwner, \"field_owner_hst\".\"fldOwnershipFromDate\" foh_fldOwnershipFromDate, \"field_owner_hst\".\"fldOwnershipToDate\" foh_fldOwnershipToDate, \"field\".\"fldNpdidField\" f_fldNpdidField FROM \"field_owner_hst\"  INNER JOIN \"field\" ON \"field_owner_hst\".\"fldNpdidField\" = \"field\".\"fldNpdidField\"",
       "sourceTables": [
@@ -22078,7 +22078,7 @@ export const npdMappingData = {
       "entityName": "currentFieldOperator",
       "targetSubject": "npd:field/{f_fldNpdidField}",
       "targetPredicate": "npdv:currentFieldOperator",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:field/{f_fldNpdidField} npdv:currentFieldOperator npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"field\".\"fldNpdidField\" f_fldNpdidField, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"field\" INNER JOIN \"company\" ON \"field\".\"cmpNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -22105,7 +22105,7 @@ export const npdMappingData = {
       "entityName": "isGeometryOfFeature",
       "targetSubject": "npd:survey/{sA_seaSurveyName}/area",
       "targetPredicate": "npdv:isGeometryOfFeature",
-      "targetObject": "npd:survey/{sa_seaName} ",
+      "targetObject": "npd:survey/{sa_seaName}",
       "target": "npd:survey/{sA_seaSurveyName}/area npdv:isGeometryOfFeature npd:survey/{sa_seaName} .",
       "sourceSql": "SELECT \"seaArea\".\"seaArea_id\", \"seaArea\".\"seaSurveyName\" sA_seaSurveyName, \"seis_acquisition\".\"seaName\" sa_seaName FROM \"seaArea\"  INNER JOIN \"seis_acquisition\" ON \"seaArea\".\"seaNpdidSurvey\" = \"seis_acquisition\".\"seaNpdidSurvey\"",
       "sourceTables": [
@@ -22136,7 +22136,7 @@ export const npdMappingData = {
       "entityName": "wellOperator",
       "targetSubject": "npd:wellbore/{wea_wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellOperator",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:wellbore/{wea_wlbNpdidWellbore} npdv:wellOperator npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"wellbore_exploration_all\" INNER JOIN \"company\" ON \"wellbore_exploration_all\".\"wlbDiskosWellOperator\" = \"company\".\"cmpShortName\"",
       "sourceTables": [
@@ -22166,7 +22166,7 @@ export const npdMappingData = {
       "entityName": "mudTestForWellbore",
       "targetSubject": "npd:wellbore/{wm_wlbNpdidWellbore}/test/mud/{wm_wellbore_mud_id}",
       "targetPredicate": "npdv:mudTestForWellbore",
-      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore}",
       "target": "npd:wellbore/{wm_wlbNpdidWellbore}/test/mud/{wm_wellbore_mud_id} npdv:mudTestForWellbore npd:wellbore/{wNOo_wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"wellbore_mud\".\"wellbore_mud_id\" wm_wellbore_mud_id, \"wellbore_mud\".\"wlbNpdidWellbore\" wm_wlbNpdidWellbore, \"wellbore_npdid_overview\".\"wlbNpdidWellbore\" wNOo_wlbNpdidWellbore FROM \"wellbore_mud\"  INNER JOIN \"wellbore_npdid_overview\" ON \"wellbore_mud\".\"wlbNpdidWellbore\" = \"wellbore_npdid_overview\".\"wlbNpdidWellbore\"",
       "sourceTables": [
@@ -22194,7 +22194,7 @@ export const npdMappingData = {
       "entityName": "resourcesIncludedInDiscovery",
       "targetSubject": "npd:discovery/{f_dscNpdidDiscovery}/area/hctype/{f_dscHcType}",
       "targetPredicate": "npdv:resourcesIncludedInDiscovery",
-      "targetObject": "npd:discovery/{d_dscNpdidDiscovery} ",
+      "targetObject": "npd:discovery/{d_dscNpdidDiscovery}",
       "target": "npd:discovery/{f_dscNpdidDiscovery}/area/hctype/{f_dscHcType} npdv:resourcesIncludedInDiscovery npd:discovery/{d_dscNpdidDiscovery} .",
       "sourceSql": "SELECT \"fldArea\".\"dscNpdidDiscovery\" f_dscNpdidDiscovery, \"fldArea\".\"dscHcType\" f_dscHcType, \"discovery\".\"dscNpdidDiscovery\" d_dscNpdidDiscovery FROM \"fldArea\"  INNER JOIN \"discovery\" ON \"fldArea\".\"dscNpdidResInclInDiscovery\" = \"discovery\".\"dscNpdidDiscovery\"",
       "sourceTables": [
@@ -22224,7 +22224,7 @@ export const npdMappingData = {
       "entityName": "operatorForField",
       "targetSubject": "npd:field/{foh_fldNpdidField}/operator/{foh_cmpNpdidCompany}/history/{foh_fldOperatorFrom}/{foh_fldOperatorTo}",
       "targetPredicate": "npdv:operatorForField",
-      "targetObject": "npd:field/{f_fldNpdidField} ",
+      "targetObject": "npd:field/{f_fldNpdidField}",
       "target": "npd:field/{foh_fldNpdidField}/operator/{foh_cmpNpdidCompany}/history/{foh_fldOperatorFrom}/{foh_fldOperatorTo} npdv:operatorForField npd:field/{f_fldNpdidField} .",
       "sourceSql": "SELECT \"field_operator_hst\".\"fldNpdidField\" foh_fldNpdidField, \"field_operator_hst\".\"cmpNpdidCompany\" foh_cmpNpdidCompany, \"field_operator_hst\".\"fldOperatorFrom\" foh_fldOperatorFrom, \"field_operator_hst\".\"fldOperatorTo\" foh_fldOperatorTo, \"field\".\"fldNpdidField\" f_fldNpdidField FROM \"field_operator_hst\"  INNER JOIN \"field\" ON \"field_operator_hst\".\"fldNpdidField\" = \"field\".\"fldNpdidField\"",
       "sourceTables": [
@@ -22258,7 +22258,7 @@ export const npdMappingData = {
       "entityName": "TUFOperatorForLicence",
       "targetSubject": "npd:facility/{toh_tufNpdidTuf}/operator/{toh_cmpNpdidCompany}/history/{toh_tufOperDateValidFrom}/{toh_tufOperDateValidTo}",
       "targetPredicate": "ptl:TUFOperatorForLicence",
-      "targetObject": "npd:petreg/facility/{tpl_tufNpdidTuf} ",
+      "targetObject": "npd:petreg/facility/{tpl_tufNpdidTuf}",
       "target": "npd:facility/{toh_tufNpdidTuf}/operator/{toh_cmpNpdidCompany}/history/{toh_tufOperDateValidFrom}/{toh_tufOperDateValidTo} ptl:TUFOperatorForLicence npd:petreg/facility/{tpl_tufNpdidTuf} .",
       "sourceSql": "SELECT \"tuf_operator_hst\".\"tufNpdidTuf\" toh_tufNpdidTuf, \"tuf_operator_hst\".\"cmpNpdidCompany\" toh_cmpNpdidCompany, \"tuf_operator_hst\".\"tufOperDateValidFrom\" toh_tufOperDateValidFrom, \"tuf_operator_hst\".\"tufOperDateValidTo\" toh_tufOperDateValidTo, \"tuf_petreg_licence\".\"tufNpdidTuf\" tpl_tufNpdidTuf FROM \"tuf_operator_hst\"  INNER JOIN \"tuf_petreg_licence\" ON \"tuf_operator_hst\".\"tufNpdidTuf\" = \"tuf_petreg_licence\".\"tufNpdidTuf\"",
       "sourceTables": [
@@ -22292,7 +22292,7 @@ export const npdMappingData = {
       "entityName": "coreForWellbore",
       "targetSubject": "npd:wellbore/{wc_wlbNpdidWellbore}/core/{wc_wlbCoreNumber}",
       "targetPredicate": "npdv:coreForWellbore",
-      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore}",
       "target": "npd:wellbore/{wc_wlbNpdidWellbore}/core/{wc_wlbCoreNumber} npdv:coreForWellbore npd:wellbore/{wNOo_wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"wellbore_core\".\"wellbore_core_id\", \"wellbore_core\".\"wlbNpdidWellbore\" wc_wlbNpdidWellbore, \"wellbore_core\".\"wlbCoreNumber\" wc_wlbCoreNumber, \"wellbore_npdid_overview\".\"wlbNpdidWellbore\" wNOo_wlbNpdidWellbore FROM \"wellbore_core\"  INNER JOIN \"wellbore_npdid_overview\" ON \"wellbore_core\".\"wlbNpdidWellbore\" = \"wellbore_npdid_overview\".\"wlbNpdidWellbore\"",
       "sourceTables": [
@@ -22322,7 +22322,7 @@ export const npdMappingData = {
       "entityName": "wellOperator",
       "targetSubject": "npd:wellbore/{wdl_wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellOperator",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:wellbore/{wdl_wlbNpdidWellbore} npdv:wellOperator npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"wellbore_development_all\".\"wlbNpdidWellbore\" wdl_wlbNpdidWellbore, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"wellbore_development_all\" INNER JOIN \"company\" ON \"wellbore_development_all\".\"wlbDiskosWellOperator\" = \"company\".\"cmpShortName\"",
       "sourceTables": [
@@ -22352,7 +22352,7 @@ export const npdMappingData = {
       "entityName": "taskForCompany",
       "targetSubject": "npd:licence/{lt_prlNpdidLicence}/task/{lt_prlTaskID}",
       "targetPredicate": "npdv:taskForCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:licence/{lt_prlNpdidLicence}/task/{lt_prlTaskID} npdv:taskForCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"licence_task\".\"prlNpdidLicence\" lt_prlNpdidLicence, \"licence_task\".\"prlTaskID\" lt_prlTaskID, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"licence_task\"  INNER JOIN \"company\" ON \"licence_task\".\"cmpNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -22382,7 +22382,7 @@ export const npdMappingData = {
       "entityName": "discoveryWellbore",
       "targetSubject": "npd:field/{f_fldNpdidField}",
       "targetPredicate": "npdv:discoveryWellbore",
-      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore}",
       "target": "npd:field/{f_fldNpdidField} npdv:discoveryWellbore npd:wellbore/{wNOo_wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"field\".\"fldNpdidField\" f_fldNpdidField, \"wellbore_npdid_overview\".\"wlbNpdidWellbore\" wNOo_wlbNpdidWellbore FROM \"field\" INNER JOIN \"wellbore_npdid_overview\" ON \"field\".\"wlbNpdidWellbore\" = \"wellbore_npdid_overview\".\"wlbNpdidWellbore\"",
       "sourceTables": [
@@ -22409,7 +22409,7 @@ export const npdMappingData = {
       "entityName": "statusForField",
       "targetSubject": "npd:field/{fash_fldNpdidField}/activity/{fash_fldStatus}/history/{fash_fldStatusFromDate}/{fash_fldStatusToDate}",
       "targetPredicate": "npdv:statusForField",
-      "targetObject": "npd:field/{f_fldNpdidField} ",
+      "targetObject": "npd:field/{f_fldNpdidField}",
       "target": "npd:field/{fash_fldNpdidField}/activity/{fash_fldStatus}/history/{fash_fldStatusFromDate}/{fash_fldStatusToDate} npdv:statusForField npd:field/{f_fldNpdidField} .",
       "sourceSql": "SELECT \"field_activity_status_hst\".\"fldNpdidField\" fash_fldNpdidField, \"field_activity_status_hst\".\"fldStatus\" fash_fldStatus, \"field_activity_status_hst\".\"fldStatusFromDate\" fash_fldStatusFromDate, \"field_activity_status_hst\".\"fldStatusToDate\" fash_fldStatusToDate, \"field\".\"fldNpdidField\" f_fldNpdidField FROM \"field_activity_status_hst\"  INNER JOIN \"field\" ON \"field_activity_status_hst\".\"fldNpdidField\" = \"field\".\"fldNpdidField\"",
       "sourceTables": [
@@ -22443,7 +22443,7 @@ export const npdMappingData = {
       "entityName": "licenceLicenceeCompany",
       "targetSubject": "npd:petreg/licence/{lpll_prlNpdidLicence}/licencee/{lpll_cmpNpdidCompany}",
       "targetPredicate": "ptl:licenceLicenceeCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:petreg/licence/{lpll_prlNpdidLicence}/licencee/{lpll_cmpNpdidCompany} ptl:licenceLicenceeCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"licence_petreg_licence_licencee\".\"prlNpdidLicence\" lpll_prlNpdidLicence, \"licence_petreg_licence_licencee\".\"cmpNpdidCompany\" lpll_cmpNpdidCompany, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"licence_petreg_licence_licencee\"  INNER JOIN \"company\" ON \"licence_petreg_licence_licencee\".\"cmpNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -22471,7 +22471,7 @@ export const npdMappingData = {
       "entityName": "isGeometryOfFeature",
       "targetSubject": "npd:discovery/{f_dscNpdidDiscovery}/area/hctype/{f_dscHcType}",
       "targetPredicate": "npdv:isGeometryOfFeature",
-      "targetObject": "npd:field/{f_fldNpdidField} ",
+      "targetObject": "npd:field/{f_fldNpdidField}",
       "target": "npd:discovery/{f_dscNpdidDiscovery}/area/hctype/{f_dscHcType} npdv:isGeometryOfFeature npd:field/{f_fldNpdidField} .",
       "sourceSql": "SELECT \"fldArea\".\"dscNpdidDiscovery\" f_dscNpdidDiscovery, \"fldArea\".\"dscHcType\" f_dscHcType, \"field\".\"fldNpdidField\" f_fldNpdidField FROM \"fldArea\"  INNER JOIN \"field\" ON \"fldArea\".\"fldNpdidField\" = \"field\".\"fldNpdidField\"",
       "sourceTables": [
@@ -22501,7 +22501,7 @@ export const npdMappingData = {
       "entityName": "reclassedFromWellbore",
       "targetSubject": "npd:wellbore/{wea_wlbNpdidWellbore}",
       "targetPredicate": "npdv:reclassedFromWellbore",
-      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore}",
       "target": "npd:wellbore/{wea_wlbNpdidWellbore} npdv:reclassedFromWellbore npd:wellbore/{wNOo_wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore, \"wellbore_npdid_overview\".\"wlbNpdidWellbore\" wNOo_wlbNpdidWellbore FROM \"wellbore_exploration_all\" INNER JOIN \"wellbore_npdid_overview\" ON \"wellbore_exploration_all\".\"wlbNpdidWellboreReclass\"  = \"wellbore_npdid_overview\".\"wlbNpdidWellbore\"",
       "sourceTables": [
@@ -22528,7 +22528,7 @@ export const npdMappingData = {
       "entityName": "includedInField",
       "targetSubject": "npd:discovery/{d_dscNpdidDiscovery}",
       "targetPredicate": "npdv:includedInField",
-      "targetObject": "npd:field/{f_fldNpdidField} ",
+      "targetObject": "npd:field/{f_fldNpdidField}",
       "target": "npd:discovery/{d_dscNpdidDiscovery} npdv:includedInField npd:field/{f_fldNpdidField} .",
       "sourceSql": "SELECT \"discovery\".\"dscNpdidDiscovery\" d_dscNpdidDiscovery, \"field\".\"fldNpdidField\" f_fldNpdidField FROM \"discovery\" INNER JOIN \"field\" ON \"discovery\".\"fldNpdidField\" = \"field\".\"fldNpdidField\"",
       "sourceTables": [
@@ -22555,7 +22555,7 @@ export const npdMappingData = {
       "entityName": "licenseeForBAA",
       "targetSubject": "npd:baa/{baalh_baaNpdidBsnsArrArea}/licensee/{baalh_cmpNpdidCompany}/history/{baalh_baaLicenseeDateValidFrom}/{baalh_baaLicenseeDateValidTo}",
       "targetPredicate": "npdv:licenseeForBAA",
-      "targetObject": "npd:baa/{baa_baaNpdidBsnsArrArea} ",
+      "targetObject": "npd:baa/{baa_baaNpdidBsnsArrArea}",
       "target": "npd:baa/{baalh_baaNpdidBsnsArrArea}/licensee/{baalh_cmpNpdidCompany}/history/{baalh_baaLicenseeDateValidFrom}/{baalh_baaLicenseeDateValidTo} npdv:licenseeForBAA npd:baa/{baa_baaNpdidBsnsArrArea} .",
       "sourceSql": "SELECT \"bsns_arr_area_licensee_hst\".\"baaNpdidBsnsArrArea\" baalh_baaNpdidBsnsArrArea, \"bsns_arr_area_licensee_hst\".\"cmpNpdidCompany\" baalh_cmpNpdidCompany, \"bsns_arr_area_licensee_hst\".\"baaLicenseeDateValidFrom\" baalh_baaLicenseeDateValidFrom, \"bsns_arr_area_licensee_hst\".\"baaLicenseeDateValidTo\" baalh_baaLicenseeDateValidTo, \"bsns_arr_area\".\"baaNpdidBsnsArrArea\" baa_baaNpdidBsnsArrArea FROM \"bsns_arr_area_licensee_hst\"  INNER JOIN \"bsns_arr_area\" ON \"bsns_arr_area_licensee_hst\".\"baaNpdidBsnsArrArea\"  = \"bsns_arr_area\".\"baaNpdidBsnsArrArea\"",
       "sourceTables": [
@@ -22589,7 +22589,7 @@ export const npdMappingData = {
       "entityName": "shallowWellboreForLicence",
       "targetSubject": "npd:wellbore/{wsa_wlbNpdidWellbore}",
       "targetPredicate": "npdv:shallowWellboreForLicence",
-      "targetObject": "npd:licence/{l_prlNpdidLicence} ",
+      "targetObject": "npd:licence/{l_prlNpdidLicence}",
       "target": "npd:wellbore/{wsa_wlbNpdidWellbore} npdv:shallowWellboreForLicence npd:licence/{l_prlNpdidLicence} .",
       "sourceSql": "SELECT \"wellbore_shallow_all\".\"wlbNpdidWellbore\" wsa_wlbNpdidWellbore, \"licence\".\"prlNpdidLicence\" l_prlNpdidLicence FROM \"wellbore_shallow_all\" INNER JOIN \"licence\" ON \"wellbore_shallow_all\".\"wlbProductionLicence\" = \"licence\".\"prlName\"",
       "sourceTables": [
@@ -22619,7 +22619,7 @@ export const npdMappingData = {
       "entityName": "messageForTUF",
       "targetSubject": "npd:petreg/facility/{tpm_tufNpdidTuf}/message/{tpm_ptlMessageDocumentNo}",
       "targetPredicate": "ptl:messageForTUF",
-      "targetObject": "npd:petreg/facility/{tpl_tufNpdidTuf} ",
+      "targetObject": "npd:petreg/facility/{tpl_tufNpdidTuf}",
       "target": "npd:petreg/facility/{tpm_tufNpdidTuf}/message/{tpm_ptlMessageDocumentNo} ptl:messageForTUF npd:petreg/facility/{tpl_tufNpdidTuf} .",
       "sourceSql": "SELECT \"tuf_petreg_message\".\"tufNpdidTuf\" tpm_tufNpdidTuf, \"tuf_petreg_message\".\"ptlMessageDocumentNo\" tpm_ptlMessageDocumentNo, \"tuf_petreg_licence\".\"tufNpdidTuf\" tpl_tufNpdidTuf FROM \"tuf_petreg_message\"  INNER JOIN \"tuf_petreg_licence\" ON \"tuf_petreg_message\".\"tufNpdidTuf\" = \"tuf_petreg_licence\".\"tufNpdidTuf\"",
       "sourceTables": [
@@ -22647,7 +22647,7 @@ export const npdMappingData = {
       "entityName": "TUFLicenceeForTUF",
       "targetSubject": "npd:petreg/facility/{tpll_tufNpdidTuf}/licencee/{tpll_cmpNpdidCompany}",
       "targetPredicate": "ptl:TUFLicenceeForTUF",
-      "targetObject": "npd:petreg/facility/{tpl_tufNpdidTuf} ",
+      "targetObject": "npd:petreg/facility/{tpl_tufNpdidTuf}",
       "target": "npd:petreg/facility/{tpll_tufNpdidTuf}/licencee/{tpll_cmpNpdidCompany} ptl:TUFLicenceeForTUF npd:petreg/facility/{tpl_tufNpdidTuf} .",
       "sourceSql": "SELECT \"tuf_petreg_licence_licencee\".\"tufNpdidTuf\" tpll_tufNpdidTuf, \"tuf_petreg_licence_licencee\".\"cmpNpdidCompany\" tpll_cmpNpdidCompany, \"tuf_petreg_licence\".\"tufNpdidTuf\" tpl_tufNpdidTuf FROM \"tuf_petreg_licence_licencee\"  INNER JOIN \"tuf_petreg_licence\" ON \"tuf_petreg_licence_licencee\".\"tufNpdidTuf\" = \"tuf_petreg_licence\".\"tufNpdidTuf\"",
       "sourceTables": [
@@ -22675,7 +22675,7 @@ export const npdMappingData = {
       "entityName": "TUFOwnerForLicence",
       "targetSubject": "npd:facility/{toh_tufNpdidTuf}/owner/{toh_cmpNpdidCompany}/history/{toh_tufOwnerDateValidFrom}/{toh_tufOwnerDateValidTo}",
       "targetPredicate": "ptl:TUFOwnerForLicence",
-      "targetObject": "npd:petreg/facility/{tpl_tufNpdidTuf} ",
+      "targetObject": "npd:petreg/facility/{tpl_tufNpdidTuf}",
       "target": "npd:facility/{toh_tufNpdidTuf}/owner/{toh_cmpNpdidCompany}/history/{toh_tufOwnerDateValidFrom}/{toh_tufOwnerDateValidTo} ptl:TUFOwnerForLicence npd:petreg/facility/{tpl_tufNpdidTuf} .",
       "sourceSql": "SELECT \"tuf_owner_hst\".\"tufNpdidTuf\" toh_tufNpdidTuf, \"tuf_owner_hst\".\"cmpNpdidCompany\" toh_cmpNpdidCompany, \"tuf_owner_hst\".\"tufOwnerDateValidFrom\" toh_tufOwnerDateValidFrom,  \"tuf_owner_hst\".\"tufOwnerDateValidTo\" toh_tufOwnerDateValidTo, \"tuf_petreg_licence\".\"tufNpdidTuf\" tpl_tufNpdidTuf FROM \"tuf_owner_hst\"  INNER JOIN \"tuf_petreg_licence\" ON \"tuf_owner_hst\".\"tufNpdidTuf\" = \"tuf_petreg_licence\".\"tufNpdidTuf\"",
       "sourceTables": [
@@ -22709,7 +22709,7 @@ export const npdMappingData = {
       "entityName": "oilSampleTestForWellbore",
       "targetSubject": "npd:wellbore/{wos_wlbNpdidWellbore}/test/oilsample/{wos_wellbore_oil_sample_id}",
       "targetPredicate": "npdv:oilSampleTestForWellbore",
-      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore}",
       "target": "npd:wellbore/{wos_wlbNpdidWellbore}/test/oilsample/{wos_wellbore_oil_sample_id} npdv:oilSampleTestForWellbore npd:wellbore/{wNOo_wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"wellbore_oil_sample\".\"wellbore_oil_sample_id\" wos_wellbore_oil_sample_id, \"wellbore_oil_sample\".\"wlbNpdidWellbore\" wos_wlbNpdidWellbore, \"wellbore_npdid_overview\".\"wlbNpdidWellbore\" wNOo_wlbNpdidWellbore FROM \"wellbore_oil_sample\"  INNER JOIN \"wellbore_npdid_overview\" ON \"wellbore_oil_sample\".\"wlbNpdidWellbore\" = \"wellbore_npdid_overview\".\"wlbNpdidWellbore\"",
       "sourceTables": [
@@ -22737,7 +22737,7 @@ export const npdMappingData = {
       "entityName": "licenceOperatorCompany",
       "targetSubject": "npd:licence/{loh_prlNpdidLicence}/operator/{loh_cmpNpdidCompany}/history/{loh_prlOperDateValidFrom}/{loh_prlOperDateValidTo}",
       "targetPredicate": "npdv:licenceOperatorCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:licence/{loh_prlNpdidLicence}/operator/{loh_cmpNpdidCompany}/history/{loh_prlOperDateValidFrom}/{loh_prlOperDateValidTo} npdv:licenceOperatorCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"licence_oper_hst\".\"prlNpdidLicence\" loh_prlNpdidLicence, \"licence_oper_hst\".\"cmpNpdidCompany\" loh_cmpNpdidCompany, \"licence_oper_hst\".\"prlOperDateValidFrom\" loh_prlOperDateValidFrom, \"licence_oper_hst\".\"prlOperDateValidTo\" loh_prlOperDateValidTo, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"licence_oper_hst\"  INNER JOIN \"company\" ON \"licence_oper_hst\".\"cmpNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -22771,7 +22771,7 @@ export const npdMappingData = {
       "entityName": "TUFLicenceeCompany",
       "targetSubject": "npd:petreg/facility/{tpll_tufNpdidTuf}/licencee/{tpll_cmpNpdidCompany}",
       "targetPredicate": "ptl:TUFLicenceeCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:petreg/facility/{tpll_tufNpdidTuf}/licencee/{tpll_cmpNpdidCompany} ptl:TUFLicenceeCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"tuf_petreg_licence_licencee\".\"tufNpdidTuf\" tpll_tufNpdidTuf, \"tuf_petreg_licence_licencee\".\"cmpNpdidCompany\" tpll_cmpNpdidCompany, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"tuf_petreg_licence_licencee\"  INNER JOIN \"company\" ON \"tuf_petreg_licence_licencee\".\"cmpNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -22799,7 +22799,7 @@ export const npdMappingData = {
       "entityName": "fieldLicensee",
       "targetSubject": "npd:field/{flh_fldNpdidField}/licensee/{flh_cmpNpdidCompany}/history/{flh_fldLicenseeFrom}/{flh_fldLicenseeTo}",
       "targetPredicate": "npdv:fieldLicensee",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:field/{flh_fldNpdidField}/licensee/{flh_cmpNpdidCompany}/history/{flh_fldLicenseeFrom}/{flh_fldLicenseeTo} npdv:fieldLicensee npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"field_licensee_hst\".\"fldNpdidField\" flh_fldNpdidField, \"field_licensee_hst\".\"cmpNpdidCompany\" flh_cmpNpdidCompany, \"field_licensee_hst\".\"fldLicenseeFrom\" flh_fldLicenseeFrom, \"field_licensee_hst\".\"fldLicenseeTo\" flh_fldLicenseeTo, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"field_licensee_hst\"  INNER JOIN \"company\" ON \"field_licensee_hst\".\"cmpNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -22833,7 +22833,7 @@ export const npdMappingData = {
       "entityName": "isGeometryOfFeature",
       "targetSubject": "npd:baa/{bA_baaNpdidBsnsArrArea}/polygon/{bA_baaNpdidBsnsArrAreaPoly}",
       "targetPredicate": "npdv:isGeometryOfFeature",
-      "targetObject": "npd:baa/{baa_baaNpdidBsnsArrArea} ",
+      "targetObject": "npd:baa/{baa_baaNpdidBsnsArrArea}",
       "target": "npd:baa/{bA_baaNpdidBsnsArrArea}/polygon/{bA_baaNpdidBsnsArrAreaPoly} npdv:isGeometryOfFeature npd:baa/{baa_baaNpdidBsnsArrArea} .",
       "sourceSql": "SELECT \"baaArea\".\"baaNpdidBsnsArrArea\" bA_baaNpdidBsnsArrArea, \"baaArea\".\"baaNpdidBsnsArrAreaPoly\" bA_baaNpdidBsnsArrAreaPoly, \"bsns_arr_area\".\"baaNpdidBsnsArrArea\" baa_baaNpdidBsnsArrArea FROM \"baaArea\"  INNER JOIN \"bsns_arr_area\" ON \"baaArea\".\"baaNpdidBsnsArrArea\" = \"bsns_arr_area\".\"baaNpdidBsnsArrArea\"",
       "sourceTables": [
@@ -22861,7 +22861,7 @@ export const npdMappingData = {
       "entityName": "coordinateForSurvey",
       "targetSubject": "npd:survey/{sacit_seaSurveyName}/point/{sacit_seaPolygonPointNumber}",
       "targetPredicate": "npdv:coordinateForSurvey",
-      "targetObject": "npd:survey/{sa_seaName} ",
+      "targetObject": "npd:survey/{sa_seaName}",
       "target": "npd:survey/{sacit_seaSurveyName}/point/{sacit_seaPolygonPointNumber} npdv:coordinateForSurvey npd:survey/{sa_seaName} .",
       "sourceSql": "SELECT \"seis_acquisition_coordinates_inc_turnarea\".\"seaSurveyName\" sacit_seaSurveyName, \"seis_acquisition_coordinates_inc_turnarea\".\"seaPolygonPointNumber\" sacit_seaPolygonPointNumber, \"seis_acquisition\".\"seaName\" sa_seaName FROM \"seis_acquisition_coordinates_inc_turnarea\"  INNER JOIN \"seis_acquisition\" ON \"seis_acquisition_coordinates_inc_turnarea\".\"seaNpdidSurvey\" = \"seis_acquisition\".\"seaNpdidSurvey\"",
       "sourceTables": [
@@ -22893,7 +22893,7 @@ export const npdMappingData = {
       "entityName": "taskForLicence",
       "targetSubject": "npd:licence/{lt_prlNpdidLicence}/task/{lt_prlTaskID}",
       "targetPredicate": "npdv:taskForLicence",
-      "targetObject": "npd:licence/{l_prlNpdidLicence} ",
+      "targetObject": "npd:licence/{l_prlNpdidLicence}",
       "target": "npd:licence/{lt_prlNpdidLicence}/task/{lt_prlTaskID} npdv:taskForLicence npd:licence/{l_prlNpdidLicence} .",
       "sourceSql": "SELECT \"licence_task\".\"prlNpdidLicence\" lt_prlNpdidLicence, \"licence_task\".\"prlTaskID\" lt_prlTaskID, \"licence\".\"prlNpdidLicence\" l_prlNpdidLicence FROM \"licence_task\"  INNER JOIN \"licence\" ON \"licence_task\".\"prlNpdidLicence\" = \"licence\".\"prlNpdidLicence\"",
       "sourceTables": [
@@ -22921,7 +22921,7 @@ export const npdMappingData = {
       "entityName": "isGeometryOfFeature",
       "targetSubject": "npd:licence/{laph_prlNpdidLicence}/block/{laph_prlAreaPolyBlockName}/polyno/{laph_prlAreaPolyPolyNo}/history/{laph_prlAreaPolyDateValidFrom}/{laph_prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:isGeometryOfFeature",
-      "targetObject": "npd:licence/{l_prlNpdidLicence} ",
+      "targetObject": "npd:licence/{l_prlNpdidLicence}",
       "target": "npd:licence/{laph_prlNpdidLicence}/block/{laph_prlAreaPolyBlockName}/polyno/{laph_prlAreaPolyPolyNo}/history/{laph_prlAreaPolyDateValidFrom}/{laph_prlAreaPolyDateValidTo} npdv:isGeometryOfFeature npd:licence/{l_prlNpdidLicence} .",
       "sourceSql": "SELECT \"licence_area_poly_hst\".\"prlNpdidLicence\" laph_prlNpdidLicence, \"licence_area_poly_hst\".\"prlAreaPolyBlockName\" laph_prlAreaPolyBlockName, \"licence_area_poly_hst\".\"prlAreaPolyPolyNo\" laph_prlAreaPolyPolyNo, \"licence_area_poly_hst\".\"prlAreaPolyDateValidFrom\" laph_prlAreaPolyDateValidFrom, \"licence_area_poly_hst\".\"prlAreaPolyDateValidTo\" laph_prlAreaPolyDateValidTo, \"licence\".\"prlNpdidLicence\" l_prlNpdidLicence FROM \"licence_area_poly_hst\"  INNER JOIN \"licence\" ON \"licence_area_poly_hst\".\"prlNpdidLicence\" = \"licence\".\"prlNpdidLicence\"",
       "sourceTables": [
@@ -22958,7 +22958,7 @@ export const npdMappingData = {
       "entityName": "licenceOperatorCompany",
       "targetSubject": "npd:petreg/licence/{lplo_prlNpdidLicence}",
       "targetPredicate": "ptl:licenceOperatorCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:petreg/licence/{lplo_prlNpdidLicence} ptl:licenceOperatorCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"licence_petreg_licence_oper\".\"prlNpdidLicence\" lplo_prlNpdidLicence, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"licence_petreg_licence_oper\" INNER JOIN \"company\" ON \"licence_petreg_licence_oper\".\"cmpNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -22985,7 +22985,7 @@ export const npdMappingData = {
       "entityName": "corePhotoForWellbore",
       "targetSubject": "npd:wellbore/{wcp_wlbNpdidWellbore}/core/{wcp_wlbCoreNumber}/photo/{wcp_wellbore_core_photo_id}/{wcp_wlbCorePhotoTitle}",
       "targetPredicate": "npdv:corePhotoForWellbore",
-      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore}",
       "target": "npd:wellbore/{wcp_wlbNpdidWellbore}/core/{wcp_wlbCoreNumber}/photo/{wcp_wellbore_core_photo_id}/{wcp_wlbCorePhotoTitle} npdv:corePhotoForWellbore npd:wellbore/{wNOo_wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"wellbore_core_photo\".\"wellbore_core_photo_id\" wcp_wellbore_core_photo_id, \"wellbore_core_photo\".\"wlbNpdidWellbore\" wcp_wlbNpdidWellbore, \"wellbore_core_photo\".\"wlbCoreNumber\" wcp_wlbCoreNumber, \"wellbore_core_photo\".\"wlbCorePhotoTitle\" wcp_wlbCorePhotoTitle, \"wellbore_npdid_overview\".\"wlbNpdidWellbore\" wNOo_wlbNpdidWellbore FROM \"wellbore_core_photo\"  INNER JOIN \"wellbore_npdid_overview\" ON \"wellbore_core_photo\".\"wlbNpdidWellbore\" = \"wellbore_npdid_overview\".\"wlbNpdidWellbore\"",
       "sourceTables": [
@@ -23019,7 +23019,7 @@ export const npdMappingData = {
       "entityName": "licenseeForLicence",
       "targetSubject": "npd:licence/{llh_prlNpdidLicence}/licensee/{llh_cmpNpdidCompany}/history/{llh_prlLicenseeDateValidFrom}/{llh_prlLicenseeDateValidTo}",
       "targetPredicate": "npdv:licenseeForLicence",
-      "targetObject": "npd:licence/{l_prlNpdidLicence} ",
+      "targetObject": "npd:licence/{l_prlNpdidLicence}",
       "target": "npd:licence/{llh_prlNpdidLicence}/licensee/{llh_cmpNpdidCompany}/history/{llh_prlLicenseeDateValidFrom}/{llh_prlLicenseeDateValidTo} npdv:licenseeForLicence npd:licence/{l_prlNpdidLicence} .",
       "sourceSql": "SELECT \"licence_licensee_hst\".\"prlNpdidLicence\" llh_prlNpdidLicence, \"licence_licensee_hst\".\"cmpNpdidCompany\" llh_cmpNpdidCompany, \"licence_licensee_hst\".\"prlLicenseeDateValidFrom\" llh_prlLicenseeDateValidFrom, \"licence_licensee_hst\".\"prlLicenseeDateValidTo\" llh_prlLicenseeDateValidTo, \"licence\".\"prlNpdidLicence\" l_prlNpdidLicence FROM \"licence_licensee_hst\"  INNER JOIN \"licence\" ON \"licence_licensee_hst\".\"prlNpdidLicence\" = \"licence\".\"prlNpdidLicence\"",
       "sourceTables": [
@@ -23053,7 +23053,7 @@ export const npdMappingData = {
       "entityName": "explorationWellboreForLicence",
       "targetSubject": "npd:wellbore/{wea_wlbNpdidWellbore}",
       "targetPredicate": "npdv:explorationWellboreForLicence",
-      "targetObject": "npd:licence/{l_prlNpdidLicence} ",
+      "targetObject": "npd:licence/{l_prlNpdidLicence}",
       "target": "npd:wellbore/{wea_wlbNpdidWellbore} npdv:explorationWellboreForLicence npd:licence/{l_prlNpdidLicence} .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore, \"licence\".\"prlNpdidLicence\" l_prlNpdidLicence FROM \"wellbore_exploration_all\" INNER JOIN \"licence\" ON \"wellbore_exploration_all\".\"prlNpdidProductionLicence\" = \"licence\".\"prlNpdidLicence\"",
       "sourceTables": [
@@ -23081,7 +23081,7 @@ export const npdMappingData = {
       "entityName": "reportingCompany",
       "targetSubject": "npd:survey/{sa_seaName}",
       "targetPredicate": "npdv:reportingCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:survey/{sa_seaName} npdv:reportingCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"seis_acquisition\".\"seaName\" sa_seaName, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"seis_acquisition\" INNER JOIN \"company\" ON \"seis_acquisition\".\"seaCompanyReported\" = \"company\".\"cmpLongName\"",
       "sourceTables": [
@@ -23111,7 +23111,7 @@ export const npdMappingData = {
       "entityName": "documentForWellbore",
       "targetSubject": "npd:wellbore/{wd_wlbNpdidWellbore}/document/{wd_wellbore_document_id}/{wd_wlbDocumentName}",
       "targetPredicate": "npdv:documentForWellbore",
-      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore}",
       "target": "npd:wellbore/{wd_wlbNpdidWellbore}/document/{wd_wellbore_document_id}/{wd_wlbDocumentName} npdv:documentForWellbore npd:wellbore/{wNOo_wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"wellbore_document\".\"wellbore_document_id\" wd_wellbore_document_id, \"wellbore_document\".\"wlbNpdidWellbore\" wd_wlbNpdidWellbore, \"wellbore_document\".\"wlbDocumentName\" wd_wlbDocumentName, \"wellbore_npdid_overview\".\"wlbNpdidWellbore\" wNOo_wlbNpdidWellbore FROM \"wellbore_document\"  INNER JOIN \"wellbore_npdid_overview\" ON \"wellbore_document\".\"wlbNpdidWellbore\" = \"wellbore_npdid_overview\".\"wlbNpdidWellbore\"",
       "sourceTables": [
@@ -23142,7 +23142,7 @@ export const npdMappingData = {
       "entityName": "licenceTransferCompany",
       "targetSubject": "npd:licence/{lth_prlNpdidLicence}/transfer/{lth_prlTransferDirection}/{lth_cmpNpdidCompany}/history/{lth_prlTransferDateValidFrom}",
       "targetPredicate": "npdv:licenceTransferCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:licence/{lth_prlNpdidLicence}/transfer/{lth_prlTransferDirection}/{lth_cmpNpdidCompany}/history/{lth_prlTransferDateValidFrom} npdv:licenceTransferCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"licence_transfer_hst\".\"prlNpdidLicence\" lth_prlNpdidLicence, \"licence_transfer_hst\".\"prlTransferDirection\" lth_prlTransferDirection, \"licence_transfer_hst\".\"cmpNpdidCompany\" lth_cmpNpdidCompany, \"licence_transfer_hst\".\"prlTransferDateValidFrom\" lth_prlTransferDateValidFrom, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"licence_transfer_hst\"  INNER JOIN \"company\" ON \"licence_transfer_hst\".\"cmpNpdidCompany\"  = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -23176,7 +23176,7 @@ export const npdMappingData = {
       "entityName": "transferredBAA",
       "targetSubject": "npd:baa/{baath_baaNpdidBsnsArrArea}/transfer/{baath_baaTransferDirection}/{baathcmpNpdidCompany}/history/{baath_baaTransferDateValidFrom}",
       "targetPredicate": "npdv:transferredBAA",
-      "targetObject": "npd:baa/{baa_baaNpdidBsnsArrArea} ",
+      "targetObject": "npd:baa/{baa_baaNpdidBsnsArrArea}",
       "target": "npd:baa/{baath_baaNpdidBsnsArrArea}/transfer/{baath_baaTransferDirection}/{baathcmpNpdidCompany}/history/{baath_baaTransferDateValidFrom} npdv:transferredBAA npd:baa/{baa_baaNpdidBsnsArrArea} .",
       "sourceSql": "SELECT \"bsns_arr_area_transfer_hst\".\"baaNpdidBsnsArrArea\" baath_baaNpdidBsnsArrArea, \"bsns_arr_area_transfer_hst\".\"baaTransferDirection\" baath_baaTransferDirection, \"bsns_arr_area_transfer_hst\".\"cmpNpdidCompany\" baathcmpNpdidCompany, \"bsns_arr_area_transfer_hst\".\"baaTransferDateValidFrom\" baath_baaTransferDateValidFrom, \"bsns_arr_area\".\"baaNpdidBsnsArrArea\" baa_baaNpdidBsnsArrArea FROM \"bsns_arr_area_transfer_hst\"  INNER JOIN \"bsns_arr_area\" ON \"bsns_arr_area_transfer_hst\".\"baaNpdidBsnsArrArea\" = \"bsns_arr_area\".\"baaNpdidBsnsArrArea\"",
       "sourceTables": [
@@ -23210,7 +23210,7 @@ export const npdMappingData = {
       "entityName": "isGeometryOfFeature",
       "targetSubject": "npd:licence/{pASB_prlNpdidLicence}/block/{pASB_blcName}/polyno/{pASB_prlAreaPolyPolyNo}/history/{pASBB_prlAreaPolyDateValidFrom}/{pASB_prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:isGeometryOfFeature",
-      "targetObject": "npd:licence/{l_prlNpdidLicence} ",
+      "targetObject": "npd:licence/{l_prlNpdidLicence}",
       "target": "npd:licence/{pASB_prlNpdidLicence}/block/{pASB_blcName}/polyno/{pASB_prlAreaPolyPolyNo}/history/{pASBB_prlAreaPolyDateValidFrom}/{pASB_prlAreaPolyDateValidTo} npdv:isGeometryOfFeature npd:licence/{l_prlNpdidLicence} .",
       "sourceSql": "SELECT \"prlAreaSplitByBlock\".\"prlNpdidLicence\" pASB_prlNpdidLicence, \"prlAreaSplitByBlock\".\"blcName\" pASB_blcName, \"prlAreaSplitByBlock\".\"prlAreaPolyPolyNo\" pASB_prlAreaPolyPolyNo, \"prlAreaSplitByBlock\".\"prlAreaPolyDateValidFrom\" pASBB_prlAreaPolyDateValidFrom, \"prlAreaSplitByBlock\".\"prlAreaPolyDateValidTo\" pASB_prlAreaPolyDateValidTo, \"licence\".\"prlNpdidLicence\" l_prlNpdidLicence FROM \"prlAreaSplitByBlock\"  INNER JOIN \"licence\" ON \"prlAreaSplitByBlock\".\"prlNpdidLicence\" = \"licence\".\"prlNpdidLicence\"",
       "sourceTables": [
@@ -23247,7 +23247,7 @@ export const npdMappingData = {
       "entityName": "isGeometryOfFeature",
       "targetSubject": "npd:wellbore/{wP_wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:isGeometryOfFeature",
-      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore}",
       "target": "npd:wellbore/{wP_wlbNpdidWellbore}/point npdv:isGeometryOfFeature npd:wellbore/{wNOo_wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"wlbPoint\".\"wlbNpdidWellbore\" wP_wlbNpdidWellbore, \"wellbore_npdid_overview\".\"wlbNpdidWellbore\" wNOo_wlbNpdidWellbore FROM \"wlbPoint\" INNER JOIN \"wellbore_npdid_overview\" ON \"wlbPoint\".\"wlbNpdidWellbore\" = \"wellbore_npdid_overview\".\"wlbNpdidWellbore\"",
       "sourceTables": [
@@ -23272,7 +23272,7 @@ export const npdMappingData = {
       "entityName": "stratumForWellbore",
       "targetSubject": "npd:wellbore/{wft_wlbNpdidWellbore}/stratum/{wft_lsuNpdidLithoStrat}/depth/{wft_lsuTopDepth}/{wft_lsuBottomDepth}",
       "targetPredicate": "npdv:stratumForWellbore",
-      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore}",
       "target": "npd:wellbore/{wft_wlbNpdidWellbore}/stratum/{wft_lsuNpdidLithoStrat}/depth/{wft_lsuTopDepth}/{wft_lsuBottomDepth} npdv:stratumForWellbore npd:wellbore/{wNOo_wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"wellbore_formation_top\".\"wlbNpdidWellbore\" wft_wlbNpdidWellbore, \"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat, \"wellbore_formation_top\".\"lsuTopDepth\" wft_lsuTopDepth, \"wellbore_formation_top\".\"lsuBottomDepth\" wft_lsuBottomDepth, \"wellbore_npdid_overview\".\"wlbNpdidWellbore\" wNOo_wlbNpdidWellbore FROM \"wellbore_formation_top\"  INNER JOIN \"wellbore_npdid_overview\" ON \"wellbore_formation_top\".\"wlbNpdidWellbore\" = \"wellbore_npdid_overview\".\"wlbNpdidWellbore\"",
       "sourceTables": [
@@ -23306,7 +23306,7 @@ export const npdMappingData = {
       "entityName": "licenceeForLicence",
       "targetSubject": "npd:petreg/licence/{lpll_prlNpdidLicence}/licencee/{lpll_cmpNpdidCompany}",
       "targetPredicate": "ptl:licenceeForLicence",
-      "targetObject": "npd:licence/{l_prlNpdidLicence} ",
+      "targetObject": "npd:licence/{l_prlNpdidLicence}",
       "target": "npd:petreg/licence/{lpll_prlNpdidLicence}/licencee/{lpll_cmpNpdidCompany} ptl:licenceeForLicence npd:licence/{l_prlNpdidLicence} .",
       "sourceSql": "SELECT \"licence_petreg_licence_licencee\".\"prlNpdidLicence\" lpll_prlNpdidLicence, \"licence_petreg_licence_licencee\".\"cmpNpdidCompany\" lpll_cmpNpdidCompany, \"licence\".\"prlNpdidLicence\" l_prlNpdidLicence FROM \"licence_petreg_licence_licencee\"  INNER JOIN \"licence\" ON \"licence_petreg_licence_licencee\".\"prlNpdidLicence\" = \"licence\".\"prlNpdidLicence\"",
       "sourceTables": [
@@ -23334,7 +23334,7 @@ export const npdMappingData = {
       "entityName": "discoveryWellbore",
       "targetSubject": "npd:discovery/{d_dscNpdidDiscovery}",
       "targetPredicate": "npdv:discoveryWellbore",
-      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore}",
       "target": "npd:discovery/{d_dscNpdidDiscovery} npdv:discoveryWellbore npd:wellbore/{wNOo_wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"discovery\".\"dscNpdidDiscovery\" d_dscNpdidDiscovery, \"wellbore_npdid_overview\".\"wlbNpdidWellbore\" wNOo_wlbNpdidWellbore FROM \"discovery\" INNER JOIN \"wellbore_npdid_overview\" ON \"discovery\".\"wlbNpdidWellbore\" = \"wellbore_npdid_overview\".\"wlbNpdidWellbore\"",
       "sourceTables": [
@@ -23361,7 +23361,7 @@ export const npdMappingData = {
       "entityName": "baaOperatorCompany",
       "targetSubject": "npd:baa/{baao_baaNpdidBsnsArrArea}",
       "targetPredicate": "npdv:baaOperatorCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:baa/{baao_baaNpdidBsnsArrArea} npdv:baaOperatorCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"bsns_arr_area_operator\".\"baaNpdidBsnsArrArea\" baao_baaNpdidBsnsArrArea, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"bsns_arr_area_operator\" INNER JOIN \"company\" ON \"bsns_arr_area_operator\".\"cmpNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -23388,7 +23388,7 @@ export const npdMappingData = {
       "entityName": "TUFOperatorCompany",
       "targetSubject": "npd:facility/{toh_tufNpdidTuf}/operator/{toh_cmpNpdidCompany}/history/{toh_tufOperDateValidFrom}/{toh_tufOperDateValidTo}",
       "targetPredicate": "ptl:TUFOperatorCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:facility/{toh_tufNpdidTuf}/operator/{toh_cmpNpdidCompany}/history/{toh_tufOperDateValidFrom}/{toh_tufOperDateValidTo} ptl:TUFOperatorCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"tuf_operator_hst\".\"tufNpdidTuf\" toh_tufNpdidTuf, \"tuf_operator_hst\".\"cmpNpdidCompany\" toh_cmpNpdidCompany, \"tuf_operator_hst\".\"tufOperDateValidFrom\" toh_tufOperDateValidFrom, \"tuf_operator_hst\".\"tufOperDateValidTo\" toh_tufOperDateValidTo, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"tuf_operator_hst\"  INNER JOIN \"company\" ON \"tuf_operator_hst\".\"cmpNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -23422,7 +23422,7 @@ export const npdMappingData = {
       "entityName": "wellboreForDiscovery",
       "targetSubject": "npd:wellbore/{wea_wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreForDiscovery",
-      "targetObject": "npd:discovery/{d_dscNpdidDiscovery} ",
+      "targetObject": "npd:discovery/{d_dscNpdidDiscovery}",
       "target": "npd:wellbore/{wea_wlbNpdidWellbore} npdv:wellboreForDiscovery npd:discovery/{d_dscNpdidDiscovery} .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore, \"discovery\".\"dscNpdidDiscovery\" d_dscNpdidDiscovery FROM \"wellbore_exploration_all\" INNER JOIN \"discovery\" ON \"wellbore_exploration_all\".\"dscNpdidDiscovery\" = \"discovery\".\"dscNpdidDiscovery\"",
       "sourceTables": [
@@ -23449,7 +23449,7 @@ export const npdMappingData = {
       "entityName": "reservesForDiscovery",
       "targetSubject": "npd:discovery/{dr_dscNpdidDiscovery}/{dr_dscReservesRC}",
       "targetPredicate": "npdv:reservesForDiscovery",
-      "targetObject": "npd:discovery/{d_dscNpdidDiscovery} ",
+      "targetObject": "npd:discovery/{d_dscNpdidDiscovery}",
       "target": "npd:discovery/{dr_dscNpdidDiscovery}/{dr_dscReservesRC} npdv:reservesForDiscovery npd:discovery/{d_dscNpdidDiscovery} .",
       "sourceSql": "SELECT \"discovery_reserves\".\"dscNpdidDiscovery\" dr_dscNpdidDiscovery, \"discovery_reserves\".\"dscReservesRC\" dr_dscReservesRC, \"discovery\".\"dscNpdidDiscovery\" d_dscNpdidDiscovery FROM \"discovery_reserves\"  INNER JOIN \"discovery\" ON \"discovery_reserves\".\"dscNpdidDiscovery\" = \"discovery\".\"dscNpdidDiscovery\"",
       "sourceTables": [
@@ -23477,7 +23477,7 @@ export const npdMappingData = {
       "entityName": "messageForLicence",
       "targetSubject": "npd:petreg/licence/{lpm_prlNpdidLicence}/message/{lpm_ptlMessageDocumentNo}",
       "targetPredicate": "npdv:messageForLicence",
-      "targetObject": "npd:licence/{l_prlNpdidLicence} ",
+      "targetObject": "npd:licence/{l_prlNpdidLicence}",
       "target": "npd:petreg/licence/{lpm_prlNpdidLicence}/message/{lpm_ptlMessageDocumentNo} npdv:messageForLicence npd:licence/{l_prlNpdidLicence} .",
       "sourceSql": "SELECT \"licence_petreg_message\".\"prlNpdidLicence\" lpm_prlNpdidLicence, \"licence_petreg_message\".\"ptlMessageDocumentNo\" lpm_ptlMessageDocumentNo, \"licence\".\"prlNpdidLicence\" l_prlNpdidLicence FROM \"licence_petreg_message\"  INNER JOIN \"licence\" ON \"licence_petreg_message\".\"prlNpdidLicence\" = \"licence\".\"prlNpdidLicence\"",
       "sourceTables": [
@@ -23505,7 +23505,7 @@ export const npdMappingData = {
       "entityName": "operatorForLicence",
       "targetSubject": "npd:licence/{loh_prlNpdidLicence}/operator/{loh_cmpNpdidCompany}/history/{loh_prlOperDateValidFrom}/{loh_prlOperDateValidTo}",
       "targetPredicate": "npdv:operatorForLicence",
-      "targetObject": "npd:licence/{l_prlNpdidLicence} ",
+      "targetObject": "npd:licence/{l_prlNpdidLicence}",
       "target": "npd:licence/{loh_prlNpdidLicence}/operator/{loh_cmpNpdidCompany}/history/{loh_prlOperDateValidFrom}/{loh_prlOperDateValidTo} npdv:operatorForLicence npd:licence/{l_prlNpdidLicence} .",
       "sourceSql": "SELECT \"licence_oper_hst\".\"prlNpdidLicence\" loh_prlNpdidLicence, \"licence_oper_hst\".\"cmpNpdidCompany\" loh_cmpNpdidCompany, \"licence_oper_hst\".\"prlOperDateValidFrom\" loh_prlOperDateValidFrom, \"licence_oper_hst\".\"prlOperDateValidTo\" loh_prlOperDateValidTo, \"licence\".\"prlNpdidLicence\" l_prlNpdidLicence FROM \"licence_oper_hst\"  INNER JOIN \"licence\" ON \"licence_oper_hst\".\"prlNpdidLicence\" = \"licence\".\"prlNpdidLicence\"",
       "sourceTables": [
@@ -23539,7 +23539,7 @@ export const npdMappingData = {
       "entityName": "licenceLicensee",
       "targetSubject": "npd:licence/{llh_prlNpdidLicence}/licensee/{llh_cmpNpdidCompany}/history/{llh_prlLicenseeDateValidFrom}/{llh_prlLicenseeDateValidTo}",
       "targetPredicate": "npdv:licenceLicensee",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:licence/{llh_prlNpdidLicence}/licensee/{llh_cmpNpdidCompany}/history/{llh_prlLicenseeDateValidFrom}/{llh_prlLicenseeDateValidTo} npdv:licenceLicensee npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"licence_licensee_hst\".\"prlNpdidLicence\" llh_prlNpdidLicence, \"licence_licensee_hst\".\"cmpNpdidCompany\" llh_cmpNpdidCompany, \"licence_licensee_hst\".\"prlLicenseeDateValidFrom\" llh_prlLicenseeDateValidFrom, \"licence_licensee_hst\".\"prlLicenseeDateValidTo\" llh_prlLicenseeDateValidTo, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"licence_licensee_hst\"  INNER JOIN \"company\" ON \"licence_licensee_hst\".\"cmpNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -23573,7 +23573,7 @@ export const npdMappingData = {
       "entityName": "baaLicensee",
       "targetSubject": "npd:baa/{baalh_baaNpdidBsnsArrArea}/licensee/{baalh_cmpNpdidCompany}/history/{baalh_baaLicenseeDateValidFrom}/{baalh_baaLicenseeDateValidTo}",
       "targetPredicate": "npdv:baaLicensee",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:baa/{baalh_baaNpdidBsnsArrArea}/licensee/{baalh_cmpNpdidCompany}/history/{baalh_baaLicenseeDateValidFrom}/{baalh_baaLicenseeDateValidTo} npdv:baaLicensee npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"bsns_arr_area_licensee_hst\".\"baaNpdidBsnsArrArea\" baalh_baaNpdidBsnsArrArea, \"bsns_arr_area_licensee_hst\".\"cmpNpdidCompany\" baalh_cmpNpdidCompany, \"bsns_arr_area_licensee_hst\".\"baaLicenseeDateValidFrom\" baalh_baaLicenseeDateValidFrom, \"bsns_arr_area_licensee_hst\".\"baaLicenseeDateValidTo\" baalh_baaLicenseeDateValidTo, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"bsns_arr_area_licensee_hst\"  INNER JOIN \"company\" ON \"bsns_arr_area_licensee_hst\".\"cmpNpdidCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -23607,7 +23607,7 @@ export const npdMappingData = {
       "entityName": "coordinateForWellbore",
       "targetSubject": "npd:wellbore/{wc_wlbNpdidWellbore}/point",
       "targetPredicate": "npdv:coordinateForWellbore",
-      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore}",
       "target": "npd:wellbore/{wc_wlbNpdidWellbore}/point npdv:coordinateForWellbore npd:wellbore/{wNOo_wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"wellbore_coordinates\".\"wlbNpdidWellbore\" wc_wlbNpdidWellbore, \"wellbore_npdid_overview\".\"wlbNpdidWellbore\" wNOo_wlbNpdidWellbore FROM \"wellbore_coordinates\" INNER JOIN \"wellbore_npdid_overview\" ON \"wellbore_coordinates\".\"wlbNpdidWellbore\" = \"wellbore_npdid_overview\".\"wlbNpdidWellbore\"",
       "sourceTables": [
@@ -23632,7 +23632,7 @@ export const npdMappingData = {
       "entityName": "reclassedFromWellbore",
       "targetSubject": "npd:wellbore/{wdl_wlbNpdidWellbore}",
       "targetPredicate": "npdv:reclassedFromWellbore",
-      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore}",
       "target": "npd:wellbore/{wdl_wlbNpdidWellbore} npdv:reclassedFromWellbore npd:wellbore/{wNOo_wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"wellbore_development_all\".\"wlbNpdidWellbore\" wdl_wlbNpdidWellbore, \"wellbore_npdid_overview\".\"wlbNpdidWellbore\" wNOo_wlbNpdidWellbore FROM \"wellbore_development_all\" INNER JOIN \"wellbore_npdid_overview\" ON \"wellbore_development_all\".\"wlbNpdidWellboreReclass\" = \"wellbore_npdid_overview\".\"wlbNpdidWellbore\"",
       "sourceTables": [
@@ -23659,7 +23659,7 @@ export const npdMappingData = {
       "entityName": "isGeometryOfFeature",
       "targetSubject": "npd:discovery/{dA_dscNpdidDiscovery}/area/hctype/{dA_dscHcType}",
       "targetPredicate": "npdv:isGeometryOfFeature",
-      "targetObject": "npd:discovery/{d_dscNpdidDiscovery} ",
+      "targetObject": "npd:discovery/{d_dscNpdidDiscovery}",
       "target": "npd:discovery/{dA_dscNpdidDiscovery}/area/hctype/{dA_dscHcType} npdv:isGeometryOfFeature npd:discovery/{d_dscNpdidDiscovery} .",
       "sourceSql": "SELECT \"dscArea\".\"dscNpdidDiscovery\" dA_dscNpdidDiscovery, \"dscArea\".\"dscHcType\" dA_dscHcType, \"discovery\".\"dscNpdidDiscovery\" d_dscNpdidDiscovery FROM \"dscArea\"  INNER JOIN \"discovery\" ON \"dscArea\".\"dscNpdidDiscovery\"  = \"discovery\".\"dscNpdidDiscovery\"",
       "sourceTables": [
@@ -23687,7 +23687,7 @@ export const npdMappingData = {
       "entityName": "coreForWellbore",
       "targetSubject": "npd:wellbore/{slwc_wlbNpdidWellbore}/stratum/{slwc_lsuNpdidLithoStrat}/cores",
       "targetPredicate": "npdv:coreForWellbore",
-      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore}",
       "target": "npd:wellbore/{slwc_wlbNpdidWellbore}/stratum/{slwc_lsuNpdidLithoStrat}/cores npdv:coreForWellbore npd:wellbore/{wNOo_wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"strat_litho_wellbore_core\".\"wlbNpdidWellbore\" slwc_wlbNpdidWellbore, \"strat_litho_wellbore_core\".\"lsuNpdidLithoStrat\" slwc_lsuNpdidLithoStrat, \"wellbore_npdid_overview\".\"wlbNpdidWellbore\" wNOo_wlbNpdidWellbore FROM \"strat_litho_wellbore_core\"  INNER JOIN \"wellbore_npdid_overview\" ON \"strat_litho_wellbore_core\".\"wlbNpdidWellbore\" = \"wellbore_npdid_overview\".\"wlbNpdidWellbore\"",
       "sourceTables": [
@@ -23715,7 +23715,7 @@ export const npdMappingData = {
       "entityName": "licenseeForField",
       "targetSubject": "npd:field/{flh_fldNpdidField}/licensee/{flh_cmpNpdidCompany}/history/{flh_fldLicenseeFrom}/{flh_fldLicenseeTo}",
       "targetPredicate": "npdv:licenseeForField",
-      "targetObject": "npd:field/{f_fldNpdidField} ",
+      "targetObject": "npd:field/{f_fldNpdidField}",
       "target": "npd:field/{flh_fldNpdidField}/licensee/{flh_cmpNpdidCompany}/history/{flh_fldLicenseeFrom}/{flh_fldLicenseeTo} npdv:licenseeForField npd:field/{f_fldNpdidField} .",
       "sourceSql": "SELECT \"field_licensee_hst\".\"fldNpdidField\" flh_fldNpdidField, \"field_licensee_hst\".\"cmpNpdidCompany\" flh_cmpNpdidCompany, \"field_licensee_hst\".\"fldLicenseeFrom\" flh_fldLicenseeFrom, \"field_licensee_hst\".\"fldLicenseeTo\" flh_fldLicenseeTo, \"field\".\"fldNpdidField\" f_fldNpdidField FROM \"field_licensee_hst\"  INNER JOIN \"field\" ON \"field_licensee_hst\".\"fldNpdidField\" = \"field\".\"fldNpdidField\"",
       "sourceTables": [
@@ -23749,7 +23749,7 @@ export const npdMappingData = {
       "entityName": "isGeometryOfFeature",
       "targetSubject": "npd:baa/{baaaph_baaNpdidBsnsArrArea}/block/{baaaph_baaAreaPolyBlockName}/polyno/{baaaph_baaAreaPolyNo}/history/{baaaph_baaAreaPolyDateValidFrom}/{baaaph_baaAreaPolyDateValidTo}",
       "targetPredicate": "npdv:isGeometryOfFeature",
-      "targetObject": "npd:baa/{baa_baaNpdidBsnsArrArea} ",
+      "targetObject": "npd:baa/{baa_baaNpdidBsnsArrArea}",
       "target": "npd:baa/{baaaph_baaNpdidBsnsArrArea}/block/{baaaph_baaAreaPolyBlockName}/polyno/{baaaph_baaAreaPolyNo}/history/{baaaph_baaAreaPolyDateValidFrom}/{baaaph_baaAreaPolyDateValidTo} npdv:isGeometryOfFeature npd:baa/{baa_baaNpdidBsnsArrArea} .",
       "sourceSql": "SELECT \"bsns_arr_area_area_poly_hst\".\"baaNpdidBsnsArrArea\" baaaph_baaNpdidBsnsArrArea, \"bsns_arr_area_area_poly_hst\".\"baaAreaPolyBlockName\" baaaph_baaAreaPolyBlockName, \"bsns_arr_area_area_poly_hst\".\"baaAreaPolyNo\" baaaph_baaAreaPolyNo, \"bsns_arr_area_area_poly_hst\".\"baaAreaPolyDateValidFrom\" baaaph_baaAreaPolyDateValidFrom, \"bsns_arr_area_area_poly_hst\".\"baaAreaPolyDateValidTo\" baaaph_baaAreaPolyDateValidTo, \"bsns_arr_area\".\"baaNpdidBsnsArrArea\" baa_baaNpdidBsnsArrArea FROM \"bsns_arr_area_area_poly_hst\"  INNER JOIN \"bsns_arr_area\" ON \"bsns_arr_area_area_poly_hst\".\"baaNpdidBsnsArrArea\" = \"bsns_arr_area\".\"baaNpdidBsnsArrArea\"",
       "sourceTables": [
@@ -23786,7 +23786,7 @@ export const npdMappingData = {
       "entityName": "isGeometryOfFeature",
       "targetSubject": "npd:licence/{pA_prlNpdidLicence}/area/{pA_prlArea_id}/history/{pA_prlAreaPolyDateValidFrom}/{pA_prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:isGeometryOfFeature",
-      "targetObject": "npd:licence/{l_prlNpdidLicence} ",
+      "targetObject": "npd:licence/{l_prlNpdidLicence}",
       "target": "npd:licence/{pA_prlNpdidLicence}/area/{pA_prlArea_id}/history/{pA_prlAreaPolyDateValidFrom}/{pA_prlAreaPolyDateValidTo} npdv:isGeometryOfFeature npd:licence/{l_prlNpdidLicence} .",
       "sourceSql": "SELECT \"prlArea\".\"prlArea_id\" pA_prlArea_id, \"prlArea\".\"prlNpdidLicence\" pA_prlNpdidLicence, \"prlArea\".\"prlAreaPolyDateValidFrom\" pA_prlAreaPolyDateValidFrom, \"prlArea\".\"prlAreaPolyDateValidTo\" pA_prlAreaPolyDateValidTo, \"licence\".\"prlNpdidLicence\" l_prlNpdidLicence FROM \"prlArea\"  INNER JOIN \"licence\" ON \"prlArea\".\"prlNpdidLicence\" = \"licence\".\"prlNpdidLicence\"",
       "sourceTables": [
@@ -23820,7 +23820,7 @@ export const npdMappingData = {
       "entityName": "belongsToFacility",
       "targetSubject": "npd:facility/{fP_fclNpdidFacility}/point",
       "targetPredicate": "npdv:belongsToFacility",
-      "targetObject": "npd:petreg/facility/{tpl_tufNpdidTuf} ",
+      "targetObject": "npd:petreg/facility/{tpl_tufNpdidTuf}",
       "target": "npd:facility/{fP_fclNpdidFacility}/point npdv:belongsToFacility npd:petreg/facility/{tpl_tufNpdidTuf} .",
       "sourceSql": "SELECT \"fclPoint\".\"fclNpdidFacility\" fP_fclNpdidFacility, \"tuf_petreg_licence\".\"tufNpdidTuf\" tpl_tufNpdidTuf FROM \"fclPoint\" INNER JOIN \"tuf_petreg_licence\" ON \"fclPoint\".\"fclBelongsToS\" = \"tuf_petreg_licence\".\"tufNpdidTuf\"",
       "sourceTables": [
@@ -23848,7 +23848,7 @@ export const npdMappingData = {
       "entityName": "explorationWellboreForLicence",
       "targetSubject": "npd:wellbore/{wea_wlbNpdidWellbore}",
       "targetPredicate": "npdv:explorationWellboreForLicence",
-      "targetObject": "npd:licence/{l_prlNpdidLicence} ",
+      "targetObject": "npd:licence/{l_prlNpdidLicence}",
       "target": "npd:wellbore/{wea_wlbNpdidWellbore} npdv:explorationWellboreForLicence npd:licence/{l_prlNpdidLicence} .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore, \"licence\".\"prlNpdidLicence\" l_prlNpdidLicence FROM \"wellbore_exploration_all\" INNER JOIN \"licence\" ON \"wellbore_exploration_all\".\"wlbProductionLicence\" = \"licence\".\"prlName\"",
       "sourceTables": [
@@ -23878,7 +23878,7 @@ export const npdMappingData = {
       "entityName": "drillingOperatorCompany",
       "targetSubject": "npd:wellbore/{wea_wlbNpdidWellbore}",
       "targetPredicate": "npdv:drillingOperatorCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:wellbore/{wea_wlbNpdidWellbore} npdv:drillingOperatorCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"wellbore_exploration_all\" INNER JOIN \"company\" ON \"wellbore_exploration_all\".\"wlbDrillingOperator\" = \"company\".\"cmpLongName\"",
       "sourceTables": [
@@ -23908,7 +23908,7 @@ export const npdMappingData = {
       "entityName": "reservesForField",
       "targetSubject": "npd:field/{fr_fldNpdidField}/reserve",
       "targetPredicate": "npdv:reservesForField",
-      "targetObject": "npd:field/{f_fldNpdidField} ",
+      "targetObject": "npd:field/{f_fldNpdidField}",
       "target": "npd:field/{fr_fldNpdidField}/reserve npdv:reservesForField npd:field/{f_fldNpdidField} .",
       "sourceSql": "SELECT \"field_reserves\".\"fldNpdidField\" fr_fldNpdidField, \"field\".\"fldNpdidField\" f_fldNpdidField FROM \"field_reserves\" INNER JOIN \"field\" ON \"field_reserves\".\"fldNpdidField\" = \"field\".\"fldNpdidField\"",
       "sourceTables": [
@@ -23933,7 +23933,7 @@ export const npdMappingData = {
       "entityName": "reservesForField",
       "targetSubject": "npd:company/{cr_cmpNpdidCompany}/reserve/{cr_fldNpdidField}",
       "targetPredicate": "npdv:reservesForField",
-      "targetObject": "npd:field/{f_fldNpdidField} ",
+      "targetObject": "npd:field/{f_fldNpdidField}",
       "target": "npd:company/{cr_cmpNpdidCompany}/reserve/{cr_fldNpdidField} npdv:reservesForField npd:field/{f_fldNpdidField} .",
       "sourceSql": "SELECT \"company_reserves\".\"cmpNpdidCompany\" cr_cmpNpdidCompany, \"company_reserves\".\"fldNpdidField\" cr_fldNpdidField, \"field\".\"fldNpdidField\" f_fldNpdidField FROM \"company_reserves\"  INNER JOIN \"field\" ON \"company_reserves\".\"fldNpdidField\" = \"field\".\"fldNpdidField\"",
       "sourceTables": [
@@ -23961,7 +23961,7 @@ export const npdMappingData = {
       "entityName": "currentResponsibleCompany",
       "targetSubject": "npd:facility/{fm_fclNpdidFacility}",
       "targetPredicate": "npdv:currentResponsibleCompany",
-      "targetObject": "npd:company/{c_cmpNpdidCompany} ",
+      "targetObject": "npd:company/{c_cmpNpdidCompany}",
       "target": "npd:facility/{fm_fclNpdidFacility} npdv:currentResponsibleCompany npd:company/{c_cmpNpdidCompany} .",
       "sourceSql": "SELECT \"facility_moveable\".\"fclNpdidFacility\" fm_fclNpdidFacility, \"company\".\"cmpNpdidCompany\" c_cmpNpdidCompany FROM \"facility_moveable\" INNER JOIN \"company\" ON \"facility_moveable\".\"fclNpdidCurrentRespCompany\" = \"company\".\"cmpNpdidCompany\"",
       "sourceTables": [
@@ -23989,7 +23989,7 @@ export const npdMappingData = {
       "entityName": "isGeometryOfFeature",
       "targetSubject": "npd:facility/{fP_fclNpdidFacility}/point",
       "targetPredicate": "npdv:isGeometryOfFeature",
-      "targetObject": "npd:facility/{ff_fclNpdidFacility} ",
+      "targetObject": "npd:facility/{ff_fclNpdidFacility}",
       "target": "npd:facility/{fP_fclNpdidFacility}/point npdv:isGeometryOfFeature npd:facility/{ff_fclNpdidFacility} .",
       "sourceSql": "SELECT \"fclPoint\".\"fclNpdidFacility\" fP_fclNpdidFacility, \"facility_fixed\".\"fclNpdidFacility\" ff_fclNpdidFacility FROM \"fclPoint\" INNER JOIN \"facility_fixed\" ON \"fclPoint\".\"fclNpdidFacility\" = \"facility_fixed\".\"fclNpdidFacility\"",
       "sourceTables": [
@@ -24014,7 +24014,7 @@ export const npdMappingData = {
       "entityName": "stratumForWellbore",
       "targetSubject": "npd:wellbore/{slw_wlbNpdidWellbore}/stratum/{slw_lsuNpdidLithoStrat}/depth/{slw_lsuTopDepth}/{slw_lsuBottomDepth}",
       "targetPredicate": "npdv:stratumForWellbore",
-      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore} ",
+      "targetObject": "npd:wellbore/{wNOo_wlbNpdidWellbore}",
       "target": "npd:wellbore/{slw_wlbNpdidWellbore}/stratum/{slw_lsuNpdidLithoStrat}/depth/{slw_lsuTopDepth}/{slw_lsuBottomDepth} npdv:stratumForWellbore npd:wellbore/{wNOo_wlbNpdidWellbore} .",
       "sourceSql": "SELECT \"strat_litho_wellbore\".\"wlbNpdidWellbore\" slw_wlbNpdidWellbore, \"strat_litho_wellbore\".\"lsuNpdidLithoStrat\" slw_lsuNpdidLithoStrat, \"strat_litho_wellbore\".\"lsuTopDepth\" slw_lsuTopDepth, \"strat_litho_wellbore\".\"lsuBottomDepth\" slw_lsuBottomDepth, \"wellbore_npdid_overview\".\"wlbNpdidWellbore\" wNOo_wlbNpdidWellbore FROM \"strat_litho_wellbore\"  INNER JOIN \"wellbore_npdid_overview\" ON \"strat_litho_wellbore\".\"wlbNpdidWellbore\" = \"wellbore_npdid_overview\".\"wlbNpdidWellbore\"",
       "sourceTables": [
@@ -26001,7 +26001,7 @@ export const npdMappingData = {
       "entityName": "wellboreFormationTD",
       "targetSubject": "npd:wellbore/{wea_wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreFormationTD",
-      "targetObject": "npd:stratum/{wft_lsuNpdidLithoStrat} ",
+      "targetObject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "target": "npd:wellbore/{wea_wlbNpdidWellbore} npdv:wellboreFormationTD npd:stratum/{wft_lsuNpdidLithoStrat} .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore, \"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_exploration_all\".\"wlbFormationAtTd\"=\"wellbore_formation_top\".\"lsuName\"",
       "sourceTables": [
@@ -26032,7 +26032,7 @@ export const npdMappingData = {
       "entityName": "wellboreFormationHcLevel1",
       "targetSubject": "npd:wellbore/{wea_wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreFormationHcLevel1",
-      "targetObject": "npd:stratum/{wft_lsuNpdidLithoStrat} ",
+      "targetObject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "target": "npd:wellbore/{wea_wlbNpdidWellbore} npdv:wellboreFormationHcLevel1 npd:stratum/{wft_lsuNpdidLithoStrat} .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_exploration_all\".\"wlbFormationWithHc1\"=\"wellbore_formation_top\".\"lsuName\"",
       "sourceTables": [
@@ -26063,7 +26063,7 @@ export const npdMappingData = {
       "entityName": "wellboreFormationHcLevel2",
       "targetSubject": "npd:wellbore/{wea_wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreFormationHcLevel2",
-      "targetObject": "npd:stratum/{wft_lsuNpdidLithoStrat} ",
+      "targetObject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "target": "npd:wellbore/{wea_wlbNpdidWellbore} npdv:wellboreFormationHcLevel2 npd:stratum/{wft_lsuNpdidLithoStrat} .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_exploration_all\".\"wlbFormationWithHc2\"=\"wellbore_formation_top\".\"lsuName\"",
       "sourceTables": [
@@ -26094,7 +26094,7 @@ export const npdMappingData = {
       "entityName": "wellboreFormationHcLevel3",
       "targetSubject": "npd:wellbore/{wea_wlbNpdidWellbore}",
       "targetPredicate": "npdv:wellboreFormationHcLevel3",
-      "targetObject": "npd:stratum/{wft_lsuNpdidLithoStrat} ",
+      "targetObject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "target": "npd:wellbore/{wea_wlbNpdidWellbore} npdv:wellboreFormationHcLevel3 npd:stratum/{wft_lsuNpdidLithoStrat} .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_exploration_all\".\"wlbFormationWithHc3\"=\"wellbore_formation_top\".\"lsuName\"",
       "sourceTables": [
@@ -26119,13 +26119,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:1",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Campanian ",
+      "targetObject": "isc:Campanian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Campanian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='CAMPANIAN'",
       "sourceTables": [
@@ -26151,13 +26151,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:2",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Campanian ",
+      "targetObject": "isc:Campanian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Campanian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='CAMPANIAN'",
       "sourceTables": [
@@ -26183,13 +26183,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:3",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Campanian ",
+      "targetObject": "isc:Campanian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Campanian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='CAMPANIAN'",
       "sourceTables": [
@@ -26215,13 +26215,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:4",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Campanian ",
+      "targetObject": "isc:Campanian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Campanian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='CAMPANIAN'",
       "sourceTables": [
@@ -26247,13 +26247,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:5",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Carboniferous ",
+      "targetObject": "isc:Carboniferous",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Carboniferous .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='CARBONIFEROUS'",
       "sourceTables": [
@@ -26279,13 +26279,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:6",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Carboniferous ",
+      "targetObject": "isc:Carboniferous",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Carboniferous .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='CARBONIFEROUS'",
       "sourceTables": [
@@ -26311,13 +26311,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:7",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Carboniferous ",
+      "targetObject": "isc:Carboniferous",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Carboniferous .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='CARBONIFEROUS'",
       "sourceTables": [
@@ -26343,13 +26343,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:8",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Carboniferous ",
+      "targetObject": "isc:Carboniferous",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Carboniferous .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='CARBONIFEROUS'",
       "sourceTables": [
@@ -26375,13 +26375,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:9",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Cretaceous ",
+      "targetObject": "isc:Cretaceous",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Cretaceous .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='CRETACEOUS'",
       "sourceTables": [
@@ -26407,13 +26407,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:10",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Cretaceous ",
+      "targetObject": "isc:Cretaceous",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Cretaceous .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='CRETACEOUS'",
       "sourceTables": [
@@ -26439,13 +26439,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:11",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Cretaceous ",
+      "targetObject": "isc:Cretaceous",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Cretaceous .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='CRETACEOUS'",
       "sourceTables": [
@@ -26471,13 +26471,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:12",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Cretaceous ",
+      "targetObject": "isc:Cretaceous",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Cretaceous .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='CRETACEOUS'",
       "sourceTables": [
@@ -26503,13 +26503,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:13",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Danian ",
+      "targetObject": "isc:Danian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Danian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='DANIAN'",
       "sourceTables": [
@@ -26535,13 +26535,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:14",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Danian ",
+      "targetObject": "isc:Danian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Danian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='DANIAN'",
       "sourceTables": [
@@ -26567,13 +26567,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:15",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Danian ",
+      "targetObject": "isc:Danian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Danian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='DANIAN'",
       "sourceTables": [
@@ -26599,13 +26599,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:16",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Danian ",
+      "targetObject": "isc:Danian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Danian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='DANIAN'",
       "sourceTables": [
@@ -26631,13 +26631,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:17",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Devonian ",
+      "targetObject": "isc:Devonian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Devonian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='DEVONIAN'",
       "sourceTables": [
@@ -26663,13 +26663,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:18",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Devonian ",
+      "targetObject": "isc:Devonian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Devonian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='DEVONIAN'",
       "sourceTables": [
@@ -26695,13 +26695,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:19",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Devonian ",
+      "targetObject": "isc:Devonian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Devonian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='DEVONIAN'",
       "sourceTables": [
@@ -26727,13 +26727,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:20",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Devonian ",
+      "targetObject": "isc:Devonian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Devonian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='DEVONIAN'",
       "sourceTables": [
@@ -26759,13 +26759,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:21",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Mississippian ",
+      "targetObject": "isc:Mississippian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Mississippian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='EARLY CARBONIFEROUS'",
       "sourceTables": [
@@ -26791,13 +26791,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:22",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Mississippian ",
+      "targetObject": "isc:Mississippian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Mississippian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='EARLY CARBONIFEROUS'",
       "sourceTables": [
@@ -26823,13 +26823,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:23",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Mississippian ",
+      "targetObject": "isc:Mississippian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Mississippian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='EARLY CARBONIFEROUS'",
       "sourceTables": [
@@ -26855,13 +26855,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:24",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Mississippian ",
+      "targetObject": "isc:Mississippian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Mississippian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='EARLY CARBONIFEROUS'",
       "sourceTables": [
@@ -26887,13 +26887,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:25",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:LowerCretaceous ",
+      "targetObject": "isc:LowerCretaceous",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:LowerCretaceous .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='EARLY CRETACEOUS'",
       "sourceTables": [
@@ -26919,13 +26919,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:26",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:LowerCretaceous ",
+      "targetObject": "isc:LowerCretaceous",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:LowerCretaceous .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='EARLY CRETACEOUS'",
       "sourceTables": [
@@ -26951,13 +26951,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:27",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:LowerCretaceous ",
+      "targetObject": "isc:LowerCretaceous",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:LowerCretaceous .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='EARLY CRETACEOUS'",
       "sourceTables": [
@@ -26983,13 +26983,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:28",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:LowerCretaceous ",
+      "targetObject": "isc:LowerCretaceous",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:LowerCretaceous .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='EARLY CRETACEOUS'",
       "sourceTables": [
@@ -27015,13 +27015,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:29",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:LowerJurassic ",
+      "targetObject": "isc:LowerJurassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:LowerJurassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='EARLY JURASSIC'",
       "sourceTables": [
@@ -27047,13 +27047,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:30",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:LowerJurassic ",
+      "targetObject": "isc:LowerJurassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:LowerJurassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='EARLY JURASSIC'",
       "sourceTables": [
@@ -27079,13 +27079,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:31",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:LowerJurassic ",
+      "targetObject": "isc:LowerJurassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:LowerJurassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='EARLY JURASSIC'",
       "sourceTables": [
@@ -27111,13 +27111,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:32",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:LowerJurassic ",
+      "targetObject": "isc:LowerJurassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:LowerJurassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='EARLY JURASSIC'",
       "sourceTables": [
@@ -27143,13 +27143,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:33",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Cisuralian ",
+      "targetObject": "isc:Cisuralian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Cisuralian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='EARLY PERMIAN'",
       "sourceTables": [
@@ -27175,13 +27175,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:34",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Cisuralian ",
+      "targetObject": "isc:Cisuralian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Cisuralian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='EARLY PERMIAN'",
       "sourceTables": [
@@ -27207,13 +27207,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:35",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Cisuralian ",
+      "targetObject": "isc:Cisuralian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Cisuralian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='EARLY PERMIAN'",
       "sourceTables": [
@@ -27239,13 +27239,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:36",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Cisuralian ",
+      "targetObject": "isc:Cisuralian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Cisuralian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='EARLY PERMIAN'",
       "sourceTables": [
@@ -27271,13 +27271,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:37",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:LowerTriassic ",
+      "targetObject": "isc:LowerTriassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:LowerTriassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='EARLY TRIASSIC'",
       "sourceTables": [
@@ -27303,13 +27303,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:38",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:LowerTriassic ",
+      "targetObject": "isc:LowerTriassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:LowerTriassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='EARLY TRIASSIC'",
       "sourceTables": [
@@ -27335,13 +27335,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:39",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:LowerTriassic ",
+      "targetObject": "isc:LowerTriassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:LowerTriassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='EARLY TRIASSIC'",
       "sourceTables": [
@@ -27367,13 +27367,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:40",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:LowerTriassic ",
+      "targetObject": "isc:LowerTriassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:LowerTriassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='EARLY TRIASSIC'",
       "sourceTables": [
@@ -27399,13 +27399,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:41",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Eocene ",
+      "targetObject": "isc:Eocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Eocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='EOCENE'",
       "sourceTables": [
@@ -27431,13 +27431,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:42",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Eocene ",
+      "targetObject": "isc:Eocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Eocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='EOCENE'",
       "sourceTables": [
@@ -27463,13 +27463,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:43",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Eocene ",
+      "targetObject": "isc:Eocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Eocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='EOCENE'",
       "sourceTables": [
@@ -27495,13 +27495,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:44",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Eocene ",
+      "targetObject": "isc:Eocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Eocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='EOCENE'",
       "sourceTables": [
@@ -27527,13 +27527,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:45",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Jurassic ",
+      "targetObject": "isc:Jurassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Jurassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='JURASSIC'",
       "sourceTables": [
@@ -27559,13 +27559,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:46",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Jurassic ",
+      "targetObject": "isc:Jurassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Jurassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='JURASSIC'",
       "sourceTables": [
@@ -27591,13 +27591,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:47",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Jurassic ",
+      "targetObject": "isc:Jurassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Jurassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='JURASSIC'",
       "sourceTables": [
@@ -27623,13 +27623,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:48",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Jurassic ",
+      "targetObject": "isc:Jurassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Jurassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='JURASSIC'",
       "sourceTables": [
@@ -27655,13 +27655,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:49",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Pennsylvanian ",
+      "targetObject": "isc:Pennsylvanian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Pennsylvanian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='LATE CARBONIFEROUS'",
       "sourceTables": [
@@ -27687,13 +27687,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:50",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Pennsylvanian ",
+      "targetObject": "isc:Pennsylvanian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Pennsylvanian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='LATE CARBONIFEROUS'",
       "sourceTables": [
@@ -27719,13 +27719,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:51",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Pennsylvanian ",
+      "targetObject": "isc:Pennsylvanian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Pennsylvanian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='LATE CARBONIFEROUS'",
       "sourceTables": [
@@ -27751,13 +27751,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:52",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Pennsylvanian ",
+      "targetObject": "isc:Pennsylvanian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Pennsylvanian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='LATE CARBONIFEROUS'",
       "sourceTables": [
@@ -27783,13 +27783,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:53",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:UpperCretaceous ",
+      "targetObject": "isc:UpperCretaceous",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:UpperCretaceous .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='LATE CRETACEOUS'",
       "sourceTables": [
@@ -27815,13 +27815,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:54",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:UpperCretaceous ",
+      "targetObject": "isc:UpperCretaceous",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:UpperCretaceous .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='LATE CRETACEOUS'",
       "sourceTables": [
@@ -27847,13 +27847,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:55",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:UpperCretaceous ",
+      "targetObject": "isc:UpperCretaceous",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:UpperCretaceous .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='LATE CRETACEOUS'",
       "sourceTables": [
@@ -27879,13 +27879,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:56",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:UpperCretaceous ",
+      "targetObject": "isc:UpperCretaceous",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:UpperCretaceous .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='LATE CRETACEOUS'",
       "sourceTables": [
@@ -27911,13 +27911,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:57",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:UpperJurassic ",
+      "targetObject": "isc:UpperJurassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:UpperJurassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='LATE JURASSIC'",
       "sourceTables": [
@@ -27943,13 +27943,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:58",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:UpperJurassic ",
+      "targetObject": "isc:UpperJurassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:UpperJurassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='LATE JURASSIC'",
       "sourceTables": [
@@ -27975,13 +27975,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:59",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:UpperJurassic ",
+      "targetObject": "isc:UpperJurassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:UpperJurassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='LATE JURASSIC'",
       "sourceTables": [
@@ -28007,13 +28007,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:60",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:UpperJurassic ",
+      "targetObject": "isc:UpperJurassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:UpperJurassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='LATE JURASSIC'",
       "sourceTables": [
@@ -28039,13 +28039,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:61",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Thanetian ",
+      "targetObject": "isc:Thanetian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Thanetian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='LATE PALEOCENE'",
       "sourceTables": [
@@ -28071,13 +28071,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:62",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Thanetian ",
+      "targetObject": "isc:Thanetian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Thanetian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='LATE PALEOCENE'",
       "sourceTables": [
@@ -28103,13 +28103,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:63",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Thanetian ",
+      "targetObject": "isc:Thanetian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Thanetian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='LATE PALEOCENE'",
       "sourceTables": [
@@ -28135,13 +28135,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:64",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Thanetian ",
+      "targetObject": "isc:Thanetian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Thanetian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='LATE PALEOCENE'",
       "sourceTables": [
@@ -28167,13 +28167,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:65",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Lopingian ",
+      "targetObject": "isc:Lopingian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Lopingian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='LATE PERMIAN'",
       "sourceTables": [
@@ -28199,13 +28199,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:66",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Lopingian ",
+      "targetObject": "isc:Lopingian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Lopingian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='LATE PERMIAN'",
       "sourceTables": [
@@ -28231,13 +28231,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:67",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Lopingian ",
+      "targetObject": "isc:Lopingian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Lopingian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='LATE PERMIAN'",
       "sourceTables": [
@@ -28263,13 +28263,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:68",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Lopingian ",
+      "targetObject": "isc:Lopingian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Lopingian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='LATE PERMIAN'",
       "sourceTables": [
@@ -28295,13 +28295,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:69",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Piacenzian ",
+      "targetObject": "isc:Piacenzian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Piacenzian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='LATE PLIOCENE'",
       "sourceTables": [
@@ -28327,13 +28327,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:70",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Piacenzian ",
+      "targetObject": "isc:Piacenzian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Piacenzian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='LATE PLIOCENE'",
       "sourceTables": [
@@ -28359,13 +28359,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:71",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Piacenzian ",
+      "targetObject": "isc:Piacenzian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Piacenzian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='LATE PLIOCENE'",
       "sourceTables": [
@@ -28391,13 +28391,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:72",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Piacenzian ",
+      "targetObject": "isc:Piacenzian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Piacenzian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='LATE PLIOCENE'",
       "sourceTables": [
@@ -28423,13 +28423,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:73",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:UpperTriassic ",
+      "targetObject": "isc:UpperTriassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:UpperTriassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='LATE TRIASSIC'",
       "sourceTables": [
@@ -28455,13 +28455,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:74",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:UpperTriassic ",
+      "targetObject": "isc:UpperTriassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:UpperTriassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='LATE TRIASSIC'",
       "sourceTables": [
@@ -28487,13 +28487,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:75",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:UpperTriassic ",
+      "targetObject": "isc:UpperTriassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:UpperTriassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='LATE TRIASSIC'",
       "sourceTables": [
@@ -28519,13 +28519,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:76",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:UpperTriassic ",
+      "targetObject": "isc:UpperTriassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:UpperTriassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='LATE TRIASSIC'",
       "sourceTables": [
@@ -28551,13 +28551,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:77",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:MiddleJurassic ",
+      "targetObject": "isc:MiddleJurassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:MiddleJurassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='MIDDLE JURASSIC'",
       "sourceTables": [
@@ -28583,13 +28583,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:78",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:MiddleJurassic ",
+      "targetObject": "isc:MiddleJurassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:MiddleJurassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='MIDDLE JURASSIC'",
       "sourceTables": [
@@ -28615,13 +28615,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:79",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:MiddleJurassic ",
+      "targetObject": "isc:MiddleJurassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:MiddleJurassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='MIDDLE JURASSIC'",
       "sourceTables": [
@@ -28647,13 +28647,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:80",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:MiddleJurassic ",
+      "targetObject": "isc:MiddleJurassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:MiddleJurassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='MIDDLE JURASSIC'",
       "sourceTables": [
@@ -28679,13 +28679,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:81",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:MiddleTriassic ",
+      "targetObject": "isc:MiddleTriassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:MiddleTriassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='MIDDLE TRIASSIC'",
       "sourceTables": [
@@ -28711,13 +28711,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:82",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:MiddleTriassic ",
+      "targetObject": "isc:MiddleTriassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:MiddleTriassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='MIDDLE TRIASSIC'",
       "sourceTables": [
@@ -28743,13 +28743,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:83",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:MiddleTriassic ",
+      "targetObject": "isc:MiddleTriassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:MiddleTriassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='MIDDLE TRIASSIC'",
       "sourceTables": [
@@ -28775,13 +28775,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:84",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:MiddleTriassic ",
+      "targetObject": "isc:MiddleTriassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:MiddleTriassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='MIDDLE TRIASSIC'",
       "sourceTables": [
@@ -28807,13 +28807,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:85",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Miocene ",
+      "targetObject": "isc:Miocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Miocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='MIOCENE'",
       "sourceTables": [
@@ -28839,13 +28839,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:86",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Miocene ",
+      "targetObject": "isc:Miocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Miocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='MIOCENE'",
       "sourceTables": [
@@ -28871,13 +28871,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:87",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Miocene ",
+      "targetObject": "isc:Miocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Miocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='MIOCENE'",
       "sourceTables": [
@@ -28903,13 +28903,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:88",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Miocene ",
+      "targetObject": "isc:Miocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Miocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='MIOCENE'",
       "sourceTables": [
@@ -28935,13 +28935,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:89",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Oligocene ",
+      "targetObject": "isc:Oligocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Oligocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='OLIGOCENE'",
       "sourceTables": [
@@ -28967,13 +28967,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:90",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Oligocene ",
+      "targetObject": "isc:Oligocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Oligocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='OLIGOCENE'",
       "sourceTables": [
@@ -28999,13 +28999,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:91",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Oligocene ",
+      "targetObject": "isc:Oligocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Oligocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='OLIGOCENE'",
       "sourceTables": [
@@ -29031,13 +29031,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:92",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Oligocene ",
+      "targetObject": "isc:Oligocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Oligocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='OLIGOCENE'",
       "sourceTables": [
@@ -29063,13 +29063,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:93",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Paleocene ",
+      "targetObject": "isc:Paleocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Paleocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='PALEOCENE'",
       "sourceTables": [
@@ -29095,13 +29095,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:94",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Paleocene ",
+      "targetObject": "isc:Paleocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Paleocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='PALEOCENE'",
       "sourceTables": [
@@ -29127,13 +29127,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:95",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Paleocene ",
+      "targetObject": "isc:Paleocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Paleocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='PALEOCENE'",
       "sourceTables": [
@@ -29159,13 +29159,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:96",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Paleocene ",
+      "targetObject": "isc:Paleocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Paleocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='PALEOCENE'",
       "sourceTables": [
@@ -29191,13 +29191,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:97",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Permian ",
+      "targetObject": "isc:Permian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Permian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='PERMIAN'",
       "sourceTables": [
@@ -29223,13 +29223,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:98",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Permian ",
+      "targetObject": "isc:Permian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Permian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='PERMIAN'",
       "sourceTables": [
@@ -29255,13 +29255,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:99",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Permian ",
+      "targetObject": "isc:Permian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Permian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='PERMIAN'",
       "sourceTables": [
@@ -29287,13 +29287,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:100",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Permian ",
+      "targetObject": "isc:Permian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Permian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='PERMIAN'",
       "sourceTables": [
@@ -29319,13 +29319,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:101",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Pleistocene ",
+      "targetObject": "isc:Pleistocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Pleistocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='PLEISTOCENE'",
       "sourceTables": [
@@ -29351,13 +29351,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:102",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Pleistocene ",
+      "targetObject": "isc:Pleistocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Pleistocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='PLEISTOCENE'",
       "sourceTables": [
@@ -29383,13 +29383,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:103",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Pleistocene ",
+      "targetObject": "isc:Pleistocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Pleistocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='PLEISTOCENE'",
       "sourceTables": [
@@ -29415,13 +29415,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:104",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Pleistocene ",
+      "targetObject": "isc:Pleistocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Pleistocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='PLEISTOCENE'",
       "sourceTables": [
@@ -29447,13 +29447,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:105",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Pliocene ",
+      "targetObject": "isc:Pliocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Pliocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='PLIOCENE'",
       "sourceTables": [
@@ -29479,13 +29479,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:106",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Pliocene ",
+      "targetObject": "isc:Pliocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Pliocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='PLIOCENE'",
       "sourceTables": [
@@ -29511,13 +29511,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:107",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Pliocene ",
+      "targetObject": "isc:Pliocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Pliocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='PLIOCENE'",
       "sourceTables": [
@@ -29543,13 +29543,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:108",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Pliocene ",
+      "targetObject": "isc:Pliocene",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Pliocene .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='PLIOCENE'",
       "sourceTables": [
@@ -29575,13 +29575,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:109",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Silurian ",
+      "targetObject": "isc:Silurian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Silurian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='SILURIAN'",
       "sourceTables": [
@@ -29607,13 +29607,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:110",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Silurian ",
+      "targetObject": "isc:Silurian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Silurian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='SILURIAN'",
       "sourceTables": [
@@ -29639,13 +29639,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:111",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Silurian ",
+      "targetObject": "isc:Silurian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Silurian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='SILURIAN'",
       "sourceTables": [
@@ -29671,13 +29671,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:112",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Silurian ",
+      "targetObject": "isc:Silurian",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Silurian .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='SILURIAN'",
       "sourceTables": [
@@ -29703,13 +29703,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:113",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Triassic ",
+      "targetObject": "isc:Triassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Triassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeAtTd\"='TRIASSIC'",
       "sourceTables": [
@@ -29735,13 +29735,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:114",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Triassic ",
+      "targetObject": "isc:Triassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Triassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc1\"='TRIASSIC'",
       "sourceTables": [
@@ -29767,13 +29767,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:115",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Triassic ",
+      "targetObject": "isc:Triassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Triassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc2\"='TRIASSIC'",
       "sourceTables": [
@@ -29799,13 +29799,13 @@ export const npdMappingData = {
     },
     {
       "id": "Mapping:NPD:Manual5:116",
-      "kind": "objectProperty",
+      "kind": "dataProperty",
       "abstraction": "条件规则映射",
       "entityPrefix": "npdv",
       "entityName": "geochronologicEra",
       "targetSubject": "npd:stratum/{wft_lsuNpdidLithoStrat}",
       "targetPredicate": "npdv:geochronologicEra",
-      "targetObject": "isc:Triassic ",
+      "targetObject": "isc:Triassic",
       "target": "npd:stratum/{wft_lsuNpdidLithoStrat} npdv:geochronologicEra isc:Triassic .",
       "sourceSql": "SELECT \"wellbore_exploration_all\".\"wlbNpdidWellbore\" wea_wlbNpdidWellbore,\"wellbore_formation_top\".\"lsuNpdidLithoStrat\" wft_lsuNpdidLithoStrat FROM \"wellbore_formation_top\", wellbore_exploration_all WHERE \"wellbore_formation_top\".\"lsuName\"=\"wellbore_exploration_all\".\"wlbFormationAtTd\" AND \"wellbore_exploration_all\".\"wlbAgeWithHc3\"='TRIASSIC'",
       "sourceTables": [
@@ -29837,7 +29837,7 @@ export const npdMappingData = {
       "entityName": "productionForField",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}",
       "targetPredicate": "npdv:productionForField",
-      "targetObject": "npd:field/{prfNpdidInformationCarrier} ",
+      "targetObject": "npd:field/{prfNpdidInformationCarrier}",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear} npdv:productionForField npd:field/{prfNpdidInformationCarrier} .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\",\"prfYear\" FROM \"field_production_yearly\" WHERE \"prfNpdidInformationCarrier\" <> '44576'",
       "sourceTables": [
@@ -29862,7 +29862,7 @@ export const npdMappingData = {
       "entityName": "productionForDiscovery",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}",
       "targetPredicate": "npdv:productionForDiscovery",
-      "targetObject": "npd:discovery/{prfNpdidInformationCarrier} ",
+      "targetObject": "npd:discovery/{prfNpdidInformationCarrier}",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear} npdv:productionForDiscovery npd:discovery/{prfNpdidInformationCarrier} .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\",\"prfYear\" FROM \"field_production_yearly\" WHERE \"prfNpdidInformationCarrier\" ='44576'",
       "sourceTables": [
@@ -29887,7 +29887,7 @@ export const npdMappingData = {
       "entityName": "productionForField",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:productionForField",
-      "targetObject": "npd:field/{prfNpdidInformationCarrier} ",
+      "targetObject": "npd:field/{prfNpdidInformationCarrier}",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth} npdv:productionForField npd:field/{prfNpdidInformationCarrier} .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\",\"prfYear\",\"prfMonth\" FROM \"field_production_monthly\" WHERE \"prfNpdidInformationCarrier\" <> '44576'",
       "sourceTables": [
@@ -29914,7 +29914,7 @@ export const npdMappingData = {
       "entityName": "productionForDiscovery",
       "targetSubject": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth}",
       "targetPredicate": "npdv:productionForDiscovery",
-      "targetObject": "npd:discovery/{prfNpdidInformationCarrier} ",
+      "targetObject": "npd:discovery/{prfNpdidInformationCarrier}",
       "target": "npd:field/{prfNpdidInformationCarrier}/production/{prfYear}/{prfMonth} npdv:productionForDiscovery npd:discovery/{prfNpdidInformationCarrier} .",
       "sourceSql": "SELECT \"prfNpdidInformationCarrier\",\"prfYear\",\"prfMonth\" FROM \"field_production_monthly\" WHERE \"prfNpdidInformationCarrier\"='44576'",
       "sourceTables": [
@@ -29941,7 +29941,7 @@ export const npdMappingData = {
       "entityName": "isActive",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:isActive",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:isActive \"true\" .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"blcName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"prlAreaSplitByBlock\" WHERE \"prlCurrentArea\"='ACTIVE'",
       "sourceTables": [
@@ -29972,7 +29972,7 @@ export const npdMappingData = {
       "entityName": "isActive",
       "targetSubject": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:isActive",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:licence/{prlNpdidLicence}/block/{blcName}/polyno/{prlAreaPolyPolyNo}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:isActive \"false\" .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"blcName\", \"prlAreaPolyPolyNo\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"prlAreaSplitByBlock\" WHERE \"prlCurrentArea\"='INACTIVE'",
       "sourceTables": [
@@ -30003,7 +30003,7 @@ export const npdMappingData = {
       "entityName": "isActive",
       "targetSubject": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:isActive",
-      "targetObject": "\"true\" ",
+      "targetObject": "\"true\"",
       "target": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:isActive \"true\" .",
       "sourceSql": "SELECT \"prlArea_id\", \"prlNpdidLicence\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"prlArea\"  WHERE \"prlCurrentArea\"='ACTIVE'",
       "sourceTables": [
@@ -30032,7 +30032,7 @@ export const npdMappingData = {
       "entityName": "isActive",
       "targetSubject": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo}",
       "targetPredicate": "npdv:isActive",
-      "targetObject": "\"false\" ",
+      "targetObject": "\"false\"",
       "target": "npd:licence/{prlNpdidLicence}/area/{prlArea_id}/history/{prlAreaPolyDateValidFrom}/{prlAreaPolyDateValidTo} npdv:isActive \"false\" .",
       "sourceSql": "SELECT \"prlArea_id\", \"prlNpdidLicence\", \"prlAreaPolyDateValidFrom\", \"prlAreaPolyDateValidTo\" FROM \"prlArea\"  WHERE \"prlCurrentArea\"='INACTIVE'",
       "sourceTables": [
@@ -30061,7 +30061,7 @@ export const npdMappingData = {
       "entityName": "currentAreaSize",
       "targetSubject": "npd:licence/{prlNpdidLicence}",
       "targetPredicate": "npdv:currentAreaSize",
-      "targetObject": "{prlCurrentArea}^^xsd:decimal ",
+      "targetObject": "{prlCurrentArea}^^xsd:decimal",
       "target": "npd:licence/{prlNpdidLicence} npdv:currentAreaSize {prlCurrentArea}^^xsd:decimal .",
       "sourceSql": "SELECT \"prlNpdidLicence\", \"prlCurrentArea\" FROM \"licence\"",
       "sourceTables": [
@@ -30084,7 +30084,7 @@ export const npdMappingData = {
       "entityName": "coreIntervalBottom",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}",
       "targetPredicate": "npdv:coreIntervalBottom",
-      "targetObject": "{wlbCoreIntervalBottom}^^xsd:decimal ",
+      "targetObject": "{wlbCoreIntervalBottom}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber} npdv:coreIntervalBottom {wlbCoreIntervalBottom}^^xsd:decimal .",
       "sourceSql": "SELECT \"wellbore_core_id\", \"wlbNpdidWellbore\", \"wlbCoreNumber\", \"wlbCoreIntervalBottom\" FROM \"wellbore_core\" WHERE \"wlbCoreIntervalUom\"='[m   ]'",
       "sourceTables": [
@@ -30112,7 +30112,7 @@ export const npdMappingData = {
       "entityName": "coreIntervalBottom",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}",
       "targetPredicate": "npdv:coreIntervalBottom",
-      "targetObject": "{wlbCoreIntervalBottomFT}^^xsd:decimal ",
+      "targetObject": "{wlbCoreIntervalBottomFT}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber} npdv:coreIntervalBottom {wlbCoreIntervalBottomFT}^^xsd:decimal .",
       "sourceSql": "SELECT \"wellbore_core_id\",\"wlbNpdidWellbore\",\"wlbCoreNumber\",\"wlbCoreIntervalBottom\" * 0.3048 AS wlbCoreIntervalBottomFT FROM \"wellbore_core\" WHERE \"wlbCoreIntervalUom\"='[ft  ]'",
       "sourceTables": [
@@ -30140,7 +30140,7 @@ export const npdMappingData = {
       "entityName": "coreIntervalTop",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}",
       "targetPredicate": "npdv:coreIntervalTop",
-      "targetObject": "{wlbCoreIntervalTop}^^xsd:decimal ",
+      "targetObject": "{wlbCoreIntervalTop}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber} npdv:coreIntervalTop {wlbCoreIntervalTop}^^xsd:decimal .",
       "sourceSql": "SELECT \"wellbore_core_id\", \"wlbNpdidWellbore\", \"wlbCoreNumber\", \"wlbCoreIntervalTop\" FROM \"wellbore_core\" WHERE \"wlbCoreIntervalUom\"='[m   ]'",
       "sourceTables": [
@@ -30168,7 +30168,7 @@ export const npdMappingData = {
       "entityName": "coreIntervalTop",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}",
       "targetPredicate": "npdv:coreIntervalTop",
-      "targetObject": "{wlbCoreIntervalTopFT}^^xsd:decimal ",
+      "targetObject": "{wlbCoreIntervalTopFT}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber} npdv:coreIntervalTop {wlbCoreIntervalTopFT}^^xsd:decimal .",
       "sourceSql": "SELECT \"wellbore_core_id\",\"wlbNpdidWellbore\",\"wlbCoreNumber\",\"wlbCoreIntervalTop\" * 0.3048 AS wlbCoreIntervalTopFT FROM \"wellbore_core\" WHERE \"wlbCoreIntervalUom\"='[ft  ]'",
       "sourceTables": [
@@ -30196,7 +30196,7 @@ export const npdMappingData = {
       "entityName": "member",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/cores",
       "targetPredicate": "npdv:member",
-      "targetObject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber} ",
+      "targetObject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}",
       "target": "npd:wellbore/{wlbNpdidWellbore}/cores npdv:member npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber} .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbCoreNumber\" FROM \"wellbore_core\"",
       "sourceTables": [
@@ -30220,7 +30220,7 @@ export const npdMappingData = {
       "entityName": "dependsOnTask",
       "targetSubject": "npd:licence/{A_prlNpdidLicence}/task/{A_prlTaskRefID}",
       "targetPredicate": "npdv:dependsOnTask",
-      "targetObject": "npd:licence/{B_prlNpdidLicence}/task/{B_prlTaskRefID} ",
+      "targetObject": "npd:licence/{B_prlNpdidLicence}/task/{B_prlTaskRefID}",
       "target": "npd:licence/{A_prlNpdidLicence}/task/{A_prlTaskRefID} npdv:dependsOnTask npd:licence/{B_prlNpdidLicence}/task/{B_prlTaskRefID} .",
       "sourceSql": "SELECT A.\"prlNpdidLicence\" A_prlNpdidLicence, A.\"prlTaskRefID\" A_prlTaskRefID, B.\"prlNpdidLicence\" B_prlNpdidLicence, B.\"prlTaskRefID\" B_prlTaskRefID FROM \"licence_task\" AS A, licence_task AS B WHERE A.\"prlTaskRefID\"=B.\"prlTaskID\"",
       "sourceTables": [
@@ -30247,7 +30247,7 @@ export const npdMappingData = {
       "entityName": "coresTotalLength",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}",
       "targetPredicate": "npdv:coresTotalLength",
-      "targetObject": "{wlbTotalCoreLength}^^xsd:decimal ",
+      "targetObject": "{wlbTotalCoreLength}^^xsd:decimal",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber} npdv:coresTotalLength {wlbTotalCoreLength}^^xsd:decimal .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbCoreNumber\", \"wlbTotalCoreLength\" FROM \"wellbore_core\"",
       "sourceTables": [
@@ -30272,7 +30272,7 @@ export const npdMappingData = {
       "entityName": "coreIntervalUOM",
       "targetSubject": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber}",
       "targetPredicate": "npdv:coreIntervalUOM",
-      "targetObject": "{wlbCoreIntervalUom}^^xsd:string ",
+      "targetObject": "{wlbCoreIntervalUom}^^xsd:string",
       "target": "npd:wellbore/{wlbNpdidWellbore}/core/{wlbCoreNumber} npdv:coreIntervalUOM {wlbCoreIntervalUom}^^xsd:string .",
       "sourceSql": "SELECT \"wlbNpdidWellbore\", \"wlbCoreNumber\", \"wlbCoreIntervalUom\" FROM \"wellbore_core\"",
       "sourceTables": [

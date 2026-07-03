@@ -12,6 +12,10 @@ const outputPath = path.join(
   repoRoot,
   "3GPP_Ontology/viz/src/npd/generatedMappingData.ts",
 );
+const graphOutputPath = path.join(
+  repoRoot,
+  "3GPP_Ontology/viz/src/npd/generatedMappingGraph.json",
+);
 
 if (!fs.existsSync(mappingPath)) {
   throw new Error(`NPD mapping file not found: ${mappingPath}`);
@@ -84,7 +88,7 @@ function extractCondition(source) {
 
 function parseTarget(target) {
   const classMatch = target.match(/\s+a\s+([A-Za-z0-9_]+):([A-Za-z0-9_]+)/);
-  const tokens = target.trim().replace(/[.]\s*$/, "").split(/\s+/);
+  const tokens = target.trim().replace(/[.]\s*$/, "").trim().split(/\s+/);
   const subject = tokens[0] ?? "";
   const predicate = classMatch ? "rdf:type" : (tokens[1] ?? "");
   const object = classMatch ? `${classMatch[1]}:${classMatch[2]}` : tokens.slice(2).join(" ");
@@ -101,8 +105,9 @@ function parseTarget(target) {
   }
 
   const predicateName = localName(predicate);
-  const isLiteral = /\{[^}]+\}\^\^|^"[^"]*"|\s"[^"]*"/.test(object) ||
-    /\{[^}]+\}$/.test(object) ||
+  const isResourceObject = /^npd:/.test(object.trim()) || /^<https?:/.test(object.trim());
+  const isLiteral = !isResourceObject ||
+    /\{[^}]+\}\^\^|^"[^"]*"|\s"[^"]*"/.test(object) ||
     object.includes("xsd:");
 
   return {
@@ -154,6 +159,525 @@ function classifyAbstraction(kind, mappingId, entityName, target, source, condit
   return "其他映射";
 }
 
+const WORD_TRANSLATIONS = {
+  acquisition: "采集",
+  activity: "活动",
+  address: "地址",
+  amount: "数量",
+  appraisal: "评价",
+  area: "区域",
+  award: "授予",
+  baa: "业务安排区域",
+  belongs: "属于",
+  block: "区块",
+  blowout: "井喷",
+  bottom: "底部",
+  business: "业务",
+  casing: "套管",
+  code: "代码",
+  company: "公司",
+  condensate: "凝析油",
+  contains: "包含",
+  coordinate: "坐标",
+  coordinates: "坐标",
+  core: "岩心",
+  cores: "岩心",
+  current: "当前",
+  date: "日期",
+  datum: "基准",
+  degree: "度",
+  degrees: "度",
+  depth: "深度",
+  development: "开发",
+  discovery: "发现",
+  document: "文档",
+  drilling: "钻井",
+  drillstem: "钻杆测试",
+  dst: "钻杆测试",
+  ew: "东西",
+  exploration: "勘探",
+  facility: "设施",
+  feeder: "支线",
+  field: "油气田",
+  fixed: "固定",
+  for: "关联",
+  formation: "地层",
+  from: "起始",
+  function: "功能",
+  gas: "气",
+  geometry: "几何",
+  geodetic: "大地",
+  gross: "总量",
+  history: "历史",
+  hst: "历史",
+  id: "ID",
+  in: "位于",
+  included: "纳入",
+  investment: "投资",
+  is: "是否",
+  licensee: "持证方",
+  licence: "许可证",
+  litho: "岩性",
+  lithostratigraphic: "岩性地层",
+  location: "位置",
+  lot: "泄漏测试",
+  main: "主要",
+  medium: "介质",
+  minute: "分",
+  minutes: "分",
+  monthly: "月度",
+  moveable: "可移动",
+  mud: "泥浆",
+  name: "名称",
+  ncs: "挪威大陆架",
+  net: "净量",
+  npd: "NPD",
+  npdid: "NPD ID",
+  ns: "南北",
+  number: "编号",
+  of: "的",
+  oil: "油",
+  operator: "运营方",
+  overview: "概览",
+  owner: "所有者",
+  parent: "父级",
+  phase: "阶段",
+  photo: "照片",
+  pipe: "管道",
+  pipeline: "管道",
+  point: "点",
+  polygon: "多边形",
+  pressure: "压力",
+  production: "生产",
+  progress: "进度",
+  province: "省区",
+  quadrant: "象限",
+  recoverable: "可采",
+  remaining: "剩余",
+  reserve: "储量",
+  reserves: "储量",
+  resource: "资源",
+  resources: "资源",
+  responsible: "负责",
+  sample: "样品",
+  sea: "海域",
+  second: "秒",
+  sensor: "传感器",
+  shallow: "浅层",
+  short: "简称",
+  size: "大小",
+  source: "震源",
+  status: "状态",
+  strat: "地层",
+  stratum: "地层",
+  survey: "测线调查",
+  sync: "同步",
+  task: "任务",
+  test: "测试",
+  to: "目标",
+  top: "顶部",
+  total: "累计",
+  transportation: "输送",
+  transfer: "转让",
+  tuf: "TUF",
+  type: "类型",
+  updated: "更新",
+  utm: "UTM",
+  valid: "有效",
+  wkt: "WKT",
+  well: "井",
+  wellbore: "井筒",
+  wildcat: "预探",
+  yearly: "年度",
+};
+
+const PHRASE_TRANSLATIONS = {
+  "appraisal wellbore": "评价井筒",
+  "belongs to facility": "属于设施",
+  "belongs to well": "属于井",
+  "blowout wellbore": "井喷井筒",
+  "condensate pipeline": "凝析油管道",
+  "date sync npd": "NPD 同步日期",
+  "feeder pipeline": "支线管道",
+  "gas pipeline": "天然气管道",
+  "is former licence operator": "曾为许可证运营方",
+  "oil gas pipeline": "油气管道",
+  "oil pipeline": "石油管道",
+  "short name": "简称",
+  "transportation pipeline": "输送管道",
+  "wildcat wellbore": "预探井筒",
+};
+
+const ACRONYMS = new Set(["BAA", "DST", "EW", "LOT", "NCS", "NPD", "NPDID", "NS", "TUF", "UTM", "WKT"]);
+
+function splitName(value) {
+  return String(value)
+    .replace(/^npdv?:/i, "")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_./-]+/g, " ")
+    .replace(/\bNpdid\b/gi, "NPDID")
+    .replace(/\bNpd\b/gi, "NPD")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function titleWord(word) {
+  const upper = word.toUpperCase();
+  if (ACRONYMS.has(upper)) return upper === "NPDID" ? "NPD ID" : upper;
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+function makeLabel(value) {
+  const words = splitName(value);
+  const en = words.map(titleWord).join(" ") || String(value);
+  const phraseKey = words.map((word) => word.toLowerCase()).join(" ");
+  const zh = PHRASE_TRANSLATIONS[phraseKey] ?? words
+    .map((word) => WORD_TRANSLATIONS[word.toLowerCase()] ?? titleWord(word))
+    .join("");
+  return { en, zh: zh || en };
+}
+
+function normalizeTemplate(term) {
+  return String(term)
+    .trim()
+    .replace(/[.]\s*$/, "")
+    .replace(/\{[^}]+\}/g, "{}")
+    .replace(/\/+/g, "/");
+}
+
+function stableTemplateParts(term) {
+  return normalizeTemplate(term)
+    .replace(/^npd:/, "")
+    .split("/")
+    .filter((part) => part && part !== "{}" && !/^\d+$/.test(part));
+}
+
+function pascalCase(words) {
+  return words.map((word) => titleWord(word).replace(/\s+/g, "")).join("");
+}
+
+function inferObjectName(term) {
+  const parts = stableTemplateParts(term);
+  if (parts.length === 0) return "UnknownObject";
+  const compactParts = parts.slice(0, Math.min(parts.length, 3));
+  return pascalCase(compactParts);
+}
+
+function makeId(prefix, value) {
+  return `${prefix}:${String(value).replace(/[^A-Za-z0-9_:-]+/g, "_")}`;
+}
+
+function uniqueSorted(values) {
+  return [...new Set(values.filter(Boolean))].sort();
+}
+
+function firstColumnsForTable(sourceColumns, table) {
+  const prefix = `${table}.`;
+  return sourceColumns.filter((column) => column.startsWith(prefix)).slice(0, 4);
+}
+
+function buildMappingGraph(entries, sourcePath) {
+  const templateVotes = new Map();
+
+  for (const entry of entries) {
+    if (entry.kind !== "class" && entry.kind !== "subclass") continue;
+    const template = normalizeTemplate(entry.targetSubject);
+    const votes = templateVotes.get(template) ?? new Map();
+    const weight = entry.kind === "class" ? 2 : 1;
+    votes.set(entry.entityName, (votes.get(entry.entityName) ?? 0) + weight);
+    templateVotes.set(template, votes);
+  }
+
+  const templateToObjectName = new Map();
+  for (const [template, votes] of templateVotes) {
+    const [name] = [...votes.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+    templateToObjectName.set(template, name);
+  }
+
+  const objects = new Map();
+  const relations = new Map();
+  const tables = new Map();
+  const edges = new Map();
+
+  function resolveObjectName(term) {
+    const template = normalizeTemplate(term);
+    return templateToObjectName.get(template) ?? inferObjectName(term);
+  }
+
+  function ensureObject(name, term) {
+    const id = makeId("object", name);
+    if (!objects.has(id)) {
+      objects.set(id, {
+        id,
+        kind: "ontologyObject",
+        name,
+        label: makeLabel(name),
+        uriTemplates: [],
+        sourceTables: [],
+        mappingIds: [],
+        classMappings: [],
+        properties: [],
+        relations: [],
+      });
+    }
+    const node = objects.get(id);
+    if (term) node.uriTemplates.push(normalizeTemplate(term));
+    return node;
+  }
+
+  function ensureTable(name) {
+    const id = makeId("table", name);
+    if (!tables.has(id)) {
+      tables.set(id, {
+        id,
+        kind: "sourceTable",
+        name,
+        label: makeLabel(name),
+        sourceTables: [name],
+        sourceColumns: [],
+        mappingIds: [],
+      });
+    }
+    return tables.get(id);
+  }
+
+  function ensureRelation(entry, sourceObject, targetObject) {
+    const id = makeId("relation", `${sourceObject.name}:${entry.entityName}:${targetObject.name}`);
+    if (!relations.has(id)) {
+      relations.set(id, {
+        id,
+        kind: "ontologyRelation",
+        name: entry.entityName,
+        label: makeLabel(entry.entityName),
+        predicate: entry.targetPredicate,
+        sourceObjectId: sourceObject.id,
+        targetObjectId: targetObject.id,
+        sourceObjectName: sourceObject.name,
+        targetObjectName: targetObject.name,
+        sourceTables: [],
+        sourceColumns: [],
+        mappingIds: [],
+        mappings: [],
+      });
+      sourceObject.relations.push(id);
+      targetObject.relations.push(id);
+      upsertEdge({
+        id: `${sourceObject.id}->${id}`,
+        kind: "objectToRelation",
+        source: sourceObject.id,
+        target: id,
+        label: { en: "domain", zh: "定义域" },
+        mappingIds: [],
+        mappings: [],
+      });
+      upsertEdge({
+        id: `${id}->${targetObject.id}`,
+        kind: "relationToObject",
+        source: id,
+        target: targetObject.id,
+        label: { en: "range", zh: "值域" },
+        mappingIds: [],
+        mappings: [],
+      });
+    }
+    return relations.get(id);
+  }
+
+  function upsertEdge(next) {
+    if (!edges.has(next.id)) {
+      edges.set(next.id, {
+        sourceColumns: [],
+        targetProperties: [],
+        ...next,
+      });
+    }
+    return edges.get(next.id);
+  }
+
+  function addMappingToEdge(edge, mapping) {
+    edge.mappingIds.push(mapping.mappingId);
+    edge.mappings.push(mapping);
+    edge.sourceColumns.push(...mapping.sourceColumns);
+    if (mapping.targetProperty) edge.targetProperties.push(mapping.targetProperty);
+  }
+
+  for (const entry of entries) {
+    for (const tableName of entry.sourceTables) {
+      const table = ensureTable(tableName);
+      table.sourceColumns.push(...firstColumnsForTable(entry.sourceColumns, tableName));
+      table.mappingIds.push(entry.id);
+    }
+
+    if (entry.kind === "class" || entry.kind === "subclass") {
+      const object = ensureObject(entry.entityName, entry.targetSubject);
+      object.sourceTables.push(...entry.sourceTables);
+      object.mappingIds.push(entry.id);
+      object.classMappings.push({
+        mappingId: entry.id,
+        sourceTables: entry.sourceTables,
+        sourceColumns: entry.sourceColumns,
+        targetColumns: entry.targetColumns,
+        targetSubject: entry.targetSubject,
+        abstraction: entry.abstraction,
+        condition: entry.condition,
+      });
+
+      for (const tableName of entry.sourceTables) {
+        const table = ensureTable(tableName);
+        const edge = upsertEdge({
+          id: `${table.id}->${object.id}`,
+          kind: "tableToObject",
+          source: table.id,
+          target: object.id,
+          label: { en: "table rows to object", zh: "表记录到对象" },
+          mappingIds: [],
+          mappings: [],
+        });
+        addMappingToEdge(edge, {
+          mappingId: entry.id,
+          sourceColumns: firstColumnsForTable(entry.sourceColumns, tableName),
+          targetProperty: `${entry.entityName}.rdf:type`,
+          targetLabel: makeLabel(`${entry.entityName} type`),
+          abstraction: entry.abstraction,
+        });
+      }
+      continue;
+    }
+
+    const sourceObjectName = resolveObjectName(entry.targetSubject);
+    const sourceObject = ensureObject(sourceObjectName, entry.targetSubject);
+    sourceObject.sourceTables.push(...entry.sourceTables);
+    sourceObject.mappingIds.push(entry.id);
+
+    if (entry.kind === "objectProperty" && /^npd:/.test(entry.targetObject.trim())) {
+      const targetObjectName = resolveObjectName(entry.targetObject);
+      const targetObject = ensureObject(targetObjectName, entry.targetObject);
+      const relation = ensureRelation(entry, sourceObject, targetObject);
+      const mapping = {
+        mappingId: entry.id,
+        sourceTables: entry.sourceTables,
+        sourceColumns: entry.sourceColumns,
+        targetColumns: entry.targetColumns,
+        targetSubject: entry.targetSubject,
+        targetObject: entry.targetObject,
+        targetProperty: `${sourceObject.name}.${entry.entityName}`,
+        targetLabel: makeLabel(`${sourceObject.name} ${entry.entityName}`),
+        abstraction: entry.abstraction,
+        condition: entry.condition,
+      };
+      relation.sourceTables.push(...entry.sourceTables);
+      relation.sourceColumns.push(...entry.sourceColumns);
+      relation.mappingIds.push(entry.id);
+      relation.mappings.push(mapping);
+
+      for (const tableName of entry.sourceTables) {
+        const table = ensureTable(tableName);
+        const edge = upsertEdge({
+          id: `${table.id}->${relation.id}`,
+          kind: "tableToRelation",
+          source: table.id,
+          target: relation.id,
+          label: { en: "columns to relation", zh: "列到关系" },
+          mappingIds: [],
+          mappings: [],
+        });
+        addMappingToEdge(edge, {
+          ...mapping,
+          sourceColumns: firstColumnsForTable(entry.sourceColumns, tableName),
+        });
+      }
+      continue;
+    }
+
+    const property = {
+      mappingId: entry.id,
+      name: entry.entityName,
+      label: makeLabel(entry.entityName),
+      predicate: entry.targetPredicate,
+      sourceTables: entry.sourceTables,
+      sourceColumns: entry.sourceColumns,
+      targetColumns: entry.targetColumns,
+      targetSubject: entry.targetSubject,
+      targetObject: entry.targetObject,
+      abstraction: entry.abstraction,
+      condition: entry.condition,
+    };
+    sourceObject.properties.push(property);
+
+    for (const tableName of entry.sourceTables) {
+      const table = ensureTable(tableName);
+      const edge = upsertEdge({
+        id: `${table.id}->${sourceObject.id}`,
+        kind: "tableToObject",
+        source: table.id,
+        target: sourceObject.id,
+        label: { en: "columns to attributes", zh: "列到属性" },
+        mappingIds: [],
+        mappings: [],
+      });
+      addMappingToEdge(edge, {
+        mappingId: entry.id,
+        sourceColumns: firstColumnsForTable(entry.sourceColumns, tableName),
+        targetProperty: `${sourceObject.name}.${entry.entityName}`,
+        targetLabel: makeLabel(`${sourceObject.name} ${entry.entityName}`),
+        abstraction: entry.abstraction,
+        condition: entry.condition,
+      });
+    }
+  }
+
+  const nodes = [...objects.values(), ...relations.values(), ...tables.values()].map((node) => ({
+    ...node,
+    uriTemplates: node.uriTemplates ? uniqueSorted(node.uriTemplates) : undefined,
+    sourceTables: uniqueSorted(node.sourceTables ?? []),
+    sourceColumns: uniqueSorted(node.sourceColumns ?? []),
+    mappingIds: uniqueSorted(node.mappingIds ?? []),
+    relations: node.relations ? uniqueSorted(node.relations) : undefined,
+  })).sort((a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name));
+
+  const graphEdges = [...edges.values()].map((edge) => {
+    const sourceColumns = uniqueSorted(edge.sourceColumns ?? []);
+    const targetProperties = uniqueSorted(edge.targetProperties ?? []);
+    const firstMapping = edge.mappings[0];
+    const label = firstMapping
+      ? {
+          en: edge.mappings.length > 1
+            ? `${edge.mappings.length} mappings`
+            : `${firstMapping.sourceColumns[0] ?? "source"} -> ${firstMapping.targetProperty ?? "target"}`,
+          zh: edge.mappings.length > 1
+            ? `${edge.mappings.length} 个映射`
+            : `${firstMapping.sourceColumns[0] ?? "来源"} -> ${firstMapping.targetLabel?.zh ?? firstMapping.targetProperty ?? "目标"}`,
+        }
+      : edge.label;
+    return {
+      ...edge,
+      label,
+      sourceColumns,
+      targetProperties,
+      mappingIds: uniqueSorted(edge.mappingIds ?? []),
+      mappings: edge.mappings.slice(0, 80),
+    };
+  }).sort((a, b) => a.kind.localeCompare(b.kind) || a.id.localeCompare(b.id));
+
+  return {
+    schemaVersion: 1,
+    source: sourcePath,
+    generatedFrom: "NPD Benchmark v1.10.1 PostgreSQL OBDA mappings",
+    stats: {
+      mappingCount: entries.length,
+      ontologyObjectCount: objects.size,
+      ontologyRelationCount: relations.size,
+      sourceTableCount: tables.size,
+      dataPropertyMappingCount: entries.filter((entry) => entry.kind === "dataProperty").length,
+      classMappingCount: entries.filter((entry) => entry.kind === "class" || entry.kind === "subclass").length,
+    },
+    nodes,
+    edges: graphEdges,
+  };
+}
+
 const entries = [];
 const regex = /mappingId\s+([^\n]+)\ntarget\s+(.+?)\nsource\s+([\s\S]*?)(?=\n\nmappingId\s+|\s*$)/g;
 let match;
@@ -202,6 +726,7 @@ const payload = {
   totals,
   entries,
 };
+const graphPayload = buildMappingGraph(entries, payload.source);
 
 const header = `// Generated by scripts/generate-npd-mapping-data.mjs from the local NPD benchmark.\n` +
   `// Do not edit this file by hand; regenerate after updating datasets/npd-benchmark.\n\n` +
@@ -212,4 +737,6 @@ const footer = ` satisfies OntologyMappingDataset;\n`;
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, `${header}${body}${footer}`);
+fs.writeFileSync(graphOutputPath, `${JSON.stringify(graphPayload, null, 2)}\n`);
 console.log(`Wrote ${entries.length} mapping entries to ${path.relative(repoRoot, outputPath)}`);
+console.log(`Wrote ${graphPayload.nodes.length} graph nodes and ${graphPayload.edges.length} edges to ${path.relative(repoRoot, graphOutputPath)}`);
