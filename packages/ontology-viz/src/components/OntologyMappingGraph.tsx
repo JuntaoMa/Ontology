@@ -334,8 +334,8 @@ function layoutDagre(nodes: Node<MappingGraphNodeData>[], edges: Edge<MappingGra
     const positioned = graph.node(node.id);
     return {
       ...node,
-      sourcePosition: Position.Right as const,
-      targetPosition: Position.Left as const,
+      sourcePosition: Position.Top as const,
+      targetPosition: Position.Top as const,
       position: {
         x: (positioned?.x ?? NODE_WIDTH / 2) - NODE_WIDTH / 2,
         y: (positioned?.y ?? NODE_HEIGHT / 2) - NODE_HEIGHT / 2,
@@ -384,8 +384,8 @@ function layoutForce(nodes: Node<MappingGraphNodeData>[], edges: Edge<MappingGra
     const simNode = simNodes.find((item) => item.id === node.id);
     return {
       ...node,
-      sourcePosition: Position.Right as const,
-      targetPosition: Position.Left as const,
+      sourcePosition: Position.Top as const,
+      targetPosition: Position.Top as const,
       position: simNode ? { x: simNode.x, y: simNode.y } : node.position,
     };
   });

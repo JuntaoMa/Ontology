@@ -102,10 +102,18 @@ function OntologyNode({ data }: NodeProps<Node<GraphNodeData>>) {
       className={`ontology-node ${isIndividual ? "ontology-node--individual" : ""} ${selected ? "is-selected" : ""}`}
       style={cardStyle}
     >
-      <Handle type="target" position={Position.Left} />
-      <Handle type="source" position={Position.Right} />
-      <Handle type="target" position={Position.Top} />
-      <Handle type="source" position={Position.Bottom} />
+      <Handle
+        id="center-target"
+        className="ontology-node__center-handle"
+        type="target"
+        position={Position.Top}
+      />
+      <Handle
+        id="center-source"
+        className="ontology-node__center-handle"
+        type="source"
+        position={Position.Top}
+      />
 
       <div className="ontology-node__header">
         <span
@@ -237,9 +245,11 @@ function buildEdges(
     edges.push({
       id: `${prop.iri}#${source}->${target}`,
       source,
+      sourceHandle: "center-source",
       target,
+      targetHandle: "center-target",
       label,
-      type: "default",
+      type: "straight",
       markerEnd: {
         type: MarkerType.ArrowClosed,
         width: 16,
@@ -310,8 +320,8 @@ function layoutDagre(
     const positioned = g.node(node.id);
     return {
       ...node,
-      sourcePosition: Position.Right as const,
-      targetPosition: Position.Left as const,
+      sourcePosition: Position.Top as const,
+      targetPosition: Position.Top as const,
       position: {
         x: (positioned?.x ?? NODE_WIDTH / 2) - NODE_WIDTH / 2,
         y: (positioned?.y ?? NODE_HEIGHT / 2) - NODE_HEIGHT / 2,
@@ -359,8 +369,8 @@ function layoutForce(
     const cols = Math.ceil(Math.sqrt(nodes.length));
     return nodes.map((node, i) => ({
       ...node,
-      sourcePosition: Position.Right as const,
-      targetPosition: Position.Left as const,
+      sourcePosition: Position.Top as const,
+      targetPosition: Position.Top as const,
       position: {
         x: (i % cols) * (NODE_WIDTH + 40),
         y: Math.floor(i / cols) * (NODE_HEIGHT + 30),
@@ -390,8 +400,8 @@ function layoutForce(
     const simNode = simNodes.find((sn) => sn.id === node.id);
     return {
       ...node,
-      sourcePosition: Position.Right as const,
-      targetPosition: Position.Left as const,
+      sourcePosition: Position.Top as const,
+      targetPosition: Position.Top as const,
       position: simNode
         ? { x: simNode.x, y: simNode.y }
         : node.position,

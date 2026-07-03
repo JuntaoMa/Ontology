@@ -45,6 +45,17 @@
   border-style: dashed;
 }
 
+.ontology-node .ontology-node__center-handle {
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  border: 0;
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .ontology-node__header {
   display: flex;
   align-items: center;
@@ -472,6 +483,33 @@
   line-height: 1.2;
 }
 
+.explicit-config-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.explicit-config-save {
+  min-height: 28px;
+  border: 1px solid #cbd5df;
+  border-radius: 6px;
+  background: #fff;
+  color: #334155;
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.explicit-config-save:hover,
+.explicit-config-save:focus-visible {
+  border-color: #1e40af;
+  background: #eff6ff;
+  color: #1e40af;
+  outline: none;
+}
+
 .explicit-config-panel__close {
   display: inline-flex;
   align-items: center;
@@ -671,6 +709,41 @@
   flex-shrink: 0;
 }
 
+.explicit-layout-toggle {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid #d6dde8;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 3px;
+}
+
+.explicit-layout-toggle button {
+  min-height: 28px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #475569;
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.explicit-layout-toggle button:hover {
+  background: #fff;
+  color: #0f172a;
+}
+
+.explicit-layout-toggle button.is-active {
+  border-color: #1e40af;
+  background: #1e40af;
+  color: #fff;
+}
+
 .explicit-stage-bar__metrics {
   display: flex;
   align-items: center;
@@ -797,6 +870,17 @@
   color: #172033;
   font-size: 12px;
   transition: box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+}
+
+.explicit-ontology-node .explicit-ontology-node__center-handle {
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  border: 0;
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .explicit-ontology-node:hover {
@@ -997,6 +1081,7 @@
   .explicit-stage-bar__tools {
     align-items: flex-start;
     justify-content: space-between;
+    flex-wrap: wrap;
   }
 
   .explicit-detail-panel {
@@ -1021,15 +1106,22 @@
   .explicit-stage-bar__tools {
     gap: 6px;
   }
+
+  .explicit-layout-toggle,
+  .explicit-stage-bar__metrics {
+    flex-wrap: wrap;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .explicit-config-field input,
   .explicit-config-field select,
+  .explicit-config-save,
   .explicit-config-panel__close,
   .explicit-config-checks label,
   .explicit-config-switch,
   .explicit-config-badges button,
+  .explicit-layout-toggle button,
   .explicit-settings-button,
   .explicit-ontology-node,
   .explicit-detail-panel__close {

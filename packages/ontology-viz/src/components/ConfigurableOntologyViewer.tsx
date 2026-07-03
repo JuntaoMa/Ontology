@@ -46,6 +46,7 @@ import type {
 
 const NODE_WIDTH = 280;
 const NODE_HEIGHT = 116;
+const CONFIG_STORAGE_PREFIX = "ontology-viz:explicit-config:";
 
 const ENTITY_KIND_LABELS: Record<ExplicitOntologyEntityKind, string> = {
   Class: "Class",
@@ -60,6 +61,12 @@ const EDGE_KIND_LABELS: Record<ExplicitOntologyEdgeKind, string> = {
   domain: "domain",
   range: "range",
   subPropertyOf: "subPropertyOf",
+};
+
+const LAYOUT_LABELS: Record<ExplicitOntologyLayoutMode, string> = {
+  layered: "层次",
+  force: "力导向",
+  typeGroups: "分组",
 };
 
 const FIELD_PALETTE = [
@@ -104,31 +111,79 @@ export const DEFAULT_EXPLICIT_ONTOLOGY_CONFIG: ExplicitOntologyVisualConfig = {
   },
 };
 
-function createExplicitOntologyConfig(initialConfig?: Partial<ExplicitOntologyVisualConfig>) {
-  return {
+function createExplicitOntologyConfig(...configs: Array<Partial<ExplicitOntologyVisualConfig> | undefined>) {
+  return configs.reduce<ExplicitOntologyVisualConfig>((merged, config) => ({
+    ...merged,
+    ...config,
+    card: {
+      ...merged.card,
+      ...config?.card,
+    },
+    color: {
+      ...merged.color,
+      ...config?.color,
+      typeColors: {
+        ...merged.color.typeColors,
+        ...config?.color?.typeColors,
+      },
+    },
+    edges: {
+      ...merged.edges,
+      ...config?.edges,
+      colorByKind: {
+        ...merged.edges.colorByKind,
+        ...config?.edges?.colorByKind,
+      },
+    },
+  }), {
     ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG,
-    ...initialConfig,
     card: {
       ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG.card,
-      ...initialConfig?.card,
     },
     color: {
       ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG.color,
-      ...initialConfig?.color,
       typeColors: {
         ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG.color.typeColors,
-        ...initialConfig?.color?.typeColors,
       },
     },
     edges: {
       ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG.edges,
-      ...initialConfig?.edges,
       colorByKind: {
         ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG.edges.colorByKind,
-        ...initialConfig?.edges?.colorByKind,
       },
     },
-  };
+  });
+}
+
+function configStorageKey(data: ExplicitOntologyGraphData, storageKey?: string) {
+  const identity = storageKey || data.ontologyIRI || data.ontologyTitle || "anonymous";
+  return `${CONFIG_STORAGE_PREFIX}${identity}`;
+}
+
+function readSavedConfig(storageKey: string) {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw) as { config?: Partial<ExplicitOntologyVisualConfig> };
+    return parsed.config;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeSavedConfig(storageKey: string, config: ExplicitOntologyVisualConfig) {
+  if (typeof window === "undefined") return false;
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify({
+      version: 1,
+      savedAt: new Date().toISOString(),
+      config,
+    }));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 interface ExplicitNodeData extends Record<string, unknown> {
@@ -207,8 +262,18 @@ const ExplicitOntologyNode = memo(function ExplicitOntologyNode({
       ].filter(Boolean).join(" ")}
       style={style}
     >
-      <Handle type="target" position={Position.Left} />
-      <Handle type="source" position={Position.Right} />
+      <Handle
+        id="center-target"
+        className="explicit-ontology-node__center-handle"
+        type="target"
+        position={Position.Top}
+      />
+      <Handle
+        id="center-source"
+        className="explicit-ontology-node__center-handle"
+        type="source"
+        position={Position.Top}
+      />
       <div className="explicit-ontology-node__header">
         <span className="explicit-ontology-node__type" style={{ background: color }}>
           {ENTITY_KIND_LABELS[entity.kind]}
@@ -299,8 +364,11 @@ function buildEdges(
       const color = config.edges.colorByKind[edge.kind];
       return {
         id: edge.id,
+        type: "straight",
         source: edge.source,
+        sourceHandle: "center-source",
         target: edge.target,
+        targetHandle: "center-target",
         label: config.edges.showLabels ? edge.label : undefined,
         markerEnd: config.edges.showArrows
           ? {
@@ -336,8 +404,8 @@ function layoutLayered(nodes: Node<ExplicitNodeData>[], edges: Edge<ExplicitEdge
     const positioned = graph.node(node.id);
     return {
       ...node,
-      sourcePosition: Position.Right as const,
-      targetPosition: Position.Left as const,
+      sourcePosition: Position.Top as const,
+      targetPosition: Position.Top as const,
       position: {
         x: (positioned?.x ?? NODE_WIDTH / 2) - NODE_WIDTH / 2,
         y: (positioned?.y ?? NODE_HEIGHT / 2) - NODE_HEIGHT / 2,
@@ -567,6 +635,8 @@ function ConfigPanel({
   search,
   onSearchChange,
   onConfigChange,
+  onSave,
+  saveLabel,
   onClose,
 }: {
   data: ExplicitOntologyGraphData;
@@ -574,6 +644,8 @@ function ConfigPanel({
   search: string;
   onSearchChange: (value: string) => void;
   onConfigChange: (config: ExplicitOntologyVisualConfig) => void;
+  onSave: () => void;
+  saveLabel: string;
   onClose: () => void;
 }) {
   const update = (patch: Partial<ExplicitOntologyVisualConfig>) => onConfigChange({ ...config, ...patch });
@@ -602,9 +674,14 @@ function ConfigPanel({
     <aside className="explicit-config-panel" role="dialog" aria-modal="false" aria-label="设置">
       <div className="explicit-config-panel__header">
         <h2>设置</h2>
-        <button className="explicit-config-panel__close" type="button" onClick={onClose} aria-label="关闭设置">
-          ×
-        </button>
+        <div className="explicit-config-panel__actions">
+          <button className="explicit-config-save" type="button" onClick={onSave}>
+            {saveLabel}
+          </button>
+          <button className="explicit-config-panel__close" type="button" onClick={onClose} aria-label="关闭设置">
+            ×
+          </button>
+        </div>
       </div>
 
       <section className="explicit-config-section explicit-config-section--first">
@@ -675,18 +752,6 @@ function ConfigPanel({
             onChange={(value) => updateColor({ field: value })}
           />
         )}
-      </section>
-
-      <section className="explicit-config-section">
-        <h3>布局</h3>
-        <label className="explicit-config-field">
-          <span>布局</span>
-          <select value={config.layoutMode} onChange={(event) => update({ layoutMode: event.target.value as any })}>
-            <option value="layered">层次布局</option>
-            <option value="force">力导向</option>
-            <option value="typeGroups">按类型分组</option>
-          </select>
-        </label>
       </section>
 
       <section className="explicit-config-section">
@@ -780,23 +845,30 @@ function compactNumber(value: number) {
 export interface ConfigurableOntologyViewerProps {
   data: ExplicitOntologyGraphData;
   initialConfig?: Partial<ExplicitOntologyVisualConfig>;
+  storageKey?: string;
 }
 
 export function ConfigurableOntologyViewer({
   data,
   initialConfig,
+  storageKey,
 }: ConfigurableOntologyViewerProps) {
+  const resolvedStorageKey = useMemo(() => configStorageKey(data, storageKey), [data, storageKey]);
   const [selectedId, setSelectedId] = useState("");
   const [search, setSearch] = useState("");
-  const [config, setConfig] = useState<ExplicitOntologyVisualConfig>(() => createExplicitOntologyConfig(initialConfig));
+  const [config, setConfig] = useState<ExplicitOntologyVisualConfig>(() =>
+    createExplicitOntologyConfig(initialConfig, readSavedConfig(resolvedStorageKey)),
+  );
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [saveLabel, setSaveLabel] = useState("保存");
 
   useEffect(() => {
     setSelectedId("");
     setSearch("");
-    setConfig(createExplicitOntologyConfig(initialConfig));
+    setConfig(createExplicitOntologyConfig(initialConfig, readSavedConfig(resolvedStorageKey)));
     setIsConfigOpen(false);
-  }, [data, initialConfig]);
+    setSaveLabel("保存");
+  }, [data, initialConfig, resolvedStorageKey]);
 
   useEffect(() => {
     if (!isConfigOpen) return undefined;
@@ -810,6 +882,29 @@ export function ConfigurableOntologyViewer({
   const handleSelect = useCallback((id: string) => {
     setSelectedId((previous) => previous === id ? "" : id);
   }, []);
+
+  const persistConfig = useCallback((nextConfig: ExplicitOntologyVisualConfig) => {
+    const saved = writeSavedConfig(resolvedStorageKey, nextConfig);
+    setSaveLabel(saved ? "已保存" : "保存失败");
+    window.setTimeout(() => setSaveLabel("保存"), 1400);
+  }, [resolvedStorageKey]);
+
+  const handleConfigChange = useCallback((nextConfig: ExplicitOntologyVisualConfig) => {
+    setConfig(nextConfig);
+    setSaveLabel("保存");
+  }, []);
+
+  const handleLayoutChange = useCallback((layoutMode: ExplicitOntologyLayoutMode) => {
+    setConfig((current) => {
+      const next = { ...current, layoutMode };
+      writeSavedConfig(resolvedStorageKey, next);
+      return next;
+    });
+    setSaveLabel("已保存");
+    window.setTimeout(() => setSaveLabel("保存"), 1400);
+  }, [resolvedStorageKey]);
+
+  const handleSave = useCallback(() => persistConfig(config), [config, persistConfig]);
 
   const visibleSummary = useMemo(() => {
     const ids = visibleEntityIds(data, config, search.trim());
@@ -827,6 +922,18 @@ export function ConfigurableOntologyViewer({
             <strong>{data.ontologyTitle ?? "Ontology"}</strong>
           </div>
           <div className="explicit-stage-bar__tools">
+            <div className="explicit-layout-toggle" aria-label="布局">
+              {(Object.keys(LAYOUT_LABELS) as ExplicitOntologyLayoutMode[]).map((layoutMode) => (
+                <button
+                  type="button"
+                  className={config.layoutMode === layoutMode ? "is-active" : ""}
+                  onClick={() => handleLayoutChange(layoutMode)}
+                  key={layoutMode}
+                >
+                  {LAYOUT_LABELS[layoutMode]}
+                </button>
+              ))}
+            </div>
             <div className="explicit-stage-bar__metrics" aria-label="当前图谱规模">
               <span><strong>{compactNumber(visibleSummary.nodes)}</strong> 节点</span>
               <span><strong>{compactNumber(visibleSummary.edges)}</strong> 边</span>
@@ -866,7 +973,9 @@ export function ConfigurableOntologyViewer({
             config={config}
             search={search}
             onSearchChange={setSearch}
-            onConfigChange={setConfig}
+            onConfigChange={handleConfigChange}
+            onSave={handleSave}
+            saveLabel={saveLabel}
             onClose={() => setIsConfigOpen(false)}
           />
         </div>

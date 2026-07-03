@@ -11,7 +11,7 @@ const NPD_ONTOLOGY_PATH = "/npd-ontology/npd-v2-ql.owl";
 type LoadState =
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "ready"; data: ExplicitOntologyGraphData };
+  | { status: "ready"; data: ExplicitOntologyGraphData; storageKey: string };
 
 function ontologyContentType(fileName: string): ExplicitOntologyParseOptions["contentType"] {
   const lowerName = fileName.toLowerCase();
@@ -20,6 +20,10 @@ function ontologyContentType(fileName: string): ExplicitOntologyParseOptions["co
 
 function ontologyTitle(fileName: string) {
   return fileName.replace(/\.[^.]+$/, "") || fileName;
+}
+
+function importedOntologyStorageKey(file: File) {
+  return `file:${file.name}:${file.size}:${file.lastModified}`;
 }
 
 export function NpdOwlExplorer() {
@@ -39,7 +43,7 @@ export function NpdOwlExplorer() {
           contentType: "application/rdf+xml",
           ontologyTitleFallback: "NPD ontology",
         });
-        if (!cancelled) setLoadState({ status: "ready", data });
+        if (!cancelled) setLoadState({ status: "ready", data, storageKey: `path:${NPD_ONTOLOGY_PATH}` });
       } catch (error) {
         if (!cancelled) {
           setLoadState({
@@ -65,7 +69,7 @@ export function NpdOwlExplorer() {
         contentType: ontologyContentType(file.name),
         ontologyTitleFallback: ontologyTitle(file.name),
       });
-      setLoadState({ status: "ready", data });
+      setLoadState({ status: "ready", data, storageKey: importedOntologyStorageKey(file) });
     } catch (error) {
       setLoadState({
         status: "error",
@@ -108,7 +112,9 @@ export function NpdOwlExplorer() {
           <p>{loadState.message}</p>
         </div>
       )}
-      {loadState.status === "ready" && <ConfigurableOntologyViewer data={loadState.data} />}
+      {loadState.status === "ready" && (
+        <ConfigurableOntologyViewer data={loadState.data} storageKey={loadState.storageKey} />
+      )}
     </div>
   );
 }
