@@ -11,7 +11,7 @@ export type ExplicitOntologyEdgeKind =
   | "range"
   | "subPropertyOf";
 
-export type ExplicitOntologyLayoutMode = "layered" | "force" | "typeGroups";
+export type ExplicitOntologyLayoutMode = "layered" | "force";
 
 export type ExplicitOntologyColorMode = "type" | "field";
 

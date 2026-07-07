@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OntologyViz — Design Mock</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f1f5f9;
+  --canvas-bg: #f8fafc;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  --primary: #2563eb;
+  --primary-bg: #eff6ff;
+  --shadow-sm: 0 1px 2px rgba(15,23,42,0.06);
+  --shadow-md: 0 4px 16px rgba(15,23,42,0.08);
+  --shadow-lg: 0 12px 40px rgba(15,23,42,0.12);
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: "SF Mono", "Fira Code", monospace;
+
+  /* entity type colors */
+  --c-class: #3b82f6;
+  --c-objprop: #8b5cf6;
+  --c-dataprop: #22c55e;
+  --c-annot: #f59e0b;
+}
+
+body {
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--bg);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ═══ Top Bar ═══ */
+.topbar {
+  height: 48px;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  z-index: 100;
+  flex-shrink: 0;
+}
+.topbar-logo {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.topbar-logo svg { width: 22px; height: 22px; }
+.topbar-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+  margin: 0 4px;
+}
+.topbar-ontology {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.topbar-ontology .dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
+.topbar-spacer { flex: 1; }
+.topbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.topbar-btn:hover { background: var(--bg); }
+.topbar-btn.primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.topbar-btn.primary:hover { opacity: 0.9; }
+
+/* ═══ Main layout ═══ */
+.main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ═══ Canvas ═══ */
+.canvas {
+  flex: 1;
+  position: relative;
+  background: var(--canvas-bg);
+  overflow: hidden;
+}
+.canvas-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, #e2e8f0 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.6;
+}
+
+/* ═══ Floating Toolbar (top-center horizontal) ═══ */
+.float-toolbar {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  transform: translateX(-50%);
+  z-index: 10;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+}
+.float-toolbar .search-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 12px;
+  width: 160px;
+}
+.float-toolbar .search-box input {
+  border: 0; outline: 0; font-size: 12px; flex: 1;
+  font-family: inherit; color: var(--text);
+  background: transparent;
+}
+.float-toolbar .search-box svg { flex-shrink: 0; }
+.float-toolbar .search-box input::placeholder { color: var(--text-dim); }
+.float-toolbar .sep {
+  width: 1px; height: 22px; background: var(--border);
+  margin: 0 2px;
+}
+.float-toolbar .layout-dropdown select {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+  cursor: pointer;
+}
+.float-toolbar .zoom-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.float-toolbar .zoom-group button {
+  width: 28px; height: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  padding: 0;
+}
+.float-toolbar .zoom-group button:hover { background: var(--bg); color: var(--text); }
+.float-toolbar .zoom-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0 4px;
+  min-width: 36px;
+  text-align: center;
+}
+.float-toolbar .settings-btn {
+  width: 28px; height: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: background 0.15s, color 0.15s;
+  padding: 0;
+}
+.float-toolbar .settings-btn:hover { background: var(--bg); color: var(--text); }
+
+/* ═══ Settings Modal ═══ */
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15,23,42,0.3);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 440px;
+  max-height: 80%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-header h2 { font-size: 15px; font-weight: 700; }
+.modal-close {
+  width: 28px; height: 28px;
+  border: 0; background: transparent;
+  cursor: pointer; border-radius: var(--radius-sm);
+  font-size: 16px; color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-close:hover { background: var(--bg); }
+.modal-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 16px; }
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px 16px;
+}
+.modal-section h3 {
+  font-size: 12px; font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+.modal-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.modal-row label { color: var(--text); min-width: 56px; }
+.modal-row select {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text);
+}
+.modal-row input[type="checkbox"] { margin-right: 4px; }
+
+/* ═══ Entity type color legend ═══ */
+.color-dot {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+/* ═══ Bottom Status Bar ═══ */
+.statusbar {
+  height: 28px;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 20px;
+  font-size: 11px;
+  color: var(--text-muted);
+  z-index: 100;
+  flex-shrink: 0;
+}
+.statusbar-item b { color: var(--text); font-weight: 600; }
+.statusbar-spacer { flex: 1; }
+
+/* ═══ Recent Files Dropdown ═══ */
+.dropdown-wrap { position: relative; }
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  min-width: 280px;
+  z-index: 200;
+  overflow: hidden;
+}
+.dropdown-menu .item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.dropdown-menu .item:hover { background: var(--bg); }
+.dropdown-menu .item .name { font-weight: 500; }
+.dropdown-menu .item .time { font-size: 11px; color: var(--text-dim); }
+
+
+/* ═══ Mock Nodes ═══ */
+.mock-node {
+  position: absolute;
+  z-index: 5;
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.mock-node:hover {
+  transform: translate(-50%,-50%) scale(1.05);
+  box-shadow: 0 4px 20px rgba(15,23,42,0.14);
+}
+/* ── Compact (small dot) ── */
+.mock-node.compact {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(15,23,42,0.12);
+  letter-spacing: -0.2px;
+}
+/* ── Intermediate (pill card) ── */
+.mock-node.intermediate {
+  width: 170px;
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  font-size: 11px;
+}
+.mock-node.intermediate .node-inter-bar {
+  height: 4px;
+}
+.mock-node.intermediate .node-inter-body {
+  padding: 6px 10px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.mock-node.intermediate .node-inter-row1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mock-node.intermediate .node-inter-row1 .kind-tag {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: #fff;
+  font-weight: 600;
+}
+.mock-node.intermediate .node-inter-row1 .acronym {
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text);
+}
+.mock-node.intermediate .node-inter-row2 {
+  display: flex;
+  gap: 4px;
+}
+.mock-node.intermediate .node-badge {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--border-light);
+  color: var(--text-muted);
+  max-width: 78px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* ── Expanded (full card) ── */
+.mock-node.expanded {
+  width: 210px;
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.mock-node .node-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+}
+.mock-node .node-header .kind-tag {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.25);
+}
+.mock-node .node-body { padding: 8px 12px 10px; }
+.mock-node .node-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 6px;
+}
+.mock-node .node-badges { display: flex; gap: 4px; margin-bottom: 6px; }
+.mock-node .node-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--border-light);
+  color: var(--text-muted);
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mock-node .node-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.4;
+  max-height: 40px;
+  overflow: hidden;
+}
+
+/* ═══ Mock Edges (SVG) ═══ */
+.mock-edges {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ═══ MiniMap ═══ */
+.minimap {
+  position: absolute;
+  right: 12px;
+  bottom: 32px;
+  width: 140px;
+  height: 100px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ Top Bar ═══ -->
+<header class="topbar">
+  <div class="topbar-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <circle cx="12" cy="12" r="3"/>
+      <circle cx="12" cy="5" r="2"/>
+      <circle cx="12" cy="19" r="2"/>
+      <circle cx="5" cy="12" r="2"/>
+      <circle cx="19" cy="12" r="2"/>
+      <line x1="5" y1="12" x2="9" y2="12"/>
+      <line x1="15" y1="12" x2="19" y2="12"/>
+      <line x1="9.5" y1="8.5" x2="10.5" y2="10.5"/>
+      <line x1="13.5" y1="13.5" x2="14.5" y2="15.5"/>
+    </svg>
+    OntologyViz
+  </div>
+  <div class="topbar-divider"></div>
+  <div class="topbar-ontology">
+    <span class="dot"></span>
+    NPD v2-quick-license.owl
+  </div>
+  <div class="topbar-spacer"></div>
+  <div class="dropdown-wrap">
+    <button class="topbar-btn" onclick="toggleDropdown()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      最近打开
+    </button>
+    <div class="dropdown-menu" id="recentDropdown" style="display:none">
+      <div class="item"><span class="name">⬡ npd-v2-quick-license.owl</span><span class="time">刚刚</span></div>
+      <div class="item"><span class="name">⬡ 5g-core-ontology.ttl</span><span class="time">2h 前</span></div>
+      <div class="item"><span class="name">⬡ manufacturing-v2.rdf</span><span class="time">昨天</span></div>
+      <div class="item"><span class="name">⬡ ~/Documents/epc-ontology.owl</span><span class="time">3 天前</span></div>
+    </div>
+  </div>
+  <button class="topbar-btn primary">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 15v4h14v-4"/></svg>
+    导入本体
+  </button>
+</header>
+
+<!-- ═══ Main ═══ -->
+<div class="main">
+  <div class="canvas" id="canvas">
+    <div class="canvas-grid"></div>
+
+    <!-- SVG edges -->
+    <svg class="mock-edges" id="edgesSvg">
+      <line x1="420" y1="286" x2="585" y2="192" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <line x1="420" y1="320" x2="580" y2="366" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <line x1="346" y1="276" x2="392" y2="288" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5 4"/>
+      <line x1="585" y1="190" x2="720" y2="246" stroke="#e2e8f0" stroke-width="1"/>
+      <line x1="140" y1="416" x2="180" y2="416" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3"/>
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 Z" fill="#94a3b8"/>
+        </marker>
+      </defs>
+    </svg>
+
+    <!-- Node 1: UPF (compact) -->
+    <div class="mock-node compact" style="left:420px; top:300px; background:var(--c-class)" title="UPF — User Plane Function">
+      UPF
+    </div>
+
+    <!-- Node 2: SMF (intermediate) -->
+    <div class="mock-node intermediate" style="left:590px; top:190px;" title="SMF — Session Management Function">
+      <div class="node-inter-bar" style="background:var(--c-class)"></div>
+      <div class="node-inter-body">
+        <div class="node-inter-row1">
+          <span class="kind-tag" style="background:var(--c-class)">Class</span>
+          <span class="acronym">SMF</span>
+        </div>
+        <div class="node-inter-row2">
+          <span class="node-badge">Domain: 5G Core</span>
+          <span class="node-badge">L1 · TS 23.501</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Node 3: AMF (compact) -->
+    <div class="mock-node compact" style="left:580px; top:380px; background:var(--c-class)" title="AMF — Access & Mobility Function">
+      AMF
+    </div>
+
+    <!-- Node 4: gNB (intermediate) -->
+    <div class="mock-node intermediate" style="left:320px; top:270px;" title="gNB — Next Generation Node B">
+      <div class="node-inter-bar" style="background:var(--c-class)"></div>
+      <div class="node-inter-body">
+        <div class="node-inter-row1">
+          <span class="kind-tag" style="background:var(--c-class)">Class</span>
+          <span class="acronym">gNB</span>
+        </div>
+        <div class="node-inter-row2">
+          <span class="node-badge">Domain: RAN</span>
+          <span class="node-badge">L2 · TS 38.300</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Node 5: hasUPF (compact, objProp) -->
+    <div class="mock-node compact" style="left:720px; top:250px; background:var(--c-objprop); width:28px; height:28px; font-size:8px" title="hasUPF">
+      hUPF
+    </div>
+
+    <!-- Node 6: NRF (expanded) -->
+    <div class="mock-node expanded" style="left:140px; top:400px;">
+      <div class="node-header" style="background:var(--c-class)">
+        <span class="kind-tag">Class</span> NRF
+      </div>
+      <div class="node-body">
+        <div class="node-title">Network Repository Function</div>
+        <div class="node-badges">
+          <span class="node-badge">Domain: 5G Core</span>
+          <span class="node-badge">L1 · TS 23.501</span>
+        </div>
+        <div class="node-desc">NF service registration, discovery, and authorization via SBI. Maintains NF profile of available instances.</div>
+      </div>
+    </div>
+
+    <!-- Floating Toolbar (top-center) -->
+    <div class="float-toolbar">
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="搜索实体...">
+      </div>
+      <div class="sep"></div>
+      <div class="layout-dropdown">
+        <select>
+          <option>Dagre</option>
+          <option selected>D3 Force</option>
+          <option>Type Groups</option>
+        </select>
+      </div>
+      <div class="sep"></div>
+      <div class="zoom-group">
+        <button title="适应画布">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        </button>
+        <button title="缩小">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </button>
+        <span class="zoom-label">100%</span>
+        <button title="放大">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </button>
+        <button title="1:1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8v8M12 8v8M17 8v8"/></svg>
+        </button>
+      </div>
+      <div class="sep"></div>
+      <button class="settings-btn" title="设置" onclick="document.getElementById('settingsModal').style.display='flex'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+
+    <!-- MiniMap -->
+    <div class="minimap"></div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>可视化设置</h2>
+          <button class="modal-close" onclick="document.getElementById('settingsModal').style.display='none'">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-section">
+            <h3>卡片字段</h3>
+            <div class="modal-row">
+              <label>标题</label>
+              <select><option>rdfs:label</option><option>localName</option></select>
+            </div>
+            <div class="modal-row">
+              <label>副标题</label>
+              <select><option>dcterms:created</option><option>不显示</option></select>
+            </div>
+            <div class="modal-row">
+              <label>徽章</label>
+              <select><option>ns:domain</option><option>+ 添加字段</option></select>
+            </div>
+          </div>
+          <div class="modal-section">
+            <h3>颜色方案</h3>
+            <div class="modal-row">
+              <label><input type="radio" name="colorMode" checked> 按类型</label>
+            </div>
+            <div class="modal-row" style="margin-left:20px">
+              <span class="color-dot" style="background:var(--c-class)"></span> Class
+              <span class="color-dot" style="background:var(--c-objprop); margin-left:12px"></span> ObjectProperty
+            </div>
+            <div class="modal-row" style="margin-left:20px">
+              <span class="color-dot" style="background:var(--c-dataprop)"></span> DatatypeProperty
+              <span class="color-dot" style="background:var(--c-annot); margin-left:12px"></span> AnnotationProperty
+            </div>
+            <div class="modal-row">
+              <label><input type="radio" name="colorMode"> 按字段</label>
+              <select style="flex:1"><option>ns:domain</option></select>
+            </div>
+          </div>
+          <div class="modal-section">
+            <h3>边显示</h3>
+            <div class="modal-row">
+              <label><input type="checkbox" checked> 显示标签</label>
+              <label style="margin-left:16px"><input type="checkbox" checked> 显示箭头</label>
+            </div>
+          </div>
+          <div class="modal-section">
+            <h3>可见类型</h3>
+            <div class="modal-row"><label><input type="checkbox" checked> Class (104)</label></div>
+            <div class="modal-row"><label><input type="checkbox" checked> ObjectProperty (18)</label></div>
+            <div class="modal-row"><label><input type="checkbox" checked> DatatypeProperty (2)</label></div>
+            <div class="modal-row"><label><input type="checkbox" checked> AnnotationProperty (0)</label></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="topbar-btn" onclick="document.getElementById('settingsModal').style.display='none'">重置默认</button>
+          <button class="topbar-btn primary" onclick="document.getElementById('settingsModal').style.display='none'">应用</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Bottom Status Bar ═══ -->
+<div class="statusbar">
+  <div class="statusbar-item">节点 <b>124</b></div>
+  <div class="statusbar-item">边 <b>386</b></div>
+</div>
+
+<script>
+function toggleDropdown() {
+  const el = document.getElementById('recentDropdown');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.dropdown-wrap')) {
+    document.getElementById('recentDropdown').style.display = 'none';
+  }
+});
+</script>
+
+</body>
+</html>

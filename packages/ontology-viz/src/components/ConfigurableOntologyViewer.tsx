@@ -8,10 +8,9 @@ import {
   forceX,
   forceY,
 } from "d3-force";
-import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Background,
-  Controls,
   Handle,
   MarkerType,
   MiniMap,
@@ -21,6 +20,7 @@ import {
   useEdgesState,
   useNodesState,
   useReactFlow,
+  useStore,
   type Edge,
   type Node,
   type NodeProps,
@@ -64,9 +64,8 @@ const EDGE_KIND_LABELS: Record<ExplicitOntologyEdgeKind, string> = {
 };
 
 const LAYOUT_LABELS: Record<ExplicitOntologyLayoutMode, string> = {
-  layered: "层次",
-  force: "力导向",
-  typeGroups: "分组",
+  layered: "Dagre",
+  force: "D3 Force",
 };
 
 const FIELD_PALETTE = [
@@ -82,7 +81,7 @@ const FIELD_PALETTE = [
 
 export const DEFAULT_EXPLICIT_ONTOLOGY_CONFIG: ExplicitOntologyVisualConfig = {
   visibleEntityKinds: ["Class"],
-  layoutMode: "layered",
+  layoutMode: "force",
   card: {
     titleField: "localName",
     subtitleField: "rdf:type",
@@ -229,29 +228,18 @@ function colorForEntity(entity: ExplicitOntologyEntity, config: ExplicitOntology
   return config.color.typeColors[entity.kind];
 }
 
+function compactLabel(entity: ExplicitOntologyEntity): string {
+  const acronym = entity.localName.replace(/[^A-Z0-9]/g, "");
+  if (acronym.length >= 2) return acronym.slice(0, 5);
+  return entity.localName.slice(0, 4);
+}
+
 const ExplicitOntologyNode = memo(function ExplicitOntologyNode({
   data,
 }: NodeProps<Node<ExplicitNodeData>>) {
-  const { entity, config, fields, color } = data;
-  const title = getExplicitOntologyDisplayValue(entity, config.card.titleField) || getExplicitOntologyDefaultLabel(entity);
-  const subtitle = getExplicitOntologyDisplayValue(entity, config.card.subtitleField);
-  const description = config.card.descriptionField
-    ? getExplicitOntologyDisplayValue(entity, config.card.descriptionField) || getExplicitOntologyDefaultDescription(entity)
-    : "";
-  const badges = config.card.badgeFields.flatMap((fieldId) => {
-    const value = getExplicitOntologyDisplayValue(entity, fieldId);
-    return value ? [{ fieldId, value }] : [];
-  });
-
-  const style: CSSProperties = {
-    borderLeft: `4px solid ${color}`,
-    background: "#fff",
-    boxShadow: data.selected
-      ? `0 0 0 2px ${tint(color, 0.42)}, 0 8px 20px rgba(15,23,42,0.16)`
-      : data.highlighted
-        ? `0 0 0 2px ${tint(color, 0.32)}, 0 5px 14px rgba(15,23,42,0.12)`
-        : "0 1px 3px rgba(15,23,42,0.08)",
-  };
+  const { entity, color } = data;
+  const isSelected = data.selected;
+  const label = compactLabel(entity);
 
   return (
     <div
@@ -260,33 +248,39 @@ const ExplicitOntologyNode = memo(function ExplicitOntologyNode({
         data.selected ? "is-selected" : "",
         data.highlighted ? "is-highlighted" : "",
       ].filter(Boolean).join(" ")}
-      style={style}
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: "50%",
+        background: color,
+        boxShadow: isSelected
+          ? `0 0 0 3px ${tint(color, 0.42)}, 0 0 0 5px ${tint(color, 0.22)}`
+          : "0 1px 4px rgba(15,23,42,0.15)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 10,
+        fontWeight: 700,
+        color: "#fff",
+        cursor: "pointer",
+        letterSpacing: "-0.2px",
+      }}
     >
+      {label}
       <Handle
         id="center-target"
         className="explicit-ontology-node__center-handle"
         type="target"
         position={Position.Top}
+        style={{ background: "transparent", border: "none", width: 0, height: 0 }}
       />
       <Handle
         id="center-source"
         className="explicit-ontology-node__center-handle"
         type="source"
         position={Position.Top}
+        style={{ background: "transparent", border: "none", width: 0, height: 0 }}
       />
-      <div className="explicit-ontology-node__header">
-        <span className="explicit-ontology-node__type" style={{ background: color }}>
-          {ENTITY_KIND_LABELS[entity.kind]}
-        </span>
-        {badges.slice(0, 2).map((badge) => (
-          <span className="explicit-ontology-node__badge" title={badge.value} key={badge.fieldId}>
-            {fieldLabel(fields, badge.fieldId)}: {badge.value}
-          </span>
-        ))}
-      </div>
-      <div className="explicit-ontology-node__title">{title}</div>
-      {subtitle && <div className="explicit-ontology-node__subtitle">{subtitle}</div>}
-      {description && <div className="explicit-ontology-node__description">{description}</div>}
     </div>
   );
 });
@@ -416,11 +410,11 @@ function layoutLayered(nodes: Node<ExplicitNodeData>[], edges: Edge<ExplicitEdge
 
 function layoutForce(nodes: Node<ExplicitNodeData>[], edges: Edge<ExplicitEdgeData>[]) {
   if (nodes.length === 0) return nodes;
-  const seeded = layoutLayered(nodes, edges);
-  const simNodes = seeded.map((node) => ({
+  const spread = Math.sqrt(nodes.length) * 80;
+  const simNodes = nodes.map((node) => ({
     id: node.id,
-    x: node.position.x,
-    y: node.position.y,
+    x: (Math.random() - 0.5) * spread * 2,
+    y: (Math.random() - 0.5) * spread * 2,
   }));
   const ids = new Set(nodes.map((node) => node.id));
   const links = edges
@@ -428,14 +422,14 @@ function layoutForce(nodes: Node<ExplicitNodeData>[], edges: Edge<ExplicitEdgeDa
     .map((edge) => ({ source: edge.source, target: edge.target }));
 
   const sim = forceSimulation(simNodes)
-    .force("link", forceLink(links).id((item: any) => item.id).distance(260).strength(0.34))
-    .force("charge", forceManyBody().strength(-420).distanceMax(1500))
+    .force("link", forceLink(links).id((item: any) => item.id).distance(80).strength(0.6))
+    .force("charge", forceManyBody().strength(-200).distanceMax(800))
     .force("center", forceCenter(0, 0))
-    .force("x", forceX(0).strength(0.025))
-    .force("y", forceY(0).strength(0.025))
-    .force("collide", forceCollide(NODE_WIDTH * 0.62).strength(0.85).iterations(2))
+    .force("x", forceX(0).strength(0.02))
+    .force("y", forceY(0).strength(0.02))
+    .force("collide", forceCollide(14).strength(0.8).iterations(2))
     .stop();
-  for (let index = 0; index < 220; index += 1) sim.tick();
+  for (let index = 0; index < 300; index += 1) sim.tick();
   const byId = new Map(simNodes.map((node) => [node.id, node]));
   return nodes.map((node) => {
     const simNode = byId.get(node.id);
@@ -446,30 +440,12 @@ function layoutForce(nodes: Node<ExplicitNodeData>[], edges: Edge<ExplicitEdgeDa
   });
 }
 
-function layoutTypeGroups(nodes: Node<ExplicitNodeData>[]) {
-  const kinds: ExplicitOntologyEntityKind[] = ["Class", "ObjectProperty", "DatatypeProperty", "AnnotationProperty"];
-  const grouped = new Map(kinds.map((kind) => [kind, nodes.filter((node) => node.data.entity.kind === kind)]));
-  const colGap = NODE_WIDTH + 120;
-  const rowGap = NODE_HEIGHT + 34;
-  return kinds.flatMap((kind, columnIndex) => {
-    const groupNodes = grouped.get(kind) ?? [];
-    return groupNodes.map((node, rowIndex) => ({
-      ...node,
-      position: {
-        x: columnIndex * colGap,
-        y: rowIndex * rowGap,
-      },
-    }));
-  });
-}
-
 function applyLayout(
   nodes: Node<ExplicitNodeData>[],
   edges: Edge<ExplicitEdgeData>[],
   mode: ExplicitOntologyLayoutMode,
 ) {
   if (mode === "force") return layoutForce(nodes, edges);
-  if (mode === "typeGroups") return layoutTypeGroups(nodes);
   return layoutLayered(nodes, edges);
 }
 
@@ -505,6 +481,9 @@ function ConfigurableOntologyGraph({
   search,
   onSelect,
   onClearSelection,
+  onSearchChange,
+  onLayoutChange,
+  onSettingsOpen,
 }: {
   data: ExplicitOntologyGraphData;
   config: ExplicitOntologyVisualConfig;
@@ -512,8 +491,12 @@ function ConfigurableOntologyGraph({
   search: string;
   onSelect: (id: string) => void;
   onClearSelection: () => void;
+  onSearchChange: (value: string) => void;
+  onLayoutChange: (mode: ExplicitOntologyLayoutMode) => void;
+  onSettingsOpen: () => void;
 }) {
-  const { fitView } = useReactFlow();
+  const { fitView, zoomIn, zoomOut, setViewport } = useReactFlow();
+  const zoom = useStore((s) => s.transform[2]);
   const deferredSearch = useDeferredValue(search);
   const { rawNodes, rawEdges } = useMemo(() => {
     const nodes = buildNodes(data, config, "", deferredSearch.trim());
@@ -594,8 +577,48 @@ function ConfigurableOntologyGraph({
         onPaneClick={onClearSelection}
       >
         {nodes.length <= 500 && <MiniMap pannable zoomable nodeColor={nodeColor} nodeStrokeWidth={3} />}
-        <Controls showInteractive={false} />
         <Background gap={20} size={1} />
+        <div className="explicit-canvas-toolbar">
+          <div className="explicit-canvas-toolbar__search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input
+              type="text"
+              placeholder="搜索实体..."
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+            />
+          </div>
+          <div className="explicit-canvas-toolbar__sep" />
+          <select
+            className="explicit-canvas-toolbar__layout"
+            value={config.layoutMode}
+            onChange={(e) => onLayoutChange(e.target.value as ExplicitOntologyLayoutMode)}
+          >
+            {(Object.keys(LAYOUT_LABELS) as ExplicitOntologyLayoutMode[]).map((m) => (
+              <option value={m} key={m}>{LAYOUT_LABELS[m]}</option>
+            ))}
+          </select>
+          <div className="explicit-canvas-toolbar__sep" />
+          <div className="explicit-canvas-toolbar__zoom">
+            <button title="适应画布" onClick={() => fitView({ padding: 0.08, duration: 260 })}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+            </button>
+            <button title="缩小" onClick={() => zoomOut({ duration: 200 })}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            </button>
+            <span className="explicit-canvas-toolbar__zoom-label">{Math.round(zoom * 100)}%</span>
+            <button title="放大" onClick={() => zoomIn({ duration: 200 })}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            </button>
+            <button title="1:1" onClick={() => setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 200 })}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8v8M12 8v8M17 8v8"/></svg>
+            </button>
+          </div>
+          <div className="explicit-canvas-toolbar__sep" />
+          <button className="explicit-canvas-toolbar__settings" title="设置" onClick={onSettingsOpen}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
       </ReactFlow>
     </div>
   );
@@ -629,14 +652,13 @@ function FieldSelect({
   );
 }
 
-function ConfigPanel({
+function SettingsModal({
   data,
   config,
   search,
   onSearchChange,
   onConfigChange,
   onSave,
-  saveLabel,
   onClose,
 }: {
   data: ExplicitOntologyGraphData;
@@ -645,7 +667,6 @@ function ConfigPanel({
   onSearchChange: (value: string) => void;
   onConfigChange: (config: ExplicitOntologyVisualConfig) => void;
   onSave: () => void;
-  saveLabel: string;
   onClose: () => void;
 }) {
   const update = (patch: Partial<ExplicitOntologyVisualConfig>) => onConfigChange({ ...config, ...patch });
@@ -671,101 +692,81 @@ function ConfigPanel({
   };
 
   return (
-    <aside className="explicit-config-panel" role="dialog" aria-modal="false" aria-label="设置">
-      <div className="explicit-config-panel__header">
-        <h2>设置</h2>
-        <div className="explicit-config-panel__actions">
-          <button className="explicit-config-save" type="button" onClick={onSave}>
-            {saveLabel}
-          </button>
-          <button className="explicit-config-panel__close" type="button" onClick={onClose} aria-label="关闭设置">
-            ×
-          </button>
-        </div>
+    <div className="explicit-modal-inner">
+      <div className="explicit-modal-header">
+        <h2>可视化设置</h2>
+        <button className="explicit-modal-close" type="button" onClick={onClose}>✕</button>
       </div>
-
-      <section className="explicit-config-section explicit-config-section--first">
-        <h3>检索</h3>
-        <label className="explicit-config-field">
-          <span>关键词</span>
-          <input
-            value={search}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="IRI、名称、注解值"
-          />
-        </label>
-      </section>
-
-      <section className="explicit-config-section">
-        <h3>实体类型</h3>
-        <div className="explicit-config-checks">
-          {(Object.keys(ENTITY_KIND_LABELS) as ExplicitOntologyEntityKind[]).map((kind) => (
-            <label key={kind}>
-              <input
-                type="checkbox"
-                checked={config.visibleEntityKinds.includes(kind)}
-                onChange={() => toggleType(kind)}
-              />
-              <span>{ENTITY_KIND_LABELS[kind]}</span>
-              <small>{data.stats[kind]}</small>
-            </label>
-          ))}
-        </div>
-      </section>
-
-      <section className="explicit-config-section">
-        <h3>卡片字段</h3>
-        <FieldSelect label="标题" value={config.card.titleField} fields={data.fields} onChange={(value) => updateCard({ titleField: value })} />
-        <FieldSelect label="副标题" value={config.card.subtitleField} fields={data.fields} onChange={(value) => updateCard({ subtitleField: value })} allowNone />
-        <FieldSelect label="描述" value={config.card.descriptionField} fields={data.fields} onChange={(value) => updateCard({ descriptionField: value })} allowNone />
-        <div className="explicit-config-subsection">
-          <span>Badges</span>
-          <div className="explicit-config-badges">
-            {data.fields.slice(0, 28).map((field) => (
-              <button
-                type="button"
-                className={config.card.badgeFields.includes(field.id) ? "is-active" : ""}
-                onClick={() => toggleBadge(field.id)}
-                key={field.id}
-              >
-                {field.label}
-              </button>
+      <div className="explicit-modal-body">
+        <section className="explicit-config-section">
+          <h3>检索</h3>
+          <label className="explicit-config-field">
+            <input value={search} onChange={(e) => onSearchChange(e.target.value)} placeholder="关键词..." />
+          </label>
+        </section>
+        <section className="explicit-config-section">
+          <h3>实体类型</h3>
+          <div className="explicit-config-checks">
+            {(Object.keys(ENTITY_KIND_LABELS) as ExplicitOntologyEntityKind[]).map((kind) => (
+              <label key={kind}>
+                <input type="checkbox" checked={config.visibleEntityKinds.includes(kind)} onChange={() => toggleType(kind)} />
+                <span>{ENTITY_KIND_LABELS[kind]}</span>
+                <small>{data.stats[kind]}</small>
+              </label>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="explicit-config-section">
-        <h3>颜色</h3>
-        <label className="explicit-config-field">
-          <span>着色方式</span>
-          <select value={config.color.mode} onChange={(event) => updateColor({ mode: event.target.value as any })}>
-            <option value="type">按类型</option>
-            <option value="field">按字段</option>
-          </select>
-        </label>
-        {config.color.mode === "field" && (
-          <FieldSelect
-            label="颜色字段"
-            value={config.color.field ?? "namespace"}
-            fields={data.fields}
-            onChange={(value) => updateColor({ field: value })}
-          />
-        )}
-      </section>
-
-      <section className="explicit-config-section">
-        <h3>边</h3>
-        <label className="explicit-config-switch">
-          <input type="checkbox" checked={config.edges.showLabels} onChange={(event) => updateEdges({ showLabels: event.target.checked })} />
-          <span>显示边标签</span>
-        </label>
-        <label className="explicit-config-switch">
-          <input type="checkbox" checked={config.edges.showArrows} onChange={(event) => updateEdges({ showArrows: event.target.checked })} />
-          <span>显示箭头</span>
-        </label>
-      </section>
-    </aside>
+        </section>
+        <section className="explicit-config-section">
+          <h3>卡片字段</h3>
+          <FieldSelect label="标题" value={config.card.titleField} fields={data.fields} onChange={(value) => updateCard({ titleField: value })} />
+          <FieldSelect label="副标题" value={config.card.subtitleField} fields={data.fields} onChange={(value) => updateCard({ subtitleField: value })} allowNone />
+          <FieldSelect label="描述" value={config.card.descriptionField} fields={data.fields} onChange={(value) => updateCard({ descriptionField: value })} allowNone />
+          <div className="explicit-config-subsection">
+            <span>Badges</span>
+            <div className="explicit-config-badges">
+              {data.fields.slice(0, 28).map((field) => (
+                <button type="button" className={config.card.badgeFields.includes(field.id) ? "is-active" : ""} onClick={() => toggleBadge(field.id)} key={field.id}>
+                  {field.label}
+                </button>
+              ))}
+          </div>
+          </div>
+        </section>
+        <section className="explicit-config-section">
+          <h3>颜色</h3>
+          <label className="explicit-config-field">
+            <span>着色方式</span>
+            <select value={config.color.mode} onChange={(event) => updateColor({ mode: event.target.value as any })}>
+              <option value="type">按类型</option>
+              <option value="field">按字段</option>
+            </select>
+          </label>
+          {config.color.mode === "field" && (
+            <FieldSelect label="颜色字段" value={config.color.field ?? "namespace"} fields={data.fields} onChange={(value) => updateColor({ field: value })} />
+          )}
+        </section>
+        <section className="explicit-config-section">
+          <h3>边</h3>
+          <label className="explicit-config-switch">
+            <input type="checkbox" checked={config.edges.showLabels} onChange={(evt) => updateEdges({ showLabels: evt.target.checked })} />
+            <span>显示边标签</span>
+          </label>
+          <label className="explicit-config-switch">
+            <input type="checkbox" checked={config.edges.showArrows} onChange={(evt) => updateEdges({ showArrows: evt.target.checked })} />
+            <span>显示箭头</span>
+          </label>
+        </section>
+      </div>
+      <div className="explicit-modal-footer">
+        <button className="explicit-modal-btn" type="button" onClick={() => {
+          const defaults = { ...DEFAULT_EXPLICIT_ONTOLOGY_CONFIG };
+          onConfigChange(defaults);
+        }}>重置默认</button>
+        <div style={{ flex: 1 }} />
+        <button className="explicit-modal-btn" type="button" onClick={onClose}>取消</button>
+        <button className="explicit-modal-btn is-primary" type="button" onClick={() => { onSave(); onClose(); }}>应用</button>
+      </div>
+    </div>
   );
 }
 
@@ -838,39 +839,19 @@ function compactPanelLabel(fields: ExplicitOntologyField[], predicate: string) {
   return fields.find((field) => field.id === predicate)?.label ?? predicate;
 }
 
-function compactNumber(value: number) {
-  return value >= 1000 ? `${(value / 1000).toFixed(1)}k` : String(value);
-}
-
 export interface ConfigurableOntologyViewerProps {
   data: ExplicitOntologyGraphData;
   initialConfig?: Partial<ExplicitOntologyVisualConfig>;
   storageKey?: string;
+  /** Optional content rendered at the right side of the header (e.g. import button). */
+  headerRight?: ReactNode;
+  /** Called when user selects a recent ontology path to re-open. */
+  onRecentOpen?: (path: string) => void;
 }
 
-export function ConfigurableOntologyViewer({
-  data,
-  initialConfig,
-  storageKey,
-}: ConfigurableOntologyViewerProps) {
-  const resolvedStorageKey = useMemo(() => configStorageKey(data, storageKey), [data, storageKey]);
-  const [selectedId, setSelectedId] = useState("");
-  const [search, setSearch] = useState("");
-  const [config, setConfig] = useState<ExplicitOntologyVisualConfig>(() =>
-    createExplicitOntologyConfig(initialConfig, readSavedConfig(resolvedStorageKey)),
-  );
+function useSettingsPopover() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
-  const [saveLabel, setSaveLabel] = useState("保存");
-  const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const configPopoverRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setSelectedId("");
-    setSearch("");
-    setConfig(createExplicitOntologyConfig(initialConfig, readSavedConfig(resolvedStorageKey)));
-    setIsConfigOpen(false);
-    setSaveLabel("保存");
-  }, [data, initialConfig, resolvedStorageKey]);
 
   useEffect(() => {
     if (!isConfigOpen) return undefined;
@@ -881,7 +862,6 @@ export function ConfigurableOntologyViewer({
       const target = event.target;
       if (!(target instanceof Node)) return;
       if (configPopoverRef.current?.contains(target)) return;
-      if (settingsButtonRef.current?.contains(target)) return;
       setIsConfigOpen(false);
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -891,6 +871,85 @@ export function ConfigurableOntologyViewer({
       window.removeEventListener("pointerdown", handlePointerDown);
     };
   }, [isConfigOpen]);
+
+  return { isConfigOpen, setIsConfigOpen, configPopoverRef };
+}
+
+const RECENT_STORAGE_KEY = "ontology-viz:recent";
+const MAX_RECENT = 10;
+
+interface RecentEntry { path: string; time: number; }
+
+function readRecent(): RecentEntry[] {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_STORAGE_KEY) ?? "[]");
+  } catch { return []; }
+}
+
+function writeRecent(path: string) {
+  const list = readRecent().filter((e) => e.path !== path);
+  list.unshift({ path, time: Date.now() });
+  localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(list.slice(0, MAX_RECENT)));
+}
+
+function timeAgo(ts: number): string {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return "刚刚";
+  if (s < 3600) return `${Math.floor(s / 60)} 分钟前`;
+  if (s < 86400) return `${Math.floor(s / 3600)} 小时前`;
+  return `${Math.floor(s / 86400)} 天前`;
+}
+
+function RecentDropdown({ recent, onSelect }: { recent: RecentEntry[]; onSelect: (path: string) => void }) {
+  return (
+    <div className="explicit-recent-dropdown">
+      {recent.length === 0 && <div className="explicit-recent-dropdown__empty">暂无最近记录</div>}
+      {recent.map((e) => (
+        <div className="explicit-recent-dropdown__item" key={e.path} onClick={() => onSelect(e.path)}>
+          <span className="explicit-recent-dropdown__name">{e.path.replace(/^.*[\\/]/, "")}</span>
+          <span className="explicit-recent-dropdown__time">{timeAgo(e.time)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function ConfigurableOntologyViewer({
+  data,
+  initialConfig,
+  storageKey,
+  headerRight,
+  onRecentOpen,
+}: ConfigurableOntologyViewerProps) {
+  const resolvedStorageKey = useMemo(() => configStorageKey(data, storageKey), [data, storageKey]);
+  const [selectedId, setSelectedId] = useState("");
+  const [search, setSearch] = useState("");
+  const [config, setConfig] = useState<ExplicitOntologyVisualConfig>(() =>
+    createExplicitOntologyConfig(initialConfig, readSavedConfig(resolvedStorageKey)),
+  );
+  const [recentOpen, setRecentOpen] = useState(false);
+  const [recent, setRecent] = useState<RecentEntry[]>(readRecent);
+  const recentRef = useRef<HTMLDivElement>(null);
+  const { isConfigOpen, setIsConfigOpen, configPopoverRef } = useSettingsPopover();
+
+  useEffect(() => {
+    setSelectedId("");
+    setSearch("");
+    setConfig(createExplicitOntologyConfig(initialConfig, readSavedConfig(resolvedStorageKey)));
+    setIsConfigOpen(false);
+    if (storageKey) writeRecent(storageKey);
+  }, [data, initialConfig, resolvedStorageKey, storageKey]);
+
+  useEffect(() => {
+    if (!recentOpen) return undefined;
+    const handler = (e: PointerEvent) => {
+      if (!(e.target instanceof Node)) return;
+      if (recentRef.current?.contains(e.target)) return;
+      setRecentOpen(false);
+    };
+    window.addEventListener("pointerdown", handler);
+    return () => window.removeEventListener("pointerdown", handler);
+  }, [recentOpen]);
 
   useEffect(() => {
     if (selectedId) setIsConfigOpen(false);
@@ -906,20 +965,22 @@ export function ConfigurableOntologyViewer({
     setSelectedId("");
   }, []);
 
-  const handleSettingsButtonClick = useCallback(() => {
-    setSelectedId("");
-    setIsConfigOpen((current) => selectedId ? true : !current);
-  }, [selectedId]);
+  const openRecent = useCallback(() => {
+    setRecent(readRecent());
+    setRecentOpen((v) => !v);
+  }, []);
+
+  const handleRecentSelect = useCallback((path: string) => {
+    setRecentOpen(false);
+    onRecentOpen?.(path);
+  }, [onRecentOpen]);
 
   const persistConfig = useCallback((nextConfig: ExplicitOntologyVisualConfig) => {
-    const saved = writeSavedConfig(resolvedStorageKey, nextConfig);
-    setSaveLabel(saved ? "已保存" : "保存失败");
-    window.setTimeout(() => setSaveLabel("保存"), 1400);
+    writeSavedConfig(resolvedStorageKey, nextConfig);
   }, [resolvedStorageKey]);
 
   const handleConfigChange = useCallback((nextConfig: ExplicitOntologyVisualConfig) => {
     setConfig(nextConfig);
-    setSaveLabel("保存");
   }, []);
 
   const handleLayoutChange = useCallback((layoutMode: ExplicitOntologyLayoutMode) => {
@@ -928,11 +989,7 @@ export function ConfigurableOntologyViewer({
       writeSavedConfig(resolvedStorageKey, next);
       return next;
     });
-    setSaveLabel("已保存");
-    window.setTimeout(() => setSaveLabel("保存"), 1400);
   }, [resolvedStorageKey]);
-
-  const handleSave = useCallback(() => persistConfig(config), [config, persistConfig]);
 
   const visibleSummary = useMemo(() => {
     const ids = visibleEntityIds(data, config, search.trim());
@@ -944,44 +1001,33 @@ export function ConfigurableOntologyViewer({
 
   return (
     <div className="explicit-viewer">
-      <main className="explicit-viewer__stage">
-        <div className="explicit-stage-bar">
-          <div className="explicit-stage-bar__title">
-            <strong>{data.ontologyTitle ?? "Ontology"}</strong>
-          </div>
-          <div className="explicit-stage-bar__tools">
-            <div className="explicit-layout-toggle" aria-label="布局">
-              {(Object.keys(LAYOUT_LABELS) as ExplicitOntologyLayoutMode[]).map((layoutMode) => (
-                <button
-                  type="button"
-                  className={config.layoutMode === layoutMode ? "is-active" : ""}
-                  onClick={() => handleLayoutChange(layoutMode)}
-                  key={layoutMode}
-                >
-                  {LAYOUT_LABELS[layoutMode]}
-                </button>
-              ))}
-            </div>
-            <div className="explicit-stage-bar__metrics" aria-label="当前图谱规模">
-              <span><strong>{compactNumber(visibleSummary.nodes)}</strong> 节点</span>
-              <span><strong>{compactNumber(visibleSummary.edges)}</strong> 边</span>
-              <span><strong>{config.visibleEntityKinds.length}</strong> 类型</span>
-            </div>
-            <button
-              ref={settingsButtonRef}
-              className="explicit-settings-button"
-              type="button"
-              onClick={handleSettingsButtonClick}
-              aria-label="打开设置"
-              title="设置"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-                <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 0 1-4 0v-.08a1.7 1.7 0 0 0-1.04-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 0 1 0-4h.08A1.7 1.7 0 0 0 4.64 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 0 1 4 0v.08a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.04A1.7 1.7 0 0 0 20.96 10H21a2 2 0 0 1 0 4h-.08A1.7 1.7 0 0 0 19.4 15Z" />
-              </svg>
-            </button>
-          </div>
+      <header className="explicit-header">
+        <div className="explicit-header__logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/><circle cx="12" cy="5" r="2"/><circle cx="12" cy="19" r="2"/>
+            <circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
+            <line x1="5" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="19" y2="12"/>
+            <line x1="9.5" y1="8.5" x2="10.5" y2="10.5"/><line x1="13.5" y1="13.5" x2="14.5" y2="15.5"/>
+          </svg>
+          OntologyViz
         </div>
+        <span className="explicit-header__sep" />
+        <span className="explicit-header__name">{data.ontologyTitle ?? "Ontology"}</span>
+        <div className="explicit-header__spacer" />
+        <div className="explicit-header__dropdown-wrap">
+          <button className="explicit-header__btn" type="button" onClick={openRecent}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            最近打开
+          </button>
+          {recentOpen && (
+            <div ref={recentRef}>
+              <RecentDropdown recent={recent} onSelect={handleRecentSelect} />
+            </div>
+          )}
+        </div>
+        {headerRight}
+      </header>
+      <main className="explicit-viewer__stage">
         <div className="explicit-viewer__graph-shell">
           <ReactFlowProvider>
             <ConfigurableOntologyGraph
@@ -991,22 +1037,30 @@ export function ConfigurableOntologyViewer({
               search={search}
               onSelect={handleSelect}
               onClearSelection={handleClearSelection}
+              onSearchChange={setSearch}
+              onLayoutChange={handleLayoutChange}
+              onSettingsOpen={() => { setSelectedId(""); setIsConfigOpen(true); }}
             />
           </ReactFlowProvider>
         </div>
       </main>
-      {isConfigOpen && !selectedId && (
-        <div className="explicit-config-popover" ref={configPopoverRef}>
-          <ConfigPanel
-            data={data}
-            config={config}
-            search={search}
-            onSearchChange={setSearch}
-            onConfigChange={handleConfigChange}
-            onSave={handleSave}
-            saveLabel={saveLabel}
-            onClose={() => setIsConfigOpen(false)}
-          />
+      <footer className="explicit-footer">
+        <span>节点 <strong>{visibleSummary.nodes}</strong></span>
+        <span>边 <strong>{visibleSummary.edges}</strong></span>
+      </footer>
+      {isConfigOpen && (
+        <div className="explicit-modal-overlay" onClick={() => setIsConfigOpen(false)}>
+          <div className="explicit-modal" ref={configPopoverRef} onClick={(e) => e.stopPropagation()}>
+            <SettingsModal
+              data={data}
+              config={config}
+              search={search}
+              onSearchChange={setSearch}
+              onConfigChange={handleConfigChange}
+              onSave={() => persistConfig(config)}
+              onClose={() => setIsConfigOpen(false)}
+            />
+          </div>
         </div>
       )}
       {selectedId && (
@@ -1015,3 +1069,4 @@ export function ConfigurableOntologyViewer({
     </div>
   );
 }
+

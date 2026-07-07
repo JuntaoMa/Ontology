@@ -82,24 +82,6 @@ export function NpdOwlExplorer() {
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1 className="app-title">OntologyViz</h1>
-        <div className="app-header__actions">
-          <label className="app-import-btn">
-            <input
-              type="file"
-              accept=".owl,.rdf,.xml,.ttl,.n3,application/rdf+xml,text/turtle"
-              onChange={handleImport}
-            />
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M12 3v12" />
-              <path d="m7 8 5-5 5 5" />
-              <path d="M5 15v4h14v-4" />
-            </svg>
-            <span>导入本体</span>
-          </label>
-        </div>
-      </header>
       {loadState.status === "loading" && (
         <div className="npd-owl-state">
           <div className="app-loading__spinner" />
@@ -113,7 +95,25 @@ export function NpdOwlExplorer() {
         </div>
       )}
       {loadState.status === "ready" && (
-        <ConfigurableOntologyViewer data={loadState.data} storageKey={loadState.storageKey} />
+        <ConfigurableOntologyViewer
+          data={loadState.data}
+          storageKey={loadState.storageKey}
+          headerRight={(
+            <label className="app-import-btn">
+              <input
+                type="file"
+                accept=".owl,.rdf,.xml,.ttl,.n3,application/rdf+xml,text/turtle"
+                onChange={handleImport}
+              />
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M12 3v12" />
+                <path d="m7 8 5-5 5 5" />
+                <path d="M5 15v4h14v-4" />
+              </svg>
+              <span>导入本体</span>
+            </label>
+          )}
+        />
       )}
     </div>
   );
