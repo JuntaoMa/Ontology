@@ -16,8 +16,7 @@
     "@types/d3-force": "^3.0.10",
     "@xyflow/react": "^12.9.3",
     "d3-force": "^3.0.0",
-    "n3": "^2.1.0",
-    "rdflib": "^2.4.0"
+    "n3": "^2.1.0"
   },
   "peerDependencies": {
     "react": "^19.1.0",

@@ -1,16 +1,8 @@
-import dagre from "@dagrejs/dagre";
-import {
-  forceCenter,
-  forceCollide,
-  forceLink,
-  forceManyBody,
-  forceSimulation,
-  forceX,
-  forceY,
-} from "d3-force";
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
-  Background,
+  BaseEdge,
+  EdgeLabelRenderer,
+  getStraightPath,
   Handle,
   MarkerType,
   MiniMap,
@@ -22,6 +14,7 @@ import {
   useReactFlow,
   useStore,
   type Edge,
+  type EdgeProps,
   type Node,
   type NodeProps,
 } from "@xyflow/react";
@@ -31,8 +24,8 @@ import {
   getExplicitOntologyDefaultDescription,
   getExplicitOntologyDefaultLabel,
   getExplicitOntologyDisplayValue,
-  getExplicitOntologyFieldValues,
 } from "../lib/explicitOntologyParser";
+import { layoutGraph, type GraphLayoutOptions } from "../lib/graphLayout";
 import type {
   ExplicitOntologyEdge,
   ExplicitOntologyEdgeKind,
@@ -44,9 +37,58 @@ import type {
   ExplicitOntologyVisualConfig,
 } from "../lib/explicitOntologyTypes";
 
-const NODE_WIDTH = 280;
-const NODE_HEIGHT = 116;
 const CONFIG_STORAGE_PREFIX = "ontology-viz:explicit-config:";
+
+const NODE_SIZE = 36;
+const NODE_ORIGIN: [number, number] = [0.5, 0.5];
+
+const FORCE_LINK_DISTANCE = 80;
+const FORCE_LINK_STRENGTH = 0.6;
+const FORCE_CHARGE_STRENGTH = 200;
+const FORCE_CHARGE_MAX_DIST = 800;
+const FORCE_COLLIDE_RADIUS = NODE_SIZE / 2 + 2;
+const FORCE_COLLIDE_STRENGTH = 0.8;
+const FORCE_TICKS = 300;
+const FORCE_CENTER_STRENGTH = 0.02;
+const FORCE_SPREAD_FACTOR = 80;
+
+const FITVIEW_PADDING = 0.08;
+const LAYOUT_VIEWPORT_LIMITS: Record<ExplicitOntologyLayoutMode, { minZoom: number; maxZoom: number }> = {
+  layered: { minZoom: 0.04, maxZoom: 5 },
+  force: { minZoom: 0.5, maxZoom: 5 },
+};
+
+const EXPLICIT_GRAPH_LAYOUT_OPTIONS: GraphLayoutOptions = {
+  nodeWidth: NODE_SIZE,
+  nodeHeight: NODE_SIZE,
+  layered: {
+    rankdir: "TB",
+    ranksep: 84,
+    nodesep: 28,
+    edgesep: 14,
+    marginx: 24,
+    marginy: 24,
+  },
+  force: {
+    linkDistance: FORCE_LINK_DISTANCE,
+    linkStrength: FORCE_LINK_STRENGTH,
+    chargeStrength: FORCE_CHARGE_STRENGTH,
+    chargeDistanceMax: FORCE_CHARGE_MAX_DIST,
+    collideRadius: FORCE_COLLIDE_RADIUS,
+    collideStrength: FORCE_COLLIDE_STRENGTH,
+    collideIterations: 2,
+    ticks: FORCE_TICKS,
+    centerStrength: FORCE_CENTER_STRENGTH,
+    spreadFactor: FORCE_SPREAD_FACTOR,
+  },
+};
+
+const EDGE_FONT_BASE = 10;
+const EDGE_FONT_MIN = 7;
+const EDGE_STROKE_MIN = 0.8;
+const EDGE_MARKER_SIZE = 16;
+const EDGE_STROKE_OBJECT_RELATION = 1.8;
+const EDGE_STROKE_DEFAULT = 1.2;
 
 const ENTITY_KIND_LABELS: Record<ExplicitOntologyEntityKind, string> = {
   Class: "Class",
@@ -187,8 +229,6 @@ function writeSavedConfig(storageKey: string, config: ExplicitOntologyVisualConf
 
 interface ExplicitNodeData extends Record<string, unknown> {
   entity: ExplicitOntologyEntity;
-  config: ExplicitOntologyVisualConfig;
-  fields: ExplicitOntologyField[];
   selected: boolean;
   highlighted: boolean;
   color: string;
@@ -200,16 +240,25 @@ interface ExplicitEdgeData extends Record<string, unknown> {
   highlighted?: boolean;
 }
 
+interface VisibleOntologyGraph {
+  entities: ExplicitOntologyEntity[];
+  edges: ExplicitOntologyEdge[];
+  ids: Set<string>;
+}
+
+interface SelectionState {
+  selectedNodeId: string;
+  selectedEdgeId: string;
+  highlightedNodes: Set<string>;
+  highlightedEdges: Set<string>;
+}
+
 function tint(hex: string, alpha: number) {
   if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return `rgba(100,116,139,${alpha})`;
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `rgba(${r},${g},${b},${alpha})`;
-}
-
-function fieldLabel(fields: ExplicitOntologyField[], fieldId: string) {
-  return fields.find((field) => field.id === fieldId)?.label ?? fieldId;
 }
 
 function hashString(value: string) {
@@ -249,8 +298,8 @@ const ExplicitOntologyNode = memo(function ExplicitOntologyNode({
         data.highlighted ? "is-highlighted" : "",
       ].filter(Boolean).join(" ")}
       style={{
-        width: 36,
-        height: 36,
+        width: NODE_SIZE,
+        height: NODE_SIZE,
         borderRadius: "50%",
         background: color,
         boxShadow: isSelected
@@ -268,18 +317,16 @@ const ExplicitOntologyNode = memo(function ExplicitOntologyNode({
     >
       {label}
       <Handle
-        id="center-target"
-        className="explicit-ontology-node__center-handle"
-        type="target"
-        position={Position.Top}
-        style={{ background: "transparent", border: "none", width: 0, height: 0 }}
-      />
-      <Handle
         id="center-source"
         className="explicit-ontology-node__center-handle"
         type="source"
         position={Position.Top}
-        style={{ background: "transparent", border: "none", width: 0, height: 0 }}
+      />
+      <Handle
+        id="center-target"
+        className="explicit-ontology-node__center-handle"
+        type="target"
+        position={Position.Top}
       />
     </div>
   );
@@ -287,6 +334,70 @@ const ExplicitOntologyNode = memo(function ExplicitOntologyNode({
 
 const nodeTypes = {
   explicitOntology: ExplicitOntologyNode,
+};
+
+function ExplicitEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  label,
+  markerEnd,
+  style,
+}: EdgeProps) {
+  const [edgePath] = getStraightPath({ sourceX, sourceY, targetX, targetY });
+  const zoom = useStore((s) => s.transform[2]);
+
+  const baseFont = EDGE_FONT_BASE;
+  const minFont = EDGE_FONT_MIN;
+  const vf = baseFont * zoom;
+  let fs = 1;
+  if (vf < minFont) fs = minFont / vf;
+  if (vf > baseFont) fs = baseFont / vf;
+
+  const baseSW = (style?.strokeWidth as number) ?? 1.2;
+  const minSW = EDGE_STROKE_MIN;
+  const vsw = baseSW * zoom;
+  let sws = 1;
+  if (vsw < minSW) sws = minSW / vsw;
+  if (vsw > baseSW) sws = baseSW / vsw;
+
+  const scaledStyle = { ...(style ?? {}), strokeWidth: baseSW * sws };
+  const mEnd = markerEnd as any;
+  const mSize = EDGE_MARKER_SIZE;
+  const scaledMarker = mEnd ? {
+    ...mEnd,
+    width: (mEnd.width ?? mSize) * sws,
+    height: (mEnd.height ?? mSize) * sws,
+  } : undefined;
+
+  return (
+    <>
+      <BaseEdge id={id} path={edgePath} markerEnd={scaledMarker} style={scaledStyle} />
+      {label && zoom >= 1 ? (
+        <EdgeLabelRenderer>
+          <div
+            className="nodrag nopan"
+            style={{
+              position: "absolute",
+              transform: `translate(-50%, -50%) translate(${(sourceX + targetX) / 2}px, ${(sourceY + targetY) / 2}px)`,
+              fontSize: Math.round(baseFont * fs),
+              fontWeight: 600,
+              color: "#334155",
+              pointerEvents: "all",
+            }}
+          >
+            {label}
+          </div>
+        </EdgeLabelRenderer>
+      ) : null}
+    </>
+  );
+}
+
+const edgeTypes = {
+  explicitEdge: ExplicitEdge,
 };
 
 function matchesSearch(entity: ExplicitOntologyEntity, search: string) {
@@ -303,10 +414,10 @@ function matchesSearch(entity: ExplicitOntologyEntity, search: string) {
 
 function visibleEntityIds(
   data: ExplicitOntologyGraphData,
-  config: ExplicitOntologyVisualConfig,
+  visibleEntityKinds: ExplicitOntologyEntityKind[],
   search: string,
 ) {
-  const visibleKinds = new Set(config.visibleEntityKinds);
+  const visibleKinds = new Set(visibleEntityKinds);
   return new Set(
     data.entities
       .filter((entity) => visibleKinds.has(entity.kind))
@@ -319,28 +430,37 @@ function edgeVisibleForNodes(edge: ExplicitOntologyEdge, visibleIds: Set<string>
   return visibleIds.has(edge.source) && visibleIds.has(edge.target);
 }
 
-function buildNodes(
+function buildVisibleGraph(
   data: ExplicitOntologyGraphData,
-  config: ExplicitOntologyVisualConfig,
-  selectedId: string,
+  visibleEntityKinds: ExplicitOntologyEntityKind[],
   search: string,
+): VisibleOntologyGraph {
+  const ids = visibleEntityIds(data, visibleEntityKinds, search);
+  return {
+    ids,
+    entities: data.entities.filter((entity) => ids.has(entity.id)),
+    edges: data.edges.filter((edge) => edgeVisibleForNodes(edge, ids)),
+  };
+}
+
+function buildNodes(
+  entities: ExplicitOntologyEntity[],
+  config: ExplicitOntologyVisualConfig,
+  positions: ReadonlyMap<string, { x: number; y: number }>,
+  selection: SelectionState,
 ): Node<ExplicitNodeData>[] {
-  const ids = visibleEntityIds(data, config, search);
-  return data.entities
-    .filter((entity) => ids.has(entity.id))
+  return entities
     .map((entity) => {
       const color = colorForEntity(entity, config);
       return {
         id: entity.id,
         type: "explicitOntology",
-        position: { x: 0, y: 0 },
+        position: positions.get(entity.id) ?? { x: 0, y: 0 },
         draggable: true,
         data: {
           entity,
-          config,
-          fields: data.fields,
-          selected: entity.id === selectedId,
-          highlighted: false,
+          selected: entity.id === selection.selectedNodeId,
+          highlighted: selection.highlightedNodes.has(entity.id),
           color,
         },
       };
@@ -348,115 +468,68 @@ function buildNodes(
 }
 
 function buildEdges(
-  data: ExplicitOntologyGraphData,
-  config: ExplicitOntologyVisualConfig,
-  visibleIds: Set<string>,
+  edges: ExplicitOntologyEdge[],
+  edgeConfig: ExplicitOntologyVisualConfig["edges"],
+  selection: SelectionState,
 ): Edge<ExplicitEdgeData>[] {
-  return data.edges
-    .filter((edge) => edgeVisibleForNodes(edge, visibleIds))
+  return edges
     .map((edge) => {
-      const color = config.edges.colorByKind[edge.kind];
+      const color = edgeConfig.colorByKind[edge.kind];
+      const selected = edge.id === selection.selectedEdgeId;
+      const highlighted = selection.highlightedEdges.has(edge.id);
       return {
         id: edge.id,
-        type: "straight",
+        type: "explicitEdge",
         source: edge.source,
         sourceHandle: "center-source",
         target: edge.target,
         targetHandle: "center-target",
-        label: config.edges.showLabels ? edge.label : undefined,
-        markerEnd: config.edges.showArrows
+        label: edgeConfig.showLabels ? edge.label : undefined,
+        markerEnd: edgeConfig.showArrows
           ? {
               type: MarkerType.ArrowClosed,
-              width: 16,
-              height: 16,
+              width: EDGE_MARKER_SIZE,
+              height: EDGE_MARKER_SIZE,
               color,
             }
           : undefined,
-        data: { edge },
+        className: [selected ? "is-selected" : "", highlighted ? "is-highlighted" : ""].filter(Boolean).join(" "),
+        data: { edge, selected, highlighted },
         style: {
           stroke: color,
-          strokeWidth: edge.kind === "objectRelation" ? 1.8 : 1.2,
+          strokeWidth: selected
+            ? 3
+            : highlighted
+              ? 2.4
+              : edge.kind === "objectRelation"
+                ? EDGE_STROKE_OBJECT_RELATION
+                : EDGE_STROKE_DEFAULT,
           strokeDasharray: edge.kind === "subClassOf" ? "5 4" : "none",
         },
-        labelShowBg: config.edges.showLabels,
-        labelBgStyle: { fill: "rgba(255,255,255,0.9)", fillOpacity: 1 },
-        labelStyle: { fontSize: 10, fontWeight: 600, fill: "#334155" },
-        labelBgPadding: [6, 3] as [number, number],
-        labelBgBorderRadius: 6,
       };
     });
 }
 
-function layoutLayered(nodes: Node<ExplicitNodeData>[], edges: Edge<ExplicitEdgeData>[]) {
-  const graph = new dagre.graphlib.Graph();
-  graph.setDefaultEdgeLabel(() => ({}));
-  graph.setGraph({ rankdir: "LR", ranksep: 72, nodesep: 34, edgesep: 12, marginx: 18, marginy: 18 });
-  nodes.forEach((node) => graph.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT }));
-  edges.forEach((edge) => graph.setEdge(edge.source, edge.target));
-  dagre.layout(graph);
-  return nodes.map((node) => {
-    const positioned = graph.node(node.id);
-    return {
-      ...node,
-      sourcePosition: Position.Top as const,
-      targetPosition: Position.Top as const,
-      position: {
-        x: (positioned?.x ?? NODE_WIDTH / 2) - NODE_WIDTH / 2,
-        y: (positioned?.y ?? NODE_HEIGHT / 2) - NODE_HEIGHT / 2,
-      },
-    };
-  });
-}
-
-function layoutForce(nodes: Node<ExplicitNodeData>[], edges: Edge<ExplicitEdgeData>[]) {
-  if (nodes.length === 0) return nodes;
-  const spread = Math.sqrt(nodes.length) * 80;
-  const simNodes = nodes.map((node) => ({
-    id: node.id,
-    x: (Math.random() - 0.5) * spread * 2,
-    y: (Math.random() - 0.5) * spread * 2,
-  }));
-  const ids = new Set(nodes.map((node) => node.id));
-  const links = edges
-    .filter((edge) => ids.has(edge.source) && ids.has(edge.target))
-    .map((edge) => ({ source: edge.source, target: edge.target }));
-
-  const sim = forceSimulation(simNodes)
-    .force("link", forceLink(links).id((item: any) => item.id).distance(80).strength(0.6))
-    .force("charge", forceManyBody().strength(-200).distanceMax(800))
-    .force("center", forceCenter(0, 0))
-    .force("x", forceX(0).strength(0.02))
-    .force("y", forceY(0).strength(0.02))
-    .force("collide", forceCollide(14).strength(0.8).iterations(2))
-    .stop();
-  for (let index = 0; index < 300; index += 1) sim.tick();
-  const byId = new Map(simNodes.map((node) => [node.id, node]));
-  return nodes.map((node) => {
-    const simNode = byId.get(node.id);
-    return {
-      ...node,
-      position: simNode ? { x: simNode.x, y: simNode.y } : node.position,
-    };
-  });
-}
-
-function applyLayout(
-  nodes: Node<ExplicitNodeData>[],
-  edges: Edge<ExplicitEdgeData>[],
+function buildLayoutPositions(
+  graph: VisibleOntologyGraph,
   mode: ExplicitOntologyLayoutMode,
 ) {
-  if (mode === "force") return layoutForce(nodes, edges);
-  return layoutLayered(nodes, edges);
+  return layoutGraph(
+    graph.entities.map((entity) => ({ id: entity.id, width: NODE_SIZE, height: NODE_SIZE })),
+    graph.edges.map((edge) => ({ source: edge.source, target: edge.target })),
+    mode,
+    EXPLICIT_GRAPH_LAYOUT_OPTIONS,
+  );
 }
 
-function selectionSets(selectedId: string, nodes: Node<ExplicitNodeData>[], edges: Edge<ExplicitEdgeData>[]) {
+function selectionSets(selectedId: string, graph: VisibleOntologyGraph): SelectionState {
   const highlightedNodes = new Set<string>();
   const highlightedEdges = new Set<string>();
-  const selectedNodeId = nodes.some((node) => node.id === selectedId) ? selectedId : "";
-  const selectedEdgeId = edges.some((edge) => edge.id === selectedId) ? selectedId : "";
+  const selectedNodeId = graph.ids.has(selectedId) ? selectedId : "";
+  const selectedEdgeId = graph.edges.some((edge) => edge.id === selectedId) ? selectedId : "";
   if (selectedNodeId) {
     highlightedNodes.add(selectedNodeId);
-    for (const edge of edges) {
+    for (const edge of graph.edges) {
       if (edge.source === selectedNodeId || edge.target === selectedNodeId) {
         highlightedEdges.add(edge.id);
         highlightedNodes.add(edge.source);
@@ -464,7 +537,7 @@ function selectionSets(selectedId: string, nodes: Node<ExplicitNodeData>[], edge
       }
     }
   } else if (selectedEdgeId) {
-    const edge = edges.find((item) => item.id === selectedEdgeId);
+    const edge = graph.edges.find((item) => item.id === selectedEdgeId);
     if (edge) {
       highlightedEdges.add(edge.id);
       highlightedNodes.add(edge.source);
@@ -472,6 +545,100 @@ function selectionSets(selectedId: string, nodes: Node<ExplicitNodeData>[], edge
     }
   }
   return { selectedNodeId, selectedEdgeId, highlightedNodes, highlightedEdges };
+}
+
+function LayoutDropdown({
+  value,
+  onChange,
+}: {
+  value: ExplicitOntologyLayoutMode;
+  onChange: (mode: ExplicitOntologyLayoutMode) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const popover = popoverRef.current;
+    if (!popover) return undefined;
+
+    popover.setAttribute("popover", "auto");
+    const handleToggle = () => setOpen(popover.matches(":popover-open"));
+    popover.addEventListener("toggle", handleToggle);
+    return () => {
+      popover.removeEventListener("toggle", handleToggle);
+    };
+  }, []);
+
+  const positionPopover = useCallback(() => {
+    const trigger = triggerRef.current;
+    const popover = popoverRef.current;
+    if (!trigger || !popover) return;
+    const rect = trigger.getBoundingClientRect();
+    popover.style.setProperty("--layout-popover-left", `${Math.round(rect.left)}px`);
+    popover.style.setProperty("--layout-popover-top", `${Math.round(rect.bottom + 6)}px`);
+  }, []);
+
+  const togglePopover = useCallback(() => {
+    const popover = popoverRef.current;
+    if (!popover) return;
+    positionPopover();
+    popover.togglePopover();
+    setOpen(popover.matches(":popover-open"));
+  }, [positionPopover]);
+
+  const handleSelect = useCallback((mode: ExplicitOntologyLayoutMode) => {
+    if (mode !== value) onChange(mode);
+    popoverRef.current?.hidePopover();
+    setOpen(false);
+  }, [onChange, value]);
+
+  return (
+    <div
+      className="explicit-canvas-toolbar__layout-menu nodrag nopan"
+      onPointerDown={(event) => event.stopPropagation()}
+    >
+      <button
+        ref={triggerRef}
+        type="button"
+        className="explicit-canvas-toolbar__layout-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={togglePopover}
+      >
+        <span>{LAYOUT_LABELS[value]}</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="m7 10 5 5 5-5" />
+        </svg>
+      </button>
+      <div
+        ref={popoverRef}
+        className="explicit-canvas-toolbar__layout-dropdown nodrag nopan"
+        popover="auto"
+        role="listbox"
+        aria-label="布局"
+        onPointerDown={(event) => event.stopPropagation()}
+      >
+        {(Object.keys(LAYOUT_LABELS) as ExplicitOntologyLayoutMode[]).map((mode) => (
+          <button
+            key={mode}
+            type="button"
+            role="option"
+            aria-selected={mode === value}
+            className={mode === value ? "is-selected" : ""}
+            onClick={() => handleSelect(mode)}
+          >
+            <span>{LAYOUT_LABELS[mode]}</span>
+            {mode === value && (
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="m5 13 4 4L19 7" />
+              </svg>
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function ConfigurableOntologyGraph({
@@ -498,68 +665,65 @@ function ConfigurableOntologyGraph({
   const { fitView, zoomIn, zoomOut, setViewport } = useReactFlow();
   const zoom = useStore((s) => s.transform[2]);
   const deferredSearch = useDeferredValue(search);
-  const { rawNodes, rawEdges } = useMemo(() => {
-    const nodes = buildNodes(data, config, "", deferredSearch.trim());
-    const visibleIds = new Set(nodes.map((node) => node.id));
-    const edges = buildEdges(data, config, visibleIds);
-    return { rawNodes: applyLayout(nodes, edges, config.layoutMode), rawEdges: edges };
-  }, [config, data, deferredSearch]);
+  const viewportLimits = LAYOUT_VIEWPORT_LIMITS[config.layoutMode];
+
+  const visibleGraph = useMemo(
+    () => buildVisibleGraph(data, config.visibleEntityKinds, deferredSearch.trim()),
+    [config.visibleEntityKinds, data, deferredSearch],
+  );
+
+  const layoutPositions = useMemo(
+    () => buildLayoutPositions(visibleGraph, config.layoutMode),
+    [config.layoutMode, visibleGraph],
+  );
+
+  const selection = useMemo(
+    () => selectionSets(selectedId, visibleGraph),
+    [selectedId, visibleGraph],
+  );
+
+  const rawNodes = useMemo(
+    () => buildNodes(visibleGraph.entities, config, layoutPositions, selection),
+    [config, layoutPositions, selection, visibleGraph.entities],
+  );
+
+  const rawEdges = useMemo(
+    () => buildEdges(visibleGraph.edges, config.edges, selection),
+    [config.edges, selection, visibleGraph.edges],
+  );
+
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<ExplicitNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<ExplicitEdgeData>>([]);
-  const hasSelection = Boolean(selectedId) &&
-    (rawNodes.some((node) => node.id === selectedId) || rawEdges.some((edge) => edge.id === selectedId));
+  const hasSelection = Boolean(selection.selectedNodeId || selection.selectedEdgeId);
 
   useEffect(() => {
     setNodes(rawNodes);
     setEdges(rawEdges);
-    const timer = window.setTimeout(() => {
-      fitView({ padding: 0.08, duration: rawNodes.length > 180 ? 0 : 260, minZoom: 0.04, maxZoom: 1 });
-    }, 80);
-    return () => window.clearTimeout(timer);
-  }, [fitView, rawEdges, rawNodes, setEdges, setNodes]);
+  }, [rawEdges, rawNodes, setEdges, setNodes]);
 
   useEffect(() => {
-    const sets = selectionSets(selectedId, rawNodes, rawEdges);
-    setNodes((current) =>
-      current.map((node) => {
-        const selected = node.id === sets.selectedNodeId;
-        const highlighted = sets.highlightedNodes.has(node.id);
-        if (node.data.selected === selected && node.data.highlighted === highlighted) return node;
-        return { ...node, data: { ...node.data, selected, highlighted } };
-      }),
-    );
-    setEdges((current) =>
-      current.map((edge) => {
-        const selected = edge.id === sets.selectedEdgeId;
-        const highlighted = sets.highlightedEdges.has(edge.id);
-        if (edge.data?.selected === selected && edge.data?.highlighted === highlighted) return edge;
-        const graphEdge = edge.data?.edge;
-        if (!graphEdge) return edge;
-        const color = config.edges.colorByKind[graphEdge.kind];
-        return {
-          ...edge,
-          className: [selected ? "is-selected" : "", highlighted ? "is-highlighted" : ""].filter(Boolean).join(" "),
-          style: {
-            ...(edge.style ?? {}),
-            stroke: color,
-            strokeWidth: selected ? 3 : highlighted ? 2.4 : graphEdge.kind === "objectRelation" ? 1.8 : 1.2,
-          },
-          data: { ...(edge.data ?? {}), edge: graphEdge, selected, highlighted },
-        };
-      }),
-    );
-  }, [config.edges.colorByKind, rawEdges, rawNodes, selectedId, setEdges, setNodes]);
+    const timer = window.setTimeout(() => {
+      fitView({
+        padding: FITVIEW_PADDING,
+        duration: visibleGraph.entities.length > 180 ? 0 : 260,
+        minZoom: viewportLimits.minZoom,
+        maxZoom: viewportLimits.maxZoom,
+      });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [fitView, layoutPositions, viewportLimits.maxZoom, viewportLimits.minZoom, visibleGraph.entities.length]);
 
   const nodeColor = useCallback((node: Node<ExplicitNodeData>) => node.data.color, []);
 
   return (
     <div className={`explicit-ontology-graph ${hasSelection ? "has-selection" : ""}`}>
       <ReactFlow
-        fitView
         proOptions={{ hideAttribution: true }}
         nodes={nodes}
         edges={edges}
+        nodeOrigin={NODE_ORIGIN}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         nodesDraggable
         nodesConnectable={false}
         edgesFocusable
@@ -568,8 +732,8 @@ function ConfigurableOntologyGraph({
         panOnScroll
         autoPanOnNodeDrag
         onlyRenderVisibleElements
-        minZoom={0.04}
-        maxZoom={1.6}
+        minZoom={viewportLimits.minZoom}
+        maxZoom={viewportLimits.maxZoom}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={(_event, node) => onSelect(node.id)}
@@ -577,7 +741,6 @@ function ConfigurableOntologyGraph({
         onPaneClick={onClearSelection}
       >
         {nodes.length <= 500 && <MiniMap pannable zoomable nodeColor={nodeColor} nodeStrokeWidth={3} />}
-        <Background gap={20} size={1} />
         <div className="explicit-canvas-toolbar">
           <div className="explicit-canvas-toolbar__search">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -589,18 +752,18 @@ function ConfigurableOntologyGraph({
             />
           </div>
           <div className="explicit-canvas-toolbar__sep" />
-          <select
-            className="explicit-canvas-toolbar__layout"
-            value={config.layoutMode}
-            onChange={(e) => onLayoutChange(e.target.value as ExplicitOntologyLayoutMode)}
-          >
-            {(Object.keys(LAYOUT_LABELS) as ExplicitOntologyLayoutMode[]).map((m) => (
-              <option value={m} key={m}>{LAYOUT_LABELS[m]}</option>
-            ))}
-          </select>
+          <LayoutDropdown value={config.layoutMode} onChange={onLayoutChange} />
           <div className="explicit-canvas-toolbar__sep" />
           <div className="explicit-canvas-toolbar__zoom">
-            <button title="适应画布" onClick={() => fitView({ padding: 0.08, duration: 260 })}>
+            <button
+              title="适应画布"
+              onClick={() => fitView({
+                padding: FITVIEW_PADDING,
+                duration: 260,
+                minZoom: viewportLimits.minZoom,
+                maxZoom: viewportLimits.maxZoom,
+              })}
+            >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
             </button>
             <button title="缩小" onClick={() => zoomOut({ duration: 200 })}>
@@ -845,8 +1008,8 @@ export interface ConfigurableOntologyViewerProps {
   storageKey?: string;
   /** Optional content rendered at the right side of the header (e.g. import button). */
   headerRight?: ReactNode;
-  /** Called when user selects a recent ontology path to re-open. */
-  onRecentOpen?: (path: string) => void;
+  /** Called when user selects a recent ontology storage key to re-open. */
+  onRecentOpen?: (storageKey: string) => void;
 }
 
 function useSettingsPopover() {
@@ -878,17 +1041,50 @@ function useSettingsPopover() {
 const RECENT_STORAGE_KEY = "ontology-viz:recent";
 const MAX_RECENT = 10;
 
-interface RecentEntry { path: string; time: number; }
+interface RecentEntry { key: string; label: string; time: number; }
+
+interface LegacyRecentEntry { path?: string; key?: string; label?: string; time?: number; }
+
+function labelFromRecentKey(key: string) {
+  if (key.startsWith("file:")) {
+    const withoutPrefix = key.slice("file:".length);
+    const lastColon = withoutPrefix.lastIndexOf(":");
+    const secondLastColon = lastColon > -1 ? withoutPrefix.lastIndexOf(":", lastColon - 1) : -1;
+    if (secondLastColon > -1) return withoutPrefix.slice(0, secondLastColon) || "Ontology";
+    return withoutPrefix || "Ontology";
+  }
+
+  const source = key.startsWith("url:") ? key.slice("url:".length) : key;
+  const clean = source.split(/[?#]/)[0] ?? source;
+  return clean.split(/[\\/]/).filter(Boolean).at(-1) || source || "Ontology";
+}
+
+function normalizeRecentEntry(entry: LegacyRecentEntry): RecentEntry | null {
+  const key = typeof entry.key === "string" ? entry.key : entry.path;
+  if (!key) return null;
+  return {
+    key,
+    label: typeof entry.label === "string" && entry.label.trim()
+      ? entry.label
+      : labelFromRecentKey(key),
+    time: typeof entry.time === "number" ? entry.time : Date.now(),
+  };
+}
 
 function readRecent(): RecentEntry[] {
   try {
-    return JSON.parse(localStorage.getItem(RECENT_STORAGE_KEY) ?? "[]");
+    const raw = JSON.parse(localStorage.getItem(RECENT_STORAGE_KEY) ?? "[]");
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((entry) => normalizeRecentEntry(entry as LegacyRecentEntry))
+      .filter((entry): entry is RecentEntry => Boolean(entry));
   } catch { return []; }
 }
 
-function writeRecent(path: string) {
-  const list = readRecent().filter((e) => e.path !== path);
-  list.unshift({ path, time: Date.now() });
+function writeRecent(key: string) {
+  const label = labelFromRecentKey(key);
+  const list = readRecent().filter((e) => e.key !== key);
+  list.unshift({ key, label, time: Date.now() });
   localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(list.slice(0, MAX_RECENT)));
 }
 
@@ -900,13 +1096,13 @@ function timeAgo(ts: number): string {
   return `${Math.floor(s / 86400)} 天前`;
 }
 
-function RecentDropdown({ recent, onSelect }: { recent: RecentEntry[]; onSelect: (path: string) => void }) {
+function RecentDropdown({ recent, onSelect }: { recent: RecentEntry[]; onSelect: (key: string) => void }) {
   return (
     <div className="explicit-recent-dropdown">
       {recent.length === 0 && <div className="explicit-recent-dropdown__empty">暂无最近记录</div>}
       {recent.map((e) => (
-        <div className="explicit-recent-dropdown__item" key={e.path} onClick={() => onSelect(e.path)}>
-          <span className="explicit-recent-dropdown__name">{e.path.replace(/^.*[\\/]/, "")}</span>
+        <div className="explicit-recent-dropdown__item" key={e.key} onClick={() => onSelect(e.key)}>
+          <span className="explicit-recent-dropdown__name" title={e.label}>{e.label}</span>
           <span className="explicit-recent-dropdown__time">{timeAgo(e.time)}</span>
         </div>
       ))}
@@ -992,12 +1188,12 @@ export function ConfigurableOntologyViewer({
   }, [resolvedStorageKey]);
 
   const visibleSummary = useMemo(() => {
-    const ids = visibleEntityIds(data, config, search.trim());
+    const ids = visibleEntityIds(data, config.visibleEntityKinds, search.trim());
     return {
       nodes: ids.size,
       edges: data.edges.filter((edge) => edgeVisibleForNodes(edge, ids)).length,
     };
-  }, [config, data, search]);
+  }, [config.visibleEntityKinds, data, search]);
 
   return (
     <div className="explicit-viewer">
@@ -1069,4 +1265,3 @@ export function ConfigurableOntologyViewer({
     </div>
   );
 }
-

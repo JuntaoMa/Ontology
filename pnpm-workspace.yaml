@@ -1,5 +1,5 @@
 packages:
   - "packages/*"
-  - "3GPP_Ontology/viz"
+  - "apps/*"
 allowBuilds:
   esbuild: true
