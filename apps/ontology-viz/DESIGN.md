@@ -887,3 +887,42 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - `OntologyVisualSettings` 从 `@ontology/viz/react` 导出，接收 `OntologyG6AdapterOptions` 和 `onChange`。
 - `OntologyVizApp` 只保存 `adapterOptions` state，并传给 `OntologyGraphCanvas`。
 - `rg -n "@antv/g6|Graph\\b|new Graph|setData|setLayout" packages/ontology-viz/src/react/OntologyVisualSettings.tsx packages/ontology-viz/src/components/OntologyVizApp.tsx` 只命中 app 的 `setLayoutMode` 状态命名，未发现设置组件或 app 直接 import `@antv/g6`、创建 `Graph` 或调用图实例数据 API。
+
+### 阶段 17：standalone 视图偏好持久化
+
+状态：已实现并验证。
+
+目标：
+
+- standalone app 自动保存并恢复当前本体的布局模式和视觉设置。
+- 存储策略保留在 standalone app，低层画布和设置组件不直接访问 localStorage。
+- 偏好绑定本体来源 key，而不是绑定全局页面状态。
+
+范围：
+
+- 默认 URL 本体使用 `source.storageKey ?? source.url` 作为偏好 key。
+- 用户导入文件使用文件名和内容 hash 作为偏好 key。
+- 保存 `layoutMode` 和 `adapterOptions`。
+- 加载同一来源本体时自动恢复偏好。
+
+不在本阶段做：
+
+- 不保存节点坐标快照。
+- 不实现后端配置存储。
+- 不实现最近打开列表。
+- 不将 localStorage 策略下沉到低层画布。
+
+验收标准：
+
+- `OntologyGraphCanvas` 不访问 localStorage。
+- `OntologyVisualSettings` 不访问 localStorage。
+- standalone app 负责读取和保存偏好。
+- 包内类型检查和 app 构建通过。
+
+验证记录：
+
+- `pnpm run typecheck`
+- `pnpm run build`
+- `rg -n "localStorage|VIEW_PREFERENCES|sourceKeyFromFile|hashContent" packages/ontology-viz/src/react packages/ontology-viz/src/components/OntologyVizApp.tsx packages/ontology-viz/src/g6` 只命中 `OntologyVizApp.tsx`。
+- `OntologyVizApp` 在加载默认 URL 或导入文件时读取偏好，并在当前本体 ready 后保存 `layoutMode` 和 `adapterOptions`。
+- 导入文件的偏好 key 使用文件名和内容 hash，不再依赖 UI 展示 label。

@@ -7,7 +7,13 @@ import {
   type OntologyGraphData,
   type OntologyParseOptions,
 } from "../core";
-import { createG6StandalonePlugins, type OntologyG6AdapterOptions, type OntologyG6LayoutMode } from "../g6";
+import {
+  createG6StandalonePlugins,
+  ONTOLOGY_G6_ENTITY_KINDS,
+  ONTOLOGY_G6_LAYOUT_MODES,
+  type OntologyG6AdapterOptions,
+  type OntologyG6LayoutMode,
+} from "../g6";
 import {
   OntologyDetailPanel,
   OntologyGraphCanvas,
@@ -32,12 +38,20 @@ type LoadState =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "ready"; data: OntologyGraphData };
+  | { status: "ready"; data: OntologyGraphData; sourceKey: string };
 
 type SelectionState =
   | { type: "node"; id: string }
   | { type: "edge"; id: string }
   | undefined;
+
+interface OntologyViewPreferences {
+  layoutMode?: OntologyG6LayoutMode;
+  adapterOptions?: OntologyG6AdapterOptions;
+}
+
+const DEFAULT_LAYOUT_MODE: OntologyG6LayoutMode = "force-atlas2";
+const VIEW_PREFERENCES_PREFIX = "ontology-viz:view:";
 
 function normalizeSource(source: string | OntologyVizSource): OntologyVizSource {
   return typeof source === "string" ? { url: source } : source;
@@ -63,6 +77,90 @@ function titleFromPath(path: string) {
   const clean = path.split(/[?#]/)[0] ?? path;
   const fileName = clean.split(/[\\/]/).filter(Boolean).at(-1) ?? clean;
   return fileName.replace(/\.[^.]+$/, "") || "Ontology";
+}
+
+function sourceKeyFromSource(source: OntologyVizSource) {
+  return source.storageKey ?? source.url;
+}
+
+function hashContent(content: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < content.length; index += 1) {
+    hash ^= content.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+}
+
+function sourceKeyFromFile(file: File, content: string) {
+  return `file:${file.name}:${hashContent(content)}`;
+}
+
+function getLocalStorage() {
+  try {
+    return window.localStorage;
+  } catch {
+    return undefined;
+  }
+}
+
+function isLayoutMode(value: unknown): value is OntologyG6LayoutMode {
+  return typeof value === "string" && ONTOLOGY_G6_LAYOUT_MODES.includes(value as OntologyG6LayoutMode);
+}
+
+function normalizeAdapterOptions(value: unknown): OntologyG6AdapterOptions | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const record = value as Record<string, unknown>;
+  const options: OntologyG6AdapterOptions = {};
+
+  if (Array.isArray(record.visibleEntityKinds)) {
+    options.visibleEntityKinds = record.visibleEntityKinds.filter(
+      (kind): kind is OntologyEntityKind =>
+        typeof kind === "string" && ONTOLOGY_G6_ENTITY_KINDS.includes(kind as OntologyEntityKind),
+    );
+  }
+  if (typeof record.showNodeLabels === "boolean") options.showNodeLabels = record.showNodeLabels;
+  if (typeof record.showEdgeLabels === "boolean") options.showEdgeLabels = record.showEdgeLabels;
+  if (typeof record.showEdgeArrows === "boolean") options.showEdgeArrows = record.showEdgeArrows;
+
+  return options;
+}
+
+function loadViewPreferences(sourceKey: string): OntologyViewPreferences {
+  const storage = getLocalStorage();
+  if (!storage) return {};
+
+  try {
+    const raw = storage.getItem(`${VIEW_PREFERENCES_PREFIX}${sourceKey}`);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    return {
+      layoutMode: isLayoutMode(parsed.layoutMode) ? parsed.layoutMode : undefined,
+      adapterOptions: normalizeAdapterOptions(parsed.adapterOptions),
+    };
+  } catch {
+    return {};
+  }
+}
+
+function saveViewPreferences(sourceKey: string, preferences: OntologyViewPreferences) {
+  const storage = getLocalStorage();
+  if (!storage) return;
+
+  try {
+    storage.setItem(`${VIEW_PREFERENCES_PREFIX}${sourceKey}`, JSON.stringify(preferences));
+  } catch {
+    // Storage may be unavailable or full; visualization should continue without persistence.
+  }
+}
+
+function applyViewPreferences(
+  preferences: OntologyViewPreferences,
+  setLayoutMode: (value: OntologyG6LayoutMode) => void,
+  setAdapterOptions: (value: OntologyG6AdapterOptions) => void,
+) {
+  setLayoutMode(preferences.layoutMode ?? DEFAULT_LAYOUT_MODE);
+  setAdapterOptions(preferences.adapterOptions ?? {});
 }
 
 function ImportButton({ onChange }: { onChange: (event: ChangeEvent<HTMLInputElement>) => void }) {
@@ -93,7 +191,7 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
   );
   const [selection, setSelection] = useState<SelectionState>();
   const [focusedElementId, setFocusedElementId] = useState<string>();
-  const [layoutMode, setLayoutMode] = useState<OntologyG6LayoutMode>("force-atlas2");
+  const [layoutMode, setLayoutMode] = useState<OntologyG6LayoutMode>(DEFAULT_LAYOUT_MODE);
   const [adapterOptions, setAdapterOptions] = useState<OntologyG6AdapterOptions>({});
   const graphPlugins = useMemo(() => createG6StandalonePlugins(), []);
 
@@ -147,9 +245,12 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
             ?? titleFromPath(source.url),
         };
         if (!cancelled) {
+          const sourceKey = sourceKeyFromSource(source);
+          applyViewPreferences(loadViewPreferences(sourceKey), setLayoutMode, setAdapterOptions);
           setLoadState({
             status: "ready",
             data: parseOntology(content, parseOptions),
+            sourceKey,
           });
           setSelection(undefined);
           setFocusedElementId(undefined);
@@ -175,13 +276,16 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
     setLoadState({ status: "loading" });
     try {
       const content = await file.text();
+      const sourceKey = sourceKeyFromFile(file, content);
       const parseOptions: OntologyParseOptions = {
         contentType: contentTypeFromName(file.name),
         ontologyTitleFallback: titleFromPath(file.name),
       };
+      applyViewPreferences(loadViewPreferences(sourceKey), setLayoutMode, setAdapterOptions);
       setLoadState({
         status: "ready",
         data: parseOntology(content, parseOptions),
+        sourceKey,
       });
       setSelection(undefined);
       setFocusedElementId(undefined);
@@ -194,6 +298,14 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
       event.currentTarget.value = "";
     }
   }, []);
+
+  useEffect(() => {
+    if (loadState.status !== "ready") return;
+    saveViewPreferences(loadState.sourceKey, {
+      layoutMode,
+      adapterOptions,
+    });
+  }, [adapterOptions, layoutMode, loadState]);
 
   if (loadState.status === "ready") {
     return (

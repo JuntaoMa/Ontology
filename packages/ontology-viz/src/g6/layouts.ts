@@ -1,6 +1,12 @@
 import { ONTOLOGY_G6_NODE_SIZE } from "./adapter";
 import type { OntologyG6LayoutMode, OntologyG6LayoutOptions } from "./types";
 
+export const ONTOLOGY_G6_LAYOUT_MODES: OntologyG6LayoutMode[] = [
+  "force-atlas2",
+  "d3-force",
+  "antv-dagre",
+];
+
 export function createG6LayoutOptions(
   mode: OntologyG6LayoutMode = "force-atlas2",
   nodeSize = ONTOLOGY_G6_NODE_SIZE,

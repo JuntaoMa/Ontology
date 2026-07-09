@@ -1,4 +1,4 @@
-import type { OntologyG6LayoutMode } from "../g6";
+import { ONTOLOGY_G6_LAYOUT_MODES, type OntologyG6LayoutMode } from "../g6";
 
 export interface OntologyLayoutControlProps {
   value: OntologyG6LayoutMode;
@@ -6,9 +6,9 @@ export interface OntologyLayoutControlProps {
 }
 
 const LAYOUT_OPTIONS: Array<{ value: OntologyG6LayoutMode; label: string }> = [
-  { value: "force-atlas2", label: "ForceAtlas2" },
-  { value: "d3-force", label: "D3 Force" },
-  { value: "antv-dagre", label: "Dagre" },
+  { value: ONTOLOGY_G6_LAYOUT_MODES[0], label: "ForceAtlas2" },
+  { value: ONTOLOGY_G6_LAYOUT_MODES[1], label: "D3 Force" },
+  { value: ONTOLOGY_G6_LAYOUT_MODES[2], label: "Dagre" },
 ];
 
 export function OntologyLayoutControl({ value, onChange }: OntologyLayoutControlProps) {

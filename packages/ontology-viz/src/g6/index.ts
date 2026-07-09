@@ -15,7 +15,7 @@ export {
   toG6GraphData,
 } from "./adapter";
 
-export { createG6LayoutOptions } from "./layouts";
+export { createG6LayoutOptions, ONTOLOGY_G6_LAYOUT_MODES } from "./layouts";
 
 export {
   createG6MinimapPlugin,
