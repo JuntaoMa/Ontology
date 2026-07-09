@@ -55,7 +55,7 @@ export function toG6GraphData(
     nodes: visibleEntities.map((entity) => ({
       id: entity.id,
       type: "circle",
-      data: entity,
+      data: { entity },
       style: {
         size: nodeSize,
         fill: nodeColorByKind[entity.kind],
@@ -70,7 +70,7 @@ export function toG6GraphData(
         source: edge.source,
         target: edge.target,
         type: "line",
-        data: edge,
+        data: { edge },
         style: {
           stroke: edgeColorByKind[edge.kind],
           labelText: showEdgeLabels ? edge.label : undefined,

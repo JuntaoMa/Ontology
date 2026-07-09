@@ -1,16 +1,21 @@
-import type {
-  OntologyEdge,
-  OntologyEdgeKind,
-  OntologyEntity,
-  OntologyEntityKind,
-} from "../core";
+import type { EdgeData, GraphData, NodeData } from "@antv/g6";
+
+import type { OntologyEdge, OntologyEdgeKind, OntologyEntity, OntologyEntityKind } from "../core";
 
 export type OntologyG6LayoutMode = "force-atlas2" | "d3-force" | "antv-dagre";
 
-export interface OntologyG6NodeData {
+export interface OntologyG6NodeCustomData extends Record<string, unknown> {
+  entity: OntologyEntity;
+}
+
+export interface OntologyG6EdgeCustomData extends Record<string, unknown> {
+  edge: OntologyEdge;
+}
+
+export interface OntologyG6NodeData extends NodeData {
   id: string;
   type: "circle";
-  data: OntologyEntity;
+  data: OntologyG6NodeCustomData;
   style: {
     size: number;
     fill: string;
@@ -19,12 +24,12 @@ export interface OntologyG6NodeData {
   };
 }
 
-export interface OntologyG6EdgeData {
+export interface OntologyG6EdgeData extends EdgeData {
   id: string;
   source: string;
   target: string;
   type: "line";
-  data: OntologyEdge;
+  data: OntologyG6EdgeCustomData;
   style: {
     stroke: string;
     labelText?: string;
@@ -32,7 +37,7 @@ export interface OntologyG6EdgeData {
   };
 }
 
-export interface OntologyG6GraphData {
+export interface OntologyG6GraphData extends GraphData {
   nodes: OntologyG6NodeData[];
   edges: OntologyG6EdgeData[];
 }

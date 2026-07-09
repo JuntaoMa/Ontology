@@ -16,6 +16,7 @@
 
 export * from "./core";
 export * from "./g6";
+export * from "./react";
 
 // Types — re-export for consumers
 export type {

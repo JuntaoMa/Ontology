@@ -337,3 +337,43 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - `packages/ontology-viz/node_modules/.bin/tsc --noEmit -p packages/ontology-viz/tsconfig.json`
 - 在 `apps/ontology-viz` 目录执行 `node --input-type=module -e "console.log(await import.meta.resolve('@ontology/viz/g6'))"`，解析到 `packages/ontology-viz/src/g6/index.ts`。
 - `rg -n "from ['\"](@xyflow/react|d3-force|@dagrejs/dagre)" packages/ontology-viz/src/g6 packages/ontology-viz/src/core` 无匹配，确认新 adapter 没有 import 旧图谱库。
+
+### 阶段 3：G6 依赖与低层 React 画布
+
+状态：已实现并验证。
+
+目标：
+
+- 引入官方 G6 运行时依赖。
+- 新增低层 `OntologyGraphCanvas`，只负责创建、更新和销毁 G6 `Graph` 实例。
+- 让 React 层消费 `@ontology/viz/core` 和 `@ontology/viz/g6`，不直接处理本体解析细节。
+
+范围：
+
+- 增加 `@antv/g6` 依赖。
+- 新增 `@ontology/viz/react` subpath。
+- `OntologyGraphCanvas` props 只接收 `data`、adapter options、layout mode 和选择事件。
+- 使用 G6 内置布局、行为和插件。
+- 组件本身不包含文件导入、最近打开、应用顶栏和配置弹窗。
+
+不在本阶段做：
+
+- 不替换 standalone app。
+- 不迁移旧 `ConfigurableOntologyViewer`。
+- 不实现复杂详情面板。
+- 不实现自定义 G6 node/edge class。
+
+验收标准：
+
+- 包内类型检查通过。
+- `@ontology/viz/react` 可以被 package exports 解析。
+- 组件代码不 import React Flow、D3 Force 或 Dagre。
+- G6 Graph 实例在 React effect cleanup 中销毁。
+
+验证记录：
+
+- `pnpm add @antv/g6@5.1.1 --filter @ontology/viz --config.confirmModulesPurge=false`
+- `packages/ontology-viz/node_modules/.bin/tsc --noEmit -p packages/ontology-viz/tsconfig.json`
+- 在 `apps/ontology-viz` 目录执行 `node --input-type=module -e "console.log(await import.meta.resolve('@ontology/viz/react'))"`，解析到 `packages/ontology-viz/src/react/index.ts`。
+- `rg -n "from ['\"](@xyflow/react|d3-force|@dagrejs/dagre)" packages/ontology-viz/src/react packages/ontology-viz/src/g6 packages/ontology-viz/src/core` 无匹配。
+- `OntologyGraphCanvas` 在 mount 时创建 G6 `Graph`，在 effect cleanup 中调用 `graph.destroy()`。

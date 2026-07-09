@@ -8,12 +8,14 @@
     ".": "./src/index.ts",
     "./core": "./src/core/index.ts",
     "./g6": "./src/g6/index.ts",
+    "./react": "./src/react/index.ts",
     "./styles": "./src/styles/index.css"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@antv/g6": "5.1.1",
     "@dagrejs/dagre": "^2.0.4",
     "@types/d3-force": "^3.0.10",
     "@xyflow/react": "^12.9.3",
