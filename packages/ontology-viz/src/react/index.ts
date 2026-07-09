@@ -9,3 +9,6 @@ export type { OntologyLayoutControlProps } from "./OntologyLayoutControl";
 
 export { OntologySearchBox } from "./OntologySearchBox";
 export type { OntologySearchBoxProps, OntologySearchOption } from "./OntologySearchBox";
+
+export { OntologyVisualSettings } from "./OntologyVisualSettings";
+export type { OntologyVisualSettingsProps } from "./OntologyVisualSettings";

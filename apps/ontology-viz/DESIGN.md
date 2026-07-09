@@ -847,3 +847,43 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - `createG6TooltipPlugin` 从 `@ontology/viz/g6` 导出，并返回 G6 `type: "tooltip"` 插件配置。
 - `createG6StandalonePlugins` 组合 tooltip 和 minimap，standalone app 无需单独处理 hover 事件。
 - tooltip 内容通过 G6 datum 的 `data.entity` / `data.edge` 生成，并使用 `ontology-viz-` 前缀样式。
+
+### 阶段 16：可复用视觉设置弹窗
+
+状态：已实现并验证。
+
+目标：
+
+- 将当前已有的 G6 adapter options 暴露为可视化设置 UI。
+- 设置组件放在 `@ontology/viz/react`，standalone app 只保存配置状态并传给画布。
+- 配置范围保持克制，只覆盖实体类型可见性、节点标签、边标签和边箭头。
+
+范围：
+
+- 新增 `OntologyVisualSettings`。
+- 组件接收 `OntologyG6AdapterOptions` 和 `onChange`。
+- 设置弹窗支持点击按钮打开、点击空白关闭、按 Escape 关闭。
+- standalone app 将设置结果作为 `adapterOptions` 传给 `OntologyGraphCanvas`。
+
+不在本阶段做：
+
+- 不做颜色选择器。
+- 不做字段选择器。
+- 不做布局参数编辑。
+- 不做配置持久化。
+- 不做数据集特定设置项。
+
+验收标准：
+
+- 设置组件不 import G6 runtime。
+- standalone app 不直接改 G6 图实例，只更新 `adapterOptions`。
+- 设置项均来自已有 adapter options。
+- 包内类型检查和 app 构建通过。
+
+验证记录：
+
+- `pnpm run typecheck`
+- `pnpm run build`
+- `OntologyVisualSettings` 从 `@ontology/viz/react` 导出，接收 `OntologyG6AdapterOptions` 和 `onChange`。
+- `OntologyVizApp` 只保存 `adapterOptions` state，并传给 `OntologyGraphCanvas`。
+- `rg -n "@antv/g6|Graph\\b|new Graph|setData|setLayout" packages/ontology-viz/src/react/OntologyVisualSettings.tsx packages/ontology-viz/src/components/OntologyVizApp.tsx` 只命中 app 的 `setLayoutMode` 状态命名，未发现设置组件或 app 直接 import `@antv/g6`、创建 `Graph` 或调用图实例数据 API。

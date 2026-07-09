@@ -3,15 +3,17 @@ import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "rea
 import {
   getOntologyDefaultLabel,
   parseOntology,
+  type OntologyEntityKind,
   type OntologyGraphData,
   type OntologyParseOptions,
 } from "../core";
-import { createG6StandalonePlugins, type OntologyG6LayoutMode } from "../g6";
+import { createG6StandalonePlugins, type OntologyG6AdapterOptions, type OntologyG6LayoutMode } from "../g6";
 import {
   OntologyDetailPanel,
   OntologyGraphCanvas,
   OntologyLayoutControl,
   OntologySearchBox,
+  OntologyVisualSettings,
   type OntologyDetailItem,
   type OntologySearchOption,
 } from "../react";
@@ -92,6 +94,7 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
   const [selection, setSelection] = useState<SelectionState>();
   const [focusedElementId, setFocusedElementId] = useState<string>();
   const [layoutMode, setLayoutMode] = useState<OntologyG6LayoutMode>("force-atlas2");
+  const [adapterOptions, setAdapterOptions] = useState<OntologyG6AdapterOptions>({});
   const graphPlugins = useMemo(() => createG6StandalonePlugins(), []);
 
   const searchOptions = useMemo<OntologySearchOption[]>(() => {
@@ -112,6 +115,13 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
     const edge = loadState.data.edges.find((item) => item.id === selection.id);
     return edge ? { type: "edge", edge } : undefined;
   }, [loadState, selection]);
+
+  const availableEntityKinds = useMemo<OntologyEntityKind[]>(() => {
+    if (loadState.status !== "ready") return [];
+    return Object.entries(loadState.data.stats)
+      .filter(([, count]) => count > 0)
+      .map(([kind]) => kind as OntologyEntityKind);
+  }, [loadState]);
 
   useEffect(() => {
     if (!normalizedDefaultSource) {
@@ -207,10 +217,16 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
               }}
             />
             <OntologyLayoutControl value={layoutMode} onChange={setLayoutMode} />
+            <OntologyVisualSettings
+              value={adapterOptions}
+              availableEntityKinds={availableEntityKinds}
+              onChange={setAdapterOptions}
+            />
             <ImportButton onChange={handleImport} />
           </header>
           <OntologyGraphCanvas
             data={loadState.data}
+            adapterOptions={adapterOptions}
             layoutMode={layoutMode}
             plugins={graphPlugins}
             focusedElementId={focusedElementId}

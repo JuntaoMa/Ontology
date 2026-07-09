@@ -23,7 +23,7 @@ export const ONTOLOGY_G6_EDGE_COLORS: Record<OntologyEdgeKind, string> = {
   subPropertyOf: "#a16207",
 };
 
-const DEFAULT_VISIBLE_ENTITY_KINDS: OntologyEntityKind[] = [
+export const ONTOLOGY_G6_ENTITY_KINDS: OntologyEntityKind[] = [
   "Class",
   "ObjectProperty",
   "DatatypeProperty",
@@ -34,7 +34,7 @@ export function toG6GraphData(
   data: OntologyGraphData,
   options: OntologyG6AdapterOptions = {},
 ): OntologyG6GraphData {
-  const visibleKinds = new Set(options.visibleEntityKinds ?? DEFAULT_VISIBLE_ENTITY_KINDS);
+  const visibleKinds = new Set(options.visibleEntityKinds ?? ONTOLOGY_G6_ENTITY_KINDS);
   const nodeSize = options.nodeSize ?? ONTOLOGY_G6_NODE_SIZE;
   const showNodeLabels = options.showNodeLabels ?? true;
   const showEdgeLabels = options.showEdgeLabels ?? true;

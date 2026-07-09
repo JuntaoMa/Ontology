@@ -1418,6 +1418,99 @@
   white-space: nowrap;
 }
 
+.ontology-viz-settings {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.ontology-viz-settings__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #dbe2ee;
+  border-radius: 8px;
+  background: #fff;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.ontology-viz-settings__trigger:hover,
+.ontology-viz-settings__trigger[aria-expanded="true"] {
+  border-color: #1f64e7;
+  color: #1f64e7;
+}
+
+.ontology-viz-settings__trigger svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.ontology-viz-settings__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  width: 260px;
+  gap: 16px;
+  border: 1px solid #dbe2ee;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.16);
+  padding: 14px;
+  z-index: 5;
+}
+
+.ontology-viz-settings__panel section {
+  display: grid;
+  gap: 10px;
+}
+
+.ontology-viz-settings__panel h3 {
+  margin: 0;
+  color: #172033;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.ontology-viz-settings__checks {
+  display: grid;
+  gap: 8px;
+}
+
+.ontology-viz-settings__check,
+.ontology-viz-settings__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.ontology-viz-settings__check input,
+.ontology-viz-settings__toggle input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: #1f64e7;
+}
+
+.ontology-viz-settings__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.06);
+}
+
 .explicit-viewer {
   display: flex;
   flex-direction: column;
