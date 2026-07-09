@@ -9,6 +9,7 @@
     "./core": "./src/core/index.ts",
     "./g6": "./src/g6/index.ts",
     "./react": "./src/react/index.ts",
+    "./standalone": "./src/standalone/index.ts",
     "./styles": "./src/styles/index.css"
   },
   "scripts": {

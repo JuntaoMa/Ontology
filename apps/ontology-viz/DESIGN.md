@@ -574,3 +574,40 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - 在 `apps/ontology-viz` 目录执行 `node_modules/.bin/vite build`，构建通过。
 - 初始尝试拆分 `react-vendor` 时出现 Rollup circular chunk 警告，已更新设计并收窄为 `antv-g6 + vendor`。
 - 最终构建输出包含 `antv-g6-Dt7M8Rid.js`，主 app chunk 降到约 `15 KB`，`antv-g6` chunk 约 `1.18 MB`，`vendor` chunk 约 `579 KB`。
+
+### 阶段 9：standalone subpath export
+
+状态：已实现并验证。
+
+目标：
+
+- 将完整 Web App 壳作为独立 subpath 暴露。
+- 让嵌入式消费者可以明确选择 `core`、`g6`、`react` 或 `standalone`。
+- 降低包根出口的语义混杂。
+
+范围：
+
+- 新增 `@ontology/viz/standalone` subpath。
+- `standalone` 只导出 `OntologyVizApp`、`OntologyVizAppProps`、`OntologyVizSource`。
+- README 中将 standalone app 示例改为从 `@ontology/viz/standalone` 导入。
+- 保留包根对 `OntologyVizApp` 的导出，避免当前 app 和已有调用立即断裂。
+
+不在本阶段做：
+
+- 不改变 `OntologyVizApp` 行为。
+- 不移动源码文件。
+- 不切换 package exports 到 `dist`。
+
+验收标准：
+
+- `@ontology/viz/standalone` 可以被 Node package exports 解析。
+- 包内类型检查和 app 构建通过。
+- README 展示的 standalone 导入路径使用 `@ontology/viz/standalone`。
+
+验证记录：
+
+- 在 `apps/ontology-viz` 目录执行 `node --input-type=module -e "console.log(await import.meta.resolve('@ontology/viz/standalone'))"`，解析到 `packages/ontology-viz/src/standalone/index.ts`。
+- `packages/ontology-viz/node_modules/.bin/tsc --noEmit -p packages/ontology-viz/tsconfig.json`
+- `apps/ontology-viz/node_modules/.bin/tsc -b apps/ontology-viz/tsconfig.json`
+- 在 `apps/ontology-viz` 目录执行 `node_modules/.bin/vite build`，构建通过。
+- README 的 standalone 示例使用 `@ontology/viz/standalone`。

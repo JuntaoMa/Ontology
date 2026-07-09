@@ -5,7 +5,7 @@ G6-first ontology visualization package for parsing OWL/RDF ontology files and e
 ## Standalone app
 
 ```tsx
-import { OntologyVizApp } from "@ontology/viz";
+import { OntologyVizApp } from "@ontology/viz/standalone";
 import "@ontology/viz/styles";
 
 export function App() {
