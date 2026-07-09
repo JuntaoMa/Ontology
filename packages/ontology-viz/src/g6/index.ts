@@ -16,4 +16,8 @@ export {
 
 export { createG6LayoutOptions } from "./layouts";
 
-export { createG6StandalonePlugins } from "./plugins";
+export {
+  createG6MinimapPlugin,
+  createG6StandalonePlugins,
+  createG6TooltipPlugin,
+} from "./plugins";

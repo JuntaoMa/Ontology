@@ -808,3 +808,42 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - `createG6StandalonePlugins` 从 `@ontology/viz/g6` 导出，并返回 G6 `type: "minimap"` 插件配置。
 - `OntologyVizApp` 使用 `useMemo` 创建插件配置，并通过 `OntologyGraphCanvas` 的 `plugins` prop 传入。
 - `OntologyGraphCanvas` 未硬编码 minimap，仍由宿主决定是否传入插件。
+
+### 阶段 15：G6 Tooltip 插件
+
+状态：已实现并验证。
+
+目标：
+
+- 使用 G6 官方 tooltip 插件提供 hover 信息。
+- tooltip 内容从 G6 datum 中的本体实体和关系数据生成，避免 standalone app 拼接字段。
+- 将 tooltip 配置保持在 `@ontology/viz/g6` adapter 层，作为可选插件能力。
+
+范围：
+
+- 新增 `createG6TooltipPlugin`。
+- 将 tooltip 加入 `createG6StandalonePlugins` 的默认插件组合。
+- tooltip 展示实体的 label、kind、localName、IRI，以及关系的 label、kind、source、target、property IRI。
+- 使用组件包样式前缀定义 tooltip 内容样式。
+
+不在本阶段做：
+
+- 不实现自定义 tooltip React 浮层。
+- 不实现 tooltip 字段配置 UI。
+- 不做多语言配置。
+- 不改变点击详情面板。
+
+验收标准：
+
+- tooltip 使用 G6 `type: "tooltip"` 插件。
+- tooltip 内容函数在 G6 adapter 层实现。
+- standalone app 不 import tooltip 组件或手写 hover 事件。
+- 包内类型检查和 app 构建通过。
+
+验证记录：
+
+- `pnpm run typecheck`
+- `pnpm run build`
+- `createG6TooltipPlugin` 从 `@ontology/viz/g6` 导出，并返回 G6 `type: "tooltip"` 插件配置。
+- `createG6StandalonePlugins` 组合 tooltip 和 minimap，standalone app 无需单独处理 hover 事件。
+- tooltip 内容通过 G6 datum 的 `data.entity` / `data.edge` 生成，并使用 `ontology-viz-` 前缀样式。
