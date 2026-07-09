@@ -45,12 +45,5 @@ export {
   parseExplicitOntology,
 } from "./lib/explicitOntologyParser";
 
-// Components
-export {
-  ConfigurableOntologyViewer,
-  DEFAULT_EXPLICIT_ONTOLOGY_CONFIG,
-} from "./components/ConfigurableOntologyViewer";
-export type { ConfigurableOntologyViewerProps } from "./components/ConfigurableOntologyViewer";
-
 export { OntologyVizApp } from "./components/OntologyVizApp";
 export type { OntologyVizAppProps, OntologyVizSource } from "./components/OntologyVizApp";

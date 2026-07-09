@@ -1,10 +1,8 @@
 # @ontology/viz
 
-Generic React ontology visualization package for importing and exploring OWL/RDF ontology files.
+G6-first ontology visualization package for parsing OWL/RDF ontology files and embedding graph views in React products.
 
-## Current API
-
-For a complete generic app shell:
+## Standalone app
 
 ```tsx
 import { OntologyVizApp } from "@ontology/viz";
@@ -15,54 +13,55 @@ export function App() {
 }
 ```
 
-For direct control over parsed data:
+## Core parser
 
-```tsx
-import {
-  ConfigurableOntologyViewer,
-  parseExplicitOntology,
-  type ExplicitOntologyGraphData,
-} from "@ontology/viz";
-import "@ontology/viz/styles";
+```ts
+import { parseOntology, type OntologyGraphData } from "@ontology/viz/core";
 
-const data: ExplicitOntologyGraphData = parseExplicitOntology(content, {
+const data: OntologyGraphData = parseOntology(content, {
   contentType: "application/rdf+xml",
   ontologyTitleFallback: "Ontology",
 });
+```
 
-export function App() {
-  return <ConfigurableOntologyViewer data={data} />;
+## G6 adapter
+
+```ts
+import { createG6LayoutOptions, toG6GraphData } from "@ontology/viz/g6";
+
+const graphData = toG6GraphData(data);
+const layout = createG6LayoutOptions("force-atlas2");
+```
+
+## React components
+
+```tsx
+import {
+  OntologyDetailPanel,
+  OntologyGraphCanvas,
+  OntologyLayoutControl,
+} from "@ontology/viz/react";
+import type { OntologyGraphData } from "@ontology/viz/core";
+
+export function Viewer({ data }: { data: OntologyGraphData }) {
+  return <OntologyGraphCanvas data={data} />;
 }
 ```
 
-## Data Flow
+## Data flow
 
 ```text
-OWL/RDF/XML or Turtle file
-  -> parseExplicitOntology
-  -> ExplicitOntologyGraphData
-  -> OntologyVizApp / ConfigurableOntologyViewer
+OWL/RDF/XML or Turtle content
+  -> parseOntology
+  -> OntologyGraphData
+  -> toG6GraphData / createG6LayoutOptions
+  -> OntologyGraphCanvas
 ```
-
-## Components
-
-- `OntologyVizApp`: complete generic app shell with optional default URL loading, file import, parser inference, loading/error states, and persisted viewer settings.
-- `ConfigurableOntologyViewer`: complete ontology viewer with import-oriented configuration, layout controls, search, selection highlighting, details panel, and persisted settings.
-
-## Parser
-
-- `parseExplicitOntology`: parses explicit OWL/RDF ontology entities:
-  - `owl:Class`
-  - `owl:ObjectProperty`
-  - `owl:DatatypeProperty`
-  - `owl:AnnotationProperty`
 
 ## Dependencies
 
 | Package | Purpose |
 |---------|---------|
-| `@xyflow/react` | Graph rendering |
-| `@dagrejs/dagre` | Layered layout |
-| `d3-force` | Force-directed layout |
+| `@antv/g6` | Graph rendering, layout, behavior, and plugins |
 | `n3` | Turtle parsing |
 | `react` / `react-dom` | UI peer dependencies |

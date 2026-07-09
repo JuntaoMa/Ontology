@@ -496,3 +496,44 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - 在 `apps/ontology-viz` 目录执行 `node_modules/.bin/vite build`，构建通过。
 - `rg -n "from ['\"](@antv/g6|@xyflow/react|d3-force|@dagrejs/dagre)" packages/ontology-viz/src/react/OntologyLayoutControl.tsx` 无匹配。
 - `OntologyVizApp` 持有 `layoutMode` state，并传给 `OntologyGraphCanvas`。
+
+### 阶段 7：删除旧可视化实现与依赖
+
+状态：已实现并验证。
+
+目标：
+
+- 删除已经脱离 standalone 入口的旧 React Flow viewer。
+- 删除自写 D3/Dagre 布局实现。
+- 从 package dependencies 中移除 React Flow、D3 Force 和 Dagre。
+
+范围：
+
+- 删除 `ConfigurableOntologyViewer.tsx`。
+- 删除 `graphLayout.ts`。
+- 从根出口移除 `ConfigurableOntologyViewer` 和 `DEFAULT_EXPLICIT_ONTOLOGY_CONFIG`。
+- 更新 README，描述新的 `core`、`g6`、`react` 和 standalone API。
+- 更新 package dependencies 和 lockfile。
+
+不在本阶段做：
+
+- 不删除 parser 和 `ExplicitOntology*` 类型。
+- 不重写配置 schema。
+- 不清理所有旧 CSS 选择器。
+- 不改变 standalone app 当前行为。
+
+验收标准：
+
+- `packages/ontology-viz/src` 不再 import `@xyflow/react`、`d3-force` 或 `@dagrejs/dagre`。
+- `packages/ontology-viz/package.json` 不再声明旧图谱依赖。
+- 包内类型检查和 app 构建通过。
+- README 不再推荐旧 `ConfigurableOntologyViewer`。
+
+验证记录：
+
+- `packages/ontology-viz/node_modules/.bin/tsc --noEmit -p packages/ontology-viz/tsconfig.json`
+- `apps/ontology-viz/node_modules/.bin/tsc -b apps/ontology-viz/tsconfig.json`
+- 在 `apps/ontology-viz` 目录执行 `node_modules/.bin/vite build`，构建通过。
+- `rg -n "from ['\"](@xyflow/react|d3-force|@dagrejs/dagre)" packages/ontology-viz/src` 无匹配。
+- `rg -n "\"(@xyflow/react|d3-force|@dagrejs/dagre|@types/d3-force)\"" packages/ontology-viz/package.json` 无匹配。
+- 删除旧实现后构建主 JS chunk 从约 `1.91 MB` 降到约 `1.69 MB`；仍需后续 code split 或 manualChunks。
