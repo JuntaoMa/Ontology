@@ -1,5 +1,13 @@
 {
-	"dependencies": {
-		"n3": "^2.1.0"
-	}
+  "private": true,
+  "packageManager": "pnpm@11.7.0",
+  "scripts": {
+    "dev": "pnpm --filter ontology-viz-app dev",
+    "build": "pnpm --filter ontology-viz-app build",
+    "build:pkg": "pnpm --filter @ontology/viz build",
+    "typecheck": "pnpm --filter @ontology/viz build && pnpm --filter @ontology/viz typecheck && pnpm --filter ontology-viz-app exec tsc -b"
+  },
+  "dependencies": {
+    "n3": "^2.1.0"
+  }
 }

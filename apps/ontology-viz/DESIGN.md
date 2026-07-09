@@ -652,3 +652,40 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - 在 `apps/ontology-viz` 目录执行 `node --input-type=module -e "console.log(await import.meta.resolve('@ontology/viz')); console.log(await import.meta.resolve('@ontology/viz/styles'))"`，解析到 `packages/ontology-viz/dist/index.js` 和 `packages/ontology-viz/dist/styles.css`。
 - `pnpm --filter ontology-viz-app build`
 - `git status --short` 未显示 `packages/ontology-viz/dist`，确认构建产物被 `.gitignore` 忽略。
+
+### 阶段 11：workspace root scripts
+
+状态：已实现并验证。
+
+目标：
+
+- 让开发者可以从仓库根目录启动和构建 OntologyViz。
+- 将 package build、app build、typecheck 的入口统一到根 `package.json`。
+- 降低新环境运行成本。
+
+范围：
+
+- 根 `package.json` 增加 `private`、`packageManager` 和 scripts。
+- `dev` 委托到 `ontology-viz-app`。
+- `build` 委托到 `ontology-viz-app`，由 app 脚本负责先构建 `@ontology/viz`。
+- `build:pkg` 只构建 npm 组件包。
+- `typecheck` 先构建 package，再检查 package 和 app TypeScript。
+
+不在本阶段做：
+
+- 不改依赖版本。
+- 不改 app 或 package 运行时代码。
+- 不引入新工具。
+
+验收标准：
+
+- 根目录 `pnpm run build:pkg` 成功。
+- 根目录 `pnpm run typecheck` 成功。
+- 根目录 `pnpm run build` 成功。
+
+验证记录：
+
+- `pnpm run build:pkg`
+- 初版 `typecheck` 未先构建 package，在 exports 指向 `dist` 时 app typecheck 无法解析 `@ontology/viz`；已更新设计和脚本，使 `typecheck` 先执行 `pnpm --filter @ontology/viz build`。
+- `pnpm run typecheck`
+- `pnpm run build`
