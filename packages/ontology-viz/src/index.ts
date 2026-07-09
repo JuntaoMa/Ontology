@@ -15,6 +15,7 @@
  */
 
 export * from "./core";
+export * from "./g6";
 
 // Types — re-export for consumers
 export type {

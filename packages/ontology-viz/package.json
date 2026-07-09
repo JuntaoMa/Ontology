@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./core": "./src/core/index.ts",
+    "./g6": "./src/g6/index.ts",
     "./styles": "./src/styles/index.css"
   },
   "scripts": {

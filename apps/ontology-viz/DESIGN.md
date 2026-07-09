@@ -299,3 +299,41 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - `packages/ontology-viz/node_modules/.bin/tsc --noEmit -p packages/ontology-viz/tsconfig.json`
 - 在 `apps/ontology-viz` 目录执行 `node --input-type=module -e "console.log(await import.meta.resolve('@ontology/viz/core'))"`，解析到 `packages/ontology-viz/src/core/index.ts`。
 - `pnpm --filter @ontology/viz typecheck` 在当前环境会触发 pnpm registry 元数据请求并失败，本阶段未依赖该命令作为验证依据。
+
+### 阶段 2：G6 数据与布局适配层
+
+状态：已实现并验证。
+
+目标：
+
+- 新增 `@ontology/viz/g6` subpath，作为 core 图数据和 G6 渲染之间的唯一适配边界。
+- 把 `OntologyGraphData` 转换为 G6 风格的 `{ nodes, edges }` 数据。
+- 提供 G6 内置布局的默认配置，不实现自定义布局算法。
+
+范围：
+
+- 新增 `toG6GraphData(data, options)`。
+- 新增 ForceAtlas2、D3 Force、AntV Dagre 的默认布局配置函数。
+- 节点默认使用 G6 circle 节点，固定 `36px` 视觉尺寸。
+- 节点和边的颜色仅按类型映射，不做数据集特定规则。
+- 边默认使用直线、中心连接，由 G6 元素模型处理端点。
+
+不在本阶段做：
+
+- 不创建 G6 `Graph` 实例。
+- 不创建 React 组件。
+- 不实现拖拽、选择、高亮、tooltip、minimap 等交互。
+- 不引入自定义边 path、handle 或碰撞算法。
+
+验收标准：
+
+- `@ontology/viz/g6` 可以被 Node package exports 解析。
+- 包内类型检查通过。
+- G6 adapter 不依赖 React Flow、D3 Force 或 Dagre。
+- 工作区只提交 G6 adapter 和设计文档相关变动。
+
+验证记录：
+
+- `packages/ontology-viz/node_modules/.bin/tsc --noEmit -p packages/ontology-viz/tsconfig.json`
+- 在 `apps/ontology-viz` 目录执行 `node --input-type=module -e "console.log(await import.meta.resolve('@ontology/viz/g6'))"`，解析到 `packages/ontology-viz/src/g6/index.ts`。
+- `rg -n "from ['\"](@xyflow/react|d3-force|@dagrejs/dagre)" packages/ontology-viz/src/g6 packages/ontology-viz/src/core` 无匹配，确认新 adapter 没有 import 旧图谱库。
