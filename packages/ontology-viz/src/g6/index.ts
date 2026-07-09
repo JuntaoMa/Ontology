@@ -15,3 +15,5 @@ export {
 } from "./adapter";
 
 export { createG6LayoutOptions } from "./layouts";
+
+export { createG6StandalonePlugins } from "./plugins";

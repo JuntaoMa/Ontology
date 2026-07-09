@@ -6,7 +6,7 @@ import {
   type OntologyGraphData,
   type OntologyParseOptions,
 } from "../core";
-import type { OntologyG6LayoutMode } from "../g6";
+import { createG6StandalonePlugins, type OntologyG6LayoutMode } from "../g6";
 import {
   OntologyDetailPanel,
   OntologyGraphCanvas,
@@ -92,6 +92,7 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
   const [selection, setSelection] = useState<SelectionState>();
   const [focusedElementId, setFocusedElementId] = useState<string>();
   const [layoutMode, setLayoutMode] = useState<OntologyG6LayoutMode>("force-atlas2");
+  const graphPlugins = useMemo(() => createG6StandalonePlugins(), []);
 
   const searchOptions = useMemo<OntologySearchOption[]>(() => {
     if (loadState.status !== "ready") return [];
@@ -211,6 +212,7 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
           <OntologyGraphCanvas
             data={loadState.data}
             layoutMode={layoutMode}
+            plugins={graphPlugins}
             focusedElementId={focusedElementId}
             selectedElementId={selection?.id}
             onNodeSelect={(id) => setSelection({ type: "node", id })}

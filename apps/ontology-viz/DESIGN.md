@@ -770,3 +770,41 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - `pnpm run typecheck`
 - `OntologyGraphCanvas` 配置了 G6 node/edge `state` 样式，并在 `selectedElementId` 变化时调用 `graph.setElementState(...)`。
 - `OntologyVizApp` 将当前 selection id 作为 `selectedElementId` 传给 `OntologyGraphCanvas`，画布点击和详情关闭会清空 selection。
+
+### 阶段 14：G6 Minimap 插件
+
+状态：已实现并验证。
+
+目标：
+
+- 使用 G6 官方 minimap 插件提供图谱概览。
+- 将 minimap 配置放在 `@ontology/viz/g6` adapter 层，避免 standalone app 自行理解 G6 插件细节。
+- 继续避免自研缩略图渲染、视口同步和元素过滤逻辑。
+
+范围：
+
+- 新增 G6 插件配置 helper。
+- standalone app 将默认插件配置传给 `OntologyGraphCanvas`。
+- minimap 使用 G6 内置的 `type: "minimap"` 插件。
+
+不在本阶段做：
+
+- 不实现自定义 minimap 画布。
+- 不实现 minimap 参数配置 UI。
+- 不实现数据集特定的 minimap 过滤规则。
+- 不改变画布选择、高亮、搜索和布局逻辑。
+
+验收标准：
+
+- minimap 配置从 `@ontology/viz/g6` 导出。
+- standalone app 只组合插件配置，不包含 minimap 渲染逻辑。
+- `OntologyGraphCanvas` 继续只接收 `plugins` prop，不硬编码 standalone app 行为。
+- 包内类型检查和 app 构建通过。
+
+验证记录：
+
+- `pnpm run typecheck`
+- `pnpm run build`
+- `createG6StandalonePlugins` 从 `@ontology/viz/g6` 导出，并返回 G6 `type: "minimap"` 插件配置。
+- `OntologyVizApp` 使用 `useMemo` 创建插件配置，并通过 `OntologyGraphCanvas` 的 `plugins` prop 传入。
+- `OntologyGraphCanvas` 未硬编码 minimap，仍由宿主决定是否传入插件。
