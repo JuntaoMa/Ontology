@@ -537,3 +537,40 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - `rg -n "from ['\"](@xyflow/react|d3-force|@dagrejs/dagre)" packages/ontology-viz/src` 无匹配。
 - `rg -n "\"(@xyflow/react|d3-force|@dagrejs/dagre|@types/d3-force)\"" packages/ontology-viz/package.json` 无匹配。
 - 删除旧实现后构建主 JS chunk 从约 `1.91 MB` 降到约 `1.69 MB`；仍需后续 code split 或 manualChunks。
+
+### 阶段 8：standalone app 构建分块
+
+状态：已实现并验证。
+
+目标：
+
+- 降低 standalone app 主 JS chunk 体积。
+- 把 AntV/G6 相关依赖拆成独立 vendor chunk。
+- 保持运行时代码和组件 API 不变。
+
+范围：
+
+- 在 `apps/ontology-viz/vite.config.ts` 配置 Rollup `manualChunks`。
+- 将 `node_modules/@antv` 与 G6 相关依赖拆到 `antv-g6` chunk。
+- 其他第三方依赖统一拆到 `vendor` chunk。
+- 保留 `base: "./"`，继续支持静态文件部署。
+
+不在本阶段做：
+
+- 不做动态 import。
+- 不改变 npm 包 exports。
+- 不改变组件代码。
+
+验收标准：
+
+- app 构建通过。
+- 构建输出中出现独立 `antv-g6` chunk。
+- app 主 JS chunk 低于阶段 7 的约 `1.69 MB`。
+
+验证记录：
+
+- `packages/ontology-viz/node_modules/.bin/tsc --noEmit -p packages/ontology-viz/tsconfig.json`
+- `apps/ontology-viz/node_modules/.bin/tsc -b apps/ontology-viz/tsconfig.json`
+- 在 `apps/ontology-viz` 目录执行 `node_modules/.bin/vite build`，构建通过。
+- 初始尝试拆分 `react-vendor` 时出现 Rollup circular chunk 警告，已更新设计并收窄为 `antv-g6 + vendor`。
+- 最终构建输出包含 `antv-g6-Dt7M8Rid.js`，主 app chunk 降到约 `15 KB`，`antv-g6` chunk 约 `1.18 MB`，`vendor` chunk 约 `579 KB`。
