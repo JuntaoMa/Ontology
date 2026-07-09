@@ -1157,6 +1157,71 @@
   stroke-width: 1.9;
 }
 
+.ontology-viz-standalone {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.ontology-viz-standalone__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #dbe2ee;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  z-index: 1;
+}
+
+.ontology-viz-standalone__title {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.ontology-viz-standalone__title strong {
+  color: #1f64e7;
+  font-size: 15px;
+}
+
+.ontology-viz-standalone__title span {
+  min-width: 0;
+  overflow: hidden;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ontology-viz-standalone__meta {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.ontology-viz-standalone__meta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ontology-viz-graph-canvas {
+  flex: 1;
+  min-height: 0;
+  background: #f6f8fb;
+}
+
 .explicit-viewer {
   display: flex;
   flex-direction: column;

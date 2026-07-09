@@ -377,3 +377,42 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - 在 `apps/ontology-viz` 目录执行 `node --input-type=module -e "console.log(await import.meta.resolve('@ontology/viz/react'))"`，解析到 `packages/ontology-viz/src/react/index.ts`。
 - `rg -n "from ['\"](@xyflow/react|d3-force|@dagrejs/dagre)" packages/ontology-viz/src/react packages/ontology-viz/src/g6 packages/ontology-viz/src/core` 无匹配。
 - `OntologyGraphCanvas` 在 mount 时创建 G6 `Graph`，在 effect cleanup 中调用 `graph.destroy()`。
+
+### 阶段 4：standalone app 切换到 G6 canvas
+
+状态：已实现并验证。
+
+目标：
+
+- 让独立 Web App 使用新的 `core + react canvas` 分层。
+- 用最小可用 app 壳替换旧 `ConfigurableOntologyViewer` 入口。
+- 保留默认本体加载和用户文件导入，先让 G6 可视化路径跑通。
+
+范围：
+
+- `OntologyVizApp` 使用 `parseOntology` 和 `OntologyGraphCanvas`。
+- 页面只包含标题、当前本体名称、导入按钮、加载/错误状态和全屏画布。
+- 点击节点/边时记录当前选择 id，作为后续详情面板的数据入口。
+- 不再从 standalone app 入口调用旧 React Flow viewer。
+
+不在本阶段做：
+
+- 不迁移旧设置弹窗。
+- 不实现详情侧栏。
+- 不实现最近打开。
+- 不删除旧组件文件。
+
+验收标准：
+
+- app 构建通过。
+- 包内类型检查通过。
+- `OntologyVizApp` 不 import `ConfigurableOntologyViewer`。
+- 应用入口不 import React Flow、D3 Force 或 Dagre。
+
+验证记录：
+
+- `packages/ontology-viz/node_modules/.bin/tsc --noEmit -p packages/ontology-viz/tsconfig.json`
+- `apps/ontology-viz/node_modules/.bin/tsc -b apps/ontology-viz/tsconfig.json`
+- 在 `apps/ontology-viz` 目录执行 `node_modules/.bin/vite build`，构建通过。
+- `rg -n "ConfigurableOntologyViewer|@xyflow/react|d3-force|@dagrejs/dagre" packages/ontology-viz/src/components/OntologyVizApp.tsx apps/ontology-viz/src` 无匹配。
+- 当前构建产物提示主 JS chunk 约 `1.9 MB`，后续需要 code split 或 manualChunks 优化；这不阻塞阶段 4 的功能切换验收。

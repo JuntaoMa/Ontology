@@ -1,38 +1,34 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
 
-import { parseExplicitOntology } from "../lib/explicitOntologyParser";
-import type {
-  ExplicitOntologyGraphData,
-  ExplicitOntologyParseOptions,
-  ExplicitOntologyVisualConfig,
-} from "../lib/explicitOntologyTypes";
-import {
-  ConfigurableOntologyViewer,
-  type ConfigurableOntologyViewerProps,
-} from "./ConfigurableOntologyViewer";
+import { parseOntology, type OntologyGraphData, type OntologyParseOptions } from "../core";
+import { OntologyGraphCanvas } from "../react";
 
 export interface OntologyVizSource {
   url: string;
   storageKey?: string;
-  parseOptions?: ExplicitOntologyParseOptions;
+  parseOptions?: OntologyParseOptions;
 }
 
 export interface OntologyVizAppProps {
   defaultSource?: string | OntologyVizSource;
-  initialConfig?: Partial<ExplicitOntologyVisualConfig>;
 }
 
 type LoadState =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "ready"; data: ExplicitOntologyGraphData; storageKey: string };
+  | { status: "ready"; data: OntologyGraphData };
+
+type SelectionState =
+  | { type: "node"; id: string }
+  | { type: "edge"; id: string }
+  | undefined;
 
 function normalizeSource(source: string | OntologyVizSource): OntologyVizSource {
   return typeof source === "string" ? { url: source } : source;
 }
 
-function contentTypeFromName(fileName: string): ExplicitOntologyParseOptions["contentType"] {
+function contentTypeFromName(fileName: string): OntologyParseOptions["contentType"] {
   const lowerName = fileName.toLowerCase();
   return lowerName.endsWith(".ttl") || lowerName.endsWith(".n3") ? "text/turtle" : "application/rdf+xml";
 }
@@ -40,7 +36,7 @@ function contentTypeFromName(fileName: string): ExplicitOntologyParseOptions["co
 function contentTypeFromResponse(
   contentType: string | null,
   fallbackName: string,
-): ExplicitOntologyParseOptions["contentType"] {
+): OntologyParseOptions["contentType"] {
   if (contentType?.includes("text/turtle")) return "text/turtle";
   if (contentType?.includes("application/rdf+xml") || contentType?.includes("application/xml")) {
     return "application/rdf+xml";
@@ -52,14 +48,6 @@ function titleFromPath(path: string) {
   const clean = path.split(/[?#]/)[0] ?? path;
   const fileName = clean.split(/[\\/]/).filter(Boolean).at(-1) ?? clean;
   return fileName.replace(/\.[^.]+$/, "") || "Ontology";
-}
-
-function fileStorageKey(file: File) {
-  return `file:${file.name}:${file.size}:${file.lastModified}`;
-}
-
-function sourceStorageKey(source: OntologyVizSource) {
-  return source.storageKey ?? `url:${source.url}`;
 }
 
 function ImportButton({ onChange }: { onChange: (event: ChangeEvent<HTMLInputElement>) => void }) {
@@ -80,7 +68,7 @@ function ImportButton({ onChange }: { onChange: (event: ChangeEvent<HTMLInputEle
   );
 }
 
-export function OntologyVizApp({ defaultSource, initialConfig }: OntologyVizAppProps) {
+export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
   const normalizedDefaultSource = useMemo(
     () => defaultSource ? normalizeSource(defaultSource) : undefined,
     [defaultSource],
@@ -88,33 +76,7 @@ export function OntologyVizApp({ defaultSource, initialConfig }: OntologyVizAppP
   const [loadState, setLoadState] = useState<LoadState>(() =>
     normalizedDefaultSource ? { status: "loading" } : { status: "idle" },
   );
-
-  const loadSource = useCallback(async (source: OntologyVizSource) => {
-    setLoadState({ status: "loading" });
-    try {
-      const response = await fetch(source.url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${source.url}: ${response.status}`);
-      }
-      const content = await response.text();
-      const parseOptions: ExplicitOntologyParseOptions = {
-        ...source.parseOptions,
-        contentType: source.parseOptions?.contentType
-          ?? contentTypeFromResponse(response.headers.get("content-type"), source.url),
-        ontologyTitleFallback: source.parseOptions?.ontologyTitleFallback ?? titleFromPath(source.url),
-      };
-      setLoadState({
-        status: "ready",
-        data: parseExplicitOntology(content, parseOptions),
-        storageKey: sourceStorageKey(source),
-      });
-    } catch (error) {
-      setLoadState({
-        status: "error",
-        message: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }, []);
+  const [selection, setSelection] = useState<SelectionState>();
 
   useEffect(() => {
     if (!normalizedDefaultSource) {
@@ -132,7 +94,7 @@ export function OntologyVizApp({ defaultSource, initialConfig }: OntologyVizAppP
           throw new Error(`Failed to fetch ${source.url}: ${response.status}`);
         }
         const content = await response.text();
-        const parseOptions: ExplicitOntologyParseOptions = {
+        const parseOptions: OntologyParseOptions = {
           ...source.parseOptions,
           contentType: source.parseOptions?.contentType
             ?? contentTypeFromResponse(response.headers.get("content-type"), source.url),
@@ -142,8 +104,7 @@ export function OntologyVizApp({ defaultSource, initialConfig }: OntologyVizAppP
         if (!cancelled) {
           setLoadState({
             status: "ready",
-            data: parseExplicitOntology(content, parseOptions),
-            storageKey: sourceStorageKey(source),
+            data: parseOntology(content, parseOptions),
           });
         }
       } catch (error) {
@@ -167,14 +128,13 @@ export function OntologyVizApp({ defaultSource, initialConfig }: OntologyVizAppP
     setLoadState({ status: "loading" });
     try {
       const content = await file.text();
-      const parseOptions: ExplicitOntologyParseOptions = {
+      const parseOptions: OntologyParseOptions = {
         contentType: contentTypeFromName(file.name),
         ontologyTitleFallback: titleFromPath(file.name),
       };
       setLoadState({
         status: "ready",
-        data: parseExplicitOntology(content, parseOptions),
-        storageKey: fileStorageKey(file),
+        data: parseOntology(content, parseOptions),
       });
     } catch (error) {
       setLoadState({
@@ -186,21 +146,29 @@ export function OntologyVizApp({ defaultSource, initialConfig }: OntologyVizAppP
     }
   }, []);
 
-  const handleRecentOpen: ConfigurableOntologyViewerProps["onRecentOpen"] = useCallback((storageKey: string) => {
-    if (!storageKey.startsWith("url:")) return;
-    loadSource({ url: storageKey.slice("url:".length), storageKey });
-  }, [loadSource]);
-
   if (loadState.status === "ready") {
     return (
       <div className="ontology-viz-app">
-        <ConfigurableOntologyViewer
-          data={loadState.data}
-          initialConfig={initialConfig}
-          storageKey={loadState.storageKey}
-          onRecentOpen={handleRecentOpen}
-          headerRight={<ImportButton onChange={handleImport} />}
-        />
+        <div className="ontology-viz-standalone">
+          <header className="ontology-viz-standalone__header">
+            <div className="ontology-viz-standalone__title">
+              <strong>OntologyViz</strong>
+              <span>{loadState.data.ontologyTitle}</span>
+            </div>
+            <div className="ontology-viz-standalone__meta">
+              <span>节点 {loadState.data.entities.length}</span>
+              <span>边 {loadState.data.edges.length}</span>
+              {selection && <span>{selection.type} {selection.id}</span>}
+            </div>
+            <ImportButton onChange={handleImport} />
+          </header>
+          <OntologyGraphCanvas
+            data={loadState.data}
+            onNodeSelect={(id) => setSelection({ type: "node", id })}
+            onEdgeSelect={(id) => setSelection({ type: "edge", id })}
+            onCanvasClick={() => setSelection(undefined)}
+          />
+        </div>
       </div>
     );
   }
