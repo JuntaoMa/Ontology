@@ -14,6 +14,8 @@
  * ```
  */
 
+export * from "./core";
+
 // Types — re-export for consumers
 export type {
   ExplicitOntologyCardConfig,
