@@ -2,6 +2,14 @@
 
 G6-first ontology visualization package for parsing OWL/RDF ontology files and embedding graph views in React products.
 
+## Build
+
+```sh
+pnpm --filter @ontology/viz build
+```
+
+The package builds unbundled ESM, type declarations, and `dist/styles.css` for frontend bundlers.
+
 ## Standalone app
 
 ```tsx

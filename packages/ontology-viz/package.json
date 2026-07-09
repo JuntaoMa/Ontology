@@ -3,16 +3,37 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "exports": {
-    ".": "./src/index.ts",
-    "./core": "./src/core/index.ts",
-    "./g6": "./src/g6/index.ts",
-    "./react": "./src/react/index.ts",
-    "./standalone": "./src/standalone/index.ts",
-    "./styles": "./src/styles/index.css"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./g6": {
+      "types": "./dist/g6/index.d.ts",
+      "import": "./dist/g6/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js"
+    },
+    "./standalone": {
+      "types": "./dist/standalone/index.d.ts",
+      "import": "./dist/standalone/index.js"
+    },
+    "./styles": "./dist/styles.css"
   },
   "scripts": {
+    "build": "node ./scripts/build.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

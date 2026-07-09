@@ -611,3 +611,44 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - `apps/ontology-viz/node_modules/.bin/tsc -b apps/ontology-viz/tsconfig.json`
 - 在 `apps/ontology-viz` 目录执行 `node_modules/.bin/vite build`，构建通过。
 - README 的 standalone 示例使用 `@ontology/viz/standalone`。
+
+### 阶段 10：npm package dist build
+
+状态：已实现并验证。
+
+目标：
+
+- 让 `@ontology/viz` 具备可发布的 `dist` 构建产物。
+- package exports 指向构建产物，而不是源码文件。
+- app 的 `dev/build` 在运行前先构建组件包，避免 workspace 使用断裂。
+
+范围：
+
+- 新增 package build 脚本，清理并生成 `dist`。
+- 使用 TypeScript 输出 unbundled ESM 和 `.d.ts` 类型文件。
+- 复制 `src/styles/index.css` 到 `dist/styles.css`。
+- 更新 `package.json` 的 `main`、`types`、`exports`、`files`。
+- 更新 app scripts，使 standalone app 先构建 `@ontology/viz`。
+
+不在本阶段做：
+
+- 不引入 tsup、rollup library build 或 dts plugin。
+- 不切换为 bundled library。
+- 不处理 Node ESM 直接执行下的相对 import 扩展名问题；当前目标是前端 bundler/npm 消费。
+- 不发布 npm 包。
+
+验收标准：
+
+- `pnpm --filter @ontology/viz build` 成功并生成 `dist/index.js`、`dist/index.d.ts`、`dist/styles.css`。
+- `@ontology/viz/core`、`@ontology/viz/g6`、`@ontology/viz/react`、`@ontology/viz/standalone` 从 package exports 解析到 `dist`。
+- app 构建通过。
+- `dist` 不进入 git 提交。
+
+验证记录：
+
+- `pnpm --filter @ontology/viz build`
+- `test -f packages/ontology-viz/dist/index.js && test -f packages/ontology-viz/dist/index.d.ts && test -f packages/ontology-viz/dist/styles.css`
+- 在 `apps/ontology-viz` 目录执行 `node --input-type=module -e "console.log(await import.meta.resolve('@ontology/viz/core')); console.log(await import.meta.resolve('@ontology/viz/g6')); console.log(await import.meta.resolve('@ontology/viz/react')); console.log(await import.meta.resolve('@ontology/viz/standalone'))"`，全部解析到 `packages/ontology-viz/dist/*`。
+- 在 `apps/ontology-viz` 目录执行 `node --input-type=module -e "console.log(await import.meta.resolve('@ontology/viz')); console.log(await import.meta.resolve('@ontology/viz/styles'))"`，解析到 `packages/ontology-viz/dist/index.js` 和 `packages/ontology-viz/dist/styles.css`。
+- `pnpm --filter ontology-viz-app build`
+- `git status --short` 未显示 `packages/ontology-viz/dist`，确认构建产物被 `.gitignore` 忽略。
