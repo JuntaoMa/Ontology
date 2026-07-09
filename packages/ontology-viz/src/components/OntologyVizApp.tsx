@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
 
-import { parseOntology, type OntologyGraphData, type OntologyParseOptions } from "../core";
+import {
+  getOntologyDefaultLabel,
+  parseOntology,
+  type OntologyGraphData,
+  type OntologyParseOptions,
+} from "../core";
 import type { OntologyG6LayoutMode } from "../g6";
 import {
   OntologyDetailPanel,
   OntologyGraphCanvas,
   OntologyLayoutControl,
+  OntologySearchBox,
   type OntologyDetailItem,
+  type OntologySearchOption,
 } from "../react";
 
 export interface OntologyVizSource {
@@ -83,7 +90,17 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
     normalizedDefaultSource ? { status: "loading" } : { status: "idle" },
   );
   const [selection, setSelection] = useState<SelectionState>();
+  const [focusedElementId, setFocusedElementId] = useState<string>();
   const [layoutMode, setLayoutMode] = useState<OntologyG6LayoutMode>("force-atlas2");
+
+  const searchOptions = useMemo<OntologySearchOption[]>(() => {
+    if (loadState.status !== "ready") return [];
+    return loadState.data.entities.map((entity) => ({
+      id: entity.id,
+      label: getOntologyDefaultLabel(entity),
+      description: entity.localName,
+    }));
+  }, [loadState]);
 
   const detailItem = useMemo<OntologyDetailItem | undefined>(() => {
     if (loadState.status !== "ready" || !selection) return undefined;
@@ -123,6 +140,8 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
             status: "ready",
             data: parseOntology(content, parseOptions),
           });
+          setSelection(undefined);
+          setFocusedElementId(undefined);
         }
       } catch (error) {
         if (!cancelled) {
@@ -153,6 +172,8 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
         status: "ready",
         data: parseOntology(content, parseOptions),
       });
+      setSelection(undefined);
+      setFocusedElementId(undefined);
     } catch (error) {
       setLoadState({
         status: "error",
@@ -177,17 +198,34 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
               <span>边 {loadState.data.edges.length}</span>
               {selection && <span>{selection.type} {selection.id}</span>}
             </div>
+            <OntologySearchBox
+              options={searchOptions}
+              onSelect={(id) => {
+                setSelection({ type: "node", id });
+                setFocusedElementId(id);
+              }}
+            />
             <OntologyLayoutControl value={layoutMode} onChange={setLayoutMode} />
             <ImportButton onChange={handleImport} />
           </header>
           <OntologyGraphCanvas
             data={loadState.data}
             layoutMode={layoutMode}
+            focusedElementId={focusedElementId}
             onNodeSelect={(id) => setSelection({ type: "node", id })}
             onEdgeSelect={(id) => setSelection({ type: "edge", id })}
-            onCanvasClick={() => setSelection(undefined)}
+            onCanvasClick={() => {
+              setSelection(undefined);
+              setFocusedElementId(undefined);
+            }}
           />
-          <OntologyDetailPanel item={detailItem} onClose={() => setSelection(undefined)} />
+          <OntologyDetailPanel
+            item={detailItem}
+            onClose={() => {
+              setSelection(undefined);
+              setFocusedElementId(undefined);
+            }}
+          />
         </div>
       </div>
     );

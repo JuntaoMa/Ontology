@@ -6,3 +6,6 @@ export type { OntologyGraphCanvasProps } from "./OntologyGraphCanvas";
 
 export { OntologyLayoutControl } from "./OntologyLayoutControl";
 export type { OntologyLayoutControlProps } from "./OntologyLayoutControl";
+
+export { OntologySearchBox } from "./OntologySearchBox";
+export type { OntologySearchBoxProps, OntologySearchOption } from "./OntologySearchBox";

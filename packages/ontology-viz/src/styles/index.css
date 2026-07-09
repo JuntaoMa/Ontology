@@ -1344,6 +1344,80 @@
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 
+.ontology-viz-search {
+  position: relative;
+  width: min(280px, 28vw);
+  min-width: 180px;
+}
+
+.ontology-viz-search input {
+  width: 100%;
+  min-height: 32px;
+  border: 1px solid #dbe2ee;
+  border-radius: 8px;
+  background: #fff;
+  color: #172033;
+  outline: none;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.ontology-viz-search input:focus {
+  border-color: #1f64e7;
+  box-shadow: 0 0 0 3px rgba(31, 100, 231, 0.12);
+}
+
+.ontology-viz-search__results {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: min(360px, calc(100vw - 32px));
+  overflow: hidden;
+  border: 1px solid #dbe2ee;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.16);
+  z-index: 4;
+}
+
+.ontology-viz-search__results button {
+  display: grid;
+  width: 100%;
+  gap: 3px;
+  border: 0;
+  border-bottom: 1px solid #eef2f7;
+  background: #fff;
+  color: #172033;
+  cursor: pointer;
+  padding: 9px 11px;
+  text-align: left;
+}
+
+.ontology-viz-search__results button:last-child {
+  border-bottom: 0;
+}
+
+.ontology-viz-search__results button:hover {
+  background: #f6f8fb;
+}
+
+.ontology-viz-search__results span {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ontology-viz-search__results small {
+  overflow: hidden;
+  color: #64748b;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .explicit-viewer {
   display: flex;
   flex-direction: column;

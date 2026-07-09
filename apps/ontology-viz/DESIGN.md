@@ -689,3 +689,43 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - 初版 `typecheck` 未先构建 package，在 exports 指向 `dist` 时 app typecheck 无法解析 `@ontology/viz`；已更新设计和脚本，使 `typecheck` 先执行 `pnpm --filter @ontology/viz build`。
 - `pnpm run typecheck`
 - `pnpm run build`
+
+### 阶段 12：实体搜索与 G6 聚焦
+
+状态：已实现并验证。
+
+目标：
+
+- 新增可复用实体搜索控件。
+- standalone app 支持按 label、localName、IRI 搜索实体。
+- 选中搜索结果后显示详情，并调用 G6 `focusElement` 聚焦元素。
+
+范围：
+
+- 新增 `OntologySearchBox`，放在 `@ontology/viz/react`。
+- 控件接收候选项和 `onSelect` 回调，不读取 G6 或本体图数据。
+- `OntologyGraphCanvas` 新增可选 `focusedElementId` prop，变化时调用 G6 `focusElement`。
+- standalone app 从 `OntologyGraphData.entities` 构造搜索候选项。
+
+不在本阶段做：
+
+- 不搜索边。
+- 不实现模糊匹配算法，只做大小写不敏感的包含匹配。
+- 不实现搜索历史。
+- 不自己计算视口位置或缩放。
+
+验收标准：
+
+- 搜索控件不 import G6、React Flow、D3 Force 或 Dagre。
+- `OntologyGraphCanvas` 使用 G6 `focusElement`，不自写坐标计算。
+- 选择搜索结果后 standalone app 设置 selection 并传入 `focusedElementId`。
+- 包内类型检查和 app 构建通过。
+
+验证记录：
+
+- `packages/ontology-viz/node_modules/.bin/tsc --noEmit -p packages/ontology-viz/tsconfig.json`
+- `apps/ontology-viz/node_modules/.bin/tsc -b apps/ontology-viz/tsconfig.json`
+- `pnpm run build`
+- `pnpm run typecheck`
+- `rg -n "from ['\"](@antv/g6|@xyflow/react|d3-force|@dagrejs/dagre)" packages/ontology-viz/src/react/OntologySearchBox.tsx` 无匹配。
+- `OntologyGraphCanvas` 在 `focusedElementId` 变化时调用 G6 `graph.focusElement(...)`。

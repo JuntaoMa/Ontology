@@ -32,6 +32,7 @@ export interface OntologyGraphCanvasProps {
   style?: CSSProperties;
   behaviors?: GraphOptions["behaviors"];
   plugins?: GraphOptions["plugins"];
+  focusedElementId?: string;
   onNodeSelect?: (id: string) => void;
   onEdgeSelect?: (id: string) => void;
   onCanvasClick?: () => void;
@@ -58,6 +59,7 @@ export function OntologyGraphCanvas({
   style,
   behaviors = DEFAULT_BEHAVIORS,
   plugins,
+  focusedElementId,
   onNodeSelect,
   onEdgeSelect,
   onCanvasClick,
@@ -129,6 +131,16 @@ export function OntologyGraphCanvas({
     graph.setLayout(layout);
     void graph.render();
   }, [behaviors, graphData, layout, plugins]);
+
+  useEffect(() => {
+    const graph = graphRef.current;
+    if (!graph || !focusedElementId) return;
+
+    void graph.focusElement(focusedElementId, {
+      duration: 300,
+      easing: "ease-in-out",
+    });
+  }, [focusedElementId]);
 
   return (
     <div
