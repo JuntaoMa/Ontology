@@ -416,3 +416,45 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - 在 `apps/ontology-viz` 目录执行 `node_modules/.bin/vite build`，构建通过。
 - `rg -n "ConfigurableOntologyViewer|@xyflow/react|d3-force|@dagrejs/dagre" packages/ontology-viz/src/components/OntologyVizApp.tsx apps/ontology-viz/src` 无匹配。
 - 当前构建产物提示主 JS chunk 约 `1.9 MB`，后续需要 code split 或 manualChunks 优化；这不阻塞阶段 4 的功能切换验收。
+
+### 阶段 5：可复用详情面板
+
+状态：已实现并验证。
+
+目标：
+
+- 新增可嵌入的 `OntologyDetailPanel`，展示当前选中的本体实体或关系。
+- 让 standalone app 点击节点/边时显示浮动详情面板，点击画布或关闭按钮时隐藏。
+- 保持详情面板独立于 G6 `Graph` 实例、文件导入和应用顶栏。
+
+范围：
+
+- `OntologyDetailPanel` 放在 `@ontology/viz/react`。
+- 组件接收已解析的实体或边对象，不自己查询图数据。
+- 实体详情展示 label、kind、IRI、namespace 和 description。
+- 边详情展示 label、kind、source、target 和 property IRI。
+- standalone app 根据当前 selection 从 `OntologyGraphData` 中查找实体或边后传入面板。
+
+不在本阶段做：
+
+- 不实现一跳高亮。
+- 不实现字段配置和详情字段选择。
+- 不实现编辑能力。
+- 不引入 G6 tooltip 插件。
+
+验收标准：
+
+- 未选择节点或边时不渲染详情面板。
+- 选择节点或边时显示对应详情。
+- 包内类型检查和 app 构建通过。
+- 详情组件不 import G6、React Flow、D3 Force 或 Dagre。
+
+验证记录：
+
+- `OntologyDetailPanel` 在 `item` 为空时返回 `null`。
+- `OntologyVizApp` 根据当前 selection 从 `OntologyGraphData` 查找实体或边后传入 `OntologyDetailPanel`。
+- `packages/ontology-viz/node_modules/.bin/tsc --noEmit -p packages/ontology-viz/tsconfig.json`
+- `apps/ontology-viz/node_modules/.bin/tsc -b apps/ontology-viz/tsconfig.json`
+- 在 `apps/ontology-viz` 目录执行 `node_modules/.bin/vite build`，构建通过。
+- `rg -n "@antv/g6|@xyflow/react|d3-force|@dagrejs/dagre" packages/ontology-viz/src/react/OntologyDetailPanel.tsx` 无匹配。
+- 当前构建产物主 JS chunk 约 `1.91 MB`，仍需后续做 code split 或 manualChunks。

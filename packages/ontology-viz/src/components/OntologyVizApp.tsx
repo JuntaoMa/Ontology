@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
 
 import { parseOntology, type OntologyGraphData, type OntologyParseOptions } from "../core";
-import { OntologyGraphCanvas } from "../react";
+import { OntologyDetailPanel, OntologyGraphCanvas, type OntologyDetailItem } from "../react";
 
 export interface OntologyVizSource {
   url: string;
@@ -77,6 +77,16 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
     normalizedDefaultSource ? { status: "loading" } : { status: "idle" },
   );
   const [selection, setSelection] = useState<SelectionState>();
+
+  const detailItem = useMemo<OntologyDetailItem | undefined>(() => {
+    if (loadState.status !== "ready" || !selection) return undefined;
+    if (selection.type === "node") {
+      const entity = loadState.data.entities.find((item) => item.id === selection.id);
+      return entity ? { type: "entity", entity } : undefined;
+    }
+    const edge = loadState.data.edges.find((item) => item.id === selection.id);
+    return edge ? { type: "edge", edge } : undefined;
+  }, [loadState, selection]);
 
   useEffect(() => {
     if (!normalizedDefaultSource) {
@@ -168,6 +178,7 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
             onEdgeSelect={(id) => setSelection({ type: "edge", id })}
             onCanvasClick={() => setSelection(undefined)}
           />
+          <OntologyDetailPanel item={detailItem} onClose={() => setSelection(undefined)} />
         </div>
       </div>
     );
