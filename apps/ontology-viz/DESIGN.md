@@ -729,3 +729,44 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - `pnpm run typecheck`
 - `rg -n "from ['\"](@antv/g6|@xyflow/react|d3-force|@dagrejs/dagre)" packages/ontology-viz/src/react/OntologySearchBox.tsx` 无匹配。
 - `OntologyGraphCanvas` 在 `focusedElementId` 变化时调用 G6 `graph.focusElement(...)`。
+
+### 阶段 13：一跳关系高亮
+
+状态：已实现并验证。
+
+目标：
+
+- 将选中节点或边的一跳邻域高亮做成 `OntologyGraphCanvas` 的通用能力。
+- 使用 G6 element state 和 state style 实现视觉变化。
+- standalone app 只传入当前选中元素 id，不直接操作 G6 实例。
+
+范围：
+
+- `OntologyGraphCanvas` 新增 `selectedElementId` prop。
+- 根据当前 G6 graph data 计算一跳节点和边集合。
+- 调用 G6 `setElementState` 设置 `selected`、`related`、`dimmed` 状态。
+- 配置 node/edge 的 `selected`、`related`、`dimmed` state style。
+
+不在本阶段做：
+
+- 不实现多跳高亮。
+- 不实现方向过滤。
+- 不实现高亮颜色配置 UI。
+- 不自己绘制高亮边或路径。
+
+验收标准：
+
+- `OntologyGraphCanvas` 使用 G6 `setElementState` 和 state style。
+- 选中节点时，高亮该节点、一跳邻居和关联边，其余元素 dim。
+- 选中边时，高亮该边和两端节点，其余元素 dim。
+- 清空选择时清除所有高亮状态。
+- 包内类型检查和 app 构建通过。
+
+验证记录：
+
+- `packages/ontology-viz/node_modules/.bin/tsc --noEmit -p packages/ontology-viz/tsconfig.json`
+- `apps/ontology-viz/node_modules/.bin/tsc -b apps/ontology-viz/tsconfig.json`
+- `pnpm run build`
+- `pnpm run typecheck`
+- `OntologyGraphCanvas` 配置了 G6 node/edge `state` 样式，并在 `selectedElementId` 变化时调用 `graph.setElementState(...)`。
+- `OntologyVizApp` 将当前 selection id 作为 `selectedElementId` 传给 `OntologyGraphCanvas`，画布点击和详情关闭会清空 selection。

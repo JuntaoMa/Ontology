@@ -212,6 +212,7 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
             data={loadState.data}
             layoutMode={layoutMode}
             focusedElementId={focusedElementId}
+            selectedElementId={selection?.id}
             onNodeSelect={(id) => setSelection({ type: "node", id })}
             onEdgeSelect={(id) => setSelection({ type: "edge", id })}
             onCanvasClick={() => {

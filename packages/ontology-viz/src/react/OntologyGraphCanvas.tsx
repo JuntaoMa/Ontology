@@ -33,6 +33,7 @@ export interface OntologyGraphCanvasProps {
   behaviors?: GraphOptions["behaviors"];
   plugins?: GraphOptions["plugins"];
   focusedElementId?: string;
+  selectedElementId?: string;
   onNodeSelect?: (id: string) => void;
   onEdgeSelect?: (id: string) => void;
   onCanvasClick?: () => void;
@@ -51,6 +52,49 @@ function getTargetId(event: unknown) {
   return typeof id === "string" ? id : undefined;
 }
 
+function getElementStateMap(data: GraphData, selectedElementId?: string) {
+  const nodeIds = new Set((data.nodes ?? []).map((node) => String(node.id)));
+  const edgeIds = new Set((data.edges ?? []).flatMap((edge) => edge.id ? [String(edge.id)] : []));
+  const states: Record<string, string[]> = {};
+
+  for (const id of [...nodeIds, ...edgeIds]) states[id] = [];
+  if (!selectedElementId) return states;
+
+  const relatedNodes = new Set<string>();
+  const relatedEdges = new Set<string>();
+
+  if (nodeIds.has(selectedElementId)) {
+    relatedNodes.add(selectedElementId);
+    for (const edge of data.edges ?? []) {
+      const edgeId = edge.id ? String(edge.id) : undefined;
+      const source = String(edge.source);
+      const target = String(edge.target);
+      if (!edgeId || (source !== selectedElementId && target !== selectedElementId)) continue;
+      relatedEdges.add(edgeId);
+      relatedNodes.add(source);
+      relatedNodes.add(target);
+    }
+  } else if (edgeIds.has(selectedElementId)) {
+    relatedEdges.add(selectedElementId);
+    const edge = (data.edges ?? []).find((item) => item.id === selectedElementId);
+    if (edge) {
+      relatedNodes.add(String(edge.source));
+      relatedNodes.add(String(edge.target));
+    }
+  }
+
+  for (const id of nodeIds) {
+    if (id === selectedElementId) states[id] = ["selected"];
+    else states[id] = relatedNodes.has(id) ? ["related"] : ["dimmed"];
+  }
+  for (const id of edgeIds) {
+    if (id === selectedElementId) states[id] = ["selected"];
+    else states[id] = relatedEdges.has(id) ? ["related"] : ["dimmed"];
+  }
+
+  return states;
+}
+
 export function OntologyGraphCanvas({
   data,
   adapterOptions,
@@ -60,6 +104,7 @@ export function OntologyGraphCanvas({
   behaviors = DEFAULT_BEHAVIORS,
   plugins,
   focusedElementId,
+  selectedElementId,
   onNodeSelect,
   onEdgeSelect,
   onCanvasClick,
@@ -100,6 +145,38 @@ export function OntologyGraphCanvas({
       autoResize: true,
       behaviors,
       plugins,
+      node: {
+        state: {
+          selected: {
+            lineWidth: 3,
+            stroke: "#1f64e7",
+            halo: true,
+            haloStroke: "#1f64e7",
+          },
+          related: {
+            lineWidth: 2,
+            stroke: "#1f64e7",
+          },
+          dimmed: {
+            opacity: 0.22,
+          },
+        },
+      },
+      edge: {
+        state: {
+          selected: {
+            lineWidth: 3,
+            stroke: "#1f64e7",
+          },
+          related: {
+            lineWidth: 2,
+            stroke: "#1f64e7",
+          },
+          dimmed: {
+            opacity: 0.16,
+          },
+        },
+      },
     });
 
     graphRef.current = graph;
@@ -131,6 +208,13 @@ export function OntologyGraphCanvas({
     graph.setLayout(layout);
     void graph.render();
   }, [behaviors, graphData, layout, plugins]);
+
+  useEffect(() => {
+    const graph = graphRef.current;
+    if (!graph) return;
+
+    void graph.setElementState(getElementStateMap(graphData, selectedElementId), false);
+  }, [graphData, selectedElementId]);
 
   useEffect(() => {
     const graph = graphRef.current;
