@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
 
 import { parseOntology, type OntologyGraphData, type OntologyParseOptions } from "../core";
-import { OntologyDetailPanel, OntologyGraphCanvas, type OntologyDetailItem } from "../react";
+import type { OntologyG6LayoutMode } from "../g6";
+import {
+  OntologyDetailPanel,
+  OntologyGraphCanvas,
+  OntologyLayoutControl,
+  type OntologyDetailItem,
+} from "../react";
 
 export interface OntologyVizSource {
   url: string;
@@ -77,6 +83,7 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
     normalizedDefaultSource ? { status: "loading" } : { status: "idle" },
   );
   const [selection, setSelection] = useState<SelectionState>();
+  const [layoutMode, setLayoutMode] = useState<OntologyG6LayoutMode>("force-atlas2");
 
   const detailItem = useMemo<OntologyDetailItem | undefined>(() => {
     if (loadState.status !== "ready" || !selection) return undefined;
@@ -170,10 +177,12 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
               <span>边 {loadState.data.edges.length}</span>
               {selection && <span>{selection.type} {selection.id}</span>}
             </div>
+            <OntologyLayoutControl value={layoutMode} onChange={setLayoutMode} />
             <ImportButton onChange={handleImport} />
           </header>
           <OntologyGraphCanvas
             data={loadState.data}
+            layoutMode={layoutMode}
             onNodeSelect={(id) => setSelection({ type: "node", id })}
             onEdgeSelect={(id) => setSelection({ type: "edge", id })}
             onCanvasClick={() => setSelection(undefined)}

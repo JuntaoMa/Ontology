@@ -458,3 +458,41 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - 在 `apps/ontology-viz` 目录执行 `node_modules/.bin/vite build`，构建通过。
 - `rg -n "@antv/g6|@xyflow/react|d3-force|@dagrejs/dagre" packages/ontology-viz/src/react/OntologyDetailPanel.tsx` 无匹配。
 - 当前构建产物主 JS chunk 约 `1.91 MB`，仍需后续做 code split 或 manualChunks。
+
+### 阶段 6：布局切换控件
+
+状态：已实现并验证。
+
+目标：
+
+- 新增可复用的布局切换控件。
+- standalone app 支持在 ForceAtlas2、D3 Force、AntV Dagre 之间切换。
+- 布局切换只改变 `OntologyGraphCanvas` 的 `layoutMode`，实际布局仍由 G6 内置布局执行。
+
+范围：
+
+- `OntologyLayoutControl` 放在 `@ontology/viz/react`。
+- 控件接收当前布局值和 `onChange` 回调。
+- standalone app 在顶栏展示布局控件。
+- 默认布局仍为 ForceAtlas2。
+
+不在本阶段做：
+
+- 不保存用户布局偏好。
+- 不保存节点坐标。
+- 不增加布局参数编辑。
+- 不实现自定义布局算法。
+
+验收标准：
+
+- 切换控件不 import 官方 `@antv/g6` runtime、React Flow、D3 Force 或 Dagre。
+- `OntologyVizApp` 将 layout mode 传给 `OntologyGraphCanvas`。
+- 包内类型检查和 app 构建通过。
+
+验证记录：
+
+- `packages/ontology-viz/node_modules/.bin/tsc --noEmit -p packages/ontology-viz/tsconfig.json`
+- `apps/ontology-viz/node_modules/.bin/tsc -b apps/ontology-viz/tsconfig.json`
+- 在 `apps/ontology-viz` 目录执行 `node_modules/.bin/vite build`，构建通过。
+- `rg -n "from ['\"](@antv/g6|@xyflow/react|d3-force|@dagrejs/dagre)" packages/ontology-viz/src/react/OntologyLayoutControl.tsx` 无匹配。
+- `OntologyVizApp` 持有 `layoutMode` state，并传给 `OntologyGraphCanvas`。
