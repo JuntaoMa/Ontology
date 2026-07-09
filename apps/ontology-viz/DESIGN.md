@@ -926,3 +926,39 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - `rg -n "localStorage|VIEW_PREFERENCES|sourceKeyFromFile|hashContent" packages/ontology-viz/src/react packages/ontology-viz/src/components/OntologyVizApp.tsx packages/ontology-viz/src/g6` 只命中 `OntologyVizApp.tsx`。
 - `OntologyVizApp` 在加载默认 URL 或导入文件时读取偏好，并在当前本体 ready 后保存 `layoutMode` 和 `adapterOptions`。
 - 导入文件的偏好 key 使用文件名和内容 hash，不再依赖 UI 展示 label。
+
+### 阶段 18：删除旧可视化样式
+
+状态：已实现并验证。
+
+目标：
+
+- 删除 React Flow、旧 3GPP/NPD 卡片、旧 provenance panel 和旧 toolbar 的样式残留。
+- 让组件包样式只覆盖当前 G6-first 实现实际使用的 `ontology-viz-*` 类。
+- 降低 CSS 体积和后续误用旧组件样式的风险。
+
+范围：
+
+- 重建 `src/styles/index.css`。
+- 保留当前 app shell、导入按钮、G6 canvas、详情面板、布局控件、搜索框、视觉设置弹窗和 tooltip 样式。
+- 删除 `.explicit-*`、`.mapping-*`、`.prov-*`、`.ontology-node*` 和 `.react-flow*` 相关规则。
+
+不在本阶段做：
+
+- 不调整 React 组件结构。
+- 不重设计视觉风格。
+- 不删除 parser 或 core 兼容类型。
+
+验收标准：
+
+- 源码中未使用的旧样式前缀从 CSS 中移除。
+- 当前 TSX 使用的 class 仍有样式覆盖。
+- 包内类型检查和 app 构建通过。
+
+验证记录：
+
+- `wc -l packages/ontology-viz/src/styles/index.css` 从 1964 行降到 540 行。
+- `rg -n "explicit-|mapping-|prov-|ontology-node|react-flow" packages/ontology-viz/src/styles/index.css` 无匹配。
+- `pnpm run typecheck`
+- `pnpm run build`
+- Vite CSS 产物从约 `31 kB` 降到 `8.86 kB`。
