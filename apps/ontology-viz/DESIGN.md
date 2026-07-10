@@ -1258,3 +1258,56 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - 首次 `npm pack --dry-run --json` 因本机 `~/.npm` 中历史 root 所有权缓存文件返回 EPERM；没有使用 sudo 或修改用户目录，改用隔离临时 cache 后完成同一 dry-run。
 - `npm pack --dry-run --json --cache /tmp/ontology-viz-npm-cache` 成功：tarball 约 38.2 KB，解包约 178.4 KB，共 79 个文件。
 - dry-run 文件清单只包含 `package.json`、`README.md` 和 `dist/**`；root/core/g6/react/standalone 的 JS 与 `.d.ts`、`dist/styles.css` 均存在，未包含 src、scripts、apps、设计文档、测试文件或数据集。
+
+### 阶段 25：Web App 内置 NPD 默认本体
+
+状态：已实现并验证。
+
+问题：
+
+- `OntologyVizApp` 已支持 `defaultSource`，但仓库 app 仅在设置 `VITE_ONTOLOGY_SOURCE_URL` 时传入；默认启动只显示文件导入空状态。
+- 这不满足独立 Web App 的“默认本体加载”职责，也不满足当前以 NPD 作为默认测试对象的产品要求。
+- NPD 下载目录被 `.gitignore` 排除，新环境克隆仓库后不能依赖 `datasets/` 中的本地文件。
+
+目标：
+
+- 静态 Web App 构建产物自带 NPD 本体，首次打开即可进入真实图谱。
+- NPD 只属于 standalone app 的默认内容，不进入 npm package，也不向 core/G6/react 引入数据集规则。
+- 保留部署时通过环境变量替换默认本体的能力。
+
+范围：
+
+- 将 `npd-v2-ql.owl` 作为 app public asset 纳入版本控制和 Vite 静态构建。
+- 将 NPD benchmark 的 Apache-2.0 许可证副本随 app public asset 分发。
+- 对上游 OWL 文件设置精确路径的 Git whitespace 例外，保留原始字节与校验和；其他项目文件仍使用默认 whitespace 检查。
+- app 未配置 `VITE_ONTOLOGY_SOURCE_URL` 时使用 `import.meta.env.BASE_URL` 下的 bundled NPD；配置后仍优先使用环境 URL。
+- bundled NPD 使用稳定 storage key，使同一本体在不同部署路径下共享同一份视图偏好语义。
+- 更新 app README，说明默认 NPD 和环境覆盖方式。
+
+不在本阶段做：
+
+- 不把 NPD 文件放入 `@ontology/viz` npm tarball。
+- 不在 parser、G6 adapter 或 React 组件中加入 NPD 专用逻辑。
+- 不修改 NPD 本体内容或许可证文本。
+- 不下载其他 NPD benchmark 数据到 app 构建。
+
+验收标准：
+
+- app 无环境变量时 `defaultSource` 指向 bundled `npd-v2-ql.owl`，有环境变量时使用配置 URL。
+- `vite build` 产物包含 NPD OWL 与许可证，OWL 文件 SHA-256 与已下载原件一致。
+- app/package 类型检查和生产构建通过。
+- npm dry-run tarball 仍不包含 NPD、datasets 或 app public 资产。
+- package/core/G6/react 源码中不出现 NPD 数据集分支或字段规则。
+
+验证记录：
+
+- 原始 `datasets/npd-benchmark/ontology/npd-v2-ql.owl` 与 `apps/ontology-viz/public/npd-v2-ql.owl` 的 SHA-256 均为 `0436de7c28f8fb8a0392dbe808d63d6f1be4dc6da9ee1500ecf0f1952e6e783a`。
+- 原始 NPD benchmark `LICENSE` 与 `apps/ontology-viz/public/NPD-LICENSE.txt` 的 SHA-256 均为 `6dc0e068dcf3a5bc8e054205b85b7720e1d49265bbc64bf515d2cf79197df69a`，确认许可证文本未修改。
+- app 默认 source 使用 `${import.meta.env.BASE_URL}npd-v2-ql.owl` 和稳定 key `bundled:npd-v2-ql`；设置 `VITE_ONTOLOGY_SOURCE_URL` 时仍优先使用环境 URL。
+- `packages/ontology-viz/node_modules/.bin/tsc --noEmit -p packages/ontology-viz/tsconfig.json`
+- `apps/ontology-viz/node_modules/.bin/tsc -b apps/ontology-viz/tsconfig.json`
+- 在 `apps/ontology-viz` 执行 `node_modules/.bin/vite build`，1388 个模块转换和生产构建成功；既有 G6/vendor chunk 告警不属于本阶段。
+- build 后 `dist/npd-v2-ql.owl` 与 public 原件 SHA-256 一致，`dist/NPD-LICENSE.txt` 与 public 许可证 SHA-256 一致；静态 app dist 总大小约 3.8 MB。
+- 编译后的 app 入口包含 `url: "./npd-v2-ql.owl"` 和 `storageKey: "bundled:npd-v2-ql"`。
+- 使用隔离 cache 再次执行 npm dry-run 并解析清单，结果为 `entryCount: 79`、`size: 38216`、`hasNpd: false`、`unexpected: []`，确认 npm 包不携带 app NPD 资产。
+- `rg -n "npd|NPD" packages/ontology-viz/src packages/ontology-viz/package.json packages/ontology-viz/README.md` 无匹配，组件包仍保持数据集无关。

@@ -9,11 +9,11 @@ cd apps/ontology-viz
 pnpm dev
 ```
 
-The app opens an import screen by default.
+The app opens the bundled NPD ontology by default. The Apache-2.0 license for the NPD benchmark asset is included in `public/NPD-LICENSE.txt`.
 
-## Optional Default Source
+## Override Default Source
 
-To preload an ontology file from a URL:
+To use another ontology URL instead of the bundled NPD file:
 
 ```bash
 VITE_ONTOLOGY_SOURCE_URL=/path/to/ontology.owl pnpm dev
