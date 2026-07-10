@@ -1336,3 +1336,28 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - `git check-ignore -v .pnpm-store/test` 返回 `.gitignore:6:.pnpm-store/`。
 - `git diff --check` 通过。
 - `git status --short` 只显示本阶段两个待提交文件和用户已有 `docs/g6-research/`，没有 `.pnpm-store/`、dist、node_modules 或临时测试文件。
+
+### 阶段 27：G6-first 重写完成性审计
+
+状态：已实现并验证。
+
+审计结论：
+
+- **Spec 驱动**：阶段 1 至 26 均先记录目标、范围、不做事项与验收标准，再实现并回写验证；最终检索没有“设计完成，待实现”、TODO 或 FIXME。
+- **独立提交**：审计前设计文档有 26 个“已实现并验证”阶段，分支相对 main 恰好有 26 个提交；每个 core、G6、React、standalone、构建或清理功能独立提交。
+- **G6-first**：源码不再包含 React Flow、旧 D3 Force/Dagre 依赖或自研 edge handle/path；G6 Graph runtime 和位置/状态/聚焦 API 只由低层 `OntologyGraphCanvas` 调用，G6 adapter 层只提供数据、布局和插件配置。
+- **通用边界**：core、G6、React 与 npm package 中没有 NPD、3GPP 或其他数据集字段规则；NPD 仅作为独立 Web App 的 public 默认资产。
+- **宿主可控**：低层画布、搜索、详情、设置和布局控件不访问 localStorage/IndexedDB；文件导入、最近打开和本地偏好只位于 standalone。
+- **交付形态**：静态 Web App 默认加载 bundled NPD；npm package 提供 root/core/g6/react/standalone/styles 六个 exports，`private: false`，tarball 白名单有效。
+
+最终验证：
+
+- 使用 package 本地 TypeScript 二进制重建 `packages/ontology-viz/dist` 成功。
+- package 源码类型检查与 app TypeScript build 均通过。
+- Vite 生产构建通过，转换 1388 个模块；主 app chunk 约 32.29 kB。G6/vendor chunk 超过 500 kB 的警告仍存在，但已经独立分块，不影响功能或发布。
+- NPD public 与 app dist OWL SHA-256 均为 `0436de7c28f8fb8a0392dbe808d63d6f1be4dc6da9ee1500ecf0f1952e6e783a`；许可证 public/dist 校验和一致。
+- 六个 package exports 全部解析到 `dist`，对应 JS、`.d.ts` 与 CSS 文件均存在。
+- npm dry-run：79 个文件、约 38.2 KB，required entry 缺失为 0，unexpected 文件为 0，dataset/app 资产为 0。
+- 旧图谱库、legacy API、旧样式前缀、package 数据集耦合和低层存储访问检索均无匹配。
+- 阶段 21 曾在浏览器完整验证 StrictMode、最近打开、D3 Force/ForceAtlas2、搜索、聚焦、一跳高亮和详情，控制台 error/warn 为 0；之后浏览器策略禁止继续访问该 localhost，后续阶段使用等价哈希、类型、dist、tarball 和生产构建证据，没有尝试绕过策略。
+- 最终 tracked worktree 无未提交改动；仅保留任务开始前已有且未触碰的 `docs/g6-research/` 未跟踪目录。
