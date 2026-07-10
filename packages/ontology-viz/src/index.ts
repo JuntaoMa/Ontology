@@ -1,16 +1,15 @@
 /**
  * @ontology/viz — Ontology visualization component library
  *
- * Generic, domain-neutral React components for importing,
- * configuring, and visualizing OWL/RDF ontology graphs.
+ * Generic, domain-neutral modules for parsing, adapting,
+ * and visualizing OWL/RDF ontology graphs.
  *
  * ## Quick start
  *
  * ```ts
- * import { OntologyVizApp } from "@ontology/viz";
- * import "@ontology/viz/styles";
- *
- * // Then render <OntologyVizApp />
+ * import { parseOntology } from "@ontology/viz/core";
+ * import { OntologyGraphCanvas } from "@ontology/viz/react";
+ * import { OntologyVizApp } from "@ontology/viz/standalone";
  * ```
  */
 
@@ -44,6 +43,3 @@ export {
   getExplicitOntologyFieldValues,
   parseExplicitOntology,
 } from "./lib/explicitOntologyParser";
-
-export { OntologyVizApp } from "./components/OntologyVizApp";
-export type { OntologyVizAppProps, OntologyVizSource } from "./components/OntologyVizApp";

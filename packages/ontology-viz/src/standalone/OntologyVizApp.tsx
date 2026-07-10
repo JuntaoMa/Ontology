@@ -25,14 +25,14 @@ import {
   type OntologyDetailItem,
   type OntologySearchOption,
 } from "../react";
-import { RecentOntologyMenu } from "../standalone/RecentOntologyMenu";
+import { RecentOntologyMenu } from "./RecentOntologyMenu";
 import {
   listRecentOntologies,
   loadRecentOntology,
   rememberRecentFile,
   rememberRecentUrl,
   touchRecentOntology,
-} from "../standalone/recentOntologyStore";
+} from "./recentOntologyStore";
 
 export interface OntologyVizSource {
   url: string;

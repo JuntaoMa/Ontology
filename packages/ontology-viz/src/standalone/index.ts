@@ -1,2 +1,2 @@
-export { OntologyVizApp } from "../components/OntologyVizApp";
-export type { OntologyVizAppProps, OntologyVizSource } from "../components/OntologyVizApp";
+export { OntologyVizApp } from "./OntologyVizApp";
+export type { OntologyVizAppProps, OntologyVizSource } from "./OntologyVizApp";

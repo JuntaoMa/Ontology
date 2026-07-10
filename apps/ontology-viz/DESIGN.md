@@ -1104,3 +1104,55 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - 搜索并选择 `AppraisalWellbore` 后，G6 聚焦、选择状态、一跳高亮和浮动详情均正常；关闭详情清除选择后控制台仍无错误。
 - 浏览器截图确认修复后 NPD 节点、边、标签和 minimap 均正常绘制，画布非空。
 - `rg -n "enableWorker|setElementState|focusElement|renderRevision|setTimeout|graph\\.render" packages/ontology-viz/src/g6/layouts.ts packages/ontology-viz/src/react/OntologyGraphCanvas.tsx` 确认 worker 关闭、render revision 和 ready 后状态/聚焦调用均已落在 G6 adapter/画布边界内。
+
+### 阶段 22：standalone 源码与公开出口收敛
+
+状态：已实现并验证。
+
+问题：
+
+- 完整 Web App 壳仍位于通用命名的 `src/components/OntologyVizApp.tsx`，而最近打开存储和菜单已经位于 `src/standalone`，源码所有权被拆散。
+- package root 仍导出 `OntologyVizApp`，仓库内实际应用也从 package root 导入；消费者容易在未明确选择 standalone 的情况下依赖文件导入、最近打开、顶栏和 localStorage 策略。
+- `@ontology/viz/standalone` 当前只是跨目录转发，不是完整 app 壳的真实模块边界。
+
+目标：
+
+- 让完整 Web App 壳及其专用存储/UI 都归属于 standalone 源码目录。
+- 让 standalone app 的使用必须显式选择 `@ontology/viz/standalone`。
+- 保持 `core`、`g6`、`react` 和 package root 的可嵌入能力不依赖 standalone。
+
+范围：
+
+- 将 `OntologyVizApp.tsx` 移到 `src/standalone`，修正同目录及跨层 import。
+- `src/standalone/index.ts` 从同目录导出 `OntologyVizApp` 及其公开类型。
+- 仓库内 Web App 改从 `@ontology/viz/standalone` 导入。
+- package root 删除 `OntologyVizApp` 及其类型导出，并更新入口注释，避免推荐错误的 quick start。
+- 删除迁移后空置的 `src/components` 路径。
+
+不在本阶段做：
+
+- 不改变 `OntologyVizApp` props、加载流程、UI 或存储行为。
+- 不删除 legacy `ExplicitOntology*` API；该兼容层另立阶段处理。
+- 不改变 package exports map 或构建方式。
+- 不拆成多个 npm package。
+
+验收标准：
+
+- `@ontology/viz/standalone` 仍导出 `OntologyVizApp`、`OntologyVizAppProps`、`OntologyVizSource`。
+- app 源码只从 `@ontology/viz/standalone` 导入完整应用壳。
+- package root 和 `@ontology/viz/react` 不导出 `OntologyVizApp`。
+- `src/components/OntologyVizApp.tsx` 不再存在。
+- 最近打开、默认 URL、文件导入和 G6 画布行为不变。
+- 包内类型检查和 app 构建通过。
+
+验证记录：
+
+- `packages/ontology-viz/node_modules/.bin/tsc --noEmit -p packages/ontology-viz/tsconfig.json`
+- 使用 package 本地 TypeScript 二进制执行 `packages/ontology-viz/scripts/build.mjs`，重新生成 ESM、类型声明和 CSS dist。
+- `apps/ontology-viz/node_modules/.bin/tsc -b apps/ontology-viz/tsconfig.json`
+- 在 `apps/ontology-viz` 执行 `node_modules/.bin/vite build`，生产构建通过；主 app chunk 约 32.34 kB，既有 G6/vendor 大 chunk 告警不属于本阶段。
+- 在 app 目录执行 `import.meta.resolve`，package root 和 `@ontology/viz/standalone` 分别解析到 `dist/index.js` 与 `dist/standalone/index.js`。
+- `dist/index.js` / `dist/index.d.ts` 和 `src/index.ts` 均不再导出 `OntologyVizApp`；standalone 的源码与 dist index 仍导出 app 及两个公开类型。
+- 原文件与迁移后文件的逐行 diff 只有两处同目录 import 路径变化，确认 app 壳内部运行逻辑未改动。
+- `rg -n "export \\{ OntologyVizApp|export type \\{ OntologyVizAppProps|components/OntologyVizApp|from ['\\\"]@ontology/viz['\\\"]" packages/ontology-viz/src packages/ontology-viz/dist --glob '!*.map' apps/ontology-viz/src` 只命中 standalone index；仓库 app 已显式从 `@ontology/viz/standalone` 导入。
+- 最后的 localhost 浏览器重载被当前浏览器安全策略拒绝，未尝试绕过；迁移前阶段 21 已完成完整运行回归，本阶段以未改运行逻辑的文件 diff、类型检查、dist 检查和生产构建作为验收证据。
