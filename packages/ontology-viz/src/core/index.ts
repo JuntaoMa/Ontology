@@ -1,8 +1,5 @@
 export type {
-  OntologyCardConfig,
-  OntologyColorMode,
   OntologyEdge,
-  OntologyEdgeConfig,
   OntologyEdgeKind,
   OntologyEntity,
   OntologyEntityKind,
@@ -10,11 +7,9 @@ export type {
   OntologyFieldKind,
   OntologyGraphData,
   OntologyLayoutPosition,
-  OntologyLayoutMode,
   OntologyLayoutSnapshot,
   OntologyParseOptions,
   OntologyValue,
-  OntologyVisualConfig,
 } from "./types";
 
 export {

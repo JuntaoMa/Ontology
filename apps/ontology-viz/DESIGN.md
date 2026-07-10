@@ -1156,3 +1156,54 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - 原文件与迁移后文件的逐行 diff 只有两处同目录 import 路径变化，确认 app 壳内部运行逻辑未改动。
 - `rg -n "export \\{ OntologyVizApp|export type \\{ OntologyVizAppProps|components/OntologyVizApp|from ['\\\"]@ontology/viz['\\\"]" packages/ontology-viz/src packages/ontology-viz/dist --glob '!*.map' apps/ontology-viz/src` 只命中 standalone index；仓库 app 已显式从 `@ontology/viz/standalone` 导入。
 - 最后的 localhost 浏览器重载被当前浏览器安全策略拒绝，未尝试绕过；迁移前阶段 21 已完成完整运行回归，本阶段以未改运行逻辑的文件 diff、类型检查、dist 检查和生产构建作为验收证据。
+
+### 阶段 23：移除 legacy ExplicitOntology core 兼容层
+
+状态：已实现并验证。
+
+问题：
+
+- `src/core/types.ts` 只把 `ExplicitOntology*` 类型逐一改名导出，真正的数据模型仍位于 `src/lib/explicitOntologyTypes.ts`。
+- `src/core/parseOntology.ts` 只转发 `parseExplicitOntology` 和四个 `getExplicitOntology*` helper，真正的 parser 仍位于 legacy `lib`。
+- package root 继续公开全部 `ExplicitOntology*` 类型和函数，保留了本项目已经不需要的兼容面。
+- legacy types 中的 card/visual/layout 配置属于已删除的卡片式 viewer，没有任何当前源码消费者，并且与现行 G6 adapter options 不一致。
+
+目标：
+
+- 让 `@ontology/viz/core` 直接拥有通用本体数据模型和解析实现。
+- 删除无调用方的 legacy API 与旧视觉配置 schema，避免两套命名和两套配置概念继续并存。
+- 保持 OWL/RDF/XML/Turtle 的显式类型解析规则和输出结构不变，不增加类型推断。
+
+范围：
+
+- 将通用实体、边、字段、值、图数据、解析选项和布局快照类型直接定义在 `core/types.ts`。
+- 将 parser 与字段 helper 实现迁入 `core/parseOntology.ts`，统一使用 `Ontology*` 命名。
+- 删除 `src/lib/explicitOntologyTypes.ts`、`src/lib/explicitOntologyParser.ts` 及迁移后空置的 `src/lib` 路径。
+- package root 删除 legacy `ExplicitOntology*` 类型和函数导出，只保留现代 core/G6/React 聚合出口。
+- 删除无调用方的 `OntologyCardConfig`、`OntologyColorMode`、`OntologyEdgeConfig`、`OntologyLayoutMode`、`OntologyVisualConfig`。
+
+不在本阶段做：
+
+- 不改变 entity/edge kind、字段内容、edge 构造或 label/description 选择顺序。
+- 不增加 OWL 推理、blank node 展开或 parser 格式。
+- 不修改 G6 adapter、React 组件或 standalone UI。
+- 不提供 legacy deprecated alias；当前版本尚未正式发布，优先保持 API 简洁。
+
+验收标准：
+
+- `packages/ontology-viz/src` 和生成的 `dist` 不再包含 `ExplicitOntology`、`parseExplicitOntology`、`explicitOntology*`。
+- `@ontology/viz/core` 继续导出当前实际使用的 `Ontology*` 数据类型、layout snapshot、parser 和字段 helper。
+- 同一 Turtle 输入在重构前后得到完全相同的序列化图数据。
+- NPD app 类型检查和生产构建通过。
+- package root、core、G6、React 和 standalone subpath 均仍能生成类型声明。
+
+验证记录：
+
+- 重构前将覆盖 Class、ObjectProperty、DatatypeProperty、AnnotationProperty、subClassOf、subPropertyOf、domain/range、label/comment 的 Turtle fixture 完整图数据序列化并计算 SHA-256，得到 `38359ea6f38087c98e04d08588015552cd62ecd43841d5b5a9c9cc5012127a98`。
+- 迁移后使用同一 fixture 调用 `parseOntology`，SHA-256 仍为 `38359ea6f38087c98e04d08588015552cd62ecd43841d5b5a9c9cc5012127a98`；两次结果均为 6 个实体、9 条边、6 个字段，四类实体统计完全一致。临时测试入口验证后已删除。
+- `packages/ontology-viz/node_modules/.bin/tsc --noEmit -p packages/ontology-viz/tsconfig.json`
+- 使用 package 本地 TypeScript 二进制执行 `packages/ontology-viz/scripts/build.mjs`，dist 重建成功。
+- `apps/ontology-viz/node_modules/.bin/tsc -b apps/ontology-viz/tsconfig.json`
+- 在 `apps/ontology-viz` 执行 `node_modules/.bin/vite build`，1388 个模块转换和生产构建成功；既有 G6/vendor chunk 体积告警不属于本阶段。
+- `rg -n "ExplicitOntology|explicitOntology|parseExplicit|getExplicit|OntologyCardConfig|OntologyVisualConfig|OntologyLayoutMode" packages/ontology-viz/src apps/ontology-viz/src` 无匹配。
+- 对生成的 `packages/ontology-viz/dist` 执行同样的 legacy API 检索无匹配；`dist/lib` 不再存在，`dist/core/parseOntology.js`、`dist/core/types.d.ts` 及各 subpath 类型声明仍存在。
