@@ -1052,3 +1052,55 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - 最近打开菜单使用 `popover="auto"` 和 `popoverTarget`；再次点击触发器可关闭菜单，未增加 document 级 outside-click 监听。
 - 实际页面截图确认菜单项的 label 与相对打开时间在同一行显示，时间列不会被 label 挤压。
 - `rg -n "recentOntology|RecentOntology|localStorage|indexedDB|popoverTarget|popover=" packages/ontology-viz/src/core packages/ontology-viz/src/g6 packages/ontology-viz/src/react packages/ontology-viz/src/components packages/ontology-viz/src/standalone` 显示最近存储和菜单实现只位于 standalone 文件及其 app 组合入口。
+
+### 阶段 21：G6 渲染生命周期收敛
+
+状态：已实现并验证。
+
+问题与根因：
+
+- ForceAtlas2 配置启用了 `enableWorker`，但 G6 5.1.1 在默认布局动画路径中向 layout options 注入 `onTick` 函数；函数无法通过 Web Worker 的 structured clone，实际运行每次都报 `DataCloneError` 后回退主线程。
+- React StrictMode 首次挂载会执行一次 effect setup/cleanup 探测。当前 render effect 立即调用异步 `graph.render()`，创建 effect 的 cleanup 随后销毁 Graph，G6 的 `prepare()` 微任务继续访问已销毁实例，产生 `The graph instance has been destroyed` 和 `draw` 未定义错误。
+- element state 和 focus effect 不等待当前数据 render 完成，会在元素尚未绘制或新一轮 render 进行中调用 G6 API。
+
+目标：
+
+- 消除正常挂载、StrictMode 重挂载、最近打开重载时的 G6 worker 回退和已销毁实例错误。
+- 保持 G6 负责布局、绘制、状态和聚焦，React 层只协调调用时序。
+- 不引入自定义布局 worker、图元素渲染器或 Graph API 替代实现。
+
+范围：
+
+- ForceAtlas2 明确关闭当前不兼容的 worker 路径；这与当前报错后回退主线程的实际执行路径一致。
+- render effect 延迟到下一个 task 启动，使 StrictMode 的探测 cleanup 可以在 `graph.render()` 调用前取消任务。
+- 用递增 render revision 区分当前 render 与已经失效的异步结果。
+- 只有当前 Graph、当前 revision 完成 render 后，才应用布局快照、元素状态、聚焦和布局快照回调。
+- selection/focus 更新发生在画布 ready 后时仍直接调用 G6 API；render 期间的更新由 render 完成回调读取最新 ref 后统一应用。
+- Graph cleanup 使所有旧 revision 失效，并避免异步回调继续操作已销毁实例。
+
+不在本阶段做：
+
+- 不重新实现 Web Worker 布局协议。
+- 不更换 G6 或 `@antv/layout` 版本。
+- 不改变 ForceAtlas2 参数、节点尺寸、边样式或布局结果语义。
+- 不处理 G6 bundle 体积告警。
+- 不调整 standalone 最近打开行为。
+
+验收标准：
+
+- `createG6LayoutOptions("force-atlas2")` 不再启用当前不兼容的 worker。
+- `setElementState` 和 `focusElement` 不会在当前 graph data render 完成前执行。
+- StrictMode 初次加载和最近记录重新打开后，控制台不再出现 worker structured-clone、graph destroyed 或 `draw` 未定义错误。
+- NPD 画布仍正常渲染，搜索聚焦、点击选择、一跳高亮和布局快照仍可使用。
+- 包内类型检查和 app 构建通过。
+
+验证记录：
+
+- `pnpm run typecheck`
+- `pnpm run build`
+- 检查当前依赖源码确认：`@antv/layout` 在 `enableWorker` 时通过 structured clone 传递 options，而 G6 5.1.1 的动画布局路径会注入 `onTick` 函数；显式关闭该路径与原先报错后回退主线程的实际执行方式一致。
+- 全新浏览器标签页执行“空状态 → 最近打开 → NPD”后，画布恢复到 785 个节点、776 条边，控制台 error/warn 为 0。
+- 在同一会话中执行 D3 Force → ForceAtlas2，强制走无坐标快照的 ForceAtlas2 布局；等待布局完成后控制台 error/warn 仍为 0，不再出现 worker `DataCloneError`。
+- 搜索并选择 `AppraisalWellbore` 后，G6 聚焦、选择状态、一跳高亮和浮动详情均正常；关闭详情清除选择后控制台仍无错误。
+- 浏览器截图确认修复后 NPD 节点、边、标签和 minimap 均正常绘制，画布非空。
+- `rg -n "enableWorker|setElementState|focusElement|renderRevision|setTimeout|graph\\.render" packages/ontology-viz/src/g6/layouts.ts packages/ontology-viz/src/react/OntologyGraphCanvas.tsx` 确认 worker 关闭、render revision 和 ready 后状态/聚焦调用均已落在 G6 adapter/画布边界内。

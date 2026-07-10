@@ -154,6 +154,11 @@ function readLayoutSnapshot(graph: Graph, data: GraphData): OntologyLayoutSnapsh
   return Object.keys(nodes).length > 0 ? { nodes, updatedAt: Date.now() } : undefined;
 }
 
+function hasGraphElement(data: GraphData, id: string) {
+  return (data.nodes ?? []).some((node) => node.id === id)
+    || (data.edges ?? []).some((edge) => edge.id === id);
+}
+
 export function OntologyGraphCanvas({
   data,
   adapterOptions,
@@ -174,6 +179,10 @@ export function OntologyGraphCanvas({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const graphRef = useRef<Graph | null>(null);
   const graphDataRef = useRef<GraphData>({ nodes: [], edges: [] });
+  const renderRevisionRef = useRef(0);
+  const completedRenderRevisionRef = useRef(0);
+  const selectedElementIdRef = useRef(selectedElementId);
+  const focusedElementIdRef = useRef(focusedElementId);
   const callbacksRef = useRef({
     onNodeSelect,
     onEdgeSelect,
@@ -189,6 +198,8 @@ export function OntologyGraphCanvas({
     onLayoutSnapshotChange,
     onGraphReady,
   };
+  selectedElementIdRef.current = selectedElementId;
+  focusedElementIdRef.current = focusedElementId;
 
   const baseGraphData = useMemo<GraphData>(
     () => toG6GraphData(data, adapterOptions),
@@ -275,8 +286,10 @@ export function OntologyGraphCanvas({
     callbacksRef.current.onGraphReady?.(graph);
 
     return () => {
+      renderRevisionRef.current += 1;
+      completedRenderRevisionRef.current = 0;
+      if (graphRef.current === graph) graphRef.current = null;
       graph.destroy();
-      graphRef.current = null;
     };
   }, [behaviors, plugins]);
 
@@ -284,33 +297,103 @@ export function OntologyGraphCanvas({
     const graph = graphRef.current;
     if (!graph) return;
 
-    graph.setData(graphData);
-    graph.setLayout(layout);
-    void graph.render().then(() => {
-      if (usesLayoutSnapshot && layoutSnapshot) {
-        void graph.translateElementTo(toG6Positions(layoutSnapshot), false);
-        return;
-      }
+    const revision = renderRevisionRef.current + 1;
+    renderRevisionRef.current = revision;
+    completedRenderRevisionRef.current = 0;
+    let cancelled = false;
 
-      const snapshot = readLayoutSnapshot(graph, graphData);
-      if (snapshot) callbacksRef.current.onLayoutSnapshotChange?.(snapshot);
-    });
-  }, [behaviors, graphData, layout, plugins]);
+    const timeoutId = window.setTimeout(() => {
+      if (cancelled || graph.destroyed || graphRef.current !== graph) return;
+
+      void (async () => {
+        const isCurrentRender = () => (
+          !cancelled
+          && !graph.destroyed
+          && graphRef.current === graph
+          && renderRevisionRef.current === revision
+        );
+
+        graph.setData(graphData);
+        graph.setLayout(layout);
+        await graph.render();
+        if (!isCurrentRender()) return;
+
+        if (usesLayoutSnapshot && layoutSnapshot) {
+          await graph.translateElementTo(toG6Positions(layoutSnapshot), false);
+          if (!isCurrentRender()) return;
+        }
+
+        let appliedSelectedId: string | undefined;
+        do {
+          appliedSelectedId = selectedElementIdRef.current;
+          await graph.setElementState(getElementStateMap(graphData, appliedSelectedId), false);
+          if (!isCurrentRender()) return;
+        } while (selectedElementIdRef.current !== appliedSelectedId);
+
+        completedRenderRevisionRef.current = revision;
+
+        const focusedId = focusedElementIdRef.current;
+        if (focusedId && hasGraphElement(graphData, focusedId)) {
+          await graph.focusElement(focusedId, {
+            duration: 300,
+            easing: "ease-in-out",
+          });
+          if (!isCurrentRender()) return;
+        }
+
+        if (!usesLayoutSnapshot) {
+          const snapshot = readLayoutSnapshot(graph, graphData);
+          if (snapshot) callbacksRef.current.onLayoutSnapshotChange?.(snapshot);
+        }
+      })().catch((error) => {
+        if (!cancelled && !graph.destroyed && graphRef.current === graph) {
+          console.error("[OntologyViz] Failed to render graph", error);
+        }
+      });
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [behaviors, graphData, layout, layoutSnapshot, plugins, usesLayoutSnapshot]);
 
   useEffect(() => {
     const graph = graphRef.current;
-    if (!graph) return;
+    if (
+      !graph
+      || graph.destroyed
+      || completedRenderRevisionRef.current !== renderRevisionRef.current
+    ) {
+      return;
+    }
 
-    void graph.setElementState(getElementStateMap(graphData, selectedElementId), false);
+    void graph.setElementState(getElementStateMap(graphData, selectedElementId), false).catch((error) => {
+      if (!graph.destroyed && graphRef.current === graph) {
+        console.error("[OntologyViz] Failed to update element state", error);
+      }
+    });
   }, [graphData, selectedElementId]);
 
   useEffect(() => {
     const graph = graphRef.current;
-    if (!graph || !focusedElementId) return;
+    if (
+      !graph
+      || graph.destroyed
+      || !focusedElementId
+      || !hasGraphElement(graphDataRef.current, focusedElementId)
+      || completedRenderRevisionRef.current !== renderRevisionRef.current
+    ) {
+      return;
+    }
 
     void graph.focusElement(focusedElementId, {
       duration: 300,
       easing: "ease-in-out",
+    }).catch((error) => {
+      if (!graph.destroyed && graphRef.current === graph) {
+        console.error("[OntologyViz] Failed to focus element", error);
+      }
     });
   }, [focusedElementId]);
 

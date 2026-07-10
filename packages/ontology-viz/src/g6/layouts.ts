@@ -57,6 +57,6 @@ export function createG6LayoutOptions(
     linLog: true,
     barnesHut: true,
     prune: true,
-    enableWorker: true,
+    enableWorker: false,
   };
 }
