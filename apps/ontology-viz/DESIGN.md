@@ -962,3 +962,43 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - `pnpm run typecheck`
 - `pnpm run build`
 - Vite CSS 产物从约 `31 kB` 降到 `8.86 kB`。
+
+### 阶段 19：布局坐标快照
+
+状态：已实现并验证。
+
+目标：
+
+- 保存并恢复同一本体的节点坐标快照。
+- 使用 G6 `getElementPosition` 和 `translateElementTo` 读写位置，不自己实现布局算法。
+- 坐标快照作为通用图谱能力暴露给宿主，standalone app 只负责按 source key 持久化。
+
+范围：
+
+- 新增 `OntologyLayoutSnapshot` 类型。
+- `OntologyGraphCanvas` 接收 `layoutSnapshot`，并在 G6 render 后应用快照。
+- `OntologyGraphCanvas` 在首次布局完成和节点拖拽结束后回调 `onLayoutSnapshotChange`。
+- standalone app 将快照保存到当前本体的 view preferences。
+- 切换布局模式时清空旧快照，让 G6 重新布局并生成新快照。
+
+不在本阶段做：
+
+- 不保存 viewport pan/zoom。
+- 不实现手动“保存布局”按钮。
+- 不实现后端布局存储。
+- 不在 app 中直接调用 G6 图实例。
+
+验收标准：
+
+- 画布使用 G6 位置 API 读写坐标。
+- standalone app 不直接 import `Graph` 或调用 G6 实例方法。
+- 低层画布不访问 localStorage。
+- 包内类型检查和 app 构建通过。
+
+验证记录：
+
+- `pnpm run typecheck`
+- `pnpm run build`
+- `rg -n "localStorage|VIEW_PREFERENCES|sourceKeyFromFile|hashContent" packages/ontology-viz/src/react packages/ontology-viz/src/components/OntologyVizApp.tsx packages/ontology-viz/src/g6` 只命中 `OntologyVizApp.tsx`。
+- `rg -n "getElementPosition|translateElementTo|onLayoutSnapshotChange|layoutSnapshot|OntologyLayoutSnapshot" packages/ontology-viz/src/react packages/ontology-viz/src/components/OntologyVizApp.tsx packages/ontology-viz/src/core` 显示 G6 坐标 API 只在 `OntologyGraphCanvas`，app 只传入和保存快照。
+- `rg -n "@antv/g6|Graph\\b|getElementPosition|translateElementTo" packages/ontology-viz/src/components/OntologyVizApp.tsx packages/ontology-viz/src/react/OntologyVisualSettings.tsx` 无匹配。

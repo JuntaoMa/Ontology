@@ -6,7 +6,7 @@ import {
   type CSSProperties,
 } from "react";
 
-import type { OntologyGraphData } from "../core";
+import type { OntologyGraphData, OntologyLayoutPosition, OntologyLayoutSnapshot } from "../core";
 import {
   createG6LayoutOptions,
   toG6GraphData,
@@ -32,11 +32,13 @@ export interface OntologyGraphCanvasProps {
   style?: CSSProperties;
   behaviors?: GraphOptions["behaviors"];
   plugins?: GraphOptions["plugins"];
+  layoutSnapshot?: OntologyLayoutSnapshot;
   focusedElementId?: string;
   selectedElementId?: string;
   onNodeSelect?: (id: string) => void;
   onEdgeSelect?: (id: string) => void;
   onCanvasClick?: () => void;
+  onLayoutSnapshotChange?: (snapshot: OntologyLayoutSnapshot) => void;
   onGraphReady?: (graph: Graph) => void;
 }
 
@@ -95,6 +97,63 @@ function getElementStateMap(data: GraphData, selectedElementId?: string) {
   return states;
 }
 
+function getSnapshotPosition(snapshot: OntologyLayoutSnapshot | undefined, id: unknown) {
+  return typeof id === "string" ? snapshot?.nodes[id] : undefined;
+}
+
+function hasCompleteLayoutSnapshot(data: GraphData, snapshot?: OntologyLayoutSnapshot) {
+  const nodes = data.nodes ?? [];
+  return nodes.length > 0 && nodes.every((node) => !!getSnapshotPosition(snapshot, node.id));
+}
+
+function withLayoutSnapshot(data: GraphData, snapshot?: OntologyLayoutSnapshot): GraphData {
+  if (!snapshot) return data;
+  return {
+    ...data,
+    nodes: data.nodes?.map((node) => {
+      const position = getSnapshotPosition(snapshot, node.id);
+      if (!position) return node;
+      return {
+        ...node,
+        style: {
+          ...node.style,
+          x: position.x,
+          y: position.y,
+          z: position.z,
+        },
+      };
+    }),
+  };
+}
+
+function toG6Position(position: OntologyLayoutPosition): [number, number] | [number, number, number] {
+  return typeof position.z === "number" ? [position.x, position.y, position.z] : [position.x, position.y];
+}
+
+function toG6Positions(snapshot: OntologyLayoutSnapshot) {
+  return Object.fromEntries(
+    Object.entries(snapshot.nodes).map(([id, position]) => [id, toG6Position(position)]),
+  );
+}
+
+function readLayoutSnapshot(graph: Graph, data: GraphData): OntologyLayoutSnapshot | undefined {
+  const nodes: Record<string, OntologyLayoutPosition> = {};
+  for (const node of data.nodes ?? []) {
+    if (typeof node.id !== "string") continue;
+    try {
+      const point = Array.from(graph.getElementPosition(node.id));
+      const [x, y, z] = point;
+      if (Number.isFinite(x) && Number.isFinite(y)) {
+        nodes[node.id] = typeof z === "number" && Number.isFinite(z) ? { x, y, z } : { x, y };
+      }
+    } catch {
+      // The element may be filtered out or not drawn yet.
+    }
+  }
+
+  return Object.keys(nodes).length > 0 ? { nodes, updatedAt: Date.now() } : undefined;
+}
+
 export function OntologyGraphCanvas({
   data,
   adapterOptions,
@@ -103,19 +162,23 @@ export function OntologyGraphCanvas({
   style,
   behaviors = DEFAULT_BEHAVIORS,
   plugins,
+  layoutSnapshot,
   focusedElementId,
   selectedElementId,
   onNodeSelect,
   onEdgeSelect,
   onCanvasClick,
+  onLayoutSnapshotChange,
   onGraphReady,
 }: OntologyGraphCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const graphRef = useRef<Graph | null>(null);
+  const graphDataRef = useRef<GraphData>({ nodes: [], edges: [] });
   const callbacksRef = useRef({
     onNodeSelect,
     onEdgeSelect,
     onCanvasClick,
+    onLayoutSnapshotChange,
     onGraphReady,
   });
 
@@ -123,17 +186,30 @@ export function OntologyGraphCanvas({
     onNodeSelect,
     onEdgeSelect,
     onCanvasClick,
+    onLayoutSnapshotChange,
     onGraphReady,
   };
 
-  const graphData = useMemo<GraphData>(
+  const baseGraphData = useMemo<GraphData>(
     () => toG6GraphData(data, adapterOptions),
     [adapterOptions, data],
   );
-  const layout = useMemo<NonNullable<GraphOptions["layout"]>>(
-    () => createG6LayoutOptions(layoutMode, adapterOptions?.nodeSize) as NonNullable<GraphOptions["layout"]>,
-    [adapterOptions?.nodeSize, layoutMode],
+  const usesLayoutSnapshot = useMemo(
+    () => hasCompleteLayoutSnapshot(baseGraphData, layoutSnapshot),
+    [baseGraphData, layoutSnapshot],
   );
+  const graphData = useMemo<GraphData>(
+    () => usesLayoutSnapshot ? withLayoutSnapshot(baseGraphData, layoutSnapshot) : baseGraphData,
+    [baseGraphData, layoutSnapshot, usesLayoutSnapshot],
+  );
+  const layout = useMemo<NonNullable<GraphOptions["layout"]>>(
+    () => usesLayoutSnapshot
+      ? { type: "grid", nodeFilter: () => false }
+      : createG6LayoutOptions(layoutMode, adapterOptions?.nodeSize) as NonNullable<GraphOptions["layout"]>,
+    [adapterOptions?.nodeSize, layoutMode, usesLayoutSnapshot],
+  );
+
+  graphDataRef.current = graphData;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -191,6 +267,10 @@ export function OntologyGraphCanvas({
     graph.on(CanvasEvent.CLICK, () => {
       callbacksRef.current.onCanvasClick?.();
     });
+    graph.on(NodeEvent.DRAG_END, () => {
+      const snapshot = readLayoutSnapshot(graph, graphDataRef.current);
+      if (snapshot) callbacksRef.current.onLayoutSnapshotChange?.(snapshot);
+    });
 
     callbacksRef.current.onGraphReady?.(graph);
 
@@ -206,7 +286,15 @@ export function OntologyGraphCanvas({
 
     graph.setData(graphData);
     graph.setLayout(layout);
-    void graph.render();
+    void graph.render().then(() => {
+      if (usesLayoutSnapshot && layoutSnapshot) {
+        void graph.translateElementTo(toG6Positions(layoutSnapshot), false);
+        return;
+      }
+
+      const snapshot = readLayoutSnapshot(graph, graphData);
+      if (snapshot) callbacksRef.current.onLayoutSnapshotChange?.(snapshot);
+    });
   }, [behaviors, graphData, layout, plugins]);
 
   useEffect(() => {

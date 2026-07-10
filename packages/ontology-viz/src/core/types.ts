@@ -30,3 +30,14 @@ export type OntologyCardConfig = ExplicitOntologyCardConfig;
 export type OntologyEdgeConfig = ExplicitOntologyEdgeConfig;
 export type OntologyVisualConfig = ExplicitOntologyVisualConfig;
 export type OntologyParseOptions = ExplicitOntologyParseOptions;
+
+export interface OntologyLayoutPosition {
+  x: number;
+  y: number;
+  z?: number;
+}
+
+export interface OntologyLayoutSnapshot {
+  nodes: Record<string, OntologyLayoutPosition>;
+  updatedAt?: number;
+}

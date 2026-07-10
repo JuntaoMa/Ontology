@@ -5,6 +5,8 @@ import {
   parseOntology,
   type OntologyEntityKind,
   type OntologyGraphData,
+  type OntologyLayoutPosition,
+  type OntologyLayoutSnapshot,
   type OntologyParseOptions,
 } from "../core";
 import {
@@ -48,6 +50,7 @@ type SelectionState =
 interface OntologyViewPreferences {
   layoutMode?: OntologyG6LayoutMode;
   adapterOptions?: OntologyG6AdapterOptions;
+  layoutSnapshot?: OntologyLayoutSnapshot;
 }
 
 const DEFAULT_LAYOUT_MODE: OntologyG6LayoutMode = "force-atlas2";
@@ -126,6 +129,26 @@ function normalizeAdapterOptions(value: unknown): OntologyG6AdapterOptions | und
   return options;
 }
 
+function normalizeLayoutSnapshot(value: unknown): OntologyLayoutSnapshot | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const record = value as Record<string, unknown>;
+  if (!record.nodes || typeof record.nodes !== "object") return undefined;
+
+  const nodes: Record<string, OntologyLayoutPosition> = {};
+  for (const [id, rawPosition] of Object.entries(record.nodes as Record<string, unknown>)) {
+    if (!rawPosition || typeof rawPosition !== "object") continue;
+    const position = rawPosition as Record<string, unknown>;
+    if (typeof position.x !== "number" || typeof position.y !== "number") continue;
+    nodes[id] = typeof position.z === "number"
+      ? { x: position.x, y: position.y, z: position.z }
+      : { x: position.x, y: position.y };
+  }
+
+  return Object.keys(nodes).length > 0
+    ? { nodes, updatedAt: typeof record.updatedAt === "number" ? record.updatedAt : undefined }
+    : undefined;
+}
+
 function loadViewPreferences(sourceKey: string): OntologyViewPreferences {
   const storage = getLocalStorage();
   if (!storage) return {};
@@ -137,6 +160,7 @@ function loadViewPreferences(sourceKey: string): OntologyViewPreferences {
     return {
       layoutMode: isLayoutMode(parsed.layoutMode) ? parsed.layoutMode : undefined,
       adapterOptions: normalizeAdapterOptions(parsed.adapterOptions),
+      layoutSnapshot: normalizeLayoutSnapshot(parsed.layoutSnapshot),
     };
   } catch {
     return {};
@@ -158,9 +182,11 @@ function applyViewPreferences(
   preferences: OntologyViewPreferences,
   setLayoutMode: (value: OntologyG6LayoutMode) => void,
   setAdapterOptions: (value: OntologyG6AdapterOptions) => void,
+  setLayoutSnapshot: (value: OntologyLayoutSnapshot | undefined) => void,
 ) {
   setLayoutMode(preferences.layoutMode ?? DEFAULT_LAYOUT_MODE);
   setAdapterOptions(preferences.adapterOptions ?? {});
+  setLayoutSnapshot(preferences.layoutSnapshot);
 }
 
 function ImportButton({ onChange }: { onChange: (event: ChangeEvent<HTMLInputElement>) => void }) {
@@ -193,6 +219,7 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
   const [focusedElementId, setFocusedElementId] = useState<string>();
   const [layoutMode, setLayoutMode] = useState<OntologyG6LayoutMode>(DEFAULT_LAYOUT_MODE);
   const [adapterOptions, setAdapterOptions] = useState<OntologyG6AdapterOptions>({});
+  const [layoutSnapshot, setLayoutSnapshot] = useState<OntologyLayoutSnapshot>();
   const graphPlugins = useMemo(() => createG6StandalonePlugins(), []);
 
   const searchOptions = useMemo<OntologySearchOption[]>(() => {
@@ -246,7 +273,12 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
         };
         if (!cancelled) {
           const sourceKey = sourceKeyFromSource(source);
-          applyViewPreferences(loadViewPreferences(sourceKey), setLayoutMode, setAdapterOptions);
+          applyViewPreferences(
+            loadViewPreferences(sourceKey),
+            setLayoutMode,
+            setAdapterOptions,
+            setLayoutSnapshot,
+          );
           setLoadState({
             status: "ready",
             data: parseOntology(content, parseOptions),
@@ -281,7 +313,12 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
         contentType: contentTypeFromName(file.name),
         ontologyTitleFallback: titleFromPath(file.name),
       };
-      applyViewPreferences(loadViewPreferences(sourceKey), setLayoutMode, setAdapterOptions);
+      applyViewPreferences(
+        loadViewPreferences(sourceKey),
+        setLayoutMode,
+        setAdapterOptions,
+        setLayoutSnapshot,
+      );
       setLoadState({
         status: "ready",
         data: parseOntology(content, parseOptions),
@@ -304,8 +341,14 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
     saveViewPreferences(loadState.sourceKey, {
       layoutMode,
       adapterOptions,
+      layoutSnapshot,
     });
-  }, [adapterOptions, layoutMode, loadState]);
+  }, [adapterOptions, layoutMode, layoutSnapshot, loadState]);
+
+  const handleLayoutModeChange = useCallback((value: OntologyG6LayoutMode) => {
+    setLayoutMode(value);
+    setLayoutSnapshot(undefined);
+  }, []);
 
   if (loadState.status === "ready") {
     return (
@@ -328,7 +371,7 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
                 setFocusedElementId(id);
               }}
             />
-            <OntologyLayoutControl value={layoutMode} onChange={setLayoutMode} />
+            <OntologyLayoutControl value={layoutMode} onChange={handleLayoutModeChange} />
             <OntologyVisualSettings
               value={adapterOptions}
               availableEntityKinds={availableEntityKinds}
@@ -341,10 +384,12 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
             adapterOptions={adapterOptions}
             layoutMode={layoutMode}
             plugins={graphPlugins}
+            layoutSnapshot={layoutSnapshot}
             focusedElementId={focusedElementId}
             selectedElementId={selection?.id}
             onNodeSelect={(id) => setSelection({ type: "node", id })}
             onEdgeSelect={(id) => setSelection({ type: "edge", id })}
+            onLayoutSnapshotChange={setLayoutSnapshot}
             onCanvasClick={() => {
               setSelection(undefined);
               setFocusedElementId(undefined);
