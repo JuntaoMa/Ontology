@@ -25,6 +25,14 @@ import {
   type OntologyDetailItem,
   type OntologySearchOption,
 } from "../react";
+import { RecentOntologyMenu } from "../standalone/RecentOntologyMenu";
+import {
+  listRecentOntologies,
+  loadRecentOntology,
+  rememberRecentFile,
+  rememberRecentUrl,
+  touchRecentOntology,
+} from "../standalone/recentOntologyStore";
 
 export interface OntologyVizSource {
   url: string;
@@ -97,6 +105,10 @@ function hashContent(content: string) {
 
 function sourceKeyFromFile(file: File, content: string) {
   return `file:${file.name}:${hashContent(content)}`;
+}
+
+function ontologyLabel(data: OntologyGraphData, fallback: string) {
+  return data.ontologyTitle?.trim() || fallback;
 }
 
 function getLocalStorage() {
@@ -220,6 +232,8 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
   const [layoutMode, setLayoutMode] = useState<OntologyG6LayoutMode>(DEFAULT_LAYOUT_MODE);
   const [adapterOptions, setAdapterOptions] = useState<OntologyG6AdapterOptions>({});
   const [layoutSnapshot, setLayoutSnapshot] = useState<OntologyLayoutSnapshot>();
+  const [recentEntries, setRecentEntries] = useState(listRecentOntologies);
+  const [loadingRecentId, setLoadingRecentId] = useState<string>();
   const graphPlugins = useMemo(() => createG6StandalonePlugins(), []);
 
   const searchOptions = useMemo<OntologySearchOption[]>(() => {
@@ -248,59 +262,71 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
       .map(([kind]) => kind as OntologyEntityKind);
   }, [loadState]);
 
+  const refreshRecentEntries = useCallback(() => {
+    setRecentEntries(listRecentOntologies());
+  }, []);
+
+  const commitOntology = useCallback((
+    content: string,
+    parseOptions: OntologyParseOptions,
+    sourceKey: string,
+  ) => {
+    const data = parseOntology(content, parseOptions);
+    applyViewPreferences(
+      loadViewPreferences(sourceKey),
+      setLayoutMode,
+      setAdapterOptions,
+      setLayoutSnapshot,
+    );
+    setLoadState({ status: "ready", data, sourceKey });
+    setSelection(undefined);
+    setFocusedElementId(undefined);
+    return data;
+  }, []);
+
+  const loadUrlSource = useCallback(async (
+    source: OntologyVizSource,
+    signal?: AbortSignal,
+  ) => {
+    setLoadState({ status: "loading" });
+    try {
+      const response = await fetch(source.url, { signal });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${source.url}: ${response.status}`);
+      }
+      const content = await response.text();
+      if (signal?.aborted) return;
+
+      const parseOptions: OntologyParseOptions = {
+        ...source.parseOptions,
+        contentType: source.parseOptions?.contentType
+          ?? contentTypeFromResponse(response.headers.get("content-type"), source.url),
+        ontologyTitleFallback: source.parseOptions?.ontologyTitleFallback
+          ?? titleFromPath(source.url),
+      };
+      const sourceKey = sourceKeyFromSource(source);
+      const data = commitOntology(content, parseOptions, sourceKey);
+      rememberRecentUrl(sourceKey, ontologyLabel(data, titleFromPath(source.url)), source);
+      refreshRecentEntries();
+    } catch (error) {
+      if (signal?.aborted) return;
+      setLoadState({
+        status: "error",
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }, [commitOntology, refreshRecentEntries]);
+
   useEffect(() => {
     if (!normalizedDefaultSource) {
       setLoadState((current) => current.status === "loading" ? { status: "idle" } : current);
       return;
     }
 
-    const source = normalizedDefaultSource;
-    let cancelled = false;
-    async function load() {
-      setLoadState({ status: "loading" });
-      try {
-        const response = await fetch(source.url);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch ${source.url}: ${response.status}`);
-        }
-        const content = await response.text();
-        const parseOptions: OntologyParseOptions = {
-          ...source.parseOptions,
-          contentType: source.parseOptions?.contentType
-            ?? contentTypeFromResponse(response.headers.get("content-type"), source.url),
-          ontologyTitleFallback: source.parseOptions?.ontologyTitleFallback
-            ?? titleFromPath(source.url),
-        };
-        if (!cancelled) {
-          const sourceKey = sourceKeyFromSource(source);
-          applyViewPreferences(
-            loadViewPreferences(sourceKey),
-            setLayoutMode,
-            setAdapterOptions,
-            setLayoutSnapshot,
-          );
-          setLoadState({
-            status: "ready",
-            data: parseOntology(content, parseOptions),
-            sourceKey,
-          });
-          setSelection(undefined);
-          setFocusedElementId(undefined);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setLoadState({
-            status: "error",
-            message: error instanceof Error ? error.message : String(error),
-          });
-        }
-      }
-    }
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [normalizedDefaultSource]);
+    const controller = new AbortController();
+    void loadUrlSource(normalizedDefaultSource, controller.signal);
+    return () => controller.abort();
+  }, [loadUrlSource, normalizedDefaultSource]);
 
   const handleImport = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
@@ -313,19 +339,15 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
         contentType: contentTypeFromName(file.name),
         ontologyTitleFallback: titleFromPath(file.name),
       };
-      applyViewPreferences(
-        loadViewPreferences(sourceKey),
-        setLayoutMode,
-        setAdapterOptions,
-        setLayoutSnapshot,
-      );
-      setLoadState({
-        status: "ready",
-        data: parseOntology(content, parseOptions),
+      const data = commitOntology(content, parseOptions, sourceKey);
+      void rememberRecentFile(
         sourceKey,
+        ontologyLabel(data, titleFromPath(file.name)),
+        content,
+        parseOptions,
+      ).then((saved) => {
+        if (saved) refreshRecentEntries();
       });
-      setSelection(undefined);
-      setFocusedElementId(undefined);
     } catch (error) {
       setLoadState({
         status: "error",
@@ -334,7 +356,35 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
     } finally {
       event.currentTarget.value = "";
     }
-  }, []);
+  }, [commitOntology, refreshRecentEntries]);
+
+  const handleOpenRecent = useCallback(async (id: string) => {
+    setLoadingRecentId(id);
+    setLoadState({ status: "loading" });
+    try {
+      const recent = await loadRecentOntology(id);
+      if (!recent) {
+        refreshRecentEntries();
+        throw new Error("无法读取这个最近打开的本体");
+      }
+      if (recent.kind === "url") {
+        await loadUrlSource(recent.source);
+        return;
+      }
+
+      const parseOptions: OntologyParseOptions = recent.parseOptions ?? {};
+      const data = commitOntology(recent.content, parseOptions, recent.entry.id);
+      touchRecentOntology(recent.entry.id, ontologyLabel(data, recent.entry.label));
+      refreshRecentEntries();
+    } catch (error) {
+      setLoadState({
+        status: "error",
+        message: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setLoadingRecentId(undefined);
+    }
+  }, [commitOntology, loadUrlSource, refreshRecentEntries]);
 
   useEffect(() => {
     if (loadState.status !== "ready") return;
@@ -376,6 +426,11 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
               value={adapterOptions}
               availableEntityKinds={availableEntityKinds}
               onChange={setAdapterOptions}
+            />
+            <RecentOntologyMenu
+              entries={recentEntries}
+              loadingId={loadingRecentId}
+              onOpen={(id) => void handleOpenRecent(id)}
             />
             <ImportButton onChange={handleImport} />
           </header>
@@ -420,10 +475,26 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
           <>
             <h2>加载失败</h2>
             <p>{loadState.message}</p>
-            <ImportButton onChange={handleImport} />
+            <div className="ontology-viz-app-state__actions">
+              <RecentOntologyMenu
+                entries={recentEntries}
+                loadingId={loadingRecentId}
+                onOpen={(id) => void handleOpenRecent(id)}
+              />
+              <ImportButton onChange={handleImport} />
+            </div>
           </>
         )}
-        {loadState.status === "idle" && <ImportButton onChange={handleImport} />}
+        {loadState.status === "idle" && (
+          <div className="ontology-viz-app-state__actions">
+            <RecentOntologyMenu
+              entries={recentEntries}
+              loadingId={loadingRecentId}
+              onOpen={(id) => void handleOpenRecent(id)}
+            />
+            <ImportButton onChange={handleImport} />
+          </div>
+        )}
       </div>
     </div>
   );

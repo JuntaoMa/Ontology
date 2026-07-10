@@ -1002,3 +1002,53 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - `rg -n "localStorage|VIEW_PREFERENCES|sourceKeyFromFile|hashContent" packages/ontology-viz/src/react packages/ontology-viz/src/components/OntologyVizApp.tsx packages/ontology-viz/src/g6` 只命中 `OntologyVizApp.tsx`。
 - `rg -n "getElementPosition|translateElementTo|onLayoutSnapshotChange|layoutSnapshot|OntologyLayoutSnapshot" packages/ontology-viz/src/react packages/ontology-viz/src/components/OntologyVizApp.tsx packages/ontology-viz/src/core` 显示 G6 坐标 API 只在 `OntologyGraphCanvas`，app 只传入和保存快照。
 - `rg -n "@antv/g6|Graph\\b|getElementPosition|translateElementTo" packages/ontology-viz/src/components/OntologyVizApp.tsx packages/ontology-viz/src/react/OntologyVisualSettings.tsx` 无匹配。
+
+### 阶段 20：standalone 最近打开
+
+状态：已实现并验证。
+
+目标：
+
+- standalone app 记录最近成功打开的本体，并允许用户直接再次打开。
+- 列表展示本体解析后的 label，不暴露内部 storage key、内容 hash 或完整文件路径。
+- 本地文件记录必须可恢复实际内容，不能只保存一个浏览器无法再次读取的文件名。
+- 最近打开的存储和 UI 保留在 standalone 层，不进入 core、G6 adapter 或低层 React 画布。
+
+范围：
+
+- URL 来源保存可重新请求的 URL、可选 storage key、解析选项和最后打开时间。
+- 本地文件的列表元数据保存在 localStorage，文件正文保存在 IndexedDB，避免大文件占满 localStorage。
+- 最近记录以 source key 去重，按最后打开时间倒序排列，最多保留 8 条。
+- 新增 standalone 专用的最近打开菜单，使用浏览器原生 Popover API 获得再次点击、点击空白和 Escape 自动关闭能力。
+- 菜单项的 label 和打开时间保持单行；label 超出可用宽度时在尾部淡化，时间保持完整可见。
+- 默认 URL、本地导入和最近打开复用同一套解析、偏好恢复和 ready-state 提交流程。
+- localStorage 或 IndexedDB 不可用、容量不足时不阻断当前本体的正常加载。
+
+不在本阶段做：
+
+- 不请求 File System Access API 持久权限。
+- 不同步到后端或跨浏览器同步。
+- 不增加最近记录搜索、固定、重命名或批量管理。
+- 不把最近打开组件导出到 `@ontology/viz/react`。
+- 不改变 G6 图实例、布局或渲染逻辑。
+
+验收标准：
+
+- 成功加载默认 URL 或导入本地文件后，最近打开列表立即出现对应 label。
+- 同一 source key 重复打开时只更新一条记录的 label 和时间。
+- URL 记录可重新 fetch；本地文件记录可从 IndexedDB 读取正文并重新解析。
+- 菜单使用 `popover` / `popoverTarget`，不手写全局 outside-click 监听。
+- 列表中不显示 `file:*:*`、内容 hash 或完整路径。
+- core、G6 和低层 React 组件不访问最近打开存储。
+- 包内类型检查和 app 构建通过。
+
+验证记录：
+
+- `pnpm run typecheck`
+- `pnpm run build`
+- 浏览器使用 NPD 默认 URL 加载后，最近打开菜单显示解析后的 `npd-v2-ql`，重复打开仍只有 1 条记录。
+- 移除默认 URL 并重启开发服务器后，空状态中的最近打开按钮仍可用；从记录重新打开后恢复到 785 个节点、776 条边的 NPD 画布。
+- 独立端口的临时浏览器测试页调用 `rememberRecentFile` 写入 Turtle 正文，结果为 `saved: true`；随后 `loadRecentOntology` 返回 `kind: "file"`、正文完全一致，并由 `parseOntology` 解析出 1 个实体和 `Local test ontology` 标题。测试页验证后已删除，未进入工作区提交。
+- 最近打开菜单使用 `popover="auto"` 和 `popoverTarget`；再次点击触发器可关闭菜单，未增加 document 级 outside-click 监听。
+- 实际页面截图确认菜单项的 label 与相对打开时间在同一行显示，时间列不会被 label 挤压。
+- `rg -n "recentOntology|RecentOntology|localStorage|indexedDB|popoverTarget|popover=" packages/ontology-viz/src/core packages/ontology-viz/src/g6 packages/ontology-viz/src/react packages/ontology-viz/src/components packages/ontology-viz/src/standalone` 显示最近存储和菜单实现只位于 standalone 文件及其 app 组合入口。

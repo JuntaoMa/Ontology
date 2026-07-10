@@ -48,6 +48,12 @@
   margin: 0;
 }
 
+.ontology-viz-app-state__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .ontology-viz-spinner {
   width: 32px;
   height: 32px;
@@ -108,6 +114,123 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.9;
+}
+
+.ontology-viz-recent {
+  flex: 0 0 auto;
+}
+
+.ontology-viz-recent__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  border: 1px solid #cbd5df;
+  border-radius: 7px;
+  background: var(--ontology-viz-panel);
+  color: #334155;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  anchor-name: --ontology-viz-recent-trigger;
+}
+
+.ontology-viz-recent__trigger:hover {
+  border-color: #1e40af;
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+.ontology-viz-recent__trigger:disabled {
+  border-color: var(--ontology-viz-border);
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: default;
+}
+
+.ontology-viz-recent__trigger svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.ontology-viz-recent__panel {
+  position: fixed;
+  position-anchor: --ontology-viz-recent-trigger;
+  inset: auto;
+  top: anchor(bottom);
+  right: anchor(right);
+  width: min(340px, calc(100vw - 32px));
+  margin: 8px 0 0;
+  overflow: hidden;
+  border: 1px solid var(--ontology-viz-border);
+  border-radius: 8px;
+  background: var(--ontology-viz-panel);
+  box-shadow: var(--ontology-viz-shadow);
+  padding: 6px;
+  color: var(--ontology-viz-text);
+}
+
+.ontology-viz-recent__panel::backdrop {
+  background: transparent;
+}
+
+.ontology-viz-recent__item {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 38px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ontology-viz-text);
+  padding: 8px 9px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ontology-viz-recent__item:hover {
+  background: var(--ontology-viz-bg);
+}
+
+.ontology-viz-recent__item:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.ontology-viz-recent__label {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.3;
+  white-space: nowrap;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent 100%);
+}
+
+.ontology-viz-recent__item time {
+  color: var(--ontology-viz-muted);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+@supports not (position-anchor: --ontology-viz-recent-trigger) {
+  .ontology-viz-recent__panel {
+    top: 64px;
+    right: 16px;
+  }
 }
 
 .ontology-viz-standalone {
