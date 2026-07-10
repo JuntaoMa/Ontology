@@ -1311,3 +1311,28 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - 编译后的 app 入口包含 `url: "./npd-v2-ql.owl"` 和 `storageKey: "bundled:npd-v2-ql"`。
 - 使用隔离 cache 再次执行 npm dry-run 并解析清单，结果为 `entryCount: 79`、`size: 38216`、`hasNpd: false`、`unexpected: []`，确认 npm 包不携带 app NPD 资产。
 - `rg -n "npd|NPD" packages/ontology-viz/src packages/ontology-viz/package.json packages/ontology-viz/README.md` 无匹配，组件包仍保持数据集无关。
+
+### 阶段 26：忽略 workspace pnpm store
+
+状态：已实现并验证。
+
+问题：
+
+- 当前 `.gitignore` 忽略 `node_modules/`，但 pnpm 在受限环境运行时可能在仓库根生成 `.pnpm-store/`。
+- 该目录是可再生依赖缓存，不属于源码；此前验证中已多次造成额外未跟踪文件并需要手动清理。
+
+范围：
+
+- 在 dependencies ignore 规则中增加根及子目录适用的 `.pnpm-store/`。
+- 不修改 pnpm store 配置，不删除用户已有的全局缓存。
+
+验收标准：
+
+- `git check-ignore -v .pnpm-store/test` 命中仓库 `.gitignore`。
+- 当前工作区除用户已有 `docs/g6-research/` 外无未跟踪构建或依赖缓存。
+
+验证记录：
+
+- `git check-ignore -v .pnpm-store/test` 返回 `.gitignore:6:.pnpm-store/`。
+- `git diff --check` 通过。
+- `git status --short` 只显示本阶段两个待提交文件和用户已有 `docs/g6-research/`，没有 `.pnpm-store/`、dist、node_modules 或临时测试文件。
