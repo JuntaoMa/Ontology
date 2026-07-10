@@ -1,8 +1,12 @@
 {
   "name": "@ontology/viz",
   "version": "0.1.0",
-  "private": true,
+  "description": "G6-first OWL and RDF ontology visualization components for React",
+  "private": false,
   "type": "module",
+  "sideEffects": [
+    "./dist/styles.css"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [

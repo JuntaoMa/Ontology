@@ -1207,3 +1207,54 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - 在 `apps/ontology-viz` 执行 `node_modules/.bin/vite build`，1388 个模块转换和生产构建成功；既有 G6/vendor chunk 体积告警不属于本阶段。
 - `rg -n "ExplicitOntology|explicitOntology|parseExplicit|getExplicit|OntologyCardConfig|OntologyVisualConfig|OntologyLayoutMode" packages/ontology-viz/src apps/ontology-viz/src` 无匹配。
 - 对生成的 `packages/ontology-viz/dist` 执行同样的 legacy API 检索无匹配；`dist/lib` 不再存在，`dist/core/parseOntology.js`、`dist/core/types.d.ts` 及各 subpath 类型声明仍存在。
+
+### 阶段 24：npm package pack-ready
+
+状态：已实现并验证。
+
+问题：
+
+- `@ontology/viz` 已能生成 dist 和 subpath exports，但 manifest 仍为 `private: true`，无法作为 npm 包发布。
+- package README 只有仓库内构建命令，没有面向使用者的安装入口。
+- CSS export 没有显式声明 side effect，激进 tree-shaking 配置可能错误删除样式导入。
+
+目标：
+
+- 让当前 package 可以被内部或外部 npm registry 正常接收，并能由前端消费者按 subpath 安装使用。
+- 保持 registry、访问级别和许可证由发布环境决定，不在仓库中假设组织策略。
+- 用本地 `npm pack` 检查实际 tarball 文件白名单，不执行 publish。
+
+范围：
+
+- 将 package manifest 设置为 `private: false`，补充简短 description。
+- 将 `dist/styles.css` 标记为 package side effect。
+- README 增加 pnpm/npm 安装命令，并明确 core、g6、react、standalone、styles 五个消费入口。
+- 构建后执行 `npm pack --dry-run --json`，检查 tarball 只包含 manifest、README 和 dist 白名单内容。
+
+不在本阶段做：
+
+- 不执行 `npm publish`，不访问 registry。
+- 不设置 `publishConfig.registry` 或 `publishConfig.access`。
+- 不添加未经项目所有者确认的 license、repository 或 organization metadata。
+- 不 bundle G6、N3 或 React，不改变 dependencies/peerDependencies 关系。
+- 不改变任何运行时代码或 app UI。
+
+验收标准：
+
+- manifest 不再阻止发布，且 CSS 不会被 tree-shaking 当作无副作用模块。
+- README 用户可直接看到 pnpm/npm 安装方式和各 subpath 用途。
+- package、app 类型检查和生产构建通过。
+- dry-run tarball 不包含 `src`、`scripts`、测试数据、apps、design 文档或 workspace 文件。
+- tarball 中存在 package root、core、g6、react、standalone 类型/JS 入口与 `styles.css`。
+
+验证记录：
+
+- manifest 已设置 `private: false` 和 description，并用 `sideEffects: ["./dist/styles.css"]` 保留样式入口；未增加 registry、access 或 license 假设。
+- README 已增加 pnpm/npm 安装命令、React peer 版本提示和五个 package entry point 的用途表。
+- `packages/ontology-viz/node_modules/.bin/tsc --noEmit -p packages/ontology-viz/tsconfig.json`
+- 使用 package 本地 TypeScript 二进制执行 `packages/ontology-viz/scripts/build.mjs`，dist 重建成功。
+- `apps/ontology-viz/node_modules/.bin/tsc -b apps/ontology-viz/tsconfig.json`
+- 在 `apps/ontology-viz` 执行 `node_modules/.bin/vite build`，1388 个模块转换和生产构建成功；既有 G6/vendor chunk 体积告警不属于本阶段。
+- 首次 `npm pack --dry-run --json` 因本机 `~/.npm` 中历史 root 所有权缓存文件返回 EPERM；没有使用 sudo 或修改用户目录，改用隔离临时 cache 后完成同一 dry-run。
+- `npm pack --dry-run --json --cache /tmp/ontology-viz-npm-cache` 成功：tarball 约 38.2 KB，解包约 178.4 KB，共 79 个文件。
+- dry-run 文件清单只包含 `package.json`、`README.md` 和 `dist/**`；root/core/g6/react/standalone 的 JS 与 `.d.ts`、`dist/styles.css` 均存在，未包含 src、scripts、apps、设计文档、测试文件或数据集。

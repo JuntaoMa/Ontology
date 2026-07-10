@@ -2,6 +2,28 @@
 
 G6-first ontology visualization package for parsing OWL/RDF ontology files and embedding graph views in React products.
 
+## Install
+
+```sh
+pnpm add @ontology/viz
+```
+
+```sh
+npm install @ontology/viz
+```
+
+The package expects React and ReactDOM 19 from the host application.
+
+## Package entry points
+
+| Import | Purpose |
+|--------|---------|
+| `@ontology/viz/core` | Ontology data types and OWL/RDF parser |
+| `@ontology/viz/g6` | G6 data adapter, layouts, and plugin options |
+| `@ontology/viz/react` | Embeddable graph canvas and optional React controls |
+| `@ontology/viz/standalone` | Complete app shell with import, recent files, and local preferences |
+| `@ontology/viz/styles` | Component stylesheet |
+
 ## Build
 
 ```sh
