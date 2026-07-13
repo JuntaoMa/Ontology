@@ -7,6 +7,9 @@ import {
 import type { OntologyG6AdapterOptions, OntologyG6GraphData } from "./types";
 
 export const ONTOLOGY_G6_NODE_SIZE = 36;
+export const ONTOLOGY_G6_DEFAULT_SHOW_NODE_LABELS = true;
+export const ONTOLOGY_G6_DEFAULT_SHOW_EDGE_LABELS = false;
+export const ONTOLOGY_G6_DEFAULT_SHOW_EDGE_ARROWS = true;
 
 export const ONTOLOGY_G6_NODE_COLORS: Record<OntologyEntityKind, string> = {
   Class: "#2563eb",
@@ -36,9 +39,9 @@ export function toG6GraphData(
 ): OntologyG6GraphData {
   const visibleKinds = new Set(options.visibleEntityKinds ?? ONTOLOGY_G6_ENTITY_KINDS);
   const nodeSize = options.nodeSize ?? ONTOLOGY_G6_NODE_SIZE;
-  const showNodeLabels = options.showNodeLabels ?? true;
-  const showEdgeLabels = options.showEdgeLabels ?? true;
-  const showEdgeArrows = options.showEdgeArrows ?? true;
+  const showNodeLabels = options.showNodeLabels ?? ONTOLOGY_G6_DEFAULT_SHOW_NODE_LABELS;
+  const showEdgeLabels = options.showEdgeLabels ?? ONTOLOGY_G6_DEFAULT_SHOW_EDGE_LABELS;
+  const showEdgeArrows = options.showEdgeArrows ?? ONTOLOGY_G6_DEFAULT_SHOW_EDGE_ARROWS;
   const nodeColorByKind = {
     ...ONTOLOGY_G6_NODE_COLORS,
     ...options.nodeColorByKind,
@@ -55,12 +58,24 @@ export function toG6GraphData(
     nodes: visibleEntities.map((entity) => ({
       id: entity.id,
       type: "circle",
+      states: [],
       data: { entity },
       style: {
         size: nodeSize,
         fill: nodeColorByKind[entity.kind],
+        fillOpacity: 0.82,
+        stroke: "#ffffff",
+        strokeOpacity: 0.96,
+        lineWidth: 2,
+        cursor: "pointer",
         labelText: showNodeLabels ? getOntologyDefaultLabel(entity) : undefined,
         labelPlacement: "bottom",
+        labelOffsetY: 4,
+        labelFill: "#334155",
+        labelFontSize: 10,
+        labelFontWeight: 600,
+        labelMaxWidth: 120,
+        labelOpacity: 0.72,
       },
     })),
     edges: data.edges
@@ -70,10 +85,17 @@ export function toG6GraphData(
         source: edge.source,
         target: edge.target,
         type: "line",
+        states: [],
         data: { edge },
         style: {
           stroke: edgeColorByKind[edge.kind],
+          strokeOpacity: 0.24,
+          lineWidth: 1,
+          cursor: "pointer",
           labelText: showEdgeLabels ? edge.label : undefined,
+          labelFill: "#475569",
+          labelFontSize: 10,
+          labelOpacity: 0.72,
           endArrow: showEdgeArrows,
         },
       })),

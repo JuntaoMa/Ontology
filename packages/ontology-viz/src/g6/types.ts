@@ -1,4 +1,4 @@
-import type { EdgeData, GraphData, NodeData } from "@antv/g6";
+import type { EdgeData, GraphData, GraphOptions, NodeData } from "@antv/g6";
 
 import type { OntologyEdge, OntologyEdgeKind, OntologyEntity, OntologyEntityKind } from "../core";
 
@@ -52,6 +52,4 @@ export interface OntologyG6AdapterOptions {
   edgeColorByKind?: Partial<Record<OntologyEdgeKind, string>>;
 }
 
-export type OntologyG6LayoutOptions = Record<string, unknown> & {
-  type: OntologyG6LayoutMode;
-};
+export type OntologyG6LayoutOptions = NonNullable<GraphOptions["layout"]>;

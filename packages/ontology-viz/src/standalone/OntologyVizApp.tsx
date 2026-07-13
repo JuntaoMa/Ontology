@@ -38,6 +38,10 @@ export interface OntologyVizSource {
   url: string;
   storageKey?: string;
   parseOptions?: OntologyParseOptions;
+  initialLayout?: {
+    mode: OntologyG6LayoutMode;
+    url: string;
+  };
 }
 
 export interface OntologyVizAppProps {
@@ -59,6 +63,11 @@ interface OntologyViewPreferences {
   layoutMode?: OntologyG6LayoutMode;
   adapterOptions?: OntologyG6AdapterOptions;
   layoutSnapshot?: OntologyLayoutSnapshot;
+}
+
+interface LoadedInitialLayout {
+  layoutMode: OntologyG6LayoutMode;
+  layoutSnapshot: OntologyLayoutSnapshot;
 }
 
 const DEFAULT_LAYOUT_MODE: OntologyG6LayoutMode = "force-atlas2";
@@ -159,6 +168,25 @@ function normalizeLayoutSnapshot(value: unknown): OntologyLayoutSnapshot | undef
   return Object.keys(nodes).length > 0
     ? { nodes, updatedAt: typeof record.updatedAt === "number" ? record.updatedAt : undefined }
     : undefined;
+}
+
+async function loadInitialLayout(
+  source: OntologyVizSource,
+  signal?: AbortSignal,
+): Promise<LoadedInitialLayout | undefined> {
+  if (!source.initialLayout) return undefined;
+
+  try {
+    const response = await fetch(source.initialLayout.url, { signal });
+    if (!response.ok) return undefined;
+    const layoutSnapshot = normalizeLayoutSnapshot(await response.json());
+    return layoutSnapshot
+      ? { layoutMode: source.initialLayout.mode, layoutSnapshot }
+      : undefined;
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    return undefined;
+  }
 }
 
 function loadViewPreferences(sourceKey: string): OntologyViewPreferences {
@@ -270,10 +298,20 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
     content: string,
     parseOptions: OntologyParseOptions,
     sourceKey: string,
+    initialLayout?: LoadedInitialLayout,
   ) => {
     const data = parseOntology(content, parseOptions);
+    const storedPreferences = loadViewPreferences(sourceKey);
+    const layoutMode = storedPreferences.layoutMode ?? initialLayout?.layoutMode;
     applyViewPreferences(
-      loadViewPreferences(sourceKey),
+      {
+        ...storedPreferences,
+        layoutMode,
+        layoutSnapshot: storedPreferences.layoutSnapshot
+          ?? (initialLayout && layoutMode === initialLayout.layoutMode
+            ? initialLayout.layoutSnapshot
+            : undefined),
+      },
       setLayoutMode,
       setAdapterOptions,
       setLayoutSnapshot,
@@ -290,7 +328,10 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
   ) => {
     setLoadState({ status: "loading" });
     try {
-      const response = await fetch(source.url, { signal });
+      const [response, initialLayout] = await Promise.all([
+        fetch(source.url, { signal }),
+        loadInitialLayout(source, signal),
+      ]);
       if (!response.ok) {
         throw new Error(`Failed to fetch ${source.url}: ${response.status}`);
       }
@@ -305,7 +346,7 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
           ?? titleFromPath(source.url),
       };
       const sourceKey = sourceKeyFromSource(source);
-      const data = commitOntology(content, parseOptions, sourceKey);
+      const data = commitOntology(content, parseOptions, sourceKey, initialLayout);
       rememberRecentUrl(sourceKey, ontologyLabel(data, titleFromPath(source.url)), source);
       refreshRecentEntries();
     } catch (error) {
@@ -452,6 +493,11 @@ export function OntologyVizApp({ defaultSource }: OntologyVizAppProps) {
           />
           <OntologyDetailPanel
             item={detailItem}
+            data={loadState.data}
+            onEntitySelect={(id) => {
+              setSelection({ type: "node", id });
+              setFocusedElementId(id);
+            }}
             onClose={() => {
               setSelection(undefined);
               setFocusedElementId(undefined);

@@ -73,6 +73,10 @@ function compactIRI(value: string) {
   return local;
 }
 
+export function getOntologyCompactIRI(value: string) {
+  return compactIRI(value);
+}
+
 function typedElementIRI(element: Element) {
   if (!element.namespaceURI || !element.localName) return undefined;
   if (element.namespaceURI === RDF_XML_NS && element.localName === "Description") return undefined;

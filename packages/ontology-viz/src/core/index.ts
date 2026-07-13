@@ -13,6 +13,7 @@ export type {
 } from "./types";
 
 export {
+  getOntologyCompactIRI,
   getOntologyDefaultDescription,
   getOntologyDefaultLabel,
   getOntologyDisplayValue,

@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 
 import type { OntologyEntityKind } from "../core";
 import {
+  ONTOLOGY_G6_DEFAULT_SHOW_EDGE_ARROWS,
+  ONTOLOGY_G6_DEFAULT_SHOW_EDGE_LABELS,
+  ONTOLOGY_G6_DEFAULT_SHOW_NODE_LABELS,
   ONTOLOGY_G6_ENTITY_KINDS,
   ONTOLOGY_G6_NODE_COLORS,
   type OntologyG6AdapterOptions,
@@ -20,8 +23,8 @@ const ENTITY_KIND_LABELS: Record<OntologyEntityKind, string> = {
   AnnotationProperty: "AnnotationProperty",
 };
 
-function isEnabled(value: boolean | undefined) {
-  return value ?? true;
+function isEnabled(value: boolean | undefined, defaultValue: boolean) {
+  return value ?? defaultValue;
 }
 
 function SettingsIcon() {
@@ -112,7 +115,7 @@ export function OntologyVisualSettings({
             <label className="ontology-viz-settings__toggle">
               <input
                 type="checkbox"
-                checked={isEnabled(value.showNodeLabels)}
+                checked={isEnabled(value.showNodeLabels, ONTOLOGY_G6_DEFAULT_SHOW_NODE_LABELS)}
                 onChange={(event) => patch({ showNodeLabels: event.currentTarget.checked })}
               />
               <span>Node labels</span>
@@ -123,7 +126,7 @@ export function OntologyVisualSettings({
             <label className="ontology-viz-settings__toggle">
               <input
                 type="checkbox"
-                checked={isEnabled(value.showEdgeLabels)}
+                checked={isEnabled(value.showEdgeLabels, ONTOLOGY_G6_DEFAULT_SHOW_EDGE_LABELS)}
                 onChange={(event) => patch({ showEdgeLabels: event.currentTarget.checked })}
               />
               <span>Edge labels</span>
@@ -131,7 +134,7 @@ export function OntologyVisualSettings({
             <label className="ontology-viz-settings__toggle">
               <input
                 type="checkbox"
-                checked={isEnabled(value.showEdgeArrows)}
+                checked={isEnabled(value.showEdgeArrows, ONTOLOGY_G6_DEFAULT_SHOW_EDGE_ARROWS)}
                 onChange={(event) => patch({ showEdgeArrows: event.currentTarget.checked })}
               />
               <span>Edge arrows</span>

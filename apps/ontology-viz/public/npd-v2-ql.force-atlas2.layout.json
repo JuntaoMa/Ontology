@@ -1,0 +1,3144 @@
+{
+  "nodes": {
+    "http://def.seegrid.csiro.au/isotc211/iso19103/2005/basic#amount": {
+      "x": -70.381,
+      "y": -42.637
+    },
+    "http://resource.geosciml.org/ontology/timescale/gts-30#boundaryLevel": {
+      "x": -93.235,
+      "y": 36.075
+    },
+    "http://def.seegrid.csiro.au/isotc211/iso19107/2003/geometry#boundingBox": {
+      "x": 12.943,
+      "y": -103.4
+    },
+    "http://www.w3.org/2004/02/skos/core#changeNote": {
+      "x": -78.635,
+      "y": -459.974
+    },
+    "http://sws.ifi.uio.no/vocab/sql#column": {
+      "x": -108.308,
+      "y": -24.597
+    },
+    "http://sws.ifi.uio.no/vocab/sql#columns": {
+      "x": 88.457,
+      "y": -159.567
+    },
+    "http://sws.ifi.uio.no/vocab/sql#comment": {
+      "x": -82.687,
+      "y": 185.091
+    },
+    "http://resource.geosciml.org/ontology/timescale/gtrs-30#component": {
+      "x": -173.897,
+      "y": -198.671
+    },
+    "http://resource.geosciml.org/ontology/trs-30#component": {
+      "x": 155.354,
+      "y": -63.356
+    },
+    "http://sws.ifi.uio.no/vocab/sql#construction": {
+      "x": -136.835,
+      "y": 72.727
+    },
+    "http://purl.org/dc/elements/1.1/contributor": {
+      "x": 83.276,
+      "y": -207.164
+    },
+    "http://def.seegrid.csiro.au/isotc211/iso19107/2003/geometry#coordinates": {
+      "x": 4.101,
+      "y": 261.668
+    },
+    "http://purl.org/dc/terms/created": {
+      "x": -293.387,
+      "y": -273.03
+    },
+    "http://purl.org/dc/elements/1.1/creator": {
+      "x": 324.94,
+      "y": -135.691
+    },
+    "http://sws.ifi.uio.no/vocab/sql#datatype": {
+      "x": -159.226,
+      "y": 307.466
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#definition": {
+      "x": -133.842,
+      "y": -396.603
+    },
+    "http://www.w3.org/2004/02/skos/core#definition": {
+      "x": -44.021,
+      "y": -479.322
+    },
+    "http://purl.org/dc/elements/1.1/description": {
+      "x": -351.739,
+      "y": -99.737
+    },
+    "http://purl.org/dc/terms/description": {
+      "x": 220.066,
+      "y": -272.674
+    },
+    "http://www.w3.org/2004/02/skos/core#editorialNote": {
+      "x": -62.949,
+      "y": -424.258
+    },
+    "http://resource.geosciml.org/ontology/timescale/gtrs-30#end": {
+      "x": -325.511,
+      "y": -360.762
+    },
+    "http://www.w3.org/2004/02/skos/core#example": {
+      "x": -4.236,
+      "y": -483.381
+    },
+    "http://purl.org/dc/elements/1.1/format": {
+      "x": -294.57,
+      "y": 213.4
+    },
+    "http://def.seegrid.csiro.au/isotc211/iso19108/2006/temporal#frame": {
+      "x": 84.742,
+      "y": -353.984
+    },
+    "http://purl.org/dc/terms/hasVersion": {
+      "x": 156.727,
+      "y": 296.269
+    },
+    "http://www.w3.org/2004/02/skos/core#hiddenLabel": {
+      "x": -290.309,
+      "y": -196.987
+    },
+    "http://www.w3.org/2004/02/skos/core#historyNote": {
+      "x": 32.592,
+      "y": -466.527
+    },
+    "http://purl.org/dc/elements/1.1/identifier": {
+      "x": -142.285,
+      "y": 378.595
+    },
+    "http://xmlns.com/foaf/0.1/isPrimaryTopicOf": {
+      "x": -213.334,
+      "y": -410.594
+    },
+    "http://purl.org/dc/terms/issued": {
+      "x": 391.703,
+      "y": 142.602
+    },
+    "http://sws.ifi.uio.no/vocab/sql#label": {
+      "x": -504.894,
+      "y": 58.069
+    },
+    "http://purl.org/dc/elements/1.1/language": {
+      "x": 259.592,
+      "y": -366.807
+    },
+    "http://resource.geosciml.org/ontology/timescale/gtrs-30#member": {
+      "x": 52.406,
+      "y": 507.587
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#message": {
+      "x": -367.642,
+      "y": -357.49
+    },
+    "http://purl.org/dc/terms/modified": {
+      "x": 454.31,
+      "y": -69.553
+    },
+    "http://resource.geosciml.org/ontology/timescale/gtrs-30#nextEra": {
+      "x": -275.827,
+      "y": 244.234
+    },
+    "http://www.w3.org/2004/02/skos/core#note": {
+      "x": -67.37,
+      "y": -541.957
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#polygonLicenceComment": {
+      "x": 324.496,
+      "y": 294.492
+    },
+    "http://def.seegrid.csiro.au/isotc211/iso19107/2003/geometry#position": {
+      "x": -440.143,
+      "y": -97.109
+    },
+    "http://def.seegrid.csiro.au/isotc211/iso19108/2006/temporal#position": {
+      "x": 438.669,
+      "y": -266.669
+    },
+    "http://resource.geosciml.org/ontology/timescale/gtrs-30#positionalUncertainty": {
+      "x": -102.216,
+      "y": 530.32
+    },
+    "http://resource.geosciml.org/ontology/timescale/gtrs-30#previousEra": {
+      "x": -299.559,
+      "y": -418.998
+    },
+    "http://resource.geosciml.org/ontology/timescale/gts-30#primaryGuidingCriterion": {
+      "x": 447.618,
+      "y": 94.029
+    },
+    "http://purl.org/dc/elements/1.1/publisher": {
+      "x": -552.625,
+      "y": 144.019
+    },
+    "http://purl.org/dc/terms/publisher": {
+      "x": 209.713,
+      "y": -499.602
+    },
+    "http://resource.geosciml.org/ontology/timescale/gts-30#rank": {
+      "x": 164.358,
+      "y": 421.524
+    },
+    "http://resource.geosciml.org/ontology/timescale/gts-30#referencePoint": {
+      "x": -548.193,
+      "y": -305.316
+    },
+    "http://purl.org/dc/terms/replaces": {
+      "x": 479.439,
+      "y": -163.197
+    },
+    "http://purl.org/dc/elements/1.1/rights": {
+      "x": -174.993,
+      "y": 495.954
+    },
+    "http://www.w3.org/2004/02/skos/core#scopeNote": {
+      "x": -90.898,
+      "y": -577.785
+    },
+    "http://def.seegrid.csiro.au/isotc211/iso19156/2011/sampling#shape": {
+      "x": 414.854,
+      "y": 281.71
+    },
+    "http://purl.org/dc/elements/1.1/source": {
+      "x": -669.703,
+      "y": 61.453
+    },
+    "http://def.seegrid.csiro.au/isotc211/iso19107/2003/geometry#srs": {
+      "x": 362.726,
+      "y": -371.518
+    },
+    "http://resource.geosciml.org/ontology/timescale/gtrs-30#start": {
+      "x": 43.007,
+      "y": 610.117
+    },
+    "http://resource.geosciml.org/ontology/timescale/gts-30#status": {
+      "x": -358.079,
+      "y": -399.943
+    },
+    "http://resource.geosciml.org/ontology/timescale/gts-30#stratotype": {
+      "x": 530.472,
+      "y": -15.42
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#surveyProgressDescription": {
+      "x": -493.93,
+      "y": 292.652
+    },
+    "http://resource.geosciml.org/ontology/timescale/gtrs-30#system": {
+      "x": 105.497,
+      "y": -655.951
+    },
+    "http://sws.ifi.uio.no/vocab/sql#table": {
+      "x": 306.739,
+      "y": 352.313
+    },
+    "http://purl.org/dc/elements/1.1/title": {
+      "x": -543.353,
+      "y": -178.453
+    },
+    "http://purl.org/dc/terms/title": {
+      "x": 396.483,
+      "y": -249.448
+    },
+    "http://def.seegrid.csiro.au/isotc211/iso19103/2005/basic#unit": {
+      "x": -118.068,
+      "y": 630.266
+    },
+    "http://def.seegrid.csiro.au/isotc211/iso19108/2006/temporal#value": {
+      "x": -348.953,
+      "y": -468.267
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#AbandonedWell": {
+      "x": -199.722,
+      "y": -354.307
+    },
+    "http://www.opengis.net/ont/gml#AbstractCurveSegment": {
+      "x": -100.391,
+      "y": -370.585
+    },
+    "http://www.opengis.net/ont/gml#AbstractGeometricPrimitive": {
+      "x": -670.712,
+      "y": 122.55
+    },
+    "http://www.opengis.net/ont/gml#AbstractGeometry": {
+      "x": -302.281,
+      "y": -471.51
+    },
+    "http://www.opengis.net/ont/gml#AbstractGriddedSurface": {
+      "x": -653.784,
+      "y": 479.687
+    },
+    "http://www.opengis.net/ont/gml#AbstractParametricCurveSurface": {
+      "x": -286.897,
+      "y": 329.09
+    },
+    "http://www.opengis.net/ont/gml#AbstractSurfacePatch": {
+      "x": 100.273,
+      "y": 14.645
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Agent": {
+      "x": -224.166,
+      "y": -77.927
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#AppraisalWell": {
+      "x": -660.332,
+      "y": -270.53
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#AppraisalWellbore": {
+      "x": 88.904,
+      "y": 131.945
+    },
+    "http://www.opengis.net/ont/gml#Arc": {
+      "x": 428.03,
+      "y": -661.802
+    },
+    "http://www.opengis.net/ont/gml#ArcByBulge": {
+      "x": -471.091,
+      "y": 169.49
+    },
+    "http://www.opengis.net/ont/gml#ArcByCenterPoint": {
+      "x": -240.907,
+      "y": -280.886
+    },
+    "http://www.opengis.net/ont/gml#ArcString": {
+      "x": 203.264,
+      "y": -553.485
+    },
+    "http://www.opengis.net/ont/gml#ArcStringByBulge": {
+      "x": -338.012,
+      "y": -58.518
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Area": {
+      "x": -52.91,
+      "y": -382.22
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#AreaFee": {
+      "x": 262.091,
+      "y": -48.771
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#AssociatedGas": {
+      "x": -416.411,
+      "y": 608.763
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Award": {
+      "x": 265.294,
+      "y": -87.643
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#AwardArea": {
+      "x": 246.132,
+      "y": 330.737
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#BAA": {
+      "x": -20.016,
+      "y": -263.602
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#BAAArea": {
+      "x": -61.662,
+      "y": -634.564
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#BAALicensee": {
+      "x": -400.656,
+      "y": -254.611
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#BAATransfer": {
+      "x": -228.112,
+      "y": -26.225
+    },
+    "http://www.opengis.net/ont/gml#BSpline": {
+      "x": -279.453,
+      "y": -319.36
+    },
+    "http://www.opengis.net/ont/gml#Bezler": {
+      "x": -407.243,
+      "y": -297.725
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Block": {
+      "x": 9.433,
+      "y": -153.495
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#BlowOut": {
+      "x": -211.374,
+      "y": 784.682
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#BlowoutWellbore": {
+      "x": 142.035,
+      "y": 10.677
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ChangeOfCompanyNameTransfer": {
+      "x": -456.533,
+      "y": 300.521
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#ChangedAwardNotification": {
+      "x": -37.618,
+      "y": -751.008
+    },
+    "http://www.opengis.net/ont/gml#Circle": {
+      "x": 512.839,
+      "y": -673.766
+    },
+    "http://www.opengis.net/ont/gml#CircleByCenterPoint": {
+      "x": -353.12,
+      "y": -227.895
+    },
+    "http://www.opengis.net/ont/gml#Clothoid": {
+      "x": -153.662,
+      "y": -439.413
+    },
+    "http://www.w3.org/2004/02/skos/core#Collection": {
+      "x": 984.166,
+      "y": -332.15
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#CommercialDiscovery": {
+      "x": 411.854,
+      "y": 594.497
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Company": {
+      "x": -296.532,
+      "y": 97.825
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#CompanyReserve": {
+      "x": -63.328,
+      "y": 218.951
+    },
+    "http://www.opengis.net/ont/gml#Composite": {
+      "x": -735.077,
+      "y": -273.5
+    },
+    "http://www.opengis.net/ont/gml#CompositeCurve": {
+      "x": -820.924,
+      "y": 86.641
+    },
+    "http://www.opengis.net/ont/gml#CompositeSolid": {
+      "x": -820.15,
+      "y": -198.474
+    },
+    "http://www.opengis.net/ont/gml#CompositeSurface": {
+      "x": -541.623,
+      "y": -349.295
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#CompressedNaturalGas": {
+      "x": -323.298,
+      "y": 657.052
+    },
+    "http://www.w3.org/2004/02/skos/core#Concept": {
+      "x": -373.989,
+      "y": 602.194
+    },
+    "http://www.w3.org/2004/02/skos/core#ConceptScheme": {
+      "x": 1029.628,
+      "y": 66.721
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ConcreteStructureFacility": {
+      "x": 603.462,
+      "y": 325.402
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Condeep3ShaftsFacility": {
+      "x": 578.298,
+      "y": 229.761
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Condeep4ShaftsFacility": {
+      "x": 735.041,
+      "y": 300.494
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#CondeepMonoshaftFacility": {
+      "x": 571.165,
+      "y": 303.534
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Condensate": {
+      "x": -329.545,
+      "y": 440.856
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#CondensatePipeline": {
+      "x": 357.206,
+      "y": -79.985
+    },
+    "http://www.opengis.net/ont/gml#Cone": {
+      "x": -723.155,
+      "y": 442.299
+    },
+    "http://www.ifomis.org/bfo/1.1/span#ConnectedSpatiotemporalRegion": {
+      "x": 160.411,
+      "y": -650.912
+    },
+    "http://www.ifomis.org/bfo/1.1/span#ConnectedTemporalRegion": {
+      "x": -49.775,
+      "y": 456.945
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ContingentResources": {
+      "x": -119.694,
+      "y": 191.163
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#Continuant": {
+      "x": 154.294,
+      "y": -106.573
+    },
+    "http://def.seegrid.csiro.au/isotc211/iso19108/2006/temporal#Coordinate": {
+      "x": -721.932,
+      "y": 201.117
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#CrudeOil": {
+      "x": 275.403,
+      "y": 280.101
+    },
+    "http://www.opengis.net/ont/gml#CubicSpline": {
+      "x": 345.524,
+      "y": 133.527
+    },
+    "http://www.opengis.net/ont/gml#Curve": {
+      "x": -762.298,
+      "y": 194.514
+    },
+    "http://www.opengis.net/ont/sf#Curve": {
+      "x": -125.229,
+      "y": -902.475
+    },
+    "http://www.opengis.net/ont/gml#Cylinder": {
+      "x": -723.478,
+      "y": 499.518
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#DeletedEasementNotification": {
+      "x": -2.511,
+      "y": -770.849
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#DependentContinuant": {
+      "x": 260.917,
+      "y": -207.361
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DevelopmentWell": {
+      "x": -391.268,
+      "y": -438.718
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DevelopmentWellbore": {
+      "x": -202.579,
+      "y": -149.015
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Discovery": {
+      "x": 386.741,
+      "y": 547.185
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DiscoveryArea": {
+      "x": -141.475,
+      "y": -484.664
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DiscoveryReserve": {
+      "x": 454.581,
+      "y": 537.526
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DiscoveryWellbore": {
+      "x": 112.416,
+      "y": 287.387
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#Disposition": {
+      "x": 913.502,
+      "y": -431.695
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DorisFacility": {
+      "x": 678.415,
+      "y": 345.442
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DryGas": {
+      "x": -442.924,
+      "y": 570.233
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#EasementNotification": {
+      "x": 34.994,
+      "y": -740.659
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ElectromagneticSurvey": {
+      "x": 376.178,
+      "y": -115.294
+    },
+    "http://www.ifomis.org/bfo/1.1#Entity": {
+      "x": 140.016,
+      "y": -255.354
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Equipment": {
+      "x": 503.425,
+      "y": 57.744
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ExplorationWell": {
+      "x": -614.884,
+      "y": -342.405
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ExplorationWellbore": {
+      "x": -116.821,
+      "y": 308.819
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#FPSOFacility": {
+      "x": 637.441,
+      "y": 344.57
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#FSUFacility": {
+      "x": 519.149,
+      "y": 174.856
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Facility": {
+      "x": 640.454,
+      "y": 299.528
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#FacilityPoint": {
+      "x": 396.791,
+      "y": 181.274
+    },
+    "http://www.opengis.net/ont/geosparql#Feature": {
+      "x": 97.715,
+      "y": -511.257
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#FeederPipeline": {
+      "x": 350.082,
+      "y": -169.017
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#FiatObjectPart": {
+      "x": -208.6,
+      "y": 231.863
+    },
+    "http://www.ifomis.org/bfo/1.1/span#FiatProcessPart": {
+      "x": -230.969,
+      "y": 375.706
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Field": {
+      "x": -397.134,
+      "y": 319.48
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#FieldArea": {
+      "x": -95.281,
+      "y": -497.464
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#FieldInvestment": {
+      "x": -536.808,
+      "y": 386.85
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#FieldLicensee": {
+      "x": -384.546,
+      "y": 365.334
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#FieldMonthlyProduction": {
+      "x": -227.41,
+      "y": 335.138
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#FieldOperator": {
+      "x": -498.344,
+      "y": 345.2
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#FieldOwner": {
+      "x": -431.086,
+      "y": 203.164
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#FieldReserve": {
+      "x": 430.75,
+      "y": 502.513
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#FieldStatus": {
+      "x": -430.131,
+      "y": 388.802
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#FieldYearlyProduction": {
+      "x": -245.239,
+      "y": 295.155
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#FixedFacility": {
+      "x": 530.671,
+      "y": 827.771
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Formation": {
+      "x": -443.834,
+      "y": -703.245
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#Function": {
+      "x": 942.504,
+      "y": -394.641
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Gas": {
+      "x": -372.833,
+      "y": 653.805
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#GasPipeline": {
+      "x": 248.281,
+      "y": -246.354
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#GenericallyDependentContinuant": {
+      "x": 433.525,
+      "y": -159.668
+    },
+    "http://resource.geosciml.org/ontology/timescale/gts-30#GeochronologicBoundary": {
+      "x": -697.088,
+      "y": 470.823
+    },
+    "http://resource.geosciml.org/classifier/ics/ischart/GeochronologicEra": {
+      "x": -17.978,
+      "y": 291.982
+    },
+    "http://resource.geosciml.org/ontology/timescale/gts-30#GeochronologicEra": {
+      "x": 318.598,
+      "y": 210.1
+    },
+    "http://www.opengis.net/ont/gml#Geodesic": {
+      "x": -194.181,
+      "y": -612.542
+    },
+    "http://www.opengis.net/ont/gml#GeodesicString": {
+      "x": -157.116,
+      "y": -544.203
+    },
+    "http://resource.geosciml.org/ontology/timescale/gts-30#GeologicTimescale": {
+      "x": -331.596,
+      "y": 798.95
+    },
+    "http://www.opengis.net/ont/gml#GeometricComplex": {
+      "x": -552.872,
+      "y": -452.048
+    },
+    "http://www.opengis.net/ont/geosparql#Geometry": {
+      "x": 7.878,
+      "y": -532.81
+    },
+    "http://www.opengis.net/ont/sf#Geometry": {
+      "x": -190.808,
+      "y": -737.13
+    },
+    "http://www.opengis.net/ont/sf#GeometryCollection": {
+      "x": -83.743,
+      "y": -294.814
+    },
+    "http://resource.geosciml.org/ontology/timescale/gts-30#GlobalStratotypePoint": {
+      "x": 115.962,
+      "y": 843.626
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#GroundSurvey": {
+      "x": 355.237,
+      "y": -287.016
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Group": {
+      "x": -306.834,
+      "y": -708.442
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#IndependentContinuant": {
+      "x": -344.615,
+      "y": 208.744
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#InitialWellbore": {
+      "x": 125.778,
+      "y": -25.031
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#InjectionWell": {
+      "x": 131.991,
+      "y": -538.986
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#InjectionWellbore": {
+      "x": 34.881,
+      "y": 106.253
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#JackUp3LegsFacility": {
+      "x": 673.402,
+      "y": 243.959
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#JackUp4LegsFacility": {
+      "x": 604.374,
+      "y": 370.898
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Jacket12LegsFacility": {
+      "x": 572.765,
+      "y": 169.512
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Jacket4LegsFacility": {
+      "x": 685.208,
+      "y": 305.758
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Jacket6LegsFacility": {
+      "x": 530.848,
+      "y": 294.782
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Jacket8LegsFacility": {
+      "x": 633.458,
+      "y": 253.232
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#JacketTripodFacility": {
+      "x": 706.308,
+      "y": 376.902
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#JunkedWellbore": {
+      "x": -10.148,
+      "y": 45.679
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Kick": {
+      "x": 195.284,
+      "y": -49.81
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#KickOffPoint": {
+      "x": 178.297,
+      "y": 25.042
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#LandfallFacility": {
+      "x": 611.819,
+      "y": 205.601
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#LicencedAcreage": {
+      "x": 48.135,
+      "y": -366.095
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Licensee": {
+      "x": -475.389,
+      "y": 29.828
+    },
+    "http://www.opengis.net/ont/sf#Line": {
+      "x": -18.759,
+      "y": -1017.298
+    },
+    "http://www.opengis.net/ont/gml#LineString": {
+      "x": 253.252,
+      "y": 232.138
+    },
+    "http://www.opengis.net/ont/sf#LineString": {
+      "x": -69.144,
+      "y": -1007.676
+    },
+    "http://www.opengis.net/ont/gml#LineStringSegment": {
+      "x": 146.169,
+      "y": 51.294
+    },
+    "http://www.opengis.net/ont/gml#LinearRing": {
+      "x": -864.115,
+      "y": 387.736
+    },
+    "http://www.opengis.net/ont/sf#LinearRing": {
+      "x": -53.026,
+      "y": -1052.218
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#LiquefiedNaturalGas": {
+      "x": -382.97,
+      "y": 695.069
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#LiquefiedPetroleumGas": {
+      "x": -450.507,
+      "y": 631.652
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#LithostratigraphicUnit": {
+      "x": -489.081,
+      "y": -698.747
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#LoadingSystemFacility": {
+      "x": 569.248,
+      "y": 349.815
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#MainArea": {
+      "x": -311.434,
+      "y": -601.584
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#MaterialEntity": {
+      "x": -148.333,
+      "y": 263.527
+    },
+    "http://def.seegrid.csiro.au/isotc211/iso19103/2005/basic#Measure": {
+      "x": -873.784,
+      "y": 248.726
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Member": {
+      "x": -413.085,
+      "y": -770.07
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#MergerTakeoverTransfer": {
+      "x": -452.491,
+      "y": 353.678
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#MonotowerFacility": {
+      "x": 547.228,
+      "y": 206.183
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#MopustorFacility": {
+      "x": 757.406,
+      "y": 255.095
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#MoveableFacility": {
+      "x": 85.457,
+      "y": 474.18
+    },
+    "http://www.opengis.net/ont/gml#MultiCurve": {
+      "x": 167.424,
+      "y": -876.681
+    },
+    "http://www.opengis.net/ont/sf#MultiCurve": {
+      "x": 201.243,
+      "y": 167.228
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#MultiFieldWellbore": {
+      "x": -15.013,
+      "y": 93.081
+    },
+    "http://www.opengis.net/ont/gml#MultiGeometry": {
+      "x": 113.1,
+      "y": -808.14
+    },
+    "http://www.opengis.net/ont/sf#MultiLineString": {
+      "x": 298.531,
+      "y": 412.589
+    },
+    "http://www.opengis.net/ont/gml#MultiPoint": {
+      "x": 141.053,
+      "y": -838.656
+    },
+    "http://www.opengis.net/ont/sf#MultiPoint": {
+      "x": 97.722,
+      "y": -241.772
+    },
+    "http://www.opengis.net/ont/sf#MultiPolygon": {
+      "x": -585.694,
+      "y": -305.145
+    },
+    "http://www.opengis.net/ont/gml#MultiSolid": {
+      "x": 212.05,
+      "y": -856.231
+    },
+    "http://www.opengis.net/ont/gml#MultiSurface": {
+      "x": 237.009,
+      "y": -711.364
+    },
+    "http://www.opengis.net/ont/sf#MultiSurface": {
+      "x": -413.775,
+      "y": -337.069
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#MultiWellTemplateFacility": {
+      "x": 705.892,
+      "y": 272.69
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#MultibranchWell": {
+      "x": -266.478,
+      "y": -241.277
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#MultifieldWellbore": {
+      "x": 45.399,
+      "y": -47.354
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#MultilateralWell": {
+      "x": -165.49,
+      "y": -326.437
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#MultilateralWellbore": {
+      "x": 43.667,
+      "y": 144.775
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#MultipurposeWellbore": {
+      "x": 207.706,
+      "y": 56.733
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#NCSMonthlyProduction": {
+      "x": -285.016,
+      "y": 487.913
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#NCSYearlyProduction": {
+      "x": -354.949,
+      "y": 333.571
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#NaturalGasLiquid": {
+      "x": 134.115,
+      "y": 377.909
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#NewAwardNotification": {
+      "x": -78.245,
+      "y": -695.663
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#Notification": {
+      "x": -8.342,
+      "y": -682.75
+    },
+    "http://def.seegrid.csiro.au/isotc211/iso19107/2003/geometry#Object": {
+      "x": 548.858,
+      "y": 713.389
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#Object": {
+      "x": 0.786,
+      "y": 220.402
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#ObjectAggregate": {
+      "x": 125.065,
+      "y": 451.336
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#ObjectBoundary": {
+      "x": -356.489,
+      "y": 412.654
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ObservationWell": {
+      "x": -505.989,
+      "y": -455.305
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ObservationWellbore": {
+      "x": 182.307,
+      "y": 128.371
+    },
+    "http://www.ifomis.org/bfo/1.1/span#Occurrent": {
+      "x": 83.734,
+      "y": -29.549
+    },
+    "http://www.opengis.net/ont/gml#OffsetCurve": {
+      "x": -117.091,
+      "y": -453.2
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Oil": {
+      "x": 211.126,
+      "y": 353.753
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#OilEquivalents": {
+      "x": 77.454,
+      "y": 306.651
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#OilGasPipeline": {
+      "x": 353.33,
+      "y": -209.288
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#OilPipeline": {
+      "x": 186.149,
+      "y": -138.884
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#OneDimensionalRegion": {
+      "x": -775.964,
+      "y": 31.663
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#OnshoreFacility": {
+      "x": 715.892,
+      "y": 334.634
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Operator": {
+      "x": -361.901,
+      "y": 168.531
+    },
+    "http://www.w3.org/2004/02/skos/core#OrderedCollection": {
+      "x": 1023.984,
+      "y": -359.299
+    },
+    "http://www.opengis.net/ont/gml#OrientableCurve": {
+      "x": -795.659,
+      "y": 167.97
+    },
+    "http://www.opengis.net/ont/gml#OrientableSurface": {
+      "x": -531.072,
+      "y": 111.133
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#OtherSurvey": {
+      "x": 442.208,
+      "y": -229.335
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Owner": {
+      "x": -272.136,
+      "y": 175.763
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#PAWellbore": {
+      "x": 164.81,
+      "y": -25.445
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ParcellBAA": {
+      "x": 190.149,
+      "y": -250.062
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Petroleum": {
+      "x": 25.293,
+      "y": 478.311
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#PetroleumActivity": {
+      "x": -179.724,
+      "y": 376.418
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#PetroleumDeposit": {
+      "x": 140.166,
+      "y": 523.638
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Pipeline": {
+      "x": 283.802,
+      "y": -126.869
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Plan": {
+      "x": -147.729,
+      "y": 554.076
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#PlanForDevelopmentAndOperationOfPetroleumDeposits": {
+      "x": -180.232,
+      "y": 598.798
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#PlanForInstallationAndOperation": {
+      "x": -34.586,
+      "y": 414.332
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Play": {
+      "x": -626.306,
+      "y": 77.445
+    },
+    "http://def.seegrid.csiro.au/isotc211/iso19107/2003/geometry#Point": {
+      "x": -726.745,
+      "y": -541.714
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Point": {
+      "x": 655.188,
+      "y": -22.212
+    },
+    "http://www.opengis.net/ont/gml#Point": {
+      "x": -691.489,
+      "y": 224.591
+    },
+    "http://www.opengis.net/ont/sf#Point": {
+      "x": -235.296,
+      "y": -773.531
+    },
+    "http://www.opengis.net/ont/gml#Polygon": {
+      "x": -183.565,
+      "y": 659.704
+    },
+    "http://www.opengis.net/ont/sf#Polygon": {
+      "x": -572.787,
+      "y": -916.42
+    },
+    "http://www.opengis.net/ont/gml#PolygonPatch": {
+      "x": 354.271,
+      "y": 250.318
+    },
+    "http://www.opengis.net/ont/gml#PolyhedralSurface": {
+      "x": -252.088,
+      "y": 814.734
+    },
+    "http://www.opengis.net/ont/sf#PolyhedralSurface": {
+      "x": -479.257,
+      "y": -968.328
+    },
+    "http://www.opengis.net/ont/gml#PolynomialSpline": {
+      "x": 265.74,
+      "y": 17.126
+    },
+    "http://def.seegrid.csiro.au/isotc211/iso19107/2003/geometry#Position": {
+      "x": -853.958,
+      "y": 427.781
+    },
+    "http://www.ifomis.org/bfo/1.1/span#Process": {
+      "x": -239.932,
+      "y": 255.093
+    },
+    "http://www.ifomis.org/bfo/1.1/span#ProcessAggregate": {
+      "x": -244.124,
+      "y": 482.601
+    },
+    "http://www.ifomis.org/bfo/1.1/span#ProcessBoundary": {
+      "x": -353.164,
+      "y": 282.454
+    },
+    "http://www.ifomis.org/bfo/1.1/span#ProcessualContext": {
+      "x": -208.17,
+      "y": 410.267
+    },
+    "http://www.ifomis.org/bfo/1.1/span#ProcessualEntity": {
+      "x": -273.176,
+      "y": 408.741
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ProductionLicence": {
+      "x": -426.792,
+      "y": -186.799
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#ProductionLicence": {
+      "x": -80.12,
+      "y": -117.557
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ProductionLicenceArea": {
+      "x": -175.916,
+      "y": -406.078
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ProductionLicenceAreaPerBlock": {
+      "x": -32.98,
+      "y": -516.746
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ProductionLicenceLicensee": {
+      "x": -563.791,
+      "y": -14.588
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#ProductionLicenceLicensee": {
+      "x": -564.298,
+      "y": -90.719
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#ProductionLicenceNotification": {
+      "x": -100.611,
+      "y": -210.712
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ProductionLicenceOperator": {
+      "x": -543.961,
+      "y": 28.16
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ProductionLicenceStatus": {
+      "x": -350.069,
+      "y": -515.751
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ProductionLicenceTransfer": {
+      "x": -452.617,
+      "y": -11.108
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ProductionLicenceWorkObligation": {
+      "x": -498.484,
+      "y": -83.217
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ProductionWell": {
+      "x": 79.192,
+      "y": -691.333
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ProductionWellbore": {
+      "x": 94.301,
+      "y": 170.919
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Prospect": {
+      "x": -710.892,
+      "y": -97.028
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Quadrant": {
+      "x": -50.005,
+      "y": 47.109
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#Quality": {
+      "x": -129.276,
+      "y": -178.073
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ReClassToDevWellbore": {
+      "x": 226.054,
+      "y": 21.073
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ReClassToTestWellbore": {
+      "x": 126.397,
+      "y": 142.696
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ReEntryWellbore": {
+      "x": 28.463,
+      "y": 29.253
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#RealizableEntity": {
+      "x": 868.118,
+      "y": -382.568
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Recovery": {
+      "x": -324.074,
+      "y": 483.316
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#RecoveryWell": {
+      "x": -20.671,
+      "y": -610.396
+    },
+    "http://www.opengis.net/ont/gml#Rectangle": {
+      "x": 472.617,
+      "y": 298.496
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Refining": {
+      "x": -397.78,
+      "y": 415.232
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#RegularSeismicSurvey": {
+      "x": 397.009,
+      "y": 331.87
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Reserve": {
+      "x": 286.117,
+      "y": 451.653
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#RichGas": {
+      "x": -440.137,
+      "y": 521.608
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Rig": {
+      "x": 630.879,
+      "y": 35.826
+    },
+    "http://www.opengis.net/ont/gml#Ring": {
+      "x": -874.709,
+      "y": 288.13
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Riser": {
+      "x": 604.875,
+      "y": -13.962
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#Role": {
+      "x": 910.373,
+      "y": -352.039
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#RouteSurvey": {
+      "x": 318.05,
+      "y": -304.515
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Royalty": {
+      "x": 318.942,
+      "y": -87.548
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SDFITransfer": {
+      "x": -529.372,
+      "y": 306.232
+    },
+    "http://www.ifomis.org/bfo/1.1/span#ScatteredSpatiotemporalRegion": {
+      "x": -213.604,
+      "y": -547.735
+    },
+    "http://www.ifomis.org/bfo/1.1/span#ScatteredTemporalRegion": {
+      "x": 370.947,
+      "y": 298.956
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SeabedSeismicSurvey": {
+      "x": 248.887,
+      "y": 492.024
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SeismicAreaBAA": {
+      "x": 133.126,
+      "y": -408.153
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SeismicSurvey": {
+      "x": 351.866,
+      "y": 391.374
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SeismicSurveyCoordinate": {
+      "x": 472.16,
+      "y": 219.404
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SeismicSurveyProgress": {
+      "x": 480.488,
+      "y": 357.929
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SemisubConcreteFacility": {
+      "x": 571.95,
+      "y": 397.562
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SemisubSteelFacility": {
+      "x": 653.814,
+      "y": 209.727
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ShallowWell": {
+      "x": -183.643,
+      "y": -290.43
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ShallowWellbore": {
+      "x": -248.688,
+      "y": -172.037
+    },
+    "http://www.opengis.net/ont/gml#Shell": {
+      "x": -383.68,
+      "y": -558.999
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Sidetrack": {
+      "x": 398.627,
+      "y": -31.386
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SidetrackWellbore": {
+      "x": 51.464,
+      "y": -2.251
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SingleWellTemplateFacility": {
+      "x": 764.068,
+      "y": 329.84
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#Site": {
+      "x": -633.196,
+      "y": -110.349
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SiteSurvey": {
+      "x": 376.949,
+      "y": -324.995
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SlidingScaleBAA": {
+      "x": 166.37,
+      "y": -292.757
+    },
+    "http://www.opengis.net/ont/gml#Solid": {
+      "x": -808.288,
+      "y": -49.585
+    },
+    "http://www.opengis.net/ont/geosparql#SpatialObject": {
+      "x": 711.967,
+      "y": -418.457
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#SpatialRegion": {
+      "x": -708.478,
+      "y": 52.121
+    },
+    "http://www.ifomis.org/bfo/1.1/span#SpatiotemporalInstant": {
+      "x": 176.896,
+      "y": -706.704
+    },
+    "http://www.ifomis.org/bfo/1.1/span#SpatiotemporalInterval": {
+      "x": 252.248,
+      "y": -613.871
+    },
+    "http://www.ifomis.org/bfo/1.1/span#SpatiotemporalRegion": {
+      "x": -12.365,
+      "y": -437.715
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#SpecificallyDependentContinuant": {
+      "x": 433.14,
+      "y": -319.363
+    },
+    "http://www.opengis.net/ont/gml#Sphere": {
+      "x": -673.487,
+      "y": 525.913
+    },
+    "http://www.opengis.net/ont/gml#SplineCurve": {
+      "x": -43.483,
+      "y": -223.777
+    },
+    "http://resource.geosciml.org/ontology/timescale/gts-30#StandardGlobalNumericalAge": {
+      "x": 934.806,
+      "y": 118.979
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SubseaCompletedWell": {
+      "x": -545.824,
+      "y": -389.582
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SubseaStructureFacility": {
+      "x": 697.724,
+      "y": 197.477
+    },
+    "http://www.opengis.net/ont/gml#Surface": {
+      "x": -389.832,
+      "y": 511.125
+    },
+    "http://www.opengis.net/ont/sf#Surface": {
+      "x": -444.247,
+      "y": -910.105
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Survey": {
+      "x": 406.464,
+      "y": -206.451
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SurveyArea": {
+      "x": -499.993,
+      "y": -183.183
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SurveyMultilineArea": {
+      "x": -109.043,
+      "y": -539.91
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SuspReenteredLaterWellbore": {
+      "x": 229.434,
+      "y": 137.093
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SuspendedWellbore": {
+      "x": -2.374,
+      "y": 168.624
+    },
+    "http://www.opengis.net/ont/sf#TIN": {
+      "x": -476.3,
+      "y": -1017.838
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#TUFLicensee": {
+      "x": -250.504,
+      "y": 212.942
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#TUFNotification": {
+      "x": 39.752,
+      "y": 185.091
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#TUFOperator": {
+      "x": 48.503,
+      "y": 339.008
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#TUFOwner": {
+      "x": -155.05,
+      "y": 429.162
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#TUFacility": {
+      "x": 646.896,
+      "y": 161.166
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#TUFacility": {
+      "x": 93.6,
+      "y": 346.426
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#TechnicalDiscovery": {
+      "x": 340.537,
+      "y": 549.256
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#TechnicalSideTrack": {
+      "x": 477.449,
+      "y": 10.56
+    },
+    "http://www.ifomis.org/bfo/1.1/span#TemporalInstant": {
+      "x": -148.985,
+      "y": 697.18
+    },
+    "http://www.ifomis.org/bfo/1.1/span#TemporalInterval": {
+      "x": -75.821,
+      "y": 276.134
+    },
+    "http://www.ifomis.org/bfo/1.1/span#TemporalRegion": {
+      "x": 214.024,
+      "y": 242.612
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#TerminationPlan": {
+      "x": -155.536,
+      "y": 631.847
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#TerminationPoint": {
+      "x": 740.686,
+      "y": -77.769
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#TestProductionWell": {
+      "x": -389.16,
+      "y": -210.817
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#ThreeDimensionalRegion": {
+      "x": -814.862,
+      "y": 34.684
+    },
+    "http://def.seegrid.csiro.au/isotc211/iso19103/2005/basic#Time": {
+      "x": 946.935,
+      "y": -327.648
+    },
+    "http://resource.geosciml.org/ontology/timescale/gtrs-30#TimeOrdinalEraBoundary": {
+      "x": -451.527,
+      "y": 867.631
+    },
+    "http://resource.geosciml.org/ontology/trs-30#TimeOrdinalEraBoundary": {
+      "x": -528.704,
+      "y": 454.24
+    },
+    "http://resource.geosciml.org/ontology/trs-30#TimeOrdinalReferenceSystem": {
+      "x": 995.893,
+      "y": 99.37
+    },
+    "http://www.opengis.net/ont/gml#Tin": {
+      "x": -199.932,
+      "y": 983.506
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#TlpConcreteFacility": {
+      "x": 722.729,
+      "y": 231.418
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#TlpSteelFacility": {
+      "x": 671.935,
+      "y": 400.183
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Transfer": {
+      "x": -480.928,
+      "y": 252.258
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#TransportationPipeline": {
+      "x": 394.691,
+      "y": -155.058
+    },
+    "http://www.opengis.net/ont/gml#Triangle": {
+      "x": 345.445,
+      "y": 339.992
+    },
+    "http://www.opengis.net/ont/sf#Triangle": {
+      "x": -633.575,
+      "y": -898.092
+    },
+    "http://www.opengis.net/ont/gml#TriangulatedSurface": {
+      "x": -207.169,
+      "y": 938.332
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#TwoDimensionalRegion": {
+      "x": -846.344,
+      "y": 126.41
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#UnitizedBAA": {
+      "x": 142.727,
+      "y": -362.619
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#VesselFacility": {
+      "x": 617.303,
+      "y": 418.703
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Well": {
+      "x": -276.218,
+      "y": -362.379
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WellHead": {
+      "x": 301.14,
+      "y": -46.848
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WellTarget": {
+      "x": 89.198,
+      "y": -74.943
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WellTrack": {
+      "x": 262.502,
+      "y": -164.648
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#Wellbore": {
+      "x": 91.821,
+      "y": 62.381
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WellboreCasingAndLeakoffTest": {
+      "x": -281.104,
+      "y": -141.046
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WellboreCoordinate": {
+      "x": 443.589,
+      "y": 45.312
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WellboreCore": {
+      "x": -556.851,
+      "y": 344.673
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WellboreCorePhoto": {
+      "x": 165.238,
+      "y": 89.011
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WellboreCoreSet": {
+      "x": 127.928,
+      "y": 248.019
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WellboreDocument": {
+      "x": -266.61,
+      "y": -94.635
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WellboreDrillStemTest": {
+      "x": 336.925,
+      "y": -507.684
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WellboreDrillingMudSample": {
+      "x": 219.747,
+      "y": 432.276
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WellboreOilSample": {
+      "x": 137.482,
+      "y": -490.031
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WellborePoint": {
+      "x": 758.726,
+      "y": -38.768
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WellboreStratigraphicCoreSet": {
+      "x": 75.608,
+      "y": 385.629
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WellboreStratum": {
+      "x": 221.304,
+      "y": -160.72
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WetGas": {
+      "x": -338.454,
+      "y": 699.971
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WildcatWell": {
+      "x": -716.393,
+      "y": -328.807
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#WildcatWellbore": {
+      "x": 250.795,
+      "y": 67.048
+    },
+    "http://www.ifomis.org/bfo/1.1/snap#ZeroDimensionalRegion": {
+      "x": -801.296,
+      "y": 127.596
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DSTBottomHolePressure": {
+      "x": 332.421,
+      "y": -616.192
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DSTChokeSize": {
+      "x": 397.371,
+      "y": -513.875
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DSTDepthFrom": {
+      "x": 244.429,
+      "y": -521.42
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DSTDepthTo": {
+      "x": 370.546,
+      "y": -602.748
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DSTFinalFlowPressure": {
+      "x": 362.469,
+      "y": -431.763
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DSTFinalShutInPressure": {
+      "x": 294.856,
+      "y": -600.377
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DSTGasDensity": {
+      "x": 386.796,
+      "y": -551.863
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DSTGasOilRelation": {
+      "x": 251.199,
+      "y": -426.287
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DSTGasProducedRate": {
+      "x": 367.728,
+      "y": -652.592
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DSTOilDensity": {
+      "x": 392.329,
+      "y": -465.457
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DSTOilProducedRate": {
+      "x": 245.698,
+      "y": -560.403
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DSTTestNo": {
+      "x": 416.834,
+      "y": -590.49
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#LOTMudDensity": {
+      "x": -402.562,
+      "y": -103.434
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#SDFI": {
+      "x": -538.148,
+      "y": -839.678
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#TUFOwnerShare": {
+      "x": -54.623,
+      "y": 556.596
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ZValueFrom": {
+      "x": -920.553,
+      "y": 463.931
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ZValueTo": {
+      "x": 339.722,
+      "y": -928.038
+    },
+    "http://resource.geosciml.org/ontology/timescale/gts-30#additionalCorrelationProperty": {
+      "x": 326.413,
+      "y": 888.505
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#areaSize": {
+      "x": -898.398,
+      "y": -444.662
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#areaSize3DKm2": {
+      "x": 972.547,
+      "y": -262.029
+    },
+    "http://www.opengis.net/ont/geosparql#asGML": {
+      "x": -198.958,
+      "y": -454.568
+    },
+    "http://www.opengis.net/ont/geosparql#asWKT": {
+      "x": -181.24,
+      "y": -510.995
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#blockId": {
+      "x": 289.155,
+      "y": 516.226
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#casingDepth": {
+      "x": -472.331,
+      "y": -216.978
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#casingDiameter": {
+      "x": -335.663,
+      "y": -263.318
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#casingType": {
+      "x": -379.746,
+      "y": -70.704
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#codeEW": {
+      "x": -704.6,
+      "y": -707.248
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#codeNS": {
+      "x": 965.084,
+      "y": 66.944
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#companyGroup": {
+      "x": -396.044,
+      "y": 124.539
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#companyShare": {
+      "x": 151.249,
+      "y": -988.757
+    },
+    "http://www.opengis.net/ont/geosparql#coordinateDimension": {
+      "x": 81.071,
+      "y": -313.151
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#coreIntervalBottom": {
+      "x": -680.735,
+      "y": 345.379
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#coreIntervalTop": {
+      "x": -435.388,
+      "y": 267.207
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#coreIntervalUOM": {
+      "x": -315.385,
+      "y": 960.207
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#coreNo": {
+      "x": -374.654,
+      "y": -896.827
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#corePhotoTitle": {
+      "x": 294.692,
+      "y": 67.492
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#coreTotalLength": {
+      "x": -975.358,
+      "y": 327.36
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#coresIntervalUOM": {
+      "x": 461.561,
+      "y": -884.369
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#coresTotalLength": {
+      "x": 229.043,
+      "y": 959.85
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#coresTotalNo": {
+      "x": 82.877,
+      "y": 213.105
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#currentAreaSize": {
+      "x": 1004.712,
+      "y": -152.259
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#currentStatus": {
+      "x": -624.446,
+      "y": 803.924
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateApproved": {
+      "x": 91.009,
+      "y": -390.958
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#dateAwarded": {
+      "x": 144.072,
+      "y": -168.217
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateBaaAreaValidFrom": {
+      "x": -110.691,
+      "y": -614.763
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateBaaAreaValidTo": {
+      "x": 40.235,
+      "y": -689.422
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateBaaLicenseeValidFrom": {
+      "x": -500.982,
+      "y": -246.915
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateBaaLicenseeValidTo": {
+      "x": -502.961,
+      "y": -381.219
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateBaaValidFrom": {
+      "x": 186.759,
+      "y": -326.007
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateBaaValidTo": {
+      "x": -0.265,
+      "y": -331.523
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateFieldLicenseeFrom": {
+      "x": -285.728,
+      "y": 280.405
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateFieldLicenseeTo": {
+      "x": -340.854,
+      "y": 547.68
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateFieldOperatorFrom": {
+      "x": -597.36,
+      "y": 397.969
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateFieldOperatorTo": {
+      "x": -318.741,
+      "y": 402.839
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateFieldOwnerFrom": {
+      "x": -448.697,
+      "y": 918.123
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateFieldOwnerTo": {
+      "x": -273.175,
+      "y": -972.848
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateIncludedInField": {
+      "x": 521.448,
+      "y": 621.674
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateInitialStatusTo": {
+      "x": -377.249,
+      "y": -623.268
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateLicenceAreaValidFrom": {
+      "x": 584.605,
+      "y": -827.791
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateLicenceAreaValidTo": {
+      "x": 91.503,
+      "y": 1003.717
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateLicenceGranted": {
+      "x": -505.348,
+      "y": -315.757
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#dateLicenceValidFrom": {
+      "x": 1024.008,
+      "y": -25.329
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateLicenceValidTo": {
+      "x": -746.375,
+      "y": 715.101
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#dateLicenceValidTo": {
+      "x": 77.302,
+      "y": -1026.478
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateLicenseeValidFrom": {
+      "x": -456.599,
+      "y": 96.059
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateLicenseeValidTo": {
+      "x": -657.038,
+      "y": 9.337
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#dateMessageRegistered": {
+      "x": 828.038,
+      "y": -615.483
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateMudMeasured": {
+      "x": 198.341,
+      "y": 587.983
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateOilSampleReceived": {
+      "x": 79.246,
+      "y": -614.152
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateOilSampleTest": {
+      "x": 170.823,
+      "y": -530.286
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateOperatorValidFrom": {
+      "x": -963.233,
+      "y": 421.12
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateOperatorValidTo": {
+      "x": 393.148,
+      "y": -934.382
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateProductionStart": {
+      "x": 523.259,
+      "y": 920.727
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateResourceEstimate": {
+      "x": -885.808,
+      "y": -506.464
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateStatusFrom": {
+      "x": -304.814,
+      "y": 527.662
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateStatusTo": {
+      "x": -499.509,
+      "y": 534.484
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateStatusValidFrom": {
+      "x": -352.895,
+      "y": -658.995
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateStatusValidTo": {
+      "x": -235.178,
+      "y": -585.87
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateSurveyActualCompleted": {
+      "x": 190.028,
+      "y": 474.205
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateSurveyActualStart": {
+      "x": 435.238,
+      "y": 313.821
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateSurveyPlannedCompleted": {
+      "x": 392.875,
+      "y": 490.41
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateSurveyPlannedStart": {
+      "x": 285.305,
+      "y": 318.616
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateSurveyProgress": {
+      "x": 586.643,
+      "y": 442.812
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateSyncNPD": {
+      "x": -847.447,
+      "y": 618.489
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateTUFOperatorValidFrom": {
+      "x": 227.528,
+      "y": 197.348
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateTUFOperatorValidTo": {
+      "x": 203.683,
+      "y": 392.934
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateTUFOwnerValidFrom": {
+      "x": -206.114,
+      "y": 473.856
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateTUFOwnerValidTo": {
+      "x": 1.102,
+      "y": 398.595
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateTaskExpiry": {
+      "x": -623.807,
+      "y": -70.449
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateTransferValidFrom": {
+      "x": -357.728,
+      "y": -957.824
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateUpdated": {
+      "x": 929.863,
+      "y": 449.941
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#dateUpdated": {
+      "x": -999.418,
+      "y": 259.481
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateUpdatedMax": {
+      "x": 520.261,
+      "y": -884.469
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#dateUpdatedMax": {
+      "x": 179.279,
+      "y": 995.513
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateWDSSQC": {
+      "x": -824.131,
+      "y": -609.918
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateWellboreCompletion": {
+      "x": 1040.557,
+      "y": -103.723
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dateWellboreEntry": {
+      "x": -684.161,
+      "y": 776.274
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#decimalDegreesEW": {
+      "x": 19.203,
+      "y": -1043.811
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#decimalDegreesNS": {
+      "x": 719.522,
+      "y": 744.891
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#degreesEW": {
+      "x": -1038.002,
+      "y": -85.655
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#degreesNS": {
+      "x": 779.717,
+      "y": -684.088
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#designLifetime": {
+      "x": 475.557,
+      "y": 913.37
+    },
+    "http://www.opengis.net/ont/geosparql#dimension": {
+      "x": -49.338,
+      "y": -581.458
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#discoveryYear": {
+      "x": 534.548,
+      "y": 576.343
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#documentFormat": {
+      "x": -458.342,
+      "y": -63.579
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#documentName": {
+      "x": -358.174,
+      "y": -182.619
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#documentSize": {
+      "x": -362.503,
+      "y": 16.264
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#documentType": {
+      "x": -470.798,
+      "y": -120.57
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#drillPermit": {
+      "x": 1029.785,
+      "y": -309.523
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#facilityFunction": {
+      "x": -514.925,
+      "y": 917.585
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#facilityType": {
+      "x": -221.118,
+      "y": -992.924
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#geodeticDatum": {
+      "x": 856.457,
+      "y": 564.848
+    },
+    "http://www.opengis.net/ont/geosparql#hasSerialization": {
+      "x": -225.194,
+      "y": -488.167
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#hydrocarbonType": {
+      "x": 529.351,
+      "y": 479.62
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#idNPD": {
+      "x": 48.693,
+      "y": 1038.969
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#investmentNOK": {
+      "x": -603.49,
+      "y": 323.163
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isActive": {
+      "x": 1043.785,
+      "y": 31.993
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isCoreSampleAvailable": {
+      "x": -662.753,
+      "y": 386.704
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isCurrentLicenceLicensee": {
+      "x": -259.72,
+      "y": -52.938
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isCurrentLicenceOperator": {
+      "x": -205.781,
+      "y": 192.691
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isDiscoveryWellbore": {
+      "x": -1011.211,
+      "y": -218.109
+    },
+    "http://www.opengis.net/ont/geosparql#isEmpty": {
+      "x": 86.753,
+      "y": -465.819
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isFormerLicenceLicensee": {
+      "x": -318.737,
+      "y": 156.009
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isFormerLicenceOperator": {
+      "x": -359.326,
+      "y": -22.61
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isGeotechnicalMeasurement": {
+      "x": 407.204,
+      "y": 452.813
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isMarketAvailable": {
+      "x": -1000.213,
+      "y": 379.783
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isMultilateral": {
+      "x": 447.753,
+      "y": -933.952
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isReentryWellbore": {
+      "x": -69.088,
+      "y": 396.142
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isSamplingPerformed": {
+      "x": 205.029,
+      "y": 314.339
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isShallowDrillingPerformed": {
+      "x": 440.06,
+      "y": 431.794
+    },
+    "http://www.opengis.net/ont/geosparql#isSimple": {
+      "x": -34.366,
+      "y": -307.222
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isStratigraphical": {
+      "x": -100.595,
+      "y": -1034.874
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isSurfaceFacility": {
+      "x": 512.912,
+      "y": 870.917
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isTurnAreaIncluded": {
+      "x": -666.579,
+      "y": -66.98
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#lengthBoatTotalKm": {
+      "x": 428.941,
+      "y": 356.261
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#lengthCdpTotalKm": {
+      "x": 358.182,
+      "y": 512.768
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#lengthPlannedBoatKm": {
+      "x": -655.101,
+      "y": -821.678
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#lengthPlannedCdpKm": {
+      "x": 1028.43,
+      "y": 184.435
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#licenseeInterest": {
+      "x": -900.877,
+      "y": 581.799
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#licenseeInterest": {
+      "x": 255.232,
+      "y": -1005.369
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#licensingActivityName": {
+      "x": -323.264,
+      "y": -164.987
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#mapNo": {
+      "x": -443.547,
+      "y": -659.215
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#messageNo": {
+      "x": 996.078,
+      "y": -438.093
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#messageType": {
+      "x": -425.162,
+      "y": 963.141
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#minutesEW": {
+      "x": -314.224,
+      "y": -1001.549
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#minutesNS": {
+      "x": 921.031,
+      "y": 518.217
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#mudMeasuredDepth": {
+      "x": 153.289,
+      "y": 577.701
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#mudType": {
+      "x": 259.036,
+      "y": 416.094
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#mudViscosity": {
+      "x": 246.126,
+      "y": 583.376
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#mudWeight": {
+      "x": 53.473,
+      "y": 448.545
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#mudYieldPoint": {
+      "x": 256.169,
+      "y": 537.358
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#name": {
+      "x": -754.474,
+      "y": 764.035
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#name": {
+      "x": 63.509,
+      "y": -268.044
+    },
+    "http://www.w3.org/2004/02/skos/core#notation": {
+      "x": 684.508,
+      "y": 794.571
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#oilSampleBottomDepth": {
+      "x": 29.151,
+      "y": -618.619
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#oilSampleFluidType": {
+      "x": 123.891,
+      "y": -623.235
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#oilSampleTestNumber": {
+      "x": 57.393,
+      "y": -435.138
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#oilSampleTestType": {
+      "x": 55.701,
+      "y": -653.591
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#oilSampleTopDepth": {
+      "x": 167.304,
+      "y": -575.789
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#originalAreaSize": {
+      "x": -530.749,
+      "y": -272.118
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#pipelineDimension": {
+      "x": 320.927,
+      "y": -232.158
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#pipelineMainGrouping": {
+      "x": 340.099,
+      "y": -44.933
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#pipelineMedium": {
+      "x": 144.355,
+      "y": -211.128
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#polygonNo": {
+      "x": 1034.821,
+      "y": -271.634
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#polygonPointNo": {
+      "x": 272.406,
+      "y": 193.102
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#producedCondensate": {
+      "x": -188.393,
+      "y": -1039.33
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#producedGas": {
+      "x": 850.991,
+      "y": 628.683
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#producedNGL": {
+      "x": -1068.181,
+      "y": 83.877
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#producedOil": {
+      "x": 684.435,
+      "y": -804.275
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#producedOilEquivalents": {
+      "x": -5.143,
+      "y": 1059.524
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#producedWater": {
+      "x": -724.398,
+      "y": -754.385
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#productionMonth": {
+      "x": 1067.203,
+      "y": 95.943
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#productionYear": {
+      "x": -838.92,
+      "y": 667.224
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#recoverableCondensate": {
+      "x": 173.237,
+      "y": -1043.485
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#recoverableGas": {
+      "x": 601.246,
+      "y": 888.262
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#recoverableNGL": {
+      "x": -1020.291,
+      "y": -284.825
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#recoverableOil": {
+      "x": 941.306,
+      "y": -536.929
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#recoverableOilEquivalents": {
+      "x": -349.803,
+      "y": 1011.257
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#remainingCondensate": {
+      "x": -407.262,
+      "y": -995.122
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#remainingGas": {
+      "x": 971.798,
+      "y": 432.841
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#remainingNGL": {
+      "x": -1033.121,
+      "y": 321.231
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#remainingOil": {
+      "x": 504.871,
+      "y": -941.905
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#remainingOilEquivalents": {
+      "x": 227.768,
+      "y": 1032.623
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#reservesResourceClass": {
+      "x": 395.094,
+      "y": 375.644
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#secondsEW": {
+      "x": 1074.419,
+      "y": -143.834
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#secondsNS": {
+      "x": -688.51,
+      "y": 832.582
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#sensorLength": {
+      "x": -41.543,
+      "y": -1087.918
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#sensorNumbers": {
+      "x": 769.195,
+      "y": 744.763
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#sensorType": {
+      "x": -1079.679,
+      "y": -56.296
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#shortName": {
+      "x": -185.584,
+      "y": 1.693
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#sourceNumber": {
+      "x": -147.009,
+      "y": 1059.225
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#sourcePressure": {
+      "x": -600.466,
+      "y": -862.319
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#sourceSize": {
+      "x": 1033.582,
+      "y": 235.227
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#sourceType": {
+      "x": -951.768,
+      "y": 542.684
+    },
+    "http://www.opengis.net/ont/geosparql#spatialDimension": {
+      "x": 44.645,
+      "y": -503.622
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#status": {
+      "x": 470.029,
+      "y": 979.631
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#stratigraphicLevel": {
+      "x": -468.655,
+      "y": -736.006
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#surveySubType": {
+      "x": 444.178,
+      "y": 392.666
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#surveyType": {
+      "x": 320.123,
+      "y": 492.279
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#taskID": {
+      "x": -585.082,
+      "y": -186.884
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#taskType": {
+      "x": -419.393,
+      "y": -65.871
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#transferDirection": {
+      "x": -1072.476,
+      "y": 168.903
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#transferredInterest": {
+      "x": 632.988,
+      "y": -860.781
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#utmEW": {
+      "x": 93.262,
+      "y": 1069.2
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#utmNS": {
+      "x": -798.597,
+      "y": -719.677
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#utmZone": {
+      "x": 1082.789,
+      "y": -1.229
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#waterDepth": {
+      "x": 444.179,
+      "y": 884.049
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellType": {
+      "x": -257.398,
+      "y": -429.936
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreBottomHoleTemperature": {
+      "x": 11.29,
+      "y": 320.333
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreCompletionYear": {
+      "x": -1063.214,
+      "y": -193.226
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreContent": {
+      "x": 903.977,
+      "y": -624.765
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreDrillingDays": {
+      "x": -104.791,
+      "y": 377.213
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreEntryYear": {
+      "x": -522.751,
+      "y": -960.006
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreFinalVerticalDepth": {
+      "x": 1009.712,
+      "y": 346.872
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreHoleDepth": {
+      "x": -465.273,
+      "y": -159.18
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreHoleDiameter": {
+      "x": -370.115,
+      "y": -285.004
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreKellyBushElevation": {
+      "x": 314.234,
+      "y": 1030.043
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreLicensingActivity": {
+      "x": -933.814,
+      "y": -545.664
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreMaxInclation": {
+      "x": 42.881,
+      "y": 233.598
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreNamePart1": {
+      "x": -614.671,
+      "y": 901.872
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreNamePart2": {
+      "x": -131.781,
+      "y": -1076.18
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreNamePart3": {
+      "x": 826.849,
+      "y": 684.379
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreNamePart4": {
+      "x": -1089.305,
+      "y": 28.617
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreNamePart5": {
+      "x": 733.446,
+      "y": -770.987
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreNamePart6": {
+      "x": -58.861,
+      "y": 1076.61
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreParent": {
+      "x": -704.633,
+      "y": -816.292
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellborePlannedContent": {
+      "x": 28.285,
+      "y": -284.792
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellborePlannedPurpose": {
+      "x": -903.677,
+      "y": 635.487
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellborePlotSymbol": {
+      "x": 235.683,
+      "y": -1052.5
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellborePurpose": {
+      "x": -35.731,
+      "y": 375.342
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreReentryExplorationActivity": {
+      "x": -167.382,
+      "y": 185.117
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreSeismicLocation": {
+      "x": 1004.461,
+      "y": -487.715
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreStratumBottomDepth": {
+      "x": 115.023,
+      "y": -133.098
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreStratumTopDepth": {
+      "x": 236.702,
+      "y": -321.474
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreTotalDepth": {
+      "x": 970.733,
+      "y": 506.121
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreType": {
+      "x": -1064.468,
+      "y": 266.399
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreWaterDepth": {
+      "x": 570.101,
+      "y": -915.321
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreWellType": {
+      "x": 134.959,
+      "y": 207.236
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#DSTForWellbore": {
+      "x": 270.525,
+      "y": -286.873
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#LOTForWellbore": {
+      "x": -102.335,
+      "y": -64.151
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#TUFLicenceeCompany": {
+      "x": -320.292,
+      "y": 247.194
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#TUFLicenceeForTUF": {
+      "x": -107.472,
+      "y": 247.928
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#TUFOperatorCompany": {
+      "x": -204.278,
+      "y": 153.716
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#TUFOperatorForLicence": {
+      "x": 96.708,
+      "y": 419.527
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#TUFOwnerCompany": {
+      "x": -197.084,
+      "y": 270.473
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#TUFOwnerForLicence": {
+      "x": -27.994,
+      "y": 492.842
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#baaLicensee": {
+      "x": -425.243,
+      "y": -141.303
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#baaOperatorCompany": {
+      "x": -125.415,
+      "y": -119.534
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#baaTransferCompany": {
+      "x": -305.48,
+      "y": -4.976
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#belongsToFacility": {
+      "x": 300.444,
+      "y": 248.952
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#belongsToWell": {
+      "x": 408.295,
+      "y": 1018.853
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#blockLocation": {
+      "x": -986.033,
+      "y": -467.36
+    },
+    "http://www.w3.org/2004/02/skos/core#broadMatch": {
+      "x": 49.707,
+      "y": 767.354
+    },
+    "http://www.w3.org/2004/02/skos/core#broader": {
+      "x": -26.254,
+      "y": 672.798
+    },
+    "http://www.w3.org/2004/02/skos/core#broaderTransitive": {
+      "x": -135.232,
+      "y": 595.203
+    },
+    "http://www.w3.org/2004/02/skos/core#closeMatch": {
+      "x": 228.768,
+      "y": 914.12
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#containsWellbore": {
+      "x": 5.962,
+      "y": -53.359
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#coordinateForSurvey": {
+      "x": 428.389,
+      "y": 243.346
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#coordinateForWellbore": {
+      "x": 349.725,
+      "y": 80.711
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#coreForWellbore": {
+      "x": 11.79,
+      "y": -13.799
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#corePhotoForWellbore": {
+      "x": 206.77,
+      "y": 96.873
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#corePhotoURL": {
+      "x": 37.882,
+      "y": 67.137
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#coresForWellbore": {
+      "x": 161.025,
+      "y": 177.05
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#country": {
+      "x": 651.997,
+      "y": 891.448
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#currentFieldOperator": {
+      "x": -474.741,
+      "y": 209.205
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#currentFieldOwner": {
+      "x": -414.22,
+      "y": 12.671
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#currentResponsibleCompany": {
+      "x": -102.974,
+      "y": 429.127
+    },
+    "http://www.opengis.net/ont/geosparql#defaultGeometry": {
+      "x": 51.377,
+      "y": -584.757
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#dependsOnTask": {
+      "x": 1015.501,
+      "y": 414.34
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#developmentWellboreForField": {
+      "x": -415.732,
+      "y": 89.14
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#developmentWellboreForLicence": {
+      "x": -319.443,
+      "y": -301.906
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#discoveryWellbore": {
+      "x": 132.924,
+      "y": 326.959
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#documentForWellbore": {
+      "x": -146.468,
+      "y": -6.087
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#documentURL": {
+      "x": -240.061,
+      "y": -130.048
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#drillingFacility": {
+      "x": -676.323,
+      "y": 877.432
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#drillingOperatorCompany": {
+      "x": -298.024,
+      "y": -45.578
+    },
+    "http://www.opengis.net/ont/geosparql#ehContains": {
+      "x": 753.255,
+      "y": -372.548
+    },
+    "http://www.opengis.net/ont/geosparql#ehCoveredBy": {
+      "x": 629.824,
+      "y": -373.839
+    },
+    "http://www.opengis.net/ont/geosparql#ehCovers": {
+      "x": 758.44,
+      "y": -471.068
+    },
+    "http://www.opengis.net/ont/geosparql#ehDisjoint": {
+      "x": 720.187,
+      "y": -347.559
+    },
+    "http://www.opengis.net/ont/geosparql#ehEquals": {
+      "x": 666.172,
+      "y": -491.386
+    },
+    "http://www.opengis.net/ont/geosparql#ehInside": {
+      "x": 824.304,
+      "y": -409.409
+    },
+    "http://www.opengis.net/ont/geosparql#ehMeet": {
+      "x": 589.157,
+      "y": -314.26
+    },
+    "http://www.opengis.net/ont/geosparql#ehOverlap": {
+      "x": 782.146,
+      "y": -517.941
+    },
+    "http://www.w3.org/2004/02/skos/core#exactMatch": {
+      "x": 319.749,
+      "y": 959.384
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#explorationWellboreForField": {
+      "x": -387.637,
+      "y": 227.104
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#explorationWellboreForLicence": {
+      "x": -261.038,
+      "y": 8.37
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#factMapURL": {
+      "x": -472.112,
+      "y": 1006.896
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#factPageURL": {
+      "x": -319.634,
+      "y": -1065.178
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#fieldLicensee": {
+      "x": -318.8,
+      "y": 302.695
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#fieldOperator": {
+      "x": -524.325,
+      "y": 260.929
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#geochronologicEra": {
+      "x": 439.89,
+      "y": 180.277
+    },
+    "http://www.opengis.net/ont/geosparql#hasGeometry": {
+      "x": 69.969,
+      "y": -547.086
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#inLithostratigraphicUnit": {
+      "x": -846.909,
+      "y": -715.432
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#includedInField": {
+      "x": 41.539,
+      "y": 554.59
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#investmentForField": {
+      "x": -577.375,
+      "y": 432.482
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#isGeometryOfFeature": {
+      "x": 66.894,
+      "y": -1106.996
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#lastOperatorCompany": {
+      "x": -166.143,
+      "y": 226.172
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#licenceLicenceeCompany": {
+      "x": -537.104,
+      "y": -56.132
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#licenceLicensee": {
+      "x": -435.731,
+      "y": 52.909
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#licenceOperatorCompany": {
+      "x": -542.125,
+      "y": 70.383
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#licenceOperatorCompany": {
+      "x": -171.503,
+      "y": -63.44
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#licenceTransferCompany": {
+      "x": -321.374,
+      "y": 37.756
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#licenceeForLicence": {
+      "x": -616.872,
+      "y": -220.599
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#licenseeForBAA": {
+      "x": -237.017,
+      "y": -380.392
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#licenseeForField": {
+      "x": -425.421,
+      "y": 443.982
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#licenseeForLicence": {
+      "x": -573.861,
+      "y": -148.612
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#mainAreaLocation": {
+      "x": 1092.146,
+      "y": -273.448
+    },
+    "http://www.w3.org/2004/02/skos/core#mappingRelation": {
+      "x": 38.851,
+      "y": 816.65
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#member": {
+      "x": -179.809,
+      "y": -1101.528
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#messageForLicence": {
+      "x": -176.514,
+      "y": -247.006
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2-ptl#messageForTUF": {
+      "x": -60.578,
+      "y": 313.014
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#mudTestForWellbore": {
+      "x": 189.825,
+      "y": 276.251
+    },
+    "http://www.w3.org/2004/02/skos/core#narrowMatch": {
+      "x": 7.967,
+      "y": 783.311
+    },
+    "http://www.w3.org/2004/02/skos/core#narrower": {
+      "x": -47.435,
+      "y": 712.537
+    },
+    "http://www.w3.org/2004/02/skos/core#narrowerTransitive": {
+      "x": -103.08,
+      "y": 666.567
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#npdPageURL": {
+      "x": 212.171,
+      "y": 508.026
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#oilSampleTestForWellbore": {
+      "x": 120.625,
+      "y": -308.049
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#operatorForField": {
+      "x": -494.166,
+      "y": 430.829
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#operatorForLicence": {
+      "x": -619.771,
+      "y": -162.458
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#ownerForField": {
+      "x": -396.028,
+      "y": 273.911
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#pipelineFromFacility": {
+      "x": 236.895,
+      "y": -18.985
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#pipelineOperator": {
+      "x": -34.616,
+      "y": -57.221
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#pipelineToFacility": {
+      "x": 419.101,
+      "y": -120.468
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#pressReleaseURL": {
+      "x": -196.611,
+      "y": 311.207
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#productionFacility": {
+      "x": 3.252,
+      "y": -372.705
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#productionForDiscovery": {
+      "x": 216.675,
+      "y": 1096.939
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#productionForField": {
+      "x": -900.446,
+      "y": -646.393
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#provinceLocation": {
+      "x": 333.688,
+      "y": 431.552
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#quadrantLocation": {
+      "x": -24.485,
+      "y": 337.994
+    },
+    "http://www.opengis.net/ont/geosparql#rcc8dc": {
+      "x": 698.65,
+      "y": -464.969
+    },
+    "http://www.opengis.net/ont/geosparql#rcc8ec": {
+      "x": 809.206,
+      "y": -332.031
+    },
+    "http://www.opengis.net/ont/geosparql#rcc8eq": {
+      "x": 603.874,
+      "y": -412.074
+    },
+    "http://www.opengis.net/ont/geosparql#rcc8ntpp": {
+      "x": 791.804,
+      "y": -440.741
+    },
+    "http://www.opengis.net/ont/geosparql#rcc8ntppi": {
+      "x": 704.134,
+      "y": -307.28
+    },
+    "http://www.opengis.net/ont/geosparql#rcc8po": {
+      "x": 696.566,
+      "y": -523.351
+    },
+    "http://www.opengis.net/ont/geosparql#rcc8tpp": {
+      "x": 795.815,
+      "y": -375.752
+    },
+    "http://www.opengis.net/ont/geosparql#rcc8tppi": {
+      "x": 628.214,
+      "y": -331.319
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#reclassedFromWellbore": {
+      "x": 199.555,
+      "y": -7.686
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#registeredInCountry": {
+      "x": 80.802,
+      "y": 633.362
+    },
+    "http://www.w3.org/2004/02/skos/core#related": {
+      "x": -83.272,
+      "y": 604.559
+    },
+    "http://www.w3.org/2004/02/skos/core#relatedMatch": {
+      "x": 17.182,
+      "y": 680.986
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#reportingCompany": {
+      "x": 40.079,
+      "y": 292.732
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#reservesForCompany": {
+      "x": -178.096,
+      "y": 123.631
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#reservesForDiscovery": {
+      "x": 488.14,
+      "y": 576.485
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#reservesForField": {
+      "x": -488.586,
+      "y": 386.058
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#resourcesIncludedInDiscovery": {
+      "x": 532.726,
+      "y": 522.731
+    },
+    "http://www.w3.org/2004/02/skos/core#semanticRelation": {
+      "x": -203.224,
+      "y": 697.712
+    },
+    "http://www.opengis.net/ont/geosparql#sfContains": {
+      "x": 651.322,
+      "y": -449.492
+    },
+    "http://www.opengis.net/ont/geosparql#sfCrosses": {
+      "x": 760.137,
+      "y": -413.957
+    },
+    "http://www.opengis.net/ont/geosparql#sfDisjoint": {
+      "x": 668.913,
+      "y": -329.063
+    },
+    "http://www.opengis.net/ont/geosparql#sfEquals": {
+      "x": 732.661,
+      "y": -504.412
+    },
+    "http://www.opengis.net/ont/geosparql#sfIntersects": {
+      "x": 763.247,
+      "y": -325.823
+    },
+    "http://www.opengis.net/ont/geosparql#sfOverlaps": {
+      "x": 652.382,
+      "y": -408.711
+    },
+    "http://www.opengis.net/ont/geosparql#sfTouches": {
+      "x": 834.717,
+      "y": -453.008
+    },
+    "http://www.opengis.net/ont/geosparql#sfWithin": {
+      "x": 686.959,
+      "y": -374.326
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#shallowWellboreForField": {
+      "x": -623.813,
+      "y": 35.314
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#shallowWellboreForLicence": {
+      "x": -306.902,
+      "y": -233.63
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#statusForField": {
+      "x": -470.242,
+      "y": 464.456
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#statusForLicence": {
+      "x": -442.222,
+      "y": -450.357
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#statusForSurvey": {
+      "x": 485.186,
+      "y": 439.362
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#stratigraphicParent": {
+      "x": -483.672,
+      "y": -782.916
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#stratumForWellbore": {
+      "x": 228.915,
+      "y": -71.263
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#taskForCompany": {
+      "x": -498.1,
+      "y": -9.237
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#taskForLicence": {
+      "x": -548.575,
+      "y": -217.595
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#transferredBAA": {
+      "x": -39.741,
+      "y": -175.64
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#transferredLicence": {
+      "x": -514.707,
+      "y": -142.362
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellOperator": {
+      "x": -222.95,
+      "y": 20.196
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreAgeHc": {
+      "x": 169.165,
+      "y": 348.709
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreAgeHcLevel1": {
+      "x": 11.947,
+      "y": 360.215
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreAgeHcLevel2": {
+      "x": 40.526,
+      "y": 404.625
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreAgeHcLevel3": {
+      "x": 13.105,
+      "y": 438.256
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreAgeTD": {
+      "x": -72.69,
+      "y": 145.96
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreForDiscovery": {
+      "x": 474.826,
+      "y": 618.303
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreForField": {
+      "x": -430.893,
+      "y": 146.859
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreFormationHc": {
+      "x": 904.571,
+      "y": -46.439
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreFormationHcLevel1": {
+      "x": 850.654,
+      "y": 23.04
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreFormationHcLevel2": {
+      "x": 862.664,
+      "y": -118.08
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreFormationHcLevel3": {
+      "x": 951.339,
+      "y": -39.296
+    },
+    "http://sws.ifi.uio.no/vocab/npd-v2#wellboreFormationTD": {
+      "x": -1115.656,
+      "y": 262.145
+    }
+  }
+}

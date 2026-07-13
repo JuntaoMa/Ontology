@@ -9,7 +9,7 @@ cd apps/ontology-viz
 pnpm dev
 ```
 
-The app opens the bundled NPD ontology by default. The Apache-2.0 license for the NPD benchmark asset is included in `public/NPD-LICENSE.txt`.
+The app opens the bundled NPD ontology by default. Its bundled ForceAtlas2 coordinates avoid recomputing the default layout on every first load. The Apache-2.0 license for the NPD benchmark asset is included in `public/NPD-LICENSE.txt`.
 
 ## Override Default Source
 

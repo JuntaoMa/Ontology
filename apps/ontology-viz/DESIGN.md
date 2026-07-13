@@ -1361,3 +1361,86 @@ Standalone app 可使用 localStorage 或 IndexedDB。其他产品可接入后�
 - 旧图谱库、legacy API、旧样式前缀、package 数据集耦合和低层存储访问检索均无匹配。
 - 阶段 21 曾在浏览器完整验证 StrictMode、最近打开、D3 Force/ForceAtlas2、搜索、聚焦、一跳高亮和详情，控制台 error/warn 为 0；之后浏览器策略禁止继续访问该 localhost，后续阶段使用等价哈希、类型、dist、tarball 和生产构建证据，没有尝试绕过策略。
 - 最终 tracked worktree 无未提交改动；仅保留任务开始前已有且未触碰的 `docs/g6-research/` 未跟踪目录。
+
+### 阶段 28：G6 大图性能收敛
+
+状态：已实现；生产构建通过，末次局部高亮优化待浏览器策略允许后复测。
+
+问题定位：
+
+- NPD 首屏同时承担本体解析、785 节点/776 边布局、标签、箭头、Tooltip、Minimap 和 React 状态同步；G6 5000 节点示例的渲染负载不包含这些完整产品功能，不能只按节点数量直接比较。
+- 旧实现对布局结果先 `render`，再逐节点读取、回写和位移；设置变化也可能重新触发布局，抵消了 G6 的增量数据和原生渲染能力。
+- standalone 默认 Minimap 使用了覆写插件私有生命周期方法的补丁，仍会在销毁竞态中访问已释放的 graph，产生 `getData` 异常并增加一个额外画布。
+- `click-select.unselectedState` 会在每次选择和清除时更新全部 1561 个元素；这是一跳高亮交互中最明显的剩余卡顿来源。
+- G6 5.1.1 的 ForceAtlas2 `preventOverlap` 在 NPD 多连通分量上无法可靠收敛；单独运行 300 次仍有 1624 对节点小于 43.9 px，不能机械地用单阶段配置替代防碰撞处理。
+
+实现：
+
+- 画布保留 G6 原生 `drag-canvas`、`zoom-canvas`、`drag-element`、`click-select` 和 `optimize-viewport-transform`；平移缩放期间只保留节点 key shape。
+- React 不再为原生点击重复写整图状态。搜索、关闭详情等受控操作通过 G6 `getElementDataByState` 和 `setElementState` 只更新旧、新一跳集合。
+- 取消 `unselectedState` 全图变淡，只保留 `selected`/`related` 一跳强化；适配器显式输出空 `states`，避免 `setData` 合并并保留过期状态。
+- 布局快照直接写入节点 style；首次使用快照调用 G6 `render()`，后续设置更新调用 `draw()`，不再逐节点 `translateElementTo`。
+- standalone 默认插件只启用 G6 Tooltip。Minimap 工厂仍作为可选 API 保留，但不再覆写私有方法，也不默认创建额外画布。
+- bundled NPD 增加 app-only ForceAtlas2 布局文件；包层只增加通用的可选 `initialLayout` source 配置，没有 NPD 分支。
+- D3 Force、Dagre 关闭布局动画。ForceAtlas2 使用 G6 支持的布局流水线：ForceAtlas2 生成拓扑结构，再由 D3 Force 的 collide 阶段消除重叠；没有自研布局或坐标后处理算法。
+
+验证记录：
+
+- 浏览器中默认 NPD 可交互时间实测约 398-445 ms；画布数由 5 个降为 4 个，控制台不再出现 Minimap `getData` 错误。
+- 浏览器确认 D3 Force 与 ForceAtlas2 产生明显不同结果；ForceAtlas2 按钮事件约 296 ms 返回，约 2 s 后标签和边恢复完整显示。
+- 浏览器确认节点原生点击可切换到相邻节点、显示一跳高亮并打开详情；设置开关不会重新运行布局。
+- 末次取消全图 `dimmed` 后，浏览器策略拒绝继续访问本地地址；未绕过限制，因此该局部交互优化仍需下一次允许访问时做视觉复测。
+- package 源码类型检查和 dist 构建通过；app TypeScript build 和 Vite 生产构建通过，转换 1388 个模块。
+- 预计算布局包含 785 个有限坐标，最小节点中心距离约 43.999 px；public 与生产 dist 文件均为 83,492 bytes。
+- `rg` 确认 package 源码和 dist 中没有 NPD、私有 Minimap 补丁或 `renderMinimap` 残留；`git diff --check` 通过。
+
+### 阶段 29：按节点度数映射尺寸
+
+状态：已实现并完成静态验证。
+
+实现：
+
+- 使用 G6 内置 `map-node-size` Transform，不在组件中重复实现度数统计和尺寸写回；仅为 G6 5.1.1 的等度数 `log` 除零边界增加保护。
+- 默认按总度数 `degree + direction: both`，以 `log` 比例映射到 `24-44px`；标签字号保持固定。
+- `OntologyGraphCanvas` 默认启用该 Transform，并公开 `transforms` 属性；宿主可传空数组关闭，也可使用 `createG6DegreeNodeSizeTransform` 切换 `in`、`out`、尺寸范围或比例函数。
+- D3 Force 和 ForceAtlas2 的碰撞阶段改用 G6 `preventOverlap`、`nodeSpacing`、`collideStrength` 和 `collideIterations`，让布局控制器从实际节点元素读取动态尺寸，不再使用固定半径。
+- 低层本体模型和 G6 adapter 不写入度数统计字段，保持输入本体与中间模型无派生业务字段。
+
+验证记录：
+
+- 当前 G6 5.1.1 源码与官方文档均确认 `map-node-size` 支持 `degree`，且方向可选 `in`、`out`、`both`。
+- NPD 度数分布为：785 节点、776 边、194 个孤立节点，中位数 1、P95 6、最大值 100；因此显式使用 `log`，避免少数枢纽压缩其余节点的视觉差异。
+- 按默认 `24-44px` 映射检查现有 NPD 预计算布局：节点重叠数为 0，最小节点边界间距约 4.44px。
+- 直接实例化 G6 `MapNodeSize` 验证：度数 `0/1/2` 分别得到 `24/36.62/44px`；所有节点同度数时稳定返回 `24px`，没有 `NaN`。
+- package 源码类型检查、dist 构建、app TypeScript build 和 Vite 生产构建通过；生产构建转换 1389 个模块。
+
+### 阶段 30：G6 原生探索交互与信息层级
+
+状态：已实现并完成静态验证；受既有浏览器策略限制，待本地地址重新允许后补视觉复测。
+
+实现：
+
+- 使用 G6 内置 `fix-element-size` Behavior，在画布缩放超过 100% 后固定节点与标签的屏幕尺寸；放大时主要变化转移到节点间距和边长，低倍率总览仍可自然缩小。
+- 使用 G6 内置 Toolbar 和 Fullscreen 插件提供放大、缩小、适应画布、导出 PNG 与全屏；没有增加自研画布控制层。
+- 提供 `createG6FisheyePlugin()` 作为显式可选能力，使用 click trigger、160px 半径和轻量镜头样式。standalone 不默认加载，避免鱼眼对全体节点的几何更新影响常规点击选择和密集图性能。
+- 未恢复 `unselectedState` 或全图 `dimmed`。节点和边的基础透明度统一降低，选中节点、一跳节点和对应边只更新局部状态并恢复完整不透明度；hover 仅激活当前元素。
+- 节点继续使用 G6 Circle，按本体类型着色并增加白色描边、克制标签和统一 hover/selected 状态；没有阴影、渐变、额外 shape 或自定义绘制循环。
+- Tooltip 增加 compact IRI、namespace、description 和关系端点信息；详情面板增加完整属性列表、IRI 属性、一跳入/出/自环关系和可点击端点导航。
+- D3 Force 的理想边长由 120 提高到 180，增加碰撞间距与弱 `x/y` 回拉，避免孤立节点在斥力下无限撑大视图。
+- ForceAtlas2 使用有效的官方参数 `mode`，而不是会被忽略的 `linLog`；参数扫描后采用 `normal`、`kr=44`、`kg=0.9`，再使用 G6 D3 collide 阶段处理动态节点尺寸。
+- bundled NPD 的布局偏好 key 更新为 `v4`，默认 ForceAtlas2 快照按新参数和 `24-44px` 动态尺寸重新生成。
+
+性能取舍：
+
+- G6 `click-select.unselectedState` 会为 NPD 一次更新约 1561 个元素，既有浏览器实测已确认它是选择交互的主要卡顿来源，因此本阶段不以“点击后再给全图变灰”换取视觉效果。
+- 当前方案的低透明基础样式不产生选择时的全图写入；一跳高亮只更新旧、新关联集合。
+- Fisheye 的实现会在镜头移动时遍历节点并更新相关边，适合用户主动开启的局部探索，不适合作为 700+ 节点画布的常驻 pointermove 行为。
+
+验证记录：
+
+- 对 785 节点、776 边的 NPD 数据扫描 ForceAtlas2 参数；`linlog` 即使在 `kr=5` 时中位边长仍约 639px，过度放大社区间距离，最终选择 `normal` 模式。
+- 新默认快照包含 785 个有限坐标；按 `24-44px` 动态节点尺寸检查，节点重叠对为 0，最小边界净距为 12px，中位边长约 134px，P90 约 368px，整体边界约 `2208 x 2204`。
+- D3 Force 新参数离线检查中位边长约 233px，P90 约 318px，无节点重叠，整体边界约 `3103 x 3153`；弱轴向回拉将无约束版本约 8764px 的边界显著收敛。
+- package 源码类型检查、dist TypeScript 构建、app TypeScript build 均通过。
+- Vite 生产构建通过，转换 1389 个模块；既有 G6/vendor 大 chunk 告警仍存在，没有新增运行时依赖。
+- `git diff --check` 通过。既有浏览器策略继续禁止访问本地地址，本阶段未绕过，因此 Toolbar、固定尺寸和详情视觉仍需策略允许后补交互复测。

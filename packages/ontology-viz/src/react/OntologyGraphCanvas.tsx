@@ -1,4 +1,12 @@
-import { CanvasEvent, EdgeEvent, Graph, NodeEvent, type GraphData, type GraphOptions } from "@antv/g6";
+import {
+  CanvasEvent,
+  EdgeEvent,
+  Graph,
+  NodeEvent,
+  type GraphData,
+  type GraphOptions,
+  type IViewportEvent,
+} from "@antv/g6";
 import {
   useEffect,
   useMemo,
@@ -8,6 +16,7 @@ import {
 
 import type { OntologyGraphData, OntologyLayoutPosition, OntologyLayoutSnapshot } from "../core";
 import {
+  createG6DegreeNodeSizeTransform,
   createG6LayoutOptions,
   toG6GraphData,
   type OntologyG6AdapterOptions,
@@ -17,12 +26,41 @@ import {
 const DEFAULT_BEHAVIORS: GraphOptions["behaviors"] = [
   "drag-canvas",
   "zoom-canvas",
+  {
+    type: "fix-element-size",
+    key: "ontology-fix-element-size",
+    enable: (event: IViewportEvent) => (event.data.scale ?? 1) > 1,
+    reset: true,
+  },
   "drag-element",
-  "click-select",
-  "hover-activate",
-  "auto-adapt-label",
-  "optimize-viewport-transform",
+  {
+    type: "hover-activate",
+    key: "ontology-hover-activate",
+    animation: false,
+    degree: 0,
+    state: "hovered",
+  },
+  {
+    type: "click-select",
+    key: "ontology-click-select",
+    animation: false,
+    degree: 1,
+    state: "selected",
+    neighborState: "related",
+  },
+  {
+    type: "optimize-viewport-transform",
+    key: "ontology-optimize-viewport",
+    shapes: { node: ["key"] },
+  },
 ];
+
+const DEFAULT_TRANSFORMS: GraphOptions["transforms"] = [
+  createG6DegreeNodeSizeTransform(),
+];
+
+const NO_NATIVE_SELECTION = Symbol("no-native-selection");
+type PendingNativeSelection = string | undefined | typeof NO_NATIVE_SELECTION;
 
 export interface OntologyGraphCanvasProps {
   data: OntologyGraphData;
@@ -32,6 +70,7 @@ export interface OntologyGraphCanvasProps {
   style?: CSSProperties;
   behaviors?: GraphOptions["behaviors"];
   plugins?: GraphOptions["plugins"];
+  transforms?: GraphOptions["transforms"];
   layoutSnapshot?: OntologyLayoutSnapshot;
   focusedElementId?: string;
   selectedElementId?: string;
@@ -42,24 +81,37 @@ export interface OntologyGraphCanvasProps {
   onGraphReady?: (graph: Graph) => void;
 }
 
-function getTargetId(event: unknown) {
-  if (!event || typeof event !== "object" || !("target" in event)) return undefined;
-  const target = event.target as {
-    id?: unknown;
-    get?: (key: string) => unknown;
-    attributes?: { id?: unknown };
-  } | undefined;
-
-  const id = target?.id ?? target?.get?.("id") ?? target?.attributes?.id;
-  return typeof id === "string" ? id : undefined;
+function hasClickSelectBehavior(behaviors: GraphOptions["behaviors"]) {
+  return behaviors?.some((behavior) => {
+    if (typeof behavior === "string") return behavior === "click-select";
+    if (typeof behavior === "function") return false;
+    return behavior.type === "click-select";
+  }) ?? false;
 }
 
-function getElementStateMap(data: GraphData, selectedElementId?: string) {
+const CONTROLLED_SELECTION_STATES = new Set(["selected", "related"]);
+
+function getControlledSelectionStateMap(
+  graph: Graph,
+  data: GraphData,
+  selectedElementId?: string,
+) {
   const nodeIds = new Set((data.nodes ?? []).map((node) => String(node.id)));
   const edgeIds = new Set((data.edges ?? []).flatMap((edge) => edge.id ? [String(edge.id)] : []));
   const states: Record<string, string[]> = {};
 
-  for (const id of [...nodeIds, ...edgeIds]) states[id] = [];
+  for (const state of CONTROLLED_SELECTION_STATES) {
+    const controlledData = [
+      ...graph.getElementDataByState("node", state),
+      ...graph.getElementDataByState("edge", state),
+    ];
+    for (const datum of controlledData) {
+      const id = String(datum.id);
+      if (states[id]) continue;
+      states[id] = graph.getElementState(id)
+        .filter((currentState) => !CONTROLLED_SELECTION_STATES.has(currentState));
+    }
+  }
   if (!selectedElementId) return states;
 
   const relatedNodes = new Set<string>();
@@ -85,13 +137,18 @@ function getElementStateMap(data: GraphData, selectedElementId?: string) {
     }
   }
 
-  for (const id of nodeIds) {
-    if (id === selectedElementId) states[id] = ["selected"];
-    else states[id] = relatedNodes.has(id) ? ["related"] : ["dimmed"];
+  const addState = (id: string, state: string) => {
+    const currentStates = states[id]
+      ?? graph.getElementState(id)
+        .filter((currentState) => !CONTROLLED_SELECTION_STATES.has(currentState));
+    states[id] = [...currentStates, state];
+  };
+
+  for (const id of relatedNodes) {
+    addState(id, id === selectedElementId ? "selected" : "related");
   }
-  for (const id of edgeIds) {
-    if (id === selectedElementId) states[id] = ["selected"];
-    else states[id] = relatedEdges.has(id) ? ["related"] : ["dimmed"];
+  for (const id of relatedEdges) {
+    addState(id, id === selectedElementId ? "selected" : "related");
   }
 
   return states;
@@ -126,16 +183,6 @@ function withLayoutSnapshot(data: GraphData, snapshot?: OntologyLayoutSnapshot):
   };
 }
 
-function toG6Position(position: OntologyLayoutPosition): [number, number] | [number, number, number] {
-  return typeof position.z === "number" ? [position.x, position.y, position.z] : [position.x, position.y];
-}
-
-function toG6Positions(snapshot: OntologyLayoutSnapshot) {
-  return Object.fromEntries(
-    Object.entries(snapshot.nodes).map(([id, position]) => [id, toG6Position(position)]),
-  );
-}
-
 function readLayoutSnapshot(graph: Graph, data: GraphData): OntologyLayoutSnapshot | undefined {
   const nodes: Record<string, OntologyLayoutPosition> = {};
   for (const node of data.nodes ?? []) {
@@ -159,6 +206,14 @@ function hasGraphElement(data: GraphData, id: string) {
     || (data.edges ?? []).some((edge) => edge.id === id);
 }
 
+function isElementSelected(graph: Graph, id: string) {
+  try {
+    return graph.getElementState(id).includes("selected");
+  } catch {
+    return false;
+  }
+}
+
 export function OntologyGraphCanvas({
   data,
   adapterOptions,
@@ -167,6 +222,7 @@ export function OntologyGraphCanvas({
   style,
   behaviors = DEFAULT_BEHAVIORS,
   plugins,
+  transforms = DEFAULT_TRANSFORMS,
   layoutSnapshot,
   focusedElementId,
   selectedElementId,
@@ -181,6 +237,11 @@ export function OntologyGraphCanvas({
   const graphDataRef = useRef<GraphData>({ nodes: [], edges: [] });
   const renderRevisionRef = useRef(0);
   const completedRenderRevisionRef = useRef(0);
+  const hasRenderedRef = useRef(false);
+  const renderedLayoutModeRef = useRef<OntologyG6LayoutMode | undefined>(undefined);
+  const pendingNativeSelectionRef = useRef<PendingNativeSelection>(NO_NATIVE_SELECTION);
+  const previousSelectedElementIdRef = useRef(selectedElementId);
+  const lastEmittedLayoutSnapshotRef = useRef<OntologyLayoutSnapshot | undefined>(undefined);
   const selectedElementIdRef = useRef(selectedElementId);
   const focusedElementIdRef = useRef(focusedElementId);
   const callbacksRef = useRef({
@@ -201,26 +262,38 @@ export function OntologyGraphCanvas({
   selectedElementIdRef.current = selectedElementId;
   focusedElementIdRef.current = focusedElementId;
 
+  const usesNativeClickSelect = useMemo(
+    () => hasClickSelectBehavior(behaviors),
+    [behaviors],
+  );
+
   const baseGraphData = useMemo<GraphData>(
     () => toG6GraphData(data, adapterOptions),
     [adapterOptions, data],
   );
   const usesLayoutSnapshot = useMemo(
-    () => hasCompleteLayoutSnapshot(baseGraphData, layoutSnapshot),
+    () => layoutSnapshot !== lastEmittedLayoutSnapshotRef.current
+      && hasCompleteLayoutSnapshot(baseGraphData, layoutSnapshot),
     [baseGraphData, layoutSnapshot],
   );
   const graphData = useMemo<GraphData>(
     () => usesLayoutSnapshot ? withLayoutSnapshot(baseGraphData, layoutSnapshot) : baseGraphData,
     [baseGraphData, layoutSnapshot, usesLayoutSnapshot],
   );
-  const layout = useMemo<NonNullable<GraphOptions["layout"]>>(
+  const layout = useMemo<GraphOptions["layout"]>(
     () => usesLayoutSnapshot
-      ? { type: "grid", nodeFilter: () => false }
-      : createG6LayoutOptions(layoutMode, adapterOptions?.nodeSize) as NonNullable<GraphOptions["layout"]>,
-    [adapterOptions?.nodeSize, layoutMode, usesLayoutSnapshot],
+      ? undefined
+      : createG6LayoutOptions(layoutMode),
+    [layoutMode, usesLayoutSnapshot],
   );
 
   graphDataRef.current = graphData;
+
+  useEffect(() => {
+    if (layoutSnapshot && layoutSnapshot === lastEmittedLayoutSnapshotRef.current) {
+      lastEmittedLayoutSnapshotRef.current = undefined;
+    }
+  }, [layoutSnapshot]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -228,39 +301,55 @@ export function OntologyGraphCanvas({
 
     const graph = new Graph({
       container,
+      animation: false,
       autoFit: "view",
       autoResize: true,
       behaviors,
       plugins,
+      transforms,
       node: {
         state: {
+          hovered: {
+            fillOpacity: 1,
+            labelOpacity: 1,
+            lineWidth: 3,
+            stroke: "#1f64e7",
+          },
           selected: {
+            fillOpacity: 1,
+            labelOpacity: 1,
             lineWidth: 3,
             stroke: "#1f64e7",
             halo: true,
             haloStroke: "#1f64e7",
           },
           related: {
+            fillOpacity: 1,
+            labelOpacity: 1,
             lineWidth: 2,
             stroke: "#1f64e7",
-          },
-          dimmed: {
-            opacity: 0.22,
           },
         },
       },
       edge: {
         state: {
+          hovered: {
+            lineWidth: 2,
+            stroke: "#1f64e7",
+            strokeOpacity: 1,
+            labelOpacity: 1,
+          },
           selected: {
             lineWidth: 3,
             stroke: "#1f64e7",
+            strokeOpacity: 1,
+            labelOpacity: 1,
           },
           related: {
             lineWidth: 2,
             stroke: "#1f64e7",
-          },
-          dimmed: {
-            opacity: 0.16,
+            strokeOpacity: 0.9,
+            labelOpacity: 1,
           },
         },
       },
@@ -268,19 +357,27 @@ export function OntologyGraphCanvas({
 
     graphRef.current = graph;
     graph.on(NodeEvent.CLICK, (event) => {
-      const id = getTargetId(event);
-      if (id) callbacksRef.current.onNodeSelect?.(id);
+      if (!("target" in event) || !event.target) return;
+      const id = String((event.target as { id: unknown }).id);
+      if (usesNativeClickSelect) pendingNativeSelectionRef.current = id;
+      callbacksRef.current.onNodeSelect?.(id);
     });
     graph.on(EdgeEvent.CLICK, (event) => {
-      const id = getTargetId(event);
-      if (id) callbacksRef.current.onEdgeSelect?.(id);
+      if (!("target" in event) || !event.target) return;
+      const id = String((event.target as { id: unknown }).id);
+      if (usesNativeClickSelect) pendingNativeSelectionRef.current = id;
+      callbacksRef.current.onEdgeSelect?.(id);
     });
     graph.on(CanvasEvent.CLICK, () => {
+      if (usesNativeClickSelect) pendingNativeSelectionRef.current = undefined;
       callbacksRef.current.onCanvasClick?.();
     });
     graph.on(NodeEvent.DRAG_END, () => {
       const snapshot = readLayoutSnapshot(graph, graphDataRef.current);
-      if (snapshot) callbacksRef.current.onLayoutSnapshotChange?.(snapshot);
+      if (snapshot) {
+        lastEmittedLayoutSnapshotRef.current = snapshot;
+        callbacksRef.current.onLayoutSnapshotChange?.(snapshot);
+      }
     });
 
     callbacksRef.current.onGraphReady?.(graph);
@@ -288,10 +385,13 @@ export function OntologyGraphCanvas({
     return () => {
       renderRevisionRef.current += 1;
       completedRenderRevisionRef.current = 0;
+      hasRenderedRef.current = false;
+      renderedLayoutModeRef.current = undefined;
+      pendingNativeSelectionRef.current = NO_NATIVE_SELECTION;
       if (graphRef.current === graph) graphRef.current = null;
       graph.destroy();
     };
-  }, [behaviors, plugins]);
+  }, [behaviors, plugins, transforms, usesNativeClickSelect]);
 
   useEffect(() => {
     const graph = graphRef.current;
@@ -313,22 +413,39 @@ export function OntologyGraphCanvas({
           && renderRevisionRef.current === revision
         );
 
-        graph.setData(graphData);
-        graph.setLayout(layout);
-        await graph.render();
-        if (!isCurrentRender()) return;
-
-        if (usesLayoutSnapshot && layoutSnapshot) {
-          await graph.translateElementTo(toG6Positions(layoutSnapshot), false);
+        const previousLayoutMode = renderedLayoutModeRef.current;
+        if (!usesLayoutSnapshot && previousLayoutMode && previousLayoutMode !== layoutMode) {
+          await graph.clear();
           if (!isCurrentRender()) return;
         }
 
-        let appliedSelectedId: string | undefined;
-        do {
-          appliedSelectedId = selectedElementIdRef.current;
-          await graph.setElementState(getElementStateMap(graphData, appliedSelectedId), false);
+        graph.setData(graphData);
+        if (usesLayoutSnapshot) {
+          if (hasRenderedRef.current) await graph.draw();
+          else await graph.render();
           if (!isCurrentRender()) return;
-        } while (selectedElementIdRef.current !== appliedSelectedId);
+        } else {
+          if (!layout) return;
+          graph.setLayout(layout);
+          await graph.render();
+          if (!isCurrentRender()) return;
+        }
+
+        hasRenderedRef.current = true;
+        renderedLayoutModeRef.current = layoutMode;
+
+        const selectedId = selectedElementIdRef.current;
+        if (
+          selectedId
+          && hasGraphElement(graphData, selectedId)
+          && !isElementSelected(graph, selectedId)
+        ) {
+          await graph.setElementState(
+            getControlledSelectionStateMap(graph, graphData, selectedId),
+            false,
+          );
+          if (!isCurrentRender()) return;
+        }
 
         completedRenderRevisionRef.current = revision;
 
@@ -343,7 +460,10 @@ export function OntologyGraphCanvas({
 
         if (!usesLayoutSnapshot) {
           const snapshot = readLayoutSnapshot(graph, graphData);
-          if (snapshot) callbacksRef.current.onLayoutSnapshotChange?.(snapshot);
+          if (snapshot) {
+            lastEmittedLayoutSnapshotRef.current = snapshot;
+            callbacksRef.current.onLayoutSnapshotChange?.(snapshot);
+          }
         }
       })().catch((error) => {
         if (!cancelled && !graph.destroyed && graphRef.current === graph) {
@@ -356,9 +476,23 @@ export function OntologyGraphCanvas({
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [behaviors, graphData, layout, layoutSnapshot, plugins, usesLayoutSnapshot]);
+  }, [graphData, layout, layoutMode, usesLayoutSnapshot]);
 
   useEffect(() => {
+    const previousSelectedId = previousSelectedElementIdRef.current;
+    previousSelectedElementIdRef.current = selectedElementId;
+
+    const pendingNativeSelection = pendingNativeSelectionRef.current;
+    if (
+      pendingNativeSelection !== NO_NATIVE_SELECTION
+      && pendingNativeSelection === selectedElementId
+    ) {
+      pendingNativeSelectionRef.current = NO_NATIVE_SELECTION;
+      return;
+    }
+    pendingNativeSelectionRef.current = NO_NATIVE_SELECTION;
+    if (previousSelectedId === selectedElementId) return;
+
     const graph = graphRef.current;
     if (
       !graph
@@ -368,12 +502,16 @@ export function OntologyGraphCanvas({
       return;
     }
 
-    void graph.setElementState(getElementStateMap(graphData, selectedElementId), false).catch((error) => {
-      if (!graph.destroyed && graphRef.current === graph) {
-        console.error("[OntologyViz] Failed to update element state", error);
-      }
-    });
-  }, [graphData, selectedElementId]);
+    void graph.setElementState(
+      getControlledSelectionStateMap(graph, graphDataRef.current, selectedElementId),
+      false,
+    )
+      .catch((error) => {
+        if (!graph.destroyed && graphRef.current === graph) {
+          console.error("[OntologyViz] Failed to update element state", error);
+        }
+      });
+  }, [selectedElementId]);
 
   useEffect(() => {
     const graph = graphRef.current;

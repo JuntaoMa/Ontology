@@ -57,11 +57,24 @@ const data: OntologyGraphData = parseOntology(content, {
 ## G6 adapter
 
 ```ts
-import { createG6LayoutOptions, toG6GraphData } from "@ontology/viz/g6";
+import {
+  createG6DegreeNodeSizeTransform,
+  createG6FisheyePlugin,
+  createG6LayoutOptions,
+  createG6StandalonePlugins,
+  toG6GraphData,
+} from "@ontology/viz/g6";
 
 const graphData = toG6GraphData(data);
 const layout = createG6LayoutOptions("force-atlas2");
+const incomingDegreeSize = createG6DegreeNodeSizeTransform({ direction: "in" });
+const plugins = createG6StandalonePlugins();
+const optionalFisheye = createG6FisheyePlugin();
 ```
+
+`OntologyGraphCanvas` uses G6's `map-node-size` transform by default. It maps total degree to `24-44px` with a logarithmic scale. Pass `transforms={[]}` to disable it, or pass a memoized transform list to use incoming or outgoing degree instead.
+
+The default canvas behaviors use G6's `fix-element-size` while zoomed above 100%, so nodes and labels remain stable while graph distances expand. `createG6StandalonePlugins()` includes the native tooltip, toolbar, and fullscreen plugins. Fisheye is opt-in because it updates graph geometry and can conflict with click selection on dense graphs.
 
 ## React components
 

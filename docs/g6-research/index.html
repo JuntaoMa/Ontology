@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AntV G6 本体可视化技术调研报告</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f7fb;
+        --paper: #ffffff;
+        --ink: #172033;
+        --muted: #657189;
+        --line: #dbe2ee;
+        --soft: #eef3fb;
+        --blue: #1f64e7;
+        --blue-soft: #e7efff;
+        --green: #0c8f62;
+        --green-soft: #e4f7ee;
+        --orange: #b86413;
+        --orange-soft: #fff0dc;
+        --red: #bd2d34;
+        --red-soft: #ffe9eb;
+        --code: #0f172a;
+        --code-muted: #9fb1cc;
+        --shadow: 0 24px 80px rgba(23, 32, 51, 0.09);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background:
+          linear-gradient(180deg, rgba(31, 100, 231, 0.08), transparent 360px),
+          var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        line-height: 1.58;
+      }
+
+      a {
+        color: var(--blue);
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .page {
+        width: min(1180px, calc(100vw - 48px));
+        margin: 0 auto;
+        padding: 48px 0 72px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.35fr 0.65fr;
+        gap: 24px;
+        align-items: stretch;
+        margin-bottom: 28px;
+      }
+
+      .hero-main,
+      .hero-side,
+      section {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(219, 226, 238, 0.92);
+        box-shadow: var(--shadow);
+      }
+
+      .hero-main {
+        padding: 34px 38px;
+        border-radius: 24px;
+      }
+
+      .hero-side {
+        display: grid;
+        align-content: center;
+        gap: 14px;
+        padding: 26px;
+        border-radius: 24px;
+      }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        color: var(--blue);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.2;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 780px;
+        font-size: clamp(34px, 5vw, 58px);
+      }
+
+      .subtitle {
+        margin: 18px 0 0;
+        max-width: 790px;
+        color: var(--muted);
+        font-size: 18px;
+      }
+
+      .meta-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--soft);
+        font-size: 14px;
+      }
+
+      .meta span:first-child {
+        color: var(--muted);
+      }
+
+      .meta span:last-child {
+        font-weight: 700;
+      }
+
+      .toc {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 0 0 28px;
+      }
+
+      .toc a,
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--paper);
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      section {
+        margin: 24px 0;
+        padding: 30px;
+        border-radius: 22px;
+      }
+
+      h2 {
+        margin: 0 0 18px;
+        font-size: 27px;
+      }
+
+      h3 {
+        margin: 26px 0 12px;
+        font-size: 19px;
+      }
+
+      p {
+        margin: 10px 0;
+      }
+
+      .lead {
+        color: var(--muted);
+        font-size: 17px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .grid.two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grid.three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .card {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--paper);
+      }
+
+      .card h3,
+      .card h4 {
+        margin-top: 0;
+      }
+
+      .verdict {
+        border-left: 5px solid var(--blue);
+        background: linear-gradient(90deg, var(--blue-soft), #fff);
+      }
+
+      .support {
+        color: var(--green);
+        background: var(--green-soft);
+        border-color: rgba(12, 143, 98, 0.25);
+      }
+
+      .partial {
+        color: var(--orange);
+        background: var(--orange-soft);
+        border-color: rgba(184, 100, 19, 0.25);
+      }
+
+      .external {
+        color: var(--red);
+        background: var(--red-soft);
+        border-color: rgba(189, 45, 52, 0.22);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 9px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--paper);
+      }
+
+      th,
+      td {
+        padding: 13px 14px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+        font-size: 14px;
+      }
+
+      th {
+        color: var(--muted);
+        background: var(--soft);
+        font-size: 13px;
+        text-transform: uppercase;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      ul,
+      ol {
+        padding-left: 20px;
+      }
+
+      li {
+        margin: 6px 0;
+      }
+
+      pre {
+        margin: 14px 0 0;
+        padding: 18px;
+        overflow: auto;
+        border-radius: 16px;
+        background: var(--code);
+        color: #d9e4f5;
+        font-size: 13px;
+        line-height: 1.55;
+        tab-size: 2;
+      }
+
+      code {
+        font-family:
+          "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      }
+
+      :not(pre) > code {
+        padding: 2px 5px;
+        border-radius: 6px;
+        background: var(--soft);
+        color: #28354c;
+        font-size: 0.92em;
+      }
+
+      .comment {
+        color: var(--code-muted);
+      }
+
+      .image-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      figure {
+        margin: 0;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--paper);
+      }
+
+      figure img {
+        display: block;
+        width: 100%;
+        height: 240px;
+        object-fit: contain;
+        background: #f7f9fd;
+      }
+
+      figcaption {
+        padding: 12px 14px;
+        color: var(--muted);
+        border-top: 1px solid var(--line);
+        font-size: 13px;
+      }
+
+      .architecture {
+        display: grid;
+        gap: 10px;
+      }
+
+      .layer {
+        display: grid;
+        grid-template-columns: 190px 1fr;
+        gap: 16px;
+        align-items: center;
+        padding: 14px 16px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--paper);
+      }
+
+      .layer strong {
+        color: var(--blue);
+      }
+
+      .source-list {
+        columns: 2;
+        column-gap: 32px;
+        padding-left: 20px;
+      }
+
+      @media (max-width: 860px) {
+        .page {
+          width: min(100vw - 28px, 1180px);
+          padding-top: 28px;
+        }
+
+        .hero,
+        .grid.two,
+        .grid.three,
+        .image-grid {
+          grid-template-columns: 1fr;
+        }
+
+        section,
+        .hero-main,
+        .hero-side {
+          padding: 22px;
+          border-radius: 18px;
+        }
+
+        .layer {
+          grid-template-columns: 1fr;
+        }
+
+        .source-list {
+          columns: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div class="hero-main">
+          <p class="eyebrow">AntV G6 Research</p>
+          <h1>本体可视化迁移到 G6 生态的技术调研</h1>
+          <p class="subtitle">
+            目标是减少自研布局、边连接、交互和插件代码，把前端复杂度收敛到本体解析、数据适配和产品配置层。
+          </p>
+        </div>
+        <aside class="hero-side">
+          <div class="meta-grid">
+            <div class="meta"><span>调研日期</span><span>2026-07-08</span></div>
+            <div class="meta"><span>官方文档版本</span><span>5.1.1</span></div>
+            <div class="meta"><span>GitHub 最新版本</span><span>5.1.1 / 2026-04-17</span></div>
+            <div class="meta"><span>建议路线</span><span>G6-first</span></div>
+          </div>
+        </aside>
+      </header>
+
+      <nav class="toc" aria-label="目录">
+        <a href="#summary">结论</a>
+        <a href="#coverage">能力覆盖</a>
+        <a href="#architecture">架构建议</a>
+        <a href="#layouts">布局策略</a>
+        <a href="#examples">示例代码</a>
+        <a href="#features">潜在价值特性</a>
+        <a href="#risks">风险</a>
+        <a href="#sources">来源</a>
+      </nav>
+
+      <section id="summary">
+        <h2>核心结论</h2>
+        <div class="card verdict">
+          <p>
+            G6 已覆盖我们当前自己写得最多、也最容易出错的部分：图元素绘制、节点/边状态、缩放拖拽、选择高亮、详情提示、缩略图、层级/力导向/社区类布局、边拥挤处理、历史操作、图例过滤和渲染器切换。
+          </p>
+          <p>
+            后续应该把“可视化引擎”交给 G6，把我们的代码收敛成三层：OWL/RDF 解析、本体图数据中间表示、G6 配置/交互适配。不要再维护自研力导向、React Flow handle、边路径计算、minimap、tooltip 和框选高亮。
+          </p>
+        </div>
+
+        <div class="grid three" style="margin-top: 16px">
+          <div class="card">
+            <span class="badge support">可直接依赖 G6</span>
+            <h3>图谱画布与交互</h3>
+            <p>
+              Canvas 默认渲染，支持 SVG/WebGL；内置拖拽、缩放、选择、hover 激活、聚焦、框选、力导向拖拽等行为。
+            </p>
+          </div>
+          <div class="card">
+            <span class="badge support">可直接依赖 G6</span>
+            <h3>布局与插件</h3>
+            <p>
+              内置 Force、D3 Force、ForceAtlas2、AntV Dagre、Concentric、Radial、ComboCombined 等布局；同时支持 Minimap、Tooltip、Legend、History、Hull、EdgeBundling 等插件。
+            </p>
+          </div>
+          <div class="card">
+            <span class="badge partial">仍需我们负责</span>
+            <h3>本体语义适配</h3>
+            <p>
+              G6 接收 JSON 图数据，不解析 OWL、TTL、RDF/XML，也不理解 Class、ObjectProperty、DatatypeProperty 的语义。这里仍需要我们的 ontology-core。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="coverage">
+        <h2>需求能力覆盖</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>我们需要的能力</th>
+              <th>G6 支持情况</th>
+              <th>建议实现方式</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>OWL/TTL/RDF/XML 文件导入</td>
+              <td><span class="badge external">不属于 G6</span></td>
+              <td>使用 RDF/OWL parser 解析为内部模型，再映射到 G6 的 <code>{ nodes, edges, combos }</code>。</td>
+            </tr>
+            <tr>
+              <td>本体对象、属性、关系的图数据表达</td>
+              <td><span class="badge partial">图层支持，语义自定义</span></td>
+              <td>节点/边使用 G6 标准数据结构；本体字段放进 <code>data</code>，样式通过 callback 映射。</td>
+            </tr>
+            <tr>
+              <td>节点颜色按类型、命名空间、字段着色</td>
+              <td><span class="badge support">支持</span></td>
+              <td>使用 <code>node.style.fill</code> callback 或 <code>node.palette</code>，不再硬编码 NPD/3GPP。</td>
+            </tr>
+            <tr>
+              <td>标签、箭头、虚线、边宽、关系类型</td>
+              <td><span class="badge support">支持</span></td>
+              <td>边默认 <code>type: 'line'</code>，用 <code>labelText</code>、<code>endArrow</code>、<code>lineDash</code> 动态映射。</td>
+            </tr>
+            <tr>
+              <td>中心连接点、避免 handle 偏移</td>
+              <td><span class="badge support">支持</span></td>
+              <td>使用圆形或统一中心坐标节点，避免自研 handle；如需端口再使用 G6 ports/sourcePort/targetPort。</td>
+            </tr>
+            <tr>
+              <td>力导向布局与防碰撞</td>
+              <td><span class="badge support">支持</span></td>
+              <td>优先 ForceAtlas2 或 D3 Force；配置 <code>preventOverlap</code>/<code>nodeSize</code> 或 <code>collide.radius</code>。</td>
+            </tr>
+            <tr>
+              <td>层级布局</td>
+              <td><span class="badge support">支持</span></td>
+              <td>使用 <code>antv-dagre</code>，可配置 <code>rankdir</code>、<code>nodesep</code>、<code>ranksep</code>、<code>nodeSize</code>。</td>
+            </tr>
+            <tr>
+              <td>社区/分组布局</td>
+              <td><span class="badge support">支持</span></td>
+              <td>数据层生成 group/combo 字段；使用 ComboCombined、Concentric、Hull、BubbleSets 展示域/模块。</td>
+            </tr>
+            <tr>
+              <td>选中后一跳高亮</td>
+              <td><span class="badge support">支持</span></td>
+              <td>使用 <code>click-select</code>、元素状态和事件 API；一跳关系计算可放在 adapter 层。</td>
+            </tr>
+            <tr>
+              <td>悬浮详情、点击详情侧栏</td>
+              <td><span class="badge support">支持</span></td>
+              <td>轻量信息用 Tooltip 插件；复杂详情面板用事件监听驱动 React 状态。</td>
+            </tr>
+            <tr>
+              <td>缩略图、工具栏、右键菜单</td>
+              <td><span class="badge support">支持</span></td>
+              <td>使用 Minimap、Toolbar、Contextmenu 插件，避免自研 DOM 叠层。</td>
+            </tr>
+            <tr>
+              <td>边重叠、平行边、密集关系</td>
+              <td><span class="badge support">支持</span></td>
+              <td>使用 <code>ProcessParallelEdges</code> transform；必要时使用 EdgeBundling 或 EdgeFilterLens。</td>
+            </tr>
+            <tr>
+              <td>布局保存与恢复</td>
+              <td><span class="badge partial">需业务层保存</span></td>
+              <td>G6 可以读写节点位置；本体路径/文件 hash 到 layout snapshot 的持久化仍由应用负责。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="architecture">
+        <h2>建议架构</h2>
+        <p class="lead">
+          迁移到 G6 不等于把所有逻辑塞进页面组件。我们应该把“本体语义”和“图谱渲染”分开，只在边界处做一次标准映射。
+        </p>
+        <div class="architecture">
+          <div class="layer">
+            <strong>ontology-core</strong>
+            <span>读取 OWL/RDF/TTL/RDFXML，输出标准化的类、对象属性、数据属性、注释属性、命名空间、三元组关系和来源信息。</span>
+          </div>
+          <div class="layer">
+            <strong>ontology-graph-model</strong>
+            <span>定义通用中间表示：<code>OntologyNode</code>、<code>OntologyEdge</code>、<code>OntologyGroup</code>、<code>displayFields</code>、<code>sourceRefs</code>。</span>
+          </div>
+          <div class="layer">
+            <strong>g6-adapter</strong>
+            <span>把中间表示转换为 G6 <code>GraphData</code> 和 <code>GraphOptions</code>，负责样式映射、布局配置、插件配置、状态映射。</span>
+          </div>
+          <div class="layer">
+            <strong>OntologyGraphCanvas</strong>
+            <span>只持有 G6 Graph 实例，处理 render、destroy、setData、setLayout、focus、exportLayout 等画布级能力。</span>
+          </div>
+          <div class="layer">
+            <strong>OntologyViz App</strong>
+            <span>负责文件导入、配置窗口、最近打开、详情面板、布局持久化；不包含图算法和边路径计算。</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="layouts">
+        <h2>布局策略</h2>
+        <div class="grid two">
+          <div class="card">
+            <h3>默认探索布局：ForceAtlas2</h3>
+            <p>
+              适合本体这类关系网络。它比普通力导向更偏向社区结构，G6 文档中也提供了 <code>preventOverlap</code>、<code>kr</code>、<code>kg</code>、<code>linlog</code>、<code>barnesHut</code> 等参数。
+            </p>
+            <p>
+              对 NPD 这类节点数几百、关系几百的图，优先测试 ForceAtlas2 + Canvas + 标签自适应；大图再考虑 Web Worker/WASM。
+            </p>
+          </div>
+          <div class="card">
+            <h3>结构浏览布局：AntV Dagre</h3>
+            <p>
+              适合看 subclass、domain/range、依赖方向。它支持横向/纵向方向、层间距、节点间距和节点尺寸。之前层级布局纵向过长的问题，应优先改 <code>rankdir: 'LR'</code>、调大 <code>ranksep</code>，并按关系类型过滤。
+            </p>
+          </div>
+          <div class="card">
+            <h3>域/社区布局：ComboCombined + Hull</h3>
+            <p>
+              如果本体能提供 namespace、domain、module、source 或 group 字段，可映射为 combo 或 hull。这样不用自己写“内圈/外圈”坐标算法，也能表达分区。
+            </p>
+          </div>
+          <div class="card">
+            <h3>环形/径向布局：Concentric / Radial</h3>
+            <p>
+              Concentric 可根据 degree、centrality 或自定义权重分层；Radial 更适合树状或根节点明确的关系。NPD 的“本体对象内层、来源表外层”可抽象为分层权重，而不是专用布局。
+            </p>
+          </div>
+        </div>
+
+        <div class="image-grid" style="margin-top: 16px">
+          <figure>
+            <img src="assets/d3-force-layout.gif" alt="G6 D3 force layout effect" />
+            <figcaption>官方 D3 Force 布局示例，展示力导向动态效果。</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/d3-force-concept.png" alt="G6 D3 force concept" />
+            <figcaption>官方 D3 Force 概念图，展示多种 force 约束。</figcaption>
+          </figure>
+          <figure>
+            <img src="assets/edge-anatomy.png" alt="G6 edge anatomy" />
+            <figcaption>官方边结构图，标签、箭头、badge 等都属于 edge style。</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="examples">
+        <h2>示例代码</h2>
+        <p class="lead">
+          以下代码是面向我们项目的模板，不是直接复制官方示例。字段命名以通用本体中间表示为前提，避免出现 NPD/3GPP 特定逻辑。
+        </p>
+
+        <h3>1. 最小 G6 画布：数据、样式、交互、插件</h3>
+        <pre><code>import { Graph, NodeEvent, EdgeEvent, CanvasEvent } from '@antv/g6';
+
+const graph = new Graph({
+  container: 'graph-root',
+  autoFit: 'view',
+  autoResize: true,
+  data: {
+    nodes: ontology.nodes.map((node) =&gt; ({
+      id: node.id,
+      type: 'circle',
+      data: node,
+      style: {
+        size: 36,
+        fill: colorBy(node.kind),
+        labelText: node.label,
+        labelPlacement: 'bottom',
+      },
+    })),
+    edges: ontology.edges.map((edge) =&gt; ({
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
+      type: 'line',
+      data: edge,
+      style: {
+        stroke: colorBy(edge.kind),
+        labelText: edge.displayLabel,
+        endArrow: edge.directed,
+      },
+    })),
+  },
+  behaviors: [
+    'drag-canvas',
+    'zoom-canvas',
+    'click-select',
+    'hover-activate',
+    'focus-element',
+    'auto-adapt-label',
+    'optimize-viewport-transform',
+  ],
+  plugins: [
+    { type: 'minimap', size: [220, 150], position: 'right-bottom' },
+    { type: 'tooltip', trigger: 'hover', getContent: renderTooltip },
+    { type: 'legend', nodeField: 'kind', edgeField: 'kind' },
+  ],
+});
+
+graph.on(NodeEvent.CLICK, (event) =&gt; {
+  openDetailPanel(graph.getNodeData(event.target.id));
+});
+
+graph.on(EdgeEvent.CLICK, (event) =&gt; {
+  openDetailPanel(graph.getEdgeData(event.target.id));
+});
+
+graph.on(CanvasEvent.CLICK, () =&gt; {
+  closeDetailPanel();
+});
+
+await graph.render();</code></pre>
+
+        <h3>2. ForceAtlas2：默认探索布局</h3>
+        <pre><code>graph.setLayout({
+  type: 'force-atlas2',
+  preventOverlap: true,
+  nodeSize: 36,
+  nodeSpacing: 8,
+  kr: 22,
+  kg: 1.2,
+  linLog: true,
+  barnesHut: true,
+  prune: true,
+  enableWorker: true,
+});
+
+await graph.layout();
+await graph.fitView();</code></pre>
+
+        <h3>3. D3 Force：需要精细 force 约束时使用</h3>
+        <pre><code>graph.setLayout({
+  type: 'd3-force',
+  link: {
+    distance: (edge) =&gt; edge.data?.kind === 'subClassOf' ? 100 : 160,
+    strength: 0.45,
+  },
+  manyBody: {
+    strength: (node) =&gt; -90 - degreeOf(node.id) * 8,
+  },
+  collide: {
+    radius: (node) =&gt; (node.data?.visualSize ?? 36) / 2 + 6,
+    strength: 1,
+    iterations: 2,
+  },
+  center: { x: 0, y: 0, strength: 0.08 },
+});</code></pre>
+
+        <h3>4. AntV Dagre：层级布局</h3>
+        <pre><code>graph.setLayout({
+  type: 'antv-dagre',
+  rankdir: 'LR',
+  align: 'UL',
+  nodesep: 44,
+  ranksep: 120,
+  nodeSize: [36, 36],
+  ranker: 'network-simplex',
+  controlPoints: false,
+});
+
+await graph.layout();</code></pre>
+
+        <h3>5. Tooltip 与详情面板：轻重分离</h3>
+        <pre><code>const tooltip = {
+  type: 'tooltip',
+  trigger: 'hover',
+  enable: (event) =&gt; event.targetType === 'node' || event.targetType === 'edge',
+  getContent: (_event, items) =&gt; {
+    const item = items[0];
+    const data = item.data;
+    return `
+      &lt;div class="ontology-tooltip"&gt;
+        &lt;strong&gt;${escapeHtml(data.label)}&lt;/strong&gt;
+        &lt;span&gt;${escapeHtml(data.kind)}&lt;/span&gt;
+      &lt;/div&gt;
+    `;
+  },
+};
+
+graph.setPlugins((plugins) =&gt; [...plugins, tooltip]);
+
+graph.on(NodeEvent.CLICK, (event) =&gt; {
+  const node = graph.getNodeData(event.target.id);
+  detailStore.show({ type: 'node', data: node.data });
+});</code></pre>
+
+        <h3>6. 平行边与节点尺寸映射</h3>
+        <pre><code>const graph = new Graph({
+  container: 'graph-root',
+  data,
+  transforms: [
+    {
+      type: 'map-node-size',
+      centrality: { type: 'degree', direction: 'both' },
+      minSize: 24,
+      maxSize: 54,
+      scale: 'sqrt',
+      mapLabelSize: false,
+    },
+    {
+      type: 'process-parallel-edges',
+      mode: 'bundle',
+      distance: 14,
+    },
+  ],
+});</code></pre>
+
+        <h3>7. 渲染器选择：默认 Canvas，大图可试 WebGL</h3>
+        <pre><code>import { Graph } from '@antv/g6';
+import { Renderer as WebGLRenderer } from '@antv/g-webgl';
+
+const graph = new Graph({
+  container: 'graph-root',
+  renderer: () =&gt; new WebGLRenderer(),
+  data,
+  layout: { type: 'force-atlas2', enableWorker: true },
+});</code></pre>
+      </section>
+
+      <section id="features">
+        <h2>暂未涉及但有价值的 G6 特性</h2>
+        <div class="grid two">
+          <div class="card">
+            <h3>Combo / CollapseExpand</h3>
+            <p>
+              把 namespace、domain、module、source system 映射为 combo，可折叠大类，解决本体节点过多时的第一屏压力。
+            </p>
+          </div>
+          <div class="card">
+            <h3>Hull / BubbleSets</h3>
+            <p>
+              用区域轮廓表达“域”“社区”“来源系统”，比给每个节点加复杂卡片更轻，视觉也更利于扫视。
+            </p>
+          </div>
+          <div class="card">
+            <h3>EdgeBundling / EdgeFilterLens</h3>
+            <p>
+              关系密集时不要先改布局算法，先降低边视觉噪声。EdgeBundling 合并相近边束，EdgeFilterLens 可局部查看边。
+            </p>
+          </div>
+          <div class="card">
+            <h3>Fisheye</h3>
+            <p>
+              本体图经常需要局部看清邻域。Fisheye 可以放大鼠标附近区域，不必频繁缩放整个画布。
+            </p>
+          </div>
+          <div class="card">
+            <h3>History</h3>
+            <p>
+              后续如果支持手动拖拽整理布局，History 插件可以提供 undo/redo，布局编辑体验会更完整。
+            </p>
+          </div>
+          <div class="card">
+            <h3>Web Worker / WASM Layout</h3>
+            <p>
+              G6 文档说明多数内置布局支持 Worker，部分布局有 WASM 版本。大图布局计算可以先从这里优化，而不是自写算法。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="risks">
+        <h2>风险与边界</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>风险</th>
+              <th>说明</th>
+              <th>应对</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>HTML 节点性能</td>
+              <td>卡片式 HTML 节点会显著增加 DOM 与重排成本，几百节点就可能拖慢交互。</td>
+              <td>默认用 Canvas 圆点/简洁节点；详情交给 Tooltip/侧栏；只有少量精选节点使用 HTML。</td>
+            </tr>
+            <tr>
+              <td>布局并非语义推理</td>
+              <td>G6 只根据节点边和布局参数摆放，不知道 OWL 语义。</td>
+              <td>在 ontology-core 中提前计算关系类型、分组、过滤和展示字段。</td>
+            </tr>
+            <tr>
+              <td>完全自动布局仍可能拥挤</td>
+              <td>力导向只能优化局部能量，不保证边无交叉，也不保证所有标签可读。</td>
+              <td>默认隐藏长标签、启用 auto-adapt-label、按关系过滤、使用 fisheye/tooltip/详情面板。</td>
+            </tr>
+            <tr>
+              <td>版本 API 差异</td>
+              <td>G6 5.0 以后行为系统、插件配置和旧版本有差异。</td>
+              <td>固定依赖版本，封装 adapter，不让应用页面直接散落 G6 API。</td>
+            </tr>
+            <tr>
+              <td>导入文件格式复杂</td>
+              <td>OWL 可能是 RDF/XML、Turtle、JSON-LD，且命名空间和 annotation 质量不一。</td>
+              <td>解析层独立测试；显示层只接受标准中间表示，避免把解析异常扩散到 G6 组件。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="sources">
+        <h2>参考来源</h2>
+        <p class="lead">
+          本报告只基于 AntV G6 官方文档、官方 GitHub 与官方示例页面整理。
+        </p>
+        <ul class="source-list">
+          <li><a href="https://g6.antv.antgroup.com/en/manual/introduction">G6 Introduction</a></li>
+          <li><a href="https://github.com/antvis/G6">AntV G6 GitHub</a></li>
+          <li><a href="https://g6.antv.antgroup.com/en/manual/data">G6 Data</a></li>
+          <li><a href="https://g6.antv.antgroup.com/en/manual/element/node/base-node">Common Node Configuration</a></li>
+          <li><a href="https://g6.antv.antgroup.com/en/manual/element/edge/base-edge">Edge Common Configuration</a></li>
+          <li><a href="https://g6.antv.antgroup.com/en/manual/layout/overview">Layout Overview</a></li>
+          <li><a href="https://g6.antv.antgroup.com/en/manual/layout/force-layout">Force Layout</a></li>
+          <li><a href="https://g6.antv.antgroup.com/en/manual/layout/d3-force-layout">D3 Force Layout</a></li>
+          <li><a href="https://g6.antv.antgroup.com/en/manual/layout/force-atlas2-layout">ForceAtlas2 Layout</a></li>
+          <li><a href="https://g6.antv.antgroup.com/en/manual/layout/antv-dagre-layout">AntV Dagre Layout</a></li>
+          <li><a href="https://g6.antv.antgroup.com/en/manual/behavior/overview">Behavior Overview</a></li>
+          <li><a href="https://g6.antv.antgroup.com/en/manual/plugin/overview">Plugin Overview</a></li>
+          <li><a href="https://g6.antv.antgroup.com/en/manual/plugin/tooltip">Tooltip Plugin</a></li>
+          <li><a href="https://g6.antv.antgroup.com/en/manual/transform/overview">Transform Overview</a></li>
+          <li><a href="https://g6.antv.antgroup.com/en/manual/further-reading/event">Event System</a></li>
+          <li><a href="https://g6.antv.antgroup.com/en/manual/further-reading/renderer">Renderer</a></li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>
