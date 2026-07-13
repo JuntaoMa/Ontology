@@ -1,11 +1,12 @@
 {
-  "name": "validation-demo-frontend",
+  "name": "ontology-validation-app",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview"
   },
   "dependencies": {

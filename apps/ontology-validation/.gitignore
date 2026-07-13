@@ -1,6 +1,7 @@
 backend/.venv/
 backend/demo.db
-frontend/node_modules/
-frontend/dist/
+node_modules/
+dist/
+var/
 __pycache__/
 .pytest_cache/

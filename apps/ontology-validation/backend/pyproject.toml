@@ -1,7 +1,7 @@
 [project]
-name = "validation-demo-backend"
+name = "ontology-validation-backend"
 version = "0.1.0"
-description = "知识校验系统 demo 后端：registry+DAG 编排、确定性引擎 + LLM judge"
+description = "本体校验应用后端：registry+DAG 编排、确定性引擎 + LLM judge"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi>=0.115",

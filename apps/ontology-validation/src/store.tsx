@@ -76,7 +76,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setFindings(await loadFindings(summary.run_id));
     } catch (e: any) {
       setError(e?.name === "AbortError"
-        ? "运行超时（>120s）。请确认前端访问的端口就是后端端口（同源）；若用 npm run dev，需把 vite 代理指向后端端口。"
+        ? "运行超时（>120s）。请确认前端访问的端口就是后端端口（同源）；若用 pnpm dev:validation，需把 Vite 代理指向后端端口。"
         : `运行失败：${e?.message || e}`);
     } finally {
       clearTimeout(timer);

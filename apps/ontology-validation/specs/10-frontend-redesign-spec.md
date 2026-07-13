@@ -1,8 +1,8 @@
 # 前端重设计规格（v1）
 
 > 目标：把 demo 前端重构为「亮色企业风 + 左侧栏 + 统一 findings 收件箱」的现代扁平界面。
-> 只动 `frontend/`，后端 API 契约零改动。参考语言：Linear/Sentry 的密度与克制 + 业务侧可信洁净观感。
-> 上游：`docs/validation-demo-plan.md`、本目录 `00-master-spec.md`（功能验收不变）。
+> 本规格最初只改前端；迁移到 Ontology 后，前端位于应用根目录的 `src/`，后端 API 契约不变。
+> 上游：`../docs/design-plan.md`、本目录 `00-master-spec.md`（功能验收不变）。
 
 ## 设计决策（核心：双语义轴分通道）
 
@@ -47,7 +47,7 @@ CSS 变量定义于 `src/styles/tokens.css`，亮/暗两套（亮色优先，暗
 
 | AC | 准则 |
 |---|---|
-| AC-UI-BUILD | `npm run build` 通过；产物由后端静态托管，六分区可达 |
+| AC-UI-BUILD | `pnpm build:validation` 通过；产物由后端静态托管，六分区可达 |
 | AC-UI-LEGEND | 严重度=填充、权限=图标+边框 两轴在图例与所有 finding 呈现处一致 |
 | AC-UI-INBOX | 收件箱可对全部 finding 做筛选/分组/triage，三类动作落库 |
 | AC-UI-GRAPH | 本体 Cytoscape / 流程图 / 注入热力图 在亮色主题下清晰，违例与 judge 来源高亮可辨 |

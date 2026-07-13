@@ -1,9 +1,9 @@
-# 知识校验系统 Demo
+# Ontology Validation
 
 业务场景下本体 / 规则 / 流程的混合校验工作台：**确定性引擎做形式判定（veto/score），
 LLM judge 做语义判定与复判（advise），人工在写入闸门终审**。
-设计文档：`../docs/validation-demo-plan.md`（v2.1）；功能验收：`specs/00-master-spec.md`；
-前端重设计规格：`specs/10-frontend-redesign-spec.md`。
+目标系统设计：`docs/system-design/index.html`；实现设计稿：`docs/design-plan.md`；
+功能验收：`specs/00-master-spec.md`；前端重设计规格：`specs/10-frontend-redesign-spec.md`。
 
 前端为**亮色企业风 + 左侧栏 + 统一 findings 收件箱**（Tailwind v4 + 手写 shadcn 风格原语 +
 Cytoscape + ECharts）。核心设计约束:**双语义轴分通道**——严重度用填充色、权限(veto/score/advise)
@@ -12,17 +12,22 @@ Cytoscape + ECharts）。核心设计约束:**双语义轴分通道**——严�
 ## 快速开始
 
 ```bash
-# 后端（Python 3.12，uv）
-cd validation_demo/backend
-uv venv --python 3.12 && uv sync
-.venv/bin/python -m pytest          # 53 项验收测试（AC-* 全覆盖）
-.venv/bin/python -m uvicorn app.main:app --port 8000
+# 从 Ontology 仓库根目录安装前端工作区并构建
+pnpm install
+pnpm --filter ontology-validation-app build
 
-# 前端（构建产物由后端静态托管，访问 http://localhost:8000）
-cd ../frontend && npm install && npm run build
+# 后端（Python 3.12，始终由 uv 管理）
+uv sync --project apps/ontology-validation/backend
+uv run --project apps/ontology-validation/backend pytest
+pnpm serve:validation
 ```
 
-打开页面 → 选择数据集（loan / pizza）→「运行全管线」。
+打开 `http://localhost:8000`，选择 fixture（loan / pizza）后运行全管线。开发前端可使用
+`pnpm dev:validation`，Vite 默认把 `/api` 代理到 `http://localhost:8000`。
+
+运行时数据库默认写入 `apps/ontology-validation/var/validation.db`。可通过
+`ONTOLOGY_VALIDATION_DB`、`ONTOLOGY_VALIDATION_FIXTURES`、
+`ONTOLOGY_VALIDATION_CASSETTES` 和 `ONTOLOGY_VALIDATION_FRONTEND_DIST` 覆盖路径。
 
 ## LLM judge 三种运行模式（自动选择）
 
@@ -32,7 +37,7 @@ cd ../frontend && npm install && npm run build
 | API | 设置 `ANTHROPIC_API_KEY` | anthropic SDK，适合服务化 |
 | cassette 回放 | 两者皆无 | 复用 `cassettes/loan.json` 的已录制响应，**离线全流程可跑** |
 
-重录 cassette：`backend/.venv/bin/python scripts/record_cassettes.py loan`
+重录 cassette：`uv run --project apps/ontology-validation/backend python apps/ontology-validation/backend/scripts/record_cassettes.py loan`
 （含 gold 自检：O9/R11/P-edge 三个「仅 LLM 可抓」缺陷必须被真实 judge 命中）；
 变异算子的 judge 响应：`scripts/record_mutation_cassettes.py`。
 

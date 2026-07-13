@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 
@@ -20,13 +21,19 @@ from .orchestrator import run_pipeline
 from .pipeline import build_registry
 from .validators.mutation import OPERATORS, matrix_json, run_mutation_lab
 
-DB_PATH = Path(__file__).resolve().parents[1] / "demo.db"
-CASSETTE_DIR = Path(__file__).resolve().parents[2] / "cassettes"
-FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+APP_ROOT = Path(__file__).resolve().parents[2]
+DB_PATH = Path(os.environ.get("ONTOLOGY_VALIDATION_DB", APP_ROOT / "var" / "validation.db"))
+CASSETTE_DIR = Path(
+    os.environ.get("ONTOLOGY_VALIDATION_CASSETTES", APP_ROOT / "cassettes")
+)
+FRONTEND_DIST = Path(
+    os.environ.get("ONTOLOGY_VALIDATION_FRONTEND_DIST", APP_ROOT / "dist")
+)
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 import threading
 
-app = FastAPI(title="知识校验系统 Demo")
+app = FastAPI(title="本体校验系统")
 conn = store.connect(DB_PATH)
 db_lock = threading.RLock()        # 单连接跨线程：串行化写入，避免竞态/锁死
 registry = build_registry()
@@ -502,4 +509,4 @@ if FRONTEND_DIST.exists():
 else:
     @app.get("/", response_class=HTMLResponse)
     def index():
-        return "<h3>前端未构建：cd validation_demo/frontend && npm install && npm run build</h3>"
+        return "<h3>前端未构建：在 apps/ontology-validation 运行 pnpm build</h3>"

@@ -1,6 +1,6 @@
 # 知识校验 Demo · 模块与设计思路总览（以 loan 场景为例）
 
-> 配套：设计文档 `../../docs/validation-demo-plan.md`（v2.1）、功能规格 `../specs/00-master-spec.md`、
+> 配套：设计文档 `./design-plan.md`（v2.1）、功能规格 `../specs/00-master-spec.md`、
 > 前端规格 `../specs/10-frontend-redesign-spec.md`。本文是 demo 的导览。
 
 ## 一、一句话定位

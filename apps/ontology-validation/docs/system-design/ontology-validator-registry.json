@@ -1,0 +1,3072 @@
+{
+  "schemaVersion": "1.1.0",
+  "registryId": "ontology-validation-system",
+  "title": "本体校验系统设计图谱",
+  "subtitle": "以原子校验器、关系图和可审计 DAG 构成可信发布控制面",
+  "updated": "2026-07-13",
+  "language": "zh-CN",
+  "sourceNote": "本 JSON 是展示页面的唯一运行时数据源；初始内容由完整本体校验矩阵导入，后续设计变更应优先更新本文件。",
+  "counts": {
+    "chapters": 13,
+    "validators": 196,
+    "coreValidators": 81
+  },
+  "principles": [
+    {
+      "title": "分层判定",
+      "text": "语法、逻辑、数据、语义和任务可用性分别验证，任何单一引擎都不代表总体正确。"
+    },
+    {
+      "title": "权限受可判定性约束",
+      "text": "规范明确且可复现的硬约束可以否决；统计和语义判断只计分或建议。"
+    },
+    {
+      "title": "证据先行",
+      "text": "事实、公理、规则和流程都应保留来源、范围、版本与转换过程。"
+    },
+    {
+      "title": "失败可逆",
+      "text": "违规对象进入隔离与复核，不静默删除；修复、放行和接受风险都必须可审计。"
+    },
+    {
+      "title": "发布可追踪",
+      "text": "校验结果、影响分析、版本、工具链和已知盲区随发布制品一起归档。"
+    }
+  ],
+  "designElements": [
+    {
+      "id": "identity",
+      "label": "身份与版本",
+      "term": "Stable Identity",
+      "question": "谁在执行？",
+      "contract": "稳定 ID、版本、所有者、配置摘要和工具镜像必须可追踪。"
+    },
+    {
+      "id": "scope",
+      "label": "作用域",
+      "term": "Scope",
+      "question": "校验边界在哪里？",
+      "contract": "明确单制品、导入闭包、全局图、变更集或运行态边界。"
+    },
+    {
+      "id": "input",
+      "label": "输入契约",
+      "term": "Input Contract",
+      "question": "依赖什么？",
+      "contract": "声明必需制品、前置节点、配置、基线和输入哈希。"
+    },
+    {
+      "id": "criterion",
+      "label": "判定契约",
+      "term": "Decision Criterion",
+      "question": "凭什么判断？",
+      "contract": "给出可复现判据、阈值、标准版本和已知不可判定边界。"
+    },
+    {
+      "id": "execution",
+      "label": "执行契约",
+      "term": "Execution Contract",
+      "question": "怎样运行？",
+      "contract": "固定引擎、资源预算、超时、重试、缓存键和隔离策略。"
+    },
+    {
+      "id": "verdict",
+      "label": "结论契约",
+      "term": "Verdict Contract",
+      "question": "输出什么状态？",
+      "contract": "至少区分 pass、fail、warn、unknown 与 abstain；异常不得记作通过。"
+    },
+    {
+      "id": "authority",
+      "label": "决策权限",
+      "term": "Decision Authority",
+      "question": "结论能做什么？",
+      "contract": "权限限定为否决、计分、建议或人工批准，并声明升级路径。"
+    },
+    {
+      "id": "evidence",
+      "label": "证据与输出",
+      "term": "Evidence Contract",
+      "question": "如何解释与复核？",
+      "contract": "输出稳定 finding、证据定位、指标、诊断和可选修复草案。"
+    },
+    {
+      "id": "cost",
+      "label": "成本预算",
+      "term": "Cost Budget",
+      "question": "何时值得运行？",
+      "contract": "声明时间、计算、数据、专家和研究不确定性成本，供编排器排程。"
+    }
+  ],
+  "scopes": {
+    "package": {
+      "code": "PKG",
+      "label": "制品包",
+      "term": "Artifact Package",
+      "description": "manifest 声明的文件、版本、依赖和安全边界。"
+    },
+    "ontology": {
+      "code": "ONT",
+      "label": "本体模块",
+      "term": "Ontology Module",
+      "description": "单一本体模块及其显式公理和元数据。"
+    },
+    "closure": {
+      "code": "CLS",
+      "label": "导入闭包",
+      "term": "Import Closure",
+      "description": "根本体与固定 imports 闭包形成的完整语义边界。"
+    },
+    "graph": {
+      "code": "KG",
+      "label": "实例图",
+      "term": "Instance Graph",
+      "description": "指定数据图、命名图集合及其推理前后状态。"
+    },
+    "evidence": {
+      "code": "EVD",
+      "label": "证据单元",
+      "term": "Evidence Unit",
+      "description": "事实或公理与来源片段、位置、版本之间的证据包。"
+    },
+    "source": {
+      "code": "SRC",
+      "label": "源与映射",
+      "term": "Source and Mapping",
+      "description": "结构化源、SQL、R2RML/OBDA 映射与虚拟图。"
+    },
+    "task": {
+      "code": "TASK",
+      "label": "任务集合",
+      "term": "Task Suite",
+      "description": "能力问题、查询、结果断言和下游任务样本。"
+    },
+    "corpus": {
+      "code": "CORP",
+      "label": "语料与 Gold",
+      "term": "Corpus and Gold Set",
+      "description": "抽取语料、标注集、seen/blind 划分和评测基线。"
+    },
+    "runtime": {
+      "code": "RUN",
+      "label": "规则与流程运行态",
+      "term": "Rule and Process Runtime",
+      "description": "规则集、流程模型、业务状态、事件日志和仿真上下文。"
+    },
+    "release": {
+      "code": "REL",
+      "label": "变更与发布",
+      "term": "Change and Release",
+      "description": "候选版本、上一基线、影响面、访问控制和发布制品。"
+    },
+    "validator": {
+      "code": "META",
+      "label": "校验器自身",
+      "term": "Validator Assurance",
+      "description": "校验规则、引擎、测试夹具、误差和性能边界。"
+    }
+  },
+  "authorities": {
+    "veto": {
+      "code": "V",
+      "label": "否决",
+      "term": "Veto",
+      "description": "阻止入库或发布；对象进入隔离区，保留完整证据。",
+      "color": "#C33F4A"
+    },
+    "score": {
+      "code": "S",
+      "label": "计分",
+      "term": "Score",
+      "description": "形成 finding、风险分与趋势，不直接删除对象。",
+      "color": "#167D8D"
+    },
+    "advise": {
+      "code": "A",
+      "label": "建议",
+      "term": "Advise",
+      "description": "语义判断和修复草案，允许不确定；不得自动写入。",
+      "color": "#B56B16"
+    },
+    "human": {
+      "code": "H",
+      "label": "人工批准",
+      "term": "Human Approval",
+      "description": "批准高影响修复、接受风险和签发正式版本。",
+      "color": "#74529C"
+    }
+  },
+  "costs": {
+    "low": {
+      "label": "低成本",
+      "description": "静态扫描或现有标准库即可实现。"
+    },
+    "medium": {
+      "label": "中成本",
+      "description": "需要跨文件索引、稳定诊断或完整测试夹具。"
+    },
+    "high": {
+      "label": "高成本",
+      "description": "需要数据库、推理器、端到端环境或专家 gold。"
+    },
+    "research": {
+      "label": "研究型",
+      "description": "正确答案不完全可判定，需要统计、模型和专家共同判断。"
+    }
+  },
+  "relationTypes": {
+    "requires": {
+      "label": "前置依赖",
+      "term": "Requires",
+      "style": "solid",
+      "description": "目标节点只有在来源节点成功或被明确放行后才能进入 ready。"
+    },
+    "supplies": {
+      "label": "数据供给",
+      "term": "Supplies",
+      "style": "data",
+      "description": "来源节点产生索引、推理结果、基线或证据，作为目标节点输入。"
+    },
+    "gates": {
+      "label": "硬门禁",
+      "term": "Gates",
+      "style": "gate",
+      "description": "来源节点失败会阻断目标节点或发布；不得以缺失结果替代通过。"
+    },
+    "explains": {
+      "label": "诊断解释",
+      "term": "Explains",
+      "style": "dotted",
+      "description": "来源节点解释目标 finding 的冲突集合、证据或失败归因。"
+    },
+    "conditional": {
+      "label": "条件依赖",
+      "term": "Conditional Dependency",
+      "style": "dashed",
+      "description": "仅当对应制品或能力出现在 manifest 中时激活该依赖。"
+    },
+    "escalates": {
+      "label": "升级复核",
+      "term": "Escalates",
+      "style": "review",
+      "description": "低可判定性、高影响或冲突结果进入人工复核与风险接受。"
+    }
+  },
+  "orchestration": {
+    "readinessRule": "READY = 必需前置节点完成 ∧ 输入哈希固定 ∧ 资源预算已分配 ∧ 门禁未阻断",
+    "policies": [
+      {
+        "title": "拓扑调度",
+        "term": "Topological Scheduling",
+        "text": "仅调度入度归零的节点；环路属于设计错误，反馈修复必须开启新 run。"
+      },
+      {
+        "title": "并行与扇入",
+        "term": "Fan-out / Fan-in",
+        "text": "共享不可变快照后并行执行独立节点，在集成、任务验收和发布点汇聚。"
+      },
+      {
+        "title": "门禁传播",
+        "term": "Gate Propagation",
+        "text": "硬失败阻断依赖后继；计分与建议继续传播，但必须进入最终风险汇总。"
+      },
+      {
+        "title": "确定性缓存",
+        "term": "Deterministic Cache",
+        "text": "缓存键由节点版本、输入哈希、配置和依赖输出哈希共同构成。"
+      },
+      {
+        "title": "故障隔离",
+        "term": "Failure Isolation",
+        "text": "timeout、OOM、unsupported 和引擎异常独立记录为 unknown/error，不污染其他并行分支。"
+      },
+      {
+        "title": "证据汇聚",
+        "term": "Evidence Aggregation",
+        "text": "每个节点输出统一 finding envelope，最终报告保留因果链、豁免和人工决定。"
+      }
+    ],
+    "phases": [
+      {
+        "id": "freeze",
+        "order": 1,
+        "title": "冻结运行上下文",
+        "term": "SNAPSHOT",
+        "nodes": [
+          {
+            "id": "dag.snapshot",
+            "label": "制品清单与不可变快照",
+            "description": "解析 manifest，固定输入、依赖、策略和工具链，建立本次 run 的审计根。",
+            "scope": "package",
+            "authority": "veto",
+            "validatorRefs": ["intake.g01", "intake.g03", "intake.g05", "intake.g07", "intake.g10"],
+            "dependsOn": [],
+            "conditionalOn": []
+          }
+        ]
+      },
+      {
+        "id": "compile",
+        "order": 2,
+        "title": "编译与索引",
+        "term": "COMPILE",
+        "nodes": [
+          {
+            "id": "dag.compile-ontology",
+            "label": "解析本体与导入闭包",
+            "description": "建立 RDF/OWL/SHACL 语法树、imports 闭包和统一词汇索引。",
+            "scope": "closure",
+            "authority": "veto",
+            "validatorRefs": ["conformance.s01", "conformance.s05", "conformance.s06", "conformance.s10", "conformance.s12"],
+            "dependsOn": ["dag.snapshot"],
+            "conditionalOn": []
+          },
+          {
+            "id": "dag.compile-source",
+            "label": "编译源 Schema 与映射",
+            "description": "验证源结构与映射语法，生成可执行映射计划和引用索引。",
+            "scope": "source",
+            "authority": "veto",
+            "validatorRefs": ["mapping.d01", "mapping.d03", "mapping.d04"],
+            "dependsOn": ["dag.snapshot"],
+            "conditionalOn": []
+          }
+        ]
+      },
+      {
+        "id": "parallel",
+        "order": 3,
+        "title": "领域并行校验",
+        "term": "FAN-OUT",
+        "nodes": [
+          {
+            "id": "dag.schema-quality",
+            "label": "术语与概念建模",
+            "description": "扫描元数据、层级、关系、量词与结构坏味道。",
+            "scope": "ontology",
+            "authority": "score",
+            "validatorRefs": ["metadata.m01", "metadata.m02", "modeling.p01", "modeling.p04", "modeling.p14"],
+            "dependsOn": ["dag.compile-ontology"],
+            "conditionalOn": []
+          },
+          {
+            "id": "dag.abox-shacl",
+            "label": "实例图与 SHACL",
+            "description": "校验实例完整性、类型、基数、引用和推理边界。",
+            "scope": "graph",
+            "authority": "veto",
+            "validatorRefs": ["abox.a01", "abox.a02", "abox.a05", "abox.a06", "abox.a09", "abox.a19"],
+            "dependsOn": ["dag.compile-ontology"],
+            "conditionalOn": []
+          },
+          {
+            "id": "dag.evidence-trust",
+            "label": "证据与来源忠实性",
+            "description": "回查来源位置、原文、数值边界、实体链接和公理级 provenance。",
+            "scope": "evidence",
+            "authority": "veto",
+            "validatorRefs": ["evidence.e01", "evidence.e02", "evidence.e03", "evidence.e05", "evidence.e14"],
+            "dependsOn": ["dag.snapshot"],
+            "conditionalOn": ["dag.compile-ontology"]
+          },
+          {
+            "id": "dag.induction-quality",
+            "label": "自动抽象质量",
+            "description": "按术语、层级、关系、公理和 blind 泛化评估自动本体学习。",
+            "scope": "corpus",
+            "authority": "score",
+            "validatorRefs": ["induction.i01", "induction.i02", "induction.i03", "induction.i04", "induction.i05", "induction.i12"],
+            "dependsOn": ["dag.snapshot"],
+            "conditionalOn": ["dag.compile-ontology"]
+          }
+        ]
+      },
+      {
+        "id": "integrate",
+        "order": 4,
+        "title": "语义与系统集成",
+        "term": "FAN-IN",
+        "nodes": [
+          {
+            "id": "dag.reasoning",
+            "label": "推理一致性与蕴含",
+            "description": "在固定闭包和实例边界上检查一致性、可满足性和期望蕴含。",
+            "scope": "closure",
+            "authority": "veto",
+            "validatorRefs": ["reasoning.l01", "reasoning.l02", "reasoning.l03", "reasoning.l12", "reasoning.l15"],
+            "dependsOn": ["dag.compile-ontology", "dag.abox-shacl"],
+            "conditionalOn": []
+          },
+          {
+            "id": "dag.virtual-graph",
+            "label": "虚拟图语义闭环",
+            "description": "汇合本体、源与映射，检查 join、虚拟 ABox 和查询改写语义。",
+            "scope": "source",
+            "authority": "veto",
+            "validatorRefs": ["mapping.d06", "mapping.d10", "mapping.d15", "mapping.d16"],
+            "dependsOn": ["dag.compile-ontology", "dag.compile-source"],
+            "conditionalOn": ["dag.abox-shacl"]
+          },
+          {
+            "id": "dag.rules-process",
+            "label": "规则、流程与运行态",
+            "description": "联合校验规则 IR、控制流、本体状态、事件日志和仿真结果。",
+            "scope": "runtime",
+            "authority": "veto",
+            "validatorRefs": ["rules-process.r01", "rules-process.r02", "rules-process.r03", "rules-process.r05", "rules-process.p01", "rules-process.p03", "rules-process.p04", "rules-process.p05"],
+            "dependsOn": ["dag.compile-ontology"],
+            "conditionalOn": ["dag.abox-shacl", "dag.evidence-trust"]
+          }
+        ]
+      },
+      {
+        "id": "accept",
+        "order": 5,
+        "title": "任务验收与变更影响",
+        "term": "ACCEPT",
+        "nodes": [
+          {
+            "id": "dag.task-acceptance",
+            "label": "能力问题与任务验收",
+            "description": "运行 CQ、结果断言和下游任务，汇聚推理、映射与流程分支。",
+            "scope": "task",
+            "authority": "score",
+            "validatorRefs": ["fitness.q01", "fitness.q02", "fitness.q03", "fitness.q04", "fitness.q05", "fitness.q10"],
+            "dependsOn": ["dag.reasoning"],
+            "conditionalOn": ["dag.virtual-graph", "dag.rules-process"]
+          },
+          {
+            "id": "dag.change-impact",
+            "label": "差异、兼容与回归",
+            "description": "对比上一基线，检查公理、推理、CQ、mapping 和查询兼容性。",
+            "scope": "release",
+            "authority": "veto",
+            "validatorRefs": ["evolution.v01", "evolution.v02", "evolution.v03", "evolution.v04", "evolution.v06"],
+            "dependsOn": ["dag.task-acceptance"],
+            "conditionalOn": ["dag.virtual-graph"]
+          }
+        ]
+      },
+      {
+        "id": "release",
+        "order": 6,
+        "title": "校验器保证与发布",
+        "term": "RELEASE",
+        "nodes": [
+          {
+            "id": "dag.validator-assurance",
+            "label": "校验器自身保证",
+            "description": "确认规则覆盖、标准一致性、误差、性能和已知盲区仍在允许范围。",
+            "scope": "validator",
+            "authority": "veto",
+            "validatorRefs": ["assurance.x01", "assurance.x02", "assurance.x03", "assurance.x05", "assurance.x07", "assurance.x11"],
+            "dependsOn": ["dag.snapshot"],
+            "conditionalOn": []
+          },
+          {
+            "id": "dag.release-decision",
+            "label": "发布签发与风险接受",
+            "description": "汇总硬门禁、风险分、建议、豁免与人工决定，生成不可变发布包。",
+            "scope": "release",
+            "authority": "human",
+            "validatorRefs": ["evolution.v07", "evolution.v15"],
+            "dependsOn": ["dag.change-impact", "dag.validator-assurance"],
+            "conditionalOn": ["dag.induction-quality", "dag.evidence-trust"]
+          }
+        ]
+      }
+    ],
+    "validatorRelations": [
+      {
+        "from": "intake.g01",
+        "to": "conformance.s01",
+        "type": "requires",
+        "reason": "manifest 先确定待解析的本体制品与必需文件。"
+      },
+      {
+        "from": "conformance.s01",
+        "to": "reasoning.l01",
+        "type": "gates",
+        "reason": "语法未成功解析时，一致性结果没有可定义的输入。"
+      },
+      {
+        "from": "conformance.s12",
+        "to": "abox.a01",
+        "type": "gates",
+        "reason": "Shape 本身无效时，实例违规结果不得用于否决数据。"
+      },
+      {
+        "from": "reasoning.l01",
+        "to": "fitness.q02",
+        "type": "supplies",
+        "reason": "CQ 必须绑定明确的一致性状态和推理语义。"
+      },
+      {
+        "from": "mapping.d16",
+        "to": "fitness.q02",
+        "type": "conditional",
+        "reason": "存在虚拟知识图谱时，CQ 结果依赖 SPARQL 到 SQL 的语义保持。"
+      },
+      {
+        "from": "reasoning.l15",
+        "to": "reasoning.l01",
+        "type": "explains",
+        "reason": "最小冲突集合解释一致性失败，但不改变原始 verdict。"
+      },
+      {
+        "from": "evidence.e05",
+        "to": "evidence.e14",
+        "type": "escalates",
+        "reason": "来源存在但语义蕴含不确定时，公理进入人工证据复核。"
+      },
+      {
+        "from": "fitness.q02",
+        "to": "evolution.v04",
+        "type": "supplies",
+        "reason": "通过验收的 CQ 与结果断言成为后续版本回归基线。"
+      },
+      {
+        "from": "assurance.x05",
+        "to": "evolution.v07",
+        "type": "gates",
+        "reason": "校验器未通过标准一致性测试时，不得签发正式版本。"
+      }
+    ],
+    "failureRoutes": [
+      {
+        "verdict": "FAIL",
+        "label": "硬失败",
+        "tone": "veto",
+        "route": "阻断强依赖后继；保留并行分支结果；进入隔离、修复或显式豁免。"
+      },
+      {
+        "verdict": "WARN",
+        "label": "质量风险",
+        "tone": "score",
+        "route": "继续执行并累计风险分，在任务验收与发布汇聚点统一判断。"
+      },
+      {
+        "verdict": "UNKNOWN",
+        "label": "未知或异常",
+        "tone": "advise",
+        "route": "按策略重试或降级；仍未知时不得转成 PASS，进入人工判定。"
+      },
+      {
+        "verdict": "REVIEW",
+        "label": "人工复核",
+        "tone": "human",
+        "route": "冻结证据和建议修复，由授权角色批准、驳回或接受风险。"
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "id": "intake",
+      "order": 1,
+      "title": "制品入口、清单与供应链",
+      "shortTitle": "入口与供应链",
+      "summary": "确保所有输入制品可识别、可追踪、可控，并以一致的失败语义进入校验管线。",
+      "scope": "package",
+      "validators": [
+        {
+          "id": "intake.g01",
+          "code": "G01",
+          "label": "制品清单",
+          "term": "Artifact Manifest",
+          "criterion": "声明 ontology、ABox、shapes、CQ、mapping、source、版本和必需/可选关系；缺必需制品即失败。",
+          "method": "JSON Schema/Pydantic manifest；新增 intake.manifest。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "low",
+          "core": true
+        },
+        {
+          "id": "intake.g02",
+          "code": "G02",
+          "label": "文件存在、可读与媒体类型",
+          "term": "",
+          "criterion": "路径存在、非空、扩展名与实际语法一致、压缩包无路径穿越。",
+          "method": "显式 preflight；MIME sniffing；安全解包。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "low",
+          "core": false
+        },
+        {
+          "id": "intake.g03",
+          "code": "G03",
+          "label": "哈希与不可变快照",
+          "term": "",
+          "criterion": "每个输入有 SHA-256；同版本内容不可漂移；报告绑定输入 hash。",
+          "method": "单文件 manifest hash；保留原始 hash、规范化 hash、工具版本。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "low",
+          "core": true
+        },
+        {
+          "id": "intake.g04",
+          "code": "G04",
+          "label": "来源许可与使用限制",
+          "term": "",
+          "criterion": "数据/本体/词表/mapping 的 license、DPA、再发布限制可追踪。",
+          "method": "manifest + SPDX/自定义 policy；发布前 policy-as-code。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "intake.g05",
+          "code": "G05",
+          "label": "依赖锁定",
+          "term": "",
+          "criterion": "imports、外部词表、reasoner、SHACL 引擎、mapping 引擎版本固定。",
+          "method": "import catalog + checksums；工具镜像 digest；release lockfile。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "intake.g06",
+          "code": "G06",
+          "label": "输入规模与资源预算",
+          "term": "",
+          "criterion": "triples、axioms、blank nodes、shape depth、query 数、文件大小不超过策略；超限明确降级。",
+          "method": "preflight counters；CPU/内存/时间预算；超时不是 pass。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "intake.g07",
+          "code": "G07",
+          "label": "恶意或不可信输入隔离",
+          "term": "",
+          "criterion": "禁止未授权网络 import、外部实体、任意 SHACL-JS/脚本、危险 SPARQL SERVICE。",
+          "method": "无网络解析；allowlist catalog；进程沙箱；默认禁 JS/SERVICE。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "intake.g08",
+          "code": "G08",
+          "label": "敏感数据最小化",
+          "term": "",
+          "criterion": "PII/密钥/连接串不进入 LLM prompt、日志、报告或 fixture。",
+          "method": "secret scan、字段分级、脱敏、prompt DLP、最小必要片段。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "intake.g09",
+          "code": "G09",
+          "label": "运行可重现",
+          "term": "",
+          "criterion": "同输入、同配置、同工具版本得到稳定 finding ID、顺序和 verdict。",
+          "method": "固定 locale/timezone/seed；保存完整环境清单；跨进程快照测试。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "intake.g10",
+          "code": "G10",
+          "label": "失败语义完整",
+          "term": "",
+          "criterion": "parser error、timeout、OOM、unsupported feature 必须是 error/unknown，不能误记 pass。",
+          "method": "统一 error/timeout/unsupported/abstain verdict 与重试策略。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": true
+        }
+      ]
+    },
+    {
+      "id": "conformance",
+      "order": 2,
+      "title": "RDF/OWL/SHACL 语法、Profile 与导入",
+      "shortTitle": "语法、Profile 与导入",
+      "summary": "确认 RDF、OWL、SHACL 和查询在目标标准与执行引擎中具有明确、可复现的语义。",
+      "scope": "closure",
+      "validators": [
+        {
+          "id": "conformance.s01",
+          "code": "S01",
+          "label": "RDF 语法可解析",
+          "term": "",
+          "criterion": "Turtle/RDF/XML/JSON-LD/N-Quads 能完整解析；错误定位到文件、行列。",
+          "method": "注册 schema.syntax；捕获 parser 诊断；正/负 fixture。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "low",
+          "core": true
+        },
+        {
+          "id": "conformance.s02",
+          "code": "S02",
+          "label": "IRI 合法性",
+          "term": "",
+          "criterion": "IRI 绝对化、无空白/控制字符、base IRI 合法、禁止意外 file:/私网 IRI。",
+          "method": "RFC 3987 校验 + namespace policy + allow/deny list。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "low",
+          "core": false
+        },
+        {
+          "id": "conformance.s03",
+          "code": "S03",
+          "label": "Ontology header",
+          "term": "",
+          "criterion": "唯一 owl:Ontology、ontology IRI/versionIRI 合法且不与类/个体误混。",
+          "method": "SPARQL/OWLAPI 扫描；策略可配置。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "low",
+          "core": false
+        },
+        {
+          "id": "conformance.s04",
+          "code": "S04",
+          "label": "实体声明完整",
+          "term": "",
+          "criterion": "被用作 class/property/datatype/annotation 的实体有一致声明；发现 untyped class/property。",
+          "method": "ROBOT report/OOPS P34 + SPARQL lint。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "low",
+          "core": false
+        },
+        {
+          "id": "conformance.s05",
+          "code": "S05",
+          "label": "OWL 2 DL 全局限制",
+          "term": "",
+          "criterion": "检查 punning、simple property、property chain regularity 等 OWL 2 DL structural restrictions。",
+          "method": "OWLAPI profile report / ROBOT validate-profile --profile DL。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "conformance.s06",
+          "code": "S06",
+          "label": "目标 Profile 合规",
+          "term": "",
+          "criterion": "按部署目标校验 OWL 2 EL/QL/RL/DL，而非“能 parse 就算合规”。",
+          "method": "schema.profile；OWLAPI/ROBOT；profile 作为 manifest 必填项。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "conformance.s07",
+          "code": "S07",
+          "label": "Profile-引擎匹配",
+          "term": "",
+          "criterion": "QL 用 OBDA/query rewriting；EL 用 ELK；RL 用规则物化；DL 用 HermiT/Openllet 等。",
+          "method": "配置矩阵和启动自检；引擎拒绝超出其完备范围的“全通过”声明。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "conformance.s08",
+          "code": "S08",
+          "label": "literal lexical space",
+          "term": "",
+          "criterion": "xsd:date/integer/decimal/... 的词法值合法，语言标签规范。",
+          "method": "全图 datatype/language-tag lint + SHACL。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "conformance.s09",
+          "code": "S09",
+          "label": "RDF list/复杂表达式完整",
+          "term": "",
+          "criterion": "rdf:first/rest/nil 列表无断裂/环；restriction、union、intersection、oneOf 结构完整。",
+          "method": "OWLAPI 结构解析 + RDF list scanner。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "conformance.s10",
+          "code": "S10",
+          "label": "imports 可解析与闭包固定",
+          "term": "",
+          "criterion": "owl:imports 可达、无未授权漂移；循环可诊断；版本与 hash 被锁定。",
+          "method": "本地 XML catalog/IRI mapper；离线 mirror；imports closure manifest。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "conformance.s11",
+          "code": "S11",
+          "label": "imports 闭包重复/冲突",
+          "term": "",
+          "criterion": "多版本同一 ontology、重复 ontology IRI、实体定义冲突和 namespace shadowing。",
+          "method": "import graph + ontology ID index + axiom provenance。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "conformance.s12",
+          "code": "S12",
+          "label": "Shape 自身有效",
+          "term": "Meta-SHACL",
+          "criterion": "shapes graph 符合 SHACL 语法，target/path/constraint 参数类型正确。",
+          "method": "新增 shape.syntax；pySHACL meta_shacl=True；作为 data validation 前置 V。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "low",
+          "core": true
+        },
+        {
+          "id": "conformance.s13",
+          "code": "S13",
+          "label": "SHACL 特性兼容性",
+          "term": "",
+          "criterion": "Core/AF/JS/SPARQL/1.2 feature 与引擎能力一致；unsupported 不能当 pass。",
+          "method": "shape feature inventory；引擎 feature matrix；1.2 在 Recommendation 前只试验。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "conformance.s14",
+          "code": "S14",
+          "label": "SPARQL/CQ 语法",
+          "term": "",
+          "criterion": "CQ、verify query、SHACL-SPARQL 能 parse；query form 和变量契约正确。",
+          "method": "独立 compile/preflight；禁止修改型 query；静态变量检查。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "low",
+          "core": false
+        }
+      ]
+    },
+    {
+      "id": "metadata",
+      "order": 3,
+      "title": "元数据、命名与可理解性",
+      "shortTitle": "元数据与可理解性",
+      "summary": "让术语既能被机器稳定引用，也能被人准确理解、维护和复用。",
+      "scope": "ontology",
+      "validators": [
+        {
+          "id": "metadata.m01",
+          "code": "M01",
+          "label": "标签覆盖",
+          "term": "",
+          "criterion": "所有本地 class/object property/datatype property/annotation property/individual 有首选语言标签。",
+          "method": "ROBOT report/SPARQL；按 namespace 和语言配置覆盖率。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "low",
+          "core": true
+        },
+        {
+          "id": "metadata.m02",
+          "code": "M02",
+          "label": "定义覆盖",
+          "term": "",
+          "criterion": "核心术语有文本定义、来源和必要注释，不能只有 label。",
+          "method": "ROBOT/OBO 风格 definition checks；按核心度设阈值。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "low",
+          "core": true
+        },
+        {
+          "id": "metadata.m03",
+          "code": "M03",
+          "label": "重复标签",
+          "term": "",
+          "criterion": "同语言同 label 的不同实体需显式区分；无意重复报警。",
+          "method": "ROBOT duplicate_label + 允许名单。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "low",
+          "core": true
+        },
+        {
+          "id": "metadata.m04",
+          "code": "M04",
+          "label": "标签语言完整性",
+          "term": "",
+          "criterion": "语言标签合法；每个必需语言最多一个 prefLabel；多语言覆盖满足政策。",
+          "method": "SHACL/SKOS integrity rules；BCP 47 校验。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "low",
+          "core": false
+        },
+        {
+          "id": "metadata.m05",
+          "code": "M05",
+          "label": "命名约定一致",
+          "term": "",
+          "criterion": "IRI local name、大小写、单复数、类/属性词性、缩写符合项目规范。",
+          "method": "regex + 词典 + ROBOT custom profile。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "low",
+          "core": false
+        },
+        {
+          "id": "metadata.m06",
+          "code": "M06",
+          "label": "label-definition 对齐",
+          "term": "",
+          "criterion": "label 与定义描述同一概念，定义不循环、不只是 label 改写。",
+          "method": "embedding/LLM 双路 + 人工抽样；输出相似度和引用。",
+          "authority": "advise",
+          "authorityPlan": "A→H",
+          "cost": "research",
+          "core": false
+        },
+        {
+          "id": "metadata.m07",
+          "code": "M07",
+          "label": "一词多义/多词同义",
+          "term": "",
+          "criterion": "一个实体不混合多个概念；同义概念不无意拆成多个类。",
+          "method": "术语聚类、词典、embedding、定义对比、专家复核。",
+          "authority": "advise",
+          "authorityPlan": "A→H",
+          "cost": "research",
+          "core": false
+        },
+        {
+          "id": "metadata.m08",
+          "code": "M08",
+          "label": "缩写与别名",
+          "term": "",
+          "criterion": "acronym、synonym、旧称和 hidden label 可解析且不冲突。",
+          "method": "SKOS/SKOS-XL shape + 领域词表对齐。",
+          "authority": "score",
+          "authorityPlan": "S/A",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "metadata.m09",
+          "code": "M09",
+          "label": "废弃术语元数据",
+          "term": "",
+          "criterion": "deprecated entity 有原因、replacement/migration、版本与禁止新增使用规则。",
+          "method": "ROBOT deprecated checks + SHACL + release policy。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "metadata.m10",
+          "code": "M10",
+          "label": "本体级元数据",
+          "term": "",
+          "criterion": "title、description、creator/publisher、license、created/modified、versionInfo/versionIRI、status 完整。",
+          "method": "DC Terms/OWL/VoID/DCAT profile 的 SHACL。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "low",
+          "core": true
+        },
+        {
+          "id": "metadata.m11",
+          "code": "M11",
+          "label": "文档与示例",
+          "term": "",
+          "criterion": "namespace 页面可解析；核心术语有正例/反例；构建/发布说明存在。",
+          "method": "文档链接检查 + exemplar manifest + 人工审查。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "metadata.m12",
+          "code": "M12",
+          "label": "需求可追踪",
+          "term": "",
+          "criterion": "每个核心模块/概念可回链 Ontology Requirement Specification Document（ORSD）或 CQ。",
+          "method": "requirement ID annotation + coverage matrix。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "medium",
+          "core": false
+        }
+      ]
+    },
+    {
+      "id": "modeling",
+      "order": 4,
+      "title": "概念建模与结构坏味道",
+      "shortTitle": "概念建模与结构",
+      "summary": "发现层级、关系、量词和模块设计中的坏味道与概念建模风险。",
+      "scope": "ontology",
+      "validators": [
+        {
+          "id": "modeling.p01",
+          "code": "P01",
+          "label": "显式子类环",
+          "term": "",
+          "criterion": "A⊑B...⊑A 是否是无意层级环。",
+          "method": "保留；增加 inferred cycle/equivalence 区分和 allowlist。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "low",
+          "core": true
+        },
+        {
+          "id": "modeling.p02",
+          "code": "P02",
+          "label": "自递归定义",
+          "term": "",
+          "criterion": "类/属性直接出现在自身 restriction、equivalentClass、domain/range 或 property chain 中。",
+          "method": "OOPS P24 + OWL expression AST traversal。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "modeling.p03",
+          "code": "P03",
+          "label": "孤立元素/组件",
+          "term": "",
+          "criterion": "class/property 无层级、签名、实例或跨模块连接；图中存在孤岛。",
+          "method": "graph component analysis；按顶层模块和 external namespace 过滤。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "low",
+          "core": false
+        },
+        {
+          "id": "modeling.p04",
+          "code": "P04",
+          "label": "缺失 domain/range",
+          "term": "",
+          "criterion": "本地对象/数据属性缺显式 domain 或 range。",
+          "method": "增加 namespace/profile policy，避免把外部词表和刻意开放属性当同类错误。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "low",
+          "core": true
+        },
+        {
+          "id": "modeling.p05",
+          "code": "P05",
+          "label": "domain/range 过宽或过窄",
+          "term": "",
+          "criterion": "签名导致意外类型推断，或排斥合法数据；union/domain 语义是否正确。",
+          "method": "inferred type diff + ABox 分布 + CQ + LLM 建议。",
+          "authority": "score",
+          "authorityPlan": "S/A→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "modeling.p06",
+          "code": "P06",
+          "label": "is-a 与 part-of 混淆",
+          "term": "",
+          "criterion": "X subClassOf Y 是否真的满足“X 是一种 Y”，而非组成、关联或角色。",
+          "method": "词汇模式 + LLM/embedding + CQ 正反例；只能建议。",
+          "authority": "advise",
+          "authorityPlan": "A→H",
+          "cost": "research",
+          "core": true
+        },
+        {
+          "id": "modeling.p07",
+          "code": "P07",
+          "label": "缺失 disjointness",
+          "term": "",
+          "criterion": "本应互斥的 sibling 未声明，导致错误实例无法暴露。",
+          "method": "sibling overlap 统计、上位本体/规则/CQ、LLM 候选；专家批准后加公理。",
+          "authority": "advise",
+          "authorityPlan": "A→H",
+          "cost": "research",
+          "core": true
+        },
+        {
+          "id": "modeling.p08",
+          "code": "P08",
+          "label": "错误 disjointness",
+          "term": "",
+          "criterion": "实际可重叠类被声明互斥，导致真实 ABox 不一致。",
+          "method": "reasoner + 历史数据 overlap + axiom provenance。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "modeling.p09",
+          "code": "P09",
+          "label": "等价类/属性误用",
+          "term": "",
+          "criterion": "equivalence 是否真是双向充分必要；同义不等于逻辑等价。",
+          "method": "reasoner entailment + 定义/实例对比 + CQ；LLM 仅建议。",
+          "authority": "score",
+          "authorityPlan": "S/A→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "modeling.p10",
+          "code": "P10",
+          "label": "缺失 equivalence/inverse",
+          "term": "",
+          "criterion": "重复概念或成对关系未对齐，影响互操作与查询。",
+          "method": "lexical/embedding 候选 + competency tests + 专家确认。",
+          "authority": "advise",
+          "authorityPlan": "A→H",
+          "cost": "research",
+          "core": false
+        },
+        {
+          "id": "modeling.p11",
+          "code": "P11",
+          "label": "inverse 方向错误",
+          "term": "",
+          "criterion": "hasPart inverseOf partOf 等方向是否与标签、domain/range、数据一致。",
+          "method": "property signature algebra + sampled triples + evidence judge。",
+          "authority": "score",
+          "authorityPlan": "S/A→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "modeling.p12",
+          "code": "P12",
+          "label": "Object/Datatype Property 混用",
+          "term": "",
+          "criterion": "IRI 对象和 literal 对象是否与属性类型一致；同一 IRI 双重误声明。",
+          "method": "全图 SPARQL + profile checker + SHACL。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "low",
+          "core": false
+        },
+        {
+          "id": "modeling.p13",
+          "code": "P13",
+          "label": "属性层级异常",
+          "term": "",
+          "criterion": "subProperty 环、domain/range 逆变问题、父属性语义不包容子属性。",
+          "method": "graph cycle + reasoner inferred signature diff + LLM 语义建议。",
+          "authority": "score",
+          "authorityPlan": "S/A",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "modeling.p14",
+          "code": "P14",
+          "label": "restriction 量词误用",
+          "term": "",
+          "criterion": "allValuesFrom 被误当“至少存在”；someValuesFrom、hasValue、cardinality 边界错误。",
+          "method": "OOPS P14 + pattern lint + witness CQ + 专家测试。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "modeling.p15",
+          "code": "P15",
+          "label": "Boolean class expression 异常",
+          "term": "",
+          "criterion": "union/intersection/complement/oneOf 中重复、空集合、互斥组合或语义不合。",
+          "method": "OWL AST lint + reasoner satisfiability + simplifier。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "modeling.p16",
+          "code": "P16",
+          "label": "property characteristic 风险",
+          "term": "",
+          "criterion": "functional、inverse-functional、transitive、symmetric、asymmetric、reflexive、irreflexive 是否恰当。",
+          "method": "pattern checks + ABox counterexamples + CQ + expert approval。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "modeling.p17",
+          "code": "P17",
+          "label": "property chain 质量",
+          "term": "",
+          "criterion": "chain 长度、regularity、方向、单元素 chain、递归与预期蕴含。",
+          "method": "profile checker + OOPS P33 + entailment regression。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "modeling.p18",
+          "code": "P18",
+          "label": "类/个体层级混淆",
+          "term": "",
+          "criterion": "rdf:type、rdfs:subClassOf、owl:sameAs、metamodeling/punning 是否有意。",
+          "method": "OOPS P03 + OWL DL profile + namespace policy。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "modeling.p19",
+          "code": "P19",
+          "label": "层级形态",
+          "term": "",
+          "criterion": "过深、过宽、多个继承、tangledness、root 数、叶节点比、无信息中间层。",
+          "method": "OQuaRE/图指标；按领域基线设阈值，不用通用硬阈值。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "modeling.p20",
+          "code": "P20",
+          "label": "模块内聚与耦合",
+          "term": "",
+          "criterion": "模块是否高内聚、跨模块公理是否失控、核心/扩展边界是否清晰。",
+          "method": "import/module graph、cohesion/coupling metrics、专家 review。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "modeling.p21",
+          "code": "P21",
+          "label": "重复/冗余公理",
+          "term": "",
+          "criterion": "语法重复、可由其他公理蕴含的冗余、无效 annotation 或 unreachable construct。",
+          "method": "OWLAPI axiom set + reasoner reduce/explain + ROBOT reduce。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "modeling.p22",
+          "code": "P22",
+          "label": "外部词表复用质量",
+          "term": "",
+          "criterion": "复用项版本、语义、license、namespace、等价映射和本地 shadowing 合理。",
+          "method": "import manifest + alignment tests + external term allowlist。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": false
+        }
+      ]
+    },
+    {
+      "id": "reasoning",
+      "order": 5,
+      "title": "形式语义、推理与一致性",
+      "shortTitle": "形式语义与推理",
+      "summary": "用推理与蕴含测试检查一致性、可满足性和非预期推导。",
+      "scope": "closure",
+      "validators": [
+        {
+          "id": "reasoning.l01",
+          "code": "L01",
+          "label": "Ontology consistency",
+          "term": "",
+          "criterion": "全体公理是否存在模型；不一致时必须报告而非继续给正常推理结果。",
+          "method": "schema.consistency.dl：HermiT/Openllet；EL 场景 ELK；保存 profile/引擎。",
+          "authority": "veto",
+          "authorityPlan": "V（发布）",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "reasoning.l02",
+          "code": "L02",
+          "label": "Named class satisfiability",
+          "term": "",
+          "criterion": "每个命名类是否可满足；找出等价于/蕴含 owl:Nothing 的类。",
+          "method": "reasoner classify + unsatisfiable class list。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "reasoning.l03",
+          "code": "L03",
+          "label": "disjoint 共同个体",
+          "term": "",
+          "criterion": "个体同时属于互斥类，包括推理得到的类型。",
+          "method": "保留；加入 imports、named graph、来源路径和 explanation。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "reasoning.l04",
+          "code": "L04",
+          "label": "sameAs/differentFrom 冲突",
+          "term": "",
+          "criterion": "同一对象既相同又不同，或 identity closure 引发冲突。",
+          "method": "DL/RL reasoner + 显式模式扫描 + identity explanation。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "reasoning.l05",
+          "code": "L05",
+          "label": "正/负属性断言冲突",
+          "term": "",
+          "criterion": "PositivePropertyAssertion 与 NegativePropertyAssertion 对同一事实冲突。",
+          "method": "OWL reasoner + assertion scanner。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "reasoning.l06",
+          "code": "L06",
+          "label": "functional/inverse-functional 冲突",
+          "term": "",
+          "criterion": "多值是否迫使对象 sameAs，并与 differentFrom/disjoint 冲突。",
+          "method": "reasoner identity closure + SHACL hard constraints + explanation。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "reasoning.l07",
+          "code": "L07",
+          "label": "key 冲突和意外合并",
+          "term": "",
+          "criterion": "owl:hasKey 是否把不应相同的个体合并；键值缺失/重复。",
+          "method": "reasoner + key index + source identity gold。",
+          "authority": "veto",
+          "authorityPlan": "V/S→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "reasoning.l08",
+          "code": "L08",
+          "label": "datatype inconsistency",
+          "term": "",
+          "criterion": "restriction、facet、range 与 literal 值组合可满足；NaN/timezone/decimal 边界正确。",
+          "method": "支持 datatype reasoning 的 reasoner + SHACL + 边界 fixture。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "reasoning.l09",
+          "code": "L09",
+          "label": "property characteristic 冲突",
+          "term": "",
+          "criterion": "asymmetric + symmetric、irreflexive + self edge、disjoint property 重叠等。",
+          "method": "reasoner + SPARQL counterexample queries。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "reasoning.l10",
+          "code": "L10",
+          "label": "不期望的 inferred subclass",
+          "term": "",
+          "criterion": "新增/修改公理后出现业务上危险的父类、等价类或跨模块归类。",
+          "method": "classify 前后 inferred hierarchy diff + allow/deny entailment tests。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "reasoning.l11",
+          "code": "L11",
+          "label": "不期望的 inferred type/property",
+          "term": "",
+          "criterion": "domain/range/chain/identity 推出意外个体类型或关系。",
+          "method": "asserted-vs-inferred provenance；SPARQL gold/deny assertions。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "reasoning.l12",
+          "code": "L12",
+          "label": "必须蕴含/禁止蕴含",
+          "term": "",
+          "criterion": "对关键公理维护 positive/negative entailment test。",
+          "method": "ROBOT verify/query、OWLAPI entailment tests。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "reasoning.l13",
+          "code": "L13",
+          "label": "imports closure consistency",
+          "term": "",
+          "criterion": "仅本体通过但合并 imports 后不一致时必须阻断。",
+          "method": "固定 import closure 后执行同 profile reasoner。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "reasoning.l14",
+          "code": "L14",
+          "label": "推理器交叉验证",
+          "term": "",
+          "criterion": "高风险 release 用第二个独立 reasoner/版本核对；差异进入调查。",
+          "method": "HermiT/Openllet/ELK 适配矩阵；只比较共同支持任务。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "reasoning.l15",
+          "code": "L15",
+          "label": "最小冲突解释",
+          "term": "",
+          "criterion": "给出 justification/minimal unsatisfiable subset，而非只有“inconsistent”。",
+          "method": "OWL explanation API、QuickXplain/black-box justification。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "reasoning.l16",
+          "code": "L16",
+          "label": "推理性能退化",
+          "term": "",
+          "criterion": "classification/realization/consistency 的时间、内存、推导规模不得异常增长。",
+          "method": "benchmark budgets、timeout、物化 triple 增长阈值、历史趋势。",
+          "authority": "score",
+          "authorityPlan": "S/V",
+          "cost": "high",
+          "core": false
+        }
+      ]
+    },
+    {
+      "id": "abox",
+      "order": 6,
+      "title": "ABox、SHACL 与数据质量",
+      "shortTitle": "ABox 与数据质量",
+      "summary": "用 SHACL 和代码约束实例的完整性、类型、基数、引用和跨节点关系。",
+      "scope": "graph",
+      "validators": [
+        {
+          "id": "abox.a01",
+          "code": "A01",
+          "label": "最低必填",
+          "term": "",
+          "criterion": "对象缺少使其不可用的关键属性时 quarantine。",
+          "method": "扩为按 class/version 管理的 minimal shapes；每条硬约束有业务依据。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "low",
+          "core": true
+        },
+        {
+          "id": "abox.a02",
+          "code": "A02",
+          "label": "datatype",
+          "term": "",
+          "criterion": "literal datatype 与词法值匹配。",
+          "method": "扩展全域 shape 和边界 fixture。",
+          "authority": "score",
+          "authorityPlan": "S/V",
+          "cost": "low",
+          "core": true
+        },
+        {
+          "id": "abox.a03",
+          "code": "A03",
+          "label": "数值/时间范围",
+          "term": "",
+          "criterion": "min/max inclusive/exclusive、日期先后、有效期与时区正确。",
+          "method": "SHACL Core + SHACL-SPARQL/代码处理跨字段关系。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "abox.a04",
+          "code": "A04",
+          "label": "枚举/controlled vocabulary",
+          "term": "",
+          "criterion": "值在允许集，区分 typo、过时值、未知值和扩展值。",
+          "method": "SKOS scheme + versioned code list + replacement 建议。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "abox.a05",
+          "code": "A05",
+          "label": "object class/range",
+          "term": "",
+          "criterion": "对象关系指向允许类型，明确是否使用推理类型。",
+          "method": "为每个 shape 记录 entailment regime；必要时预物化。",
+          "authority": "score",
+          "authorityPlan": "S/V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "abox.a06",
+          "code": "A06",
+          "label": "cardinality",
+          "term": "",
+          "criterion": "min/max/exact/qualified cardinality 与业务粒度一致。",
+          "method": "扩展 qualified count 和集合/版本边界。",
+          "authority": "score",
+          "authorityPlan": "S/V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "abox.a07",
+          "code": "A07",
+          "label": "string/pattern/language",
+          "term": "",
+          "criterion": "长度、regex、语言、唯一语言值、禁止空白占位符。",
+          "method": "SHACL Core；针对 OCR/LLM placeholder 建词典。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "low",
+          "core": false
+        },
+        {
+          "id": "abox.a08",
+          "code": "A08",
+          "label": "closed shape/额外属性",
+          "term": "",
+          "criterion": "严格对象是否出现未允许属性；扩展 namespace 是否豁免。",
+          "method": "sh:closed + ignoredProperties；只用于稳定封闭接口。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "abox.a09",
+          "code": "A09",
+          "label": "关系引用完整性",
+          "term": "",
+          "criterion": "对象 IRI 是否存在、是否为允许 external entity；发现 dangling reference。",
+          "method": "SPARQL/SHACL；区分内部完整性和外部可解析性。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "abox.a10",
+          "code": "A10",
+          "label": "唯一键与重复个体",
+          "term": "",
+          "criterion": "canonical ID、业务键、近似重复、错误拆分/合并。",
+          "method": "SHACL-SPARQL/代码唯一索引 + entity resolution + 人工合并。",
+          "authority": "score",
+          "authorityPlan": "S/A→H",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "abox.a11",
+          "code": "A11",
+          "label": "类型完整性与冲突",
+          "term": "",
+          "criterion": "缺 type、过多不相容 type、只靠 domain/range 意外补 type。",
+          "method": "target/type shapes + asserted/inferred 分栏。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "abox.a12",
+          "code": "A12",
+          "label": "单位与量纲",
+          "term": "",
+          "criterion": "数值必须带单位或使用明确默认；单位转换后量纲与范围一致。",
+          "method": "QUDT/OM 等词表 + SHACL + 单位换算代码。",
+          "authority": "score",
+          "authorityPlan": "S/V",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "abox.a13",
+          "code": "A13",
+          "label": "时间一致性",
+          "term": "",
+          "criterion": "start≤end、事件顺序、版本有效期、不可能日期。",
+          "method": "SHACL-SPARQL/代码；时区规范；temporal CQ。",
+          "authority": "score",
+          "authorityPlan": "S/V",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "abox.a14",
+          "code": "A14",
+          "label": "空间一致性",
+          "term": "",
+          "criterion": "坐标系、范围、geometry validity、地理包含/相交关系合理。",
+          "method": "GeoSPARQL validator + GIS library。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "abox.a15",
+          "code": "A15",
+          "label": "跨节点/聚合约束",
+          "term": "",
+          "criterion": "总和、比例、依赖对象、跨路径条件和条件必填。",
+          "method": "SHACL-SPARQL、SPARQL verify 或专用代码；限制查询资源。",
+          "authority": "score",
+          "authorityPlan": "S/V",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "abox.a16",
+          "code": "A16",
+          "label": "缺失、未知、不适用区分",
+          "term": "",
+          "criterion": "absent/null/unknown/not-applicable 不被混为同一状态。",
+          "method": "领域 value object/code list + shapes + extraction policy。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "abox.a17",
+          "code": "A17",
+          "label": "shape target 覆盖",
+          "term": "",
+          "criterion": "每个核心类/属性是否被至少一个 minimal/trusted shape 触达；无 target 的 shape 报警。",
+          "method": "shape.coverage：TBox×shape 静态 coverage 和运行时 focus count。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "abox.a18",
+          "code": "A18",
+          "label": "shape 约束有效性",
+          "term": "",
+          "criterion": "shape 是否总通过、总失败、互相矛盾、冗余或对真实目标无判别力。",
+          "method": "synthetic witness、mutation、SAT/SMT/SHACL differential tests。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "abox.a19",
+          "code": "A19",
+          "label": "推理-校验边界",
+          "term": "",
+          "criterion": "明确 none/rdfs/owlrl/pre-materialized；防止 range 推理掩盖错误对象。",
+          "method": "将策略写入 manifest/report；针对每种模式做 differential test。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "abox.a20",
+          "code": "A20",
+          "label": "quarantine 与恢复",
+          "term": "",
+          "criterion": "硬违规对象隔离、可见、可审、可恢复；修复后重验。",
+          "method": "增加原因链、版本、审批人、恢复后完整 DAG 重验。",
+          "authority": "veto",
+          "authorityPlan": "V→H",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "abox.a21",
+          "code": "A21",
+          "label": "对象级增量校验",
+          "term": "",
+          "criterion": "只重跑受变更节点及其依赖 shape/公理/CQ。",
+          "method": "provenance dependency index + pySHACL focus/shape selection + 影响闭包。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "high",
+          "core": false
+        }
+      ]
+    },
+    {
+      "id": "evidence",
+      "order": 7,
+      "title": "抽取证据、来源忠实性与信任",
+      "shortTitle": "证据与来源忠实性",
+      "summary": "保证每条事实和公理能够回到可信来源，并保留条件、范围和版本。",
+      "scope": "evidence",
+      "validators": [
+        {
+          "id": "evidence.e01",
+          "code": "E01",
+          "label": "evidence 必填",
+          "term": "",
+          "criterion": "每个候选事实、术语、关系、公理、规则、流程边均有 source/evidence。",
+          "method": "统一 claim/axiom provenance IR；无 evidence 只能进 candidate。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "evidence.e02",
+          "code": "E02",
+          "label": "source 可解析",
+          "term": "",
+          "criterion": "source_id 存在，版本/hash 匹配，页码/span/table/cell/image 区域合法。",
+          "method": "document registry + offset/page/bbox validator。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "evidence.e03",
+          "code": "E03",
+          "label": "quote 原样回填",
+          "term": "",
+          "criterion": "引文确实存在于对应版本源文档，规范化后位置唯一或明确消歧。",
+          "method": "exact/fuzzy span match；OCR 坐标回查；差异阈值。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "evidence.e04",
+          "code": "E04",
+          "label": "claim 原子化",
+          "term": "",
+          "criterion": "一个 claim 不混合多个可独立真假的事实；关系方向和条件显式。",
+          "method": "schema + rule-based splitter + LLM 建议 + 人工抽样。",
+          "authority": "advise",
+          "authorityPlan": "A→H",
+          "cost": "research",
+          "core": false
+        },
+        {
+          "id": "evidence.e05",
+          "code": "E05",
+          "label": "文本蕴含/反驳",
+          "term": "",
+          "criterion": "evidence 对 claim/axiom 是 supported、contradicted、ambiguous 或 insufficient。",
+          "method": "NLI/独立 judge + 检索反证；强制引用；可 abstain。",
+          "authority": "advise",
+          "authorityPlan": "A→H",
+          "cost": "research",
+          "core": true
+        },
+        {
+          "id": "evidence.e06",
+          "code": "E06",
+          "label": "数值与边界忠实",
+          "term": "",
+          "criterion": "数量级、单位、>/≥、范围端点、比例和币种不被改写。",
+          "method": "确定性 number/unit parser 优先；LLM 只处理语言歧义。",
+          "authority": "score",
+          "authorityPlan": "S/A→H",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "evidence.e07",
+          "code": "E07",
+          "label": "否定/模态/例外",
+          "term": "",
+          "criterion": "“不、可能、通常、除非、仅当、建议、必须”在形式化中不丢失。",
+          "method": "modality/exception IR + NLI + 规则测试。",
+          "authority": "score",
+          "authorityPlan": "S/A→H",
+          "cost": "research",
+          "core": false
+        },
+        {
+          "id": "evidence.e08",
+          "code": "E08",
+          "label": "时间/版本/适用范围",
+          "term": "",
+          "criterion": "claim 保留生效时间、软件/规范版本、地域、对象范围。",
+          "method": "qualified statement/n-ary relation + PROV-O + temporal shapes。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "evidence.e09",
+          "code": "E09",
+          "label": "实体链接与规范化",
+          "term": "",
+          "criterion": "surface form 到 canonical IRI 正确；同名异物和同物异名可解释。",
+          "method": "candidate generation + type/context score + human merge queue。",
+          "authority": "advise",
+          "authorityPlan": "A→H",
+          "cost": "research",
+          "core": true
+        },
+        {
+          "id": "evidence.e10",
+          "code": "E10",
+          "label": "关系谓词映射",
+          "term": "",
+          "criterion": "文本关系映射到已有 predicate 时，定义、方向、domain/range 与上下文一致。",
+          "method": "definition-aware retrieval + constraint filtering + evidence judge。",
+          "authority": "advise",
+          "authorityPlan": "A→H",
+          "cost": "research",
+          "core": false
+        },
+        {
+          "id": "evidence.e11",
+          "code": "E11",
+          "label": "跨来源冲突",
+          "term": "",
+          "criterion": "同一 claim 的支持/反驳、版本优先级和来源独立性可聚合。",
+          "method": "claim identity + evidence graph + source policy + conflict queue。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "evidence.e12",
+          "code": "E12",
+          "label": "来源质量与独立性",
+          "term": "",
+          "criterion": "权威性、时效性、直接/转述、多个来源是否真正独立。",
+          "method": "source metadata/risk score；不以“来源数”替代独立性。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "research",
+          "core": false
+        },
+        {
+          "id": "evidence.e13",
+          "code": "E13",
+          "label": "置信度校准",
+          "term": "",
+          "criterion": "抽取 confidence 与真实 precision 匹配；按对象/关系/领域分别校准。",
+          "method": "labeled audit set、reliability curve、ECE/Brier、阈值治理。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "evidence.e14",
+          "code": "E14",
+          "label": "公理级 provenance",
+          "term": "",
+          "criterion": "每条生成/修改公理记录来源、模型、prompt、操作者、时间、推导活动。",
+          "method": "RDF-star/named graph 或 PROV-O；stable axiom ID。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "evidence.e15",
+          "code": "E15",
+          "label": "可逆修复与审计",
+          "term": "",
+          "criterion": "原候选、finding、修复 patch、审批和最终公理形成不可变链。",
+          "method": "append-only audit + patch/PR 工作流 + 签名 release。",
+          "authority": "human",
+          "authorityPlan": "H",
+          "cost": "high",
+          "core": false
+        }
+      ]
+    },
+    {
+      "id": "mapping",
+      "order": 8,
+      "title": "结构化源、R2RML/OBDA 与虚拟知识图谱",
+      "shortTitle": "源数据、映射与虚拟图",
+      "summary": "验证 SQL、R2RML/OBDA、本体和虚拟 ABox 之间的结构与语义闭环。",
+      "scope": "source",
+      "validators": [
+        {
+          "id": "mapping.d01",
+          "code": "D01",
+          "label": "源 schema 可解析",
+          "term": "",
+          "criterion": "DDL 中表、列、类型、PK/FK/unique/null/default/check 完整建索引。",
+          "method": "source.schema-integrity：数据库 catalog/SQL parser，禁用字符串正则主解析。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "mapping.d02",
+          "code": "D02",
+          "label": "源约束一致性",
+          "term": "",
+          "criterion": "FK 指向存在、类型兼容、PK/unique 可满足、孤立表/列可报告。",
+          "method": "catalog queries + sampled profiling；不执行 DDL 修改。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "mapping.d03",
+          "code": "D03",
+          "label": "R2RML 语法/结构合规",
+          "term": "",
+          "criterion": "TriplesMap、logicalTable、subjectMap、predicateObjectMap、termMap 参数满足标准。",
+          "method": "mapping.syntax：R2RML shapes/标准 validator + W3C test cases。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "mapping.d04",
+          "code": "D04",
+          "label": "表/列引用存在",
+          "term": "",
+          "criterion": "rr:tableName/column/template/child/parent 引用真实 catalog，大小写/方言正确。",
+          "method": "mapping.references：R2RML AST × DB metadata。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "mapping.d05",
+          "code": "D05",
+          "label": "SQL view 可解析/只读",
+          "term": "",
+          "criterion": "rr:sqlQuery 是可执行只读 SELECT；无 DDL/DML、危险函数或越权访问。",
+          "method": "SQL parser + EXPLAIN/limit 0；只读事务；statement timeout。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "mapping.d06",
+          "code": "D06",
+          "label": "ontology vocabulary 对齐",
+          "term": "",
+          "criterion": "rr:class/predicate/datatype 存在、未废弃、类型正确、属于允许 namespace。",
+          "method": "mapping.ontology-alignment：TBox symbol table + deprecation policy。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "mapping.d07",
+          "code": "D07",
+          "label": "term type/datatype/language",
+          "term": "",
+          "criterion": "IRI/literal/blank node 生成方式与目标属性、SQL 类型和语言标签一致。",
+          "method": "mapping static type checker + sampled materialization + SHACL。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "mapping.d08",
+          "code": "D08",
+          "label": "IRI 模板合法与稳定",
+          "term": "",
+          "criterion": "模板编码、null、特殊字符、base IRI、跨版本稳定性正确。",
+          "method": "property-based tests + sample rows + IRI validator。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "mapping.d09",
+          "code": "D09",
+          "label": "IRI 碰撞与 identity",
+          "term": "",
+          "criterion": "不同业务对象不意外生成同 IRI；同一对象跨表/映射不被拆成多个 IRI。",
+          "method": "mapping.identity：SQL uniqueness checks、collision sample、gold identity。",
+          "authority": "veto",
+          "authorityPlan": "V/S→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "mapping.d10",
+          "code": "D10",
+          "label": "join 正确性",
+          "term": "",
+          "criterion": "child/parent 列、复合键、nullable FK、连接方向和基数与业务关系一致。",
+          "method": "FK-aware static check + anti-join/orphan query + cardinality profiling。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "mapping.d11",
+          "code": "D11",
+          "label": "mapping 覆盖率",
+          "term": "",
+          "criterion": "核心表/列/FK、目标类/属性、CQ 所需路径被 mapping 覆盖；无意遗漏可量化。",
+          "method": "mapping.coverage：source→mapping→ontology 三向矩阵。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "mapping.d12",
+          "code": "D12",
+          "label": "mapping 重叠/冲突/冗余",
+          "term": "",
+          "criterion": "多个 TriplesMap 对同一 source/target 产生冲突类型、重复 triple 或不一致值。",
+          "method": "normalized mapping signatures + sample materialization diff。",
+          "authority": "score",
+          "authorityPlan": "S/V",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "mapping.d13",
+          "code": "D13",
+          "label": "标准测试合规",
+          "term": "",
+          "criterion": "自动生成的 mapping 通过 W3C R2RML/Direct Mapping 正负测试。",
+          "method": "集成 W3C RDB2RDF test suite；按支持特性声明。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "mapping.d14",
+          "code": "D14",
+          "label": "虚拟图 Shape 校验",
+          "term": "",
+          "criterion": "不全量导出也能对 Ontop endpoint/sample CONSTRUCT 运行 SHACL。",
+          "method": "virtual.instance-quality：分层采样/按 class materialize；远程只读模式。",
+          "authority": "score",
+          "authorityPlan": "S/V",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "mapping.d15",
+          "code": "D15",
+          "label": "虚拟 ABox×TBox 一致性",
+          "term": "",
+          "criterion": "mapping 生成的类型/关系是否触发 disjoint、domain/range、key 等逻辑冲突。",
+          "method": "cross.virtual-consistency：Ontop/materialize representative slice + profile reasoner。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "mapping.d16",
+          "code": "D16",
+          "label": "SPARQL→SQL 语义回归",
+          "term": "",
+          "criterion": "查询可执行，结果与 gold/materialized RDF 一致，OPTIONAL/aggregate/tree-witness 正确。",
+          "method": "query.regression：Ontop endpoint + expected result/differential oracle。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "mapping.d17",
+          "code": "D17",
+          "label": "查询完整性与性能",
+          "term": "",
+          "criterion": "无 silent empty、重复爆炸、错误 NULL 语义；SQL plan、超时、结果量受控。",
+          "method": "query budgets、EXPLAIN、基线趋势、重写日志和 sampled oracle。",
+          "authority": "score",
+          "authorityPlan": "S/V",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "mapping.d18",
+          "code": "D18",
+          "label": "数据库访问权限",
+          "term": "",
+          "criterion": "mapping 校验只用 read-only 账号；schema-only 与 sample-data 权限分离。",
+          "method": "两级凭据、行数限制、无写权限、网络 allowlist、审计 SQL。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": false
+        }
+      ]
+    },
+    {
+      "id": "fitness",
+      "order": 9,
+      "title": "能力问题、任务适配与回归",
+      "shortTitle": "能力问题与任务适配",
+      "summary": "验证本体能否稳定回答关键问题，并支撑查询与下游业务任务。",
+      "scope": "task",
+      "validators": [
+        {
+          "id": "fitness.q01",
+          "code": "Q01",
+          "label": "CQ 结构完整",
+          "term": "",
+          "criterion": "natural-language question、query、expected、owner、priority、version、适用数据集齐全。",
+          "method": "CQ Pydantic schema + owner/version/risk。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "low",
+          "core": true
+        },
+        {
+          "id": "fitness.q02",
+          "code": "Q02",
+          "label": "CQ 可执行与结果断言",
+          "term": "",
+          "criterion": "支持 non-empty、empty、exact、contains、count/range/graph isomorphism。",
+          "method": "增加 ASK/count/order-insensitive bindings/CONSTRUCT canonical diff。",
+          "authority": "score",
+          "authorityPlan": "S/V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "fitness.q03",
+          "code": "Q03",
+          "label": "CQ 推理语义固定",
+          "term": "",
+          "criterion": "query 在 asserted、RDFS、RL、QL rewriting 或 DL materialization 哪个 regime 下运行。",
+          "method": "manifest 声明 entailment regime；报告引擎和 closure hash。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "fitness.q04",
+          "code": "Q04",
+          "label": "CQ 失败归因",
+          "term": "",
+          "criterion": "区分 ontology gap、data gap、mapping gap、CQ outdated、engine error、regression。",
+          "method": "确定性 prechecks + 差异诊断 + LLM A。",
+          "authority": "score",
+          "authorityPlan": "S/A→H",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "fitness.q05",
+          "code": "Q05",
+          "label": "需求覆盖率",
+          "term": "",
+          "criterion": "每条需求至少有 CQ；每个核心类/关系至少被正/负 CQ 或下游测试触达。",
+          "method": "requirement↔CQ↔axiom coverage graph。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "fitness.q06",
+          "code": "Q06",
+          "label": "正反例/边界 CQ",
+          "term": "",
+          "criterion": "不只验证“能回答”，还验证“不应回答”和边界条件。",
+          "method": "positive/negative/adversarial fixtures；mutation-generated CQs。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "fitness.q07",
+          "code": "Q07",
+          "label": "CQ 自身正确性",
+          "term": "",
+          "criterion": "query 与自然语言含义一致，expected 非偶然；防止 gold 过时。",
+          "method": "双人审查、query paraphrase judge、gold 数据变异测试。",
+          "authority": "advise",
+          "authorityPlan": "A→H",
+          "cost": "research",
+          "core": false
+        },
+        {
+          "id": "fitness.q08",
+          "code": "Q08",
+          "label": "结果稳定与兼容",
+          "term": "",
+          "criterion": "本体、mapping、引擎升级后结果差异可解释；排序/blank node 不造成伪 diff。",
+          "method": "canonical result format + semantic diff + approved change file。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "fitness.q09",
+          "code": "Q09",
+          "label": "查询覆盖/难度分层",
+          "term": "",
+          "criterion": "BGP、OPTIONAL、UNION、FILTER、aggregate、property path、negation 等均有代表。",
+          "method": "query feature inventory + 最小覆盖阈值。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "fitness.q10",
+          "code": "Q10",
+          "label": "下游任务有效性",
+          "term": "",
+          "criterion": "检索、问答、决策、数据集成、流程执行指标不因本体修改退化。",
+          "method": "task-specific evaluation、A/B、gold set、错误归因。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "fitness.q11",
+          "code": "Q11",
+          "label": "专家可接受性",
+          "term": "",
+          "criterion": "领域专家认为 CQ 重要、答案可解释、概念粒度适合实际决策。",
+          "method": "专家评分/一致性、争议记录、定期 CQ pruning。",
+          "authority": "human",
+          "authorityPlan": "H",
+          "cost": "research",
+          "core": false
+        },
+        {
+          "id": "fitness.q12",
+          "code": "Q12",
+          "label": "CQ 性能预算",
+          "term": "",
+          "criterion": "关键查询响应时间、内存、结果量和超时率满足 SLO。",
+          "method": "benchmark + percentile + query plan regression。",
+          "authority": "score",
+          "authorityPlan": "S/V",
+          "cost": "high",
+          "core": false
+        }
+      ]
+    },
+    {
+      "id": "induction",
+      "order": 10,
+      "title": "自动本体学习/抽象质量",
+      "shortTitle": "自动本体学习质量",
+      "summary": "分别评估术语、层级、关系、公理和图结构的抽象质量与泛化能力。",
+      "scope": "corpus",
+      "validators": [
+        {
+          "id": "induction.i01",
+          "code": "I01",
+          "label": "术语发现",
+          "term": "",
+          "criterion": "术语 precision/recall/F1；边界、别名、噪声词和领域覆盖。",
+          "method": "LLMs4OL/Text2Onto 风格 gold；按领域/频次分层。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "induction.i02",
+          "code": "I02",
+          "label": "术语类型识别",
+          "term": "",
+          "criterion": "term typing 的 macro/micro P/R/F1；未知类和层级标签单独评估。",
+          "method": "OntoLearner/LLMs4OL protocol + blind ontology split。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "induction.i03",
+          "code": "I03",
+          "label": "taxonomy discovery",
+          "term": "",
+          "criterion": "subclass edge P/R/F1；transitive reduction 后比较，避免间接边重复计罚。",
+          "method": "exact + ancestor-aware/hierarchical metrics + 人工错误分类。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "induction.i04",
+          "code": "I04",
+          "label": "非分类关系",
+          "term": "",
+          "criterion": "relation、方向、domain/range 的 P/R/F1；is-a/part-of 单独混淆矩阵。",
+          "method": "LLMs4OL task + evidence-grounded gold。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "induction.i05",
+          "code": "I05",
+          "label": "公理类型分项",
+          "term": "",
+          "criterion": "disjoint/equivalent/domain/range/restriction/property characteristic 分别计分。",
+          "method": "axiom-by-axiom benchmark；高风险公理强制人工。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "induction.i06",
+          "code": "I06",
+          "label": "语义软匹配",
+          "term": "",
+          "criterion": "同义/释义节点和关系不能只用 literal exact F1。",
+          "method": "Fuzzy/Continuous F1；人工校准 embedding 阈值。",
+          "authority": "score",
+          "authorityPlan": "S/A",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "induction.i07",
+          "code": "I07",
+          "label": "图结构相似",
+          "term": "",
+          "criterion": "局部结构、祖先关系、motif、组件和层级形态与 gold/参考本体相近。",
+          "method": "Graph F1、Motif Distance、graph edit/ancestor metrics。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "induction.i08",
+          "code": "I08",
+          "label": "过度/不足泛化",
+          "term": "",
+          "criterion": "父类过宽、错误抽象、过多叶类、漏掉稳定共同模式。",
+          "method": "held-out instances、classification error、CQ、expert review。",
+          "authority": "score",
+          "authorityPlan": "S/A→H",
+          "cost": "research",
+          "core": false
+        },
+        {
+          "id": "induction.i09",
+          "code": "I09",
+          "label": "domain/range 归纳证据",
+          "term": "",
+          "criterion": "候选签名有足够 support/confidence；异常值不支配 schema。",
+          "method": "predicate subject/object type distribution + robust thresholds。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "induction.i10",
+          "code": "I10",
+          "label": "Shape mining 质量",
+          "term": "",
+          "criterion": "mined shape 的 support、confidence、coverage、violation precision 和稳定性。",
+          "method": "schema-derived 与 data-mined shapes 做 diff；人工批准硬约束。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "induction.i11",
+          "code": "I11",
+          "label": "seed/reference 对齐",
+          "term": "",
+          "criterion": "与 seed ontology、上位本体、标准词表对齐时避免错误 sameAs/equivalence。",
+          "method": "lexical + structural + instance alignment；保留 mapping confidence。",
+          "authority": "advise",
+          "authorityPlan": "A→H",
+          "cost": "research",
+          "core": false
+        },
+        {
+          "id": "induction.i12",
+          "code": "I12",
+          "label": "Seen/Blind 泛化",
+          "term": "",
+          "criterion": "已见本体和完全未见领域分开评测，防止记忆被当作建模能力。",
+          "method": "LLMs4OL 2025 Seen-Eval/Blind-Eval 风格划分。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "induction.i13",
+          "code": "I13",
+          "label": "随机性与模型稳定性",
+          "term": "",
+          "criterion": "不同 seed/model/prompt 的术语、公理和指标方差；高影响差异进入复核。",
+          "method": "多次运行、consensus graph、stability score。",
+          "authority": "score",
+          "authorityPlan": "S/A→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "induction.i14",
+          "code": "I14",
+          "label": "人工一致性与成本",
+          "term": "",
+          "criterion": "专家之间的一致率、每类公理审核耗时、自动化节省与漏错率。",
+          "method": "stratified audit、Cohen/Fleiss kappa、time-on-task。",
+          "authority": "human",
+          "authorityPlan": "H",
+          "cost": "high",
+          "core": false
+        }
+      ]
+    },
+    {
+      "id": "rules-process",
+      "order": 11,
+      "title": "与本体联动的规则和流程",
+      "shortTitle": "规则与流程联动",
+      "summary": "检查规则、流程、本体状态和真实事件之间的可执行性与一致性。",
+      "scope": "runtime",
+      "validators": [
+        {
+          "id": "rules-process.r01",
+          "code": "R01",
+          "label": "规则/流程 IR 结构",
+          "term": "",
+          "criterion": "必填字段、类型、evidence、引用节点和枚举合法。",
+          "method": "将 class/property IRI 与 ontology symbol table 对齐。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "low",
+          "core": true
+        },
+        {
+          "id": "rules-process.r02",
+          "code": "R02",
+          "label": "规则可满足/死规则",
+          "term": "",
+          "criterion": "guard 在变量域、本体类型和约束下是否可满足。",
+          "method": "将 SHACL/OWL domain、unit、enum 编译到 SMT domain。",
+          "authority": "score",
+          "authorityPlan": "S/V",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "rules-process.r03",
+          "code": "R03",
+          "label": "规则冲突/竞争",
+          "term": "",
+          "criterion": "hard-hard 不兼容；heuristic 重叠只记竞争；输出反例。",
+          "method": "扩 hit policy、优先级、例外、时间窗和组合动作。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "rules-process.r04",
+          "code": "R04",
+          "label": "规则覆盖/冗余",
+          "term": "",
+          "criterion": "输入 gap、subsumption、重复、边界重叠。",
+          "method": "property-based tests + DMN TCK 风格 fixture。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "rules-process.r05",
+          "code": "R05",
+          "label": "规则-本体词汇对齐",
+          "term": "",
+          "criterion": "guard/action 的变量、类、属性、枚举、单位存在且类型一致。",
+          "method": "cross.rule-schema：symbol/type checker + SHACL/SMT。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "rules-process.r06",
+          "code": "R06",
+          "label": "规则来源忠实",
+          "term": "",
+          "criterion": "条件、结论、例外、模态、数值与原文一致。",
+          "method": "parser-first + evidence judge + high-risk human review。",
+          "authority": "advise",
+          "authorityPlan": "A→H",
+          "cost": "research",
+          "core": false
+        },
+        {
+          "id": "rules-process.p01",
+          "code": "P01",
+          "label": "流程控制流 soundness",
+          "term": "",
+          "criterion": "可完成、无死任务、正确终止、无残留 token。",
+          "method": "扩 BPMN 导入和构造覆盖。",
+          "authority": "score",
+          "authorityPlan": "S/V",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "rules-process.p02",
+          "code": "P02",
+          "label": "数据感知可达性",
+          "term": "",
+          "criterion": "控制流可达但真实 guard/数据分布下不可达的活动和分支。",
+          "method": "从 ontology/SHACL 自动生成合法/边界 case。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "rules-process.p03",
+          "code": "P03",
+          "label": "规则-流程一致",
+          "term": "",
+          "criterion": "满足规则条件的 trace 必须/禁止经过相应活动。",
+          "method": "完整 Declare/LTL/temporal logic；覆盖 exception/response/precedence。",
+          "authority": "score",
+          "authorityPlan": "S/V",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "rules-process.p04",
+          "code": "P04",
+          "label": "流程-本体状态一致",
+          "term": "",
+          "criterion": "pre/post-condition、输入输出类型、状态转换符合 ontology 和 shapes。",
+          "method": "cross.process-schema：状态 ontology + transition contracts + model checking。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "rules-process.p05",
+          "code": "P05",
+          "label": "事件日志 conformance",
+          "term": "",
+          "criterion": "真实日志与 BPMN/Petri/Declare 的 fitness、precision、alignment 和偏差。",
+          "method": "PM4Py conformance/alignment；没有日志时明确不适用。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "rules-process.p06",
+          "code": "P06",
+          "label": "时间/资源/概率仿真",
+          "term": "",
+          "criterion": "到达、资源、日历、服务时间、排队、成本、SLA 和分支概率。",
+          "method": "离散事件仿真器 + 参数来源/分布拟合 + 敏感性分析。",
+          "authority": "score",
+          "authorityPlan": "S/A→H",
+          "cost": "research",
+          "core": false
+        },
+        {
+          "id": "rules-process.p07",
+          "code": "P07",
+          "label": "异常与高级 BPMN 语义",
+          "term": "",
+          "criterion": "timer/message/error/escalation/compensation/subprocess/multi-instance 正确。",
+          "method": "BPMN execution engine + test scenarios + token semantics。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "rules-process.p08",
+          "code": "P08",
+          "label": "仿真模型校准/有效性",
+          "term": "",
+          "criterion": "仿真输出能复现历史分布；参数不确定性、极端场景和稳健性明确。",
+          "method": "backtesting、distribution distance、sensitivity、expert validation。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "research",
+          "core": false
+        }
+      ]
+    },
+    {
+      "id": "evolution",
+      "order": 12,
+      "title": "演化、发布、互操作、FAIR 与安全",
+      "shortTitle": "演化、发布与安全",
+      "summary": "控制版本影响、兼容性、持久标识、访问权限和可回滚发布。",
+      "scope": "release",
+      "validators": [
+        {
+          "id": "evolution.v01",
+          "code": "V01",
+          "label": "公理级 diff",
+          "term": "",
+          "criterion": "比较两版本 axiom set，忽略序列化顺序和 blank node 标识差异。",
+          "method": "evolution.axiom-diff：ROBOT diff + RDFC-1.0 canonicalization。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "evolution.v02",
+          "code": "V02",
+          "label": "推理结果 diff",
+          "term": "",
+          "criterion": "新增/删除的 inferred subclass/equivalence/type/property，而非只看显式文本。",
+          "method": "classify 两版并做 semantic diff；高风险 entailment allow/deny list。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "evolution.v03",
+          "code": "V03",
+          "label": "breaking change 分类",
+          "term": "",
+          "criterion": "删除/收紧/改义/改 IRI/domain/range/cardinality 如何影响数据和消费者。",
+          "method": "变更规则引擎 + affected entity/query/shape/mapping 索引。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "evolution.v04",
+          "code": "V04",
+          "label": "CQ 回归",
+          "term": "",
+          "criterion": "所有关键 CQ 在新版本重跑并比较 expected。",
+          "method": "baseline artifact + approved diff + failure owner。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "evolution.v05",
+          "code": "V05",
+          "label": "SHACL 违规增量",
+          "term": "",
+          "criterion": "新旧版本 violation 数、对象、类型和严重度变化。",
+          "method": "canonical finding key + delta report；区分新 shape 与数据退化。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "evolution.v06",
+          "code": "V06",
+          "label": "mapping/query 兼容",
+          "term": "",
+          "criterion": "ontology 变更是否使 mapping 引用失效、查询空结果或 SQL 重写退化。",
+          "method": "impact graph + NPD query suite + endpoint differential test。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "evolution.v07",
+          "code": "V07",
+          "label": "版本 IRI 与不可变发布",
+          "term": "",
+          "criterion": "每个 release 有唯一可解析 versionIRI；已发布 artifact 不被覆盖修改。",
+          "method": "OBO Principle 4 风格 policy + hash archive。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "evolution.v08",
+          "code": "V08",
+          "label": "废弃与迁移",
+          "term": "",
+          "criterion": "deprecated term 有 replacement、迁移期限、兼容层和使用统计。",
+          "method": "deprecation SHACL + mapping/query usage index + migration report。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "evolution.v09",
+          "code": "V09",
+          "label": "通知与变更说明",
+          "term": "",
+          "criterion": "用户可定位新增、删除、修复、breaking change 和迁移措施。",
+          "method": "machine-readable changelog + human release notes + subscriber policy。",
+          "authority": "human",
+          "authorityPlan": "H",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "evolution.v10",
+          "code": "V10",
+          "label": "可解析持久 IRI",
+          "term": "",
+          "criterion": "ontology/version/term/doc IRI 可解析、内容协商正确、无重定向环。",
+          "method": "HTTP checker、PURL policy、离线 snapshot；网络失败不等于语义错误。",
+          "authority": "score",
+          "authorityPlan": "S/V",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "evolution.v11",
+          "code": "V11",
+          "label": "FAIR 与复用性",
+          "term": "",
+          "criterion": "findable/accessible/interoperable/reusable 元数据、license、namespace、文档、复用关系。",
+          "method": "release.fairness：FOOPS! + 项目 profile；主要计分。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "evolution.v12",
+          "code": "V12",
+          "label": "RDF canonicalization/签名",
+          "term": "",
+          "criterion": "同构 dataset 产生稳定规范序列化/hash；支持 diff、签名和审计。",
+          "method": "W3C RDFC-1.0；限制 blank-node poisoning 的资源消耗。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "evolution.v13",
+          "code": "V13",
+          "label": "发布构建可重现",
+          "term": "",
+          "criterion": "相同 source/import/toolchain 构建出相同 artifact、report 和 hash。",
+          "method": "hermetic build、container digest、signed provenance/SBOM。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "evolution.v14",
+          "code": "V14",
+          "label": "查询/推理拒绝服务防护",
+          "term": "",
+          "criterion": "property path、blank-node canonicalization、恶意 shape、深递归不会耗尽资源。",
+          "method": "quotas、timeout、depth/result limit、sandbox、circuit breaker。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "evolution.v15",
+          "code": "V15",
+          "label": "访问控制与最小权限",
+          "term": "",
+          "criterion": "ontology read、candidate write、repair、approve、publish、DB sample 分角色。",
+          "method": "服务账号/RBAC；高风险操作双人或 PR 审批；全量审计。",
+          "authority": "veto",
+          "authorityPlan": "V/H",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "evolution.v16",
+          "code": "V16",
+          "label": "备份、回滚与撤回",
+          "term": "",
+          "criterion": "可恢复任一 release；错误版本可撤回但历史不可抹除；消费者收到通知。",
+          "method": "immutable registry、rollback pointer、revocation metadata、演练。",
+          "authority": "human",
+          "authorityPlan": "H",
+          "cost": "high",
+          "core": false
+        }
+      ]
+    },
+    {
+      "id": "assurance",
+      "order": 13,
+      "title": "校验器自身的校验",
+      "shortTitle": "校验器保证",
+      "summary": "持续验证校验器自身的覆盖率、标准一致性、诊断稳定性和误差边界。",
+      "scope": "validator",
+      "validators": [
+        {
+          "id": "assurance.x01",
+          "code": "X01",
+          "label": "gold 缺陷 fixture",
+          "term": "",
+          "criterion": "每类 finding 有最小正例、最小反例、边界例和 expected locator。",
+          "method": "扩到 profile/import/shape/mapping/version/NPD。",
+          "authority": "veto",
+          "authorityPlan": "V（CI）",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "assurance.x02",
+          "code": "X02",
+          "label": "变异测试",
+          "term": "Mutation Testing",
+          "criterion": "删除/翻转/替换公理、shape、mapping、规则、流程后应由预期层捕获。",
+          "method": "新增 axiom/mapping/import/query operators；报告 precision/recall。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "assurance.x03",
+          "code": "X03",
+          "label": "已知盲区登记",
+          "term": "",
+          "criterion": "未捕获变异必须可见，不得把“没有 finding”解释成无风险。",
+          "method": "建立 blind-spot register、owner、缓解措施和关闭条件。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "medium",
+          "core": true
+        },
+        {
+          "id": "assurance.x04",
+          "code": "X04",
+          "label": "自动测试与 AC 对齐",
+          "term": "",
+          "criterion": "每个 validator 的权限、finding type、定位、隔离和缓存均有回归。",
+          "method": "增加 property-based、timeout、unsupported、cross-process tests。",
+          "authority": "veto",
+          "authorityPlan": "V（CI）",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "assurance.x05",
+          "code": "X05",
+          "label": "标准一致性测试",
+          "term": "",
+          "criterion": "SHACL、R2RML、SPARQL、RDFC、OWL profile 实现通过官方 test suite。",
+          "method": "vendor test suite pinning + 支持/不支持特性声明。",
+          "authority": "veto",
+          "authorityPlan": "V",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "assurance.x06",
+          "code": "X06",
+          "label": "多引擎差分",
+          "term": "",
+          "criterion": "同一输入在独立 parser/reasoner/SHACL/mapping 引擎结果差异可检测。",
+          "method": "differential testing；差异作为 finding，不自动择一。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "assurance.x07",
+          "code": "X07",
+          "label": "精确率/召回率",
+          "term": "",
+          "criterion": "在人工 gold 上按 finding type 统计 TP/FP/FN，不只统计“发现数量”。",
+          "method": "stratified labeled corpus + bootstrap CI + 错误成本权重。",
+          "authority": "score",
+          "authorityPlan": "S→H",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "assurance.x08",
+          "code": "X08",
+          "label": "诊断可解释性",
+          "term": "",
+          "criterion": "finding 有 object、axiom/path、source、counterexample/trace、engine/version。",
+          "method": "统一 evidence schema + justification graph。",
+          "authority": "score",
+          "authorityPlan": "S",
+          "cost": "high",
+          "core": false
+        },
+        {
+          "id": "assurance.x09",
+          "code": "X09",
+          "label": "稳定 finding identity",
+          "term": "",
+          "criterion": "序列化/遍历顺序变化不造成新 finding；修复后同问题可闭环。",
+          "method": "canonical object/axiom/finding IDs；RDFC；跨版本映射。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "medium",
+          "core": false
+        },
+        {
+          "id": "assurance.x10",
+          "code": "X10",
+          "label": "LLM judge 校准",
+          "term": "",
+          "criterion": "evidence citation、abstention、置信度、模型/版本漂移、self-bias 有基准。",
+          "method": "blind gold、双模型/规则抽样、季度重校准、成本与延迟监控。",
+          "authority": "advise",
+          "authorityPlan": "A→H",
+          "cost": "research",
+          "core": false
+        },
+        {
+          "id": "assurance.x11",
+          "code": "X11",
+          "label": "性能与降级测试",
+          "term": "",
+          "criterion": "大图、深层级、复杂 shape/query、故障 endpoint 下 timeout/partial/error 语义正确。",
+          "method": "NPD + synthetic scale；chaos/fault injection；资源预算。",
+          "authority": "veto",
+          "authorityPlan": "V/S",
+          "cost": "high",
+          "core": true
+        },
+        {
+          "id": "assurance.x12",
+          "code": "X12",
+          "label": "人工复核质量",
+          "term": "",
+          "criterion": "审核人一致性、误放行、复审率、修复返工和 SLA 可量化。",
+          "method": "adjudication sample、inter-rater agreement、review analytics。",
+          "authority": "human",
+          "authorityPlan": "H",
+          "cost": "high",
+          "core": false
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "label": "OWL 2 Profiles",
+      "url": "https://www.w3.org/TR/owl2-profiles/"
+    },
+    {
+      "label": "SHACL Recommendation",
+      "url": "https://www.w3.org/TR/shacl/"
+    },
+    {
+      "label": "R2RML",
+      "url": "https://www.w3.org/TR/r2rml/"
+    },
+    {
+      "label": "ROBOT",
+      "url": "https://robot.obolibrary.org/report.html"
+    },
+    {
+      "label": "OOPS! Pitfall Catalogue",
+      "url": "https://oops.linkeddata.es/catalogue.jsp"
+    },
+    {
+      "label": "NPD Benchmark",
+      "url": "https://github.com/ontop/npd-benchmark"
+    }
+  ]
+}

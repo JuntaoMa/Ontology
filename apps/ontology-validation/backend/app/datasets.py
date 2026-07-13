@@ -3,12 +3,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from rdflib import Graph
 
-DATASETS_DIR = Path(__file__).resolve().parents[2] / "datasets"
+APP_ROOT = Path(__file__).resolve().parents[2]
+DATASETS_DIR = Path(
+    os.environ.get("ONTOLOGY_VALIDATION_FIXTURES", APP_ROOT / "fixtures")
+)
 
 
 @dataclass

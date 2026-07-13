@@ -5,7 +5,12 @@
     "dev": "pnpm --filter ontology-viz-app dev",
     "build": "pnpm --filter ontology-viz-app build",
     "build:pkg": "pnpm --filter @ontology/viz build",
-    "typecheck": "pnpm --filter @ontology/viz build && pnpm --filter @ontology/viz typecheck && pnpm --filter ontology-viz-app exec tsc -b"
+    "typecheck": "pnpm --filter @ontology/viz build && pnpm --filter @ontology/viz typecheck && pnpm --filter ontology-viz-app exec tsc -b",
+    "dev:validation": "pnpm --filter ontology-validation-app dev",
+    "serve:validation": "uv run --project apps/ontology-validation/backend uvicorn app.main:app --app-dir apps/ontology-validation/backend --port 8000",
+    "build:validation": "pnpm --filter ontology-validation-app build",
+    "typecheck:validation": "pnpm --filter ontology-validation-app typecheck",
+    "test:validation": "uv run --project apps/ontology-validation/backend pytest"
   },
   "dependencies": {
     "n3": "^2.1.0"

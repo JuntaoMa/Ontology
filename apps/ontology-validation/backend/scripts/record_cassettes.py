@@ -1,6 +1,6 @@
 """用真实后端（默认 claude CLI）跑 judge 并录制 cassette。
 
-用法：.venv/bin/python scripts/record_cassettes.py [dataset ...]
+用法：uv run --project backend python backend/scripts/record_cassettes.py [dataset ...]
 录制后立刻做回放自检：AC-MUT-LLM 三缺陷必须被真实 judge 检出。
 """
 from __future__ import annotations
