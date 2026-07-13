@@ -1,0 +1,73 @@
+{
+  "$schema": "./runtime-design-map.schema.json",
+  "version": "1.0.0",
+  "description": "运行时校验器到目标设计注册表的职责映射；它用于工程追踪，不进入对外系统设计页面。",
+  "designRegistry": "../docs/system-design/ontology-validator-registry.json",
+  "mappings": [
+    {
+      "runtimeValidatorId": "intake.structure",
+      "designValidatorIds": ["rules-process.r01"],
+      "mappingKind": "implements"
+    },
+    {
+      "runtimeValidatorId": "instance.required-fields",
+      "designValidatorIds": ["abox.a01"],
+      "mappingKind": "implements"
+    },
+    {
+      "runtimeValidatorId": "instance.data-quality",
+      "designValidatorIds": ["abox.a02", "abox.a05", "abox.a06", "abox.a09"],
+      "mappingKind": "aggregates"
+    },
+    {
+      "runtimeValidatorId": "schema.consistency",
+      "designValidatorIds": ["reasoning.l01", "reasoning.l02", "reasoning.l03"],
+      "mappingKind": "aggregates"
+    },
+    {
+      "runtimeValidatorId": "schema.pitfalls",
+      "designValidatorIds": ["metadata.m01", "modeling.p01", "modeling.p04"],
+      "mappingKind": "aggregates"
+    },
+    {
+      "runtimeValidatorId": "instance.competency",
+      "designValidatorIds": ["fitness.q02", "fitness.q03", "fitness.q04"],
+      "mappingKind": "aggregates"
+    },
+    {
+      "runtimeValidatorId": "rule.defects",
+      "designValidatorIds": ["rules-process.r02", "rules-process.r03", "rules-process.r04"],
+      "mappingKind": "aggregates"
+    },
+    {
+      "runtimeValidatorId": "process.soundness",
+      "designValidatorIds": ["rules-process.p01"],
+      "mappingKind": "implements"
+    },
+    {
+      "runtimeValidatorId": "process.simulation",
+      "designValidatorIds": ["rules-process.p02"],
+      "mappingKind": "implements"
+    },
+    {
+      "runtimeValidatorId": "cross.rule-process",
+      "designValidatorIds": ["rules-process.p03", "rules-process.p04"],
+      "mappingKind": "aggregates"
+    },
+    {
+      "runtimeValidatorId": "schema.semantic",
+      "designValidatorIds": ["modeling.p05", "modeling.p06", "modeling.p07", "modeling.p08", "modeling.p09"],
+      "mappingKind": "supports"
+    },
+    {
+      "runtimeValidatorId": "cross.faithfulness",
+      "designValidatorIds": ["evidence.e05", "evidence.e06", "evidence.e07", "evidence.e08", "evidence.e10"],
+      "mappingKind": "supports"
+    },
+    {
+      "runtimeValidatorId": "meta.review",
+      "designValidatorIds": ["evidence.e15", "assurance.x10", "assurance.x12"],
+      "mappingKind": "supports"
+    }
+  ]
+}

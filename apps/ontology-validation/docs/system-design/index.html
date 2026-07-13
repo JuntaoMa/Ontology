@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="本体校验系统的分层设计图谱，按章节展示校验目标、核心判据、实现方法、权限与成本。"
+    />
+    <title>本体校验系统设计图谱</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#architecture">跳到系统设计</a>
+
+    <header class="topbar">
+      <div class="topbar__inner">
+        <a class="brand" href="#top" aria-label="返回页面顶部">
+          <span class="brand__mark" aria-hidden="true">OV</span>
+          <span class="brand__name">本体校验系统</span>
+        </a>
+        <nav class="topnav" aria-label="设计文档导航">
+          <a href="#architecture">校验器</a>
+          <a href="#relations">关系</a>
+          <a href="#orchestration">DAG 编排</a>
+          <a href="#chapters">校验项</a>
+        </nav>
+        <div class="topbar__meta">
+          <span id="registry-date">设计基线</span>
+          <button class="text-button" id="print-button" type="button">打印</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="intro-band" aria-labelledby="page-title">
+        <div class="page-shell intro-grid">
+          <div>
+            <p class="eyebrow">ONTOLOGY VALIDATION SYSTEM · DESIGN MAP</p>
+            <h1 id="page-title">本体校验系统设计图谱</h1>
+            <p class="intro-copy" id="page-subtitle">
+              从制品入口到可信发布的分层校验框架
+            </p>
+          </div>
+          <dl class="headline-metrics" aria-label="设计规模">
+            <div>
+              <dt>章节</dt>
+              <dd id="metric-chapters">13</dd>
+            </div>
+            <div>
+              <dt>完整校验项</dt>
+              <dd id="metric-validators">196</dd>
+            </div>
+            <div>
+              <dt>核心节点</dt>
+              <dd id="metric-core">81</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="principles-band" aria-labelledby="principles-title">
+        <div class="page-shell">
+          <div class="section-kicker">
+            <span>01</span>
+            <h2 id="principles-title">设计原则</h2>
+          </div>
+          <div class="principle-grid" id="principles"></div>
+        </div>
+      </section>
+
+      <section class="architecture-band" id="architecture" aria-labelledby="architecture-title">
+        <div class="page-shell">
+          <div class="section-heading">
+            <div>
+              <p class="section-number">02 / VALIDATOR CONTRACT</p>
+              <h2 id="architecture-title">校验器是可编排的判定契约</h2>
+            </div>
+            <p>
+              每个节点都必须声明身份、作用域、输入、判据、执行、结论、权限、证据和成本；只有契约完整，校验器才能被安全复用与编排。
+            </p>
+          </div>
+
+          <div class="validator-blueprint" aria-label="原子校验器输入、判定与输出模型">
+            <div class="blueprint-port blueprint-port--input">
+              <span>INPUT CONTRACT</span>
+              <strong>制品 + 配置 + 前置输出</strong>
+              <small>内容哈希固定，依赖显式声明</small>
+            </div>
+            <article class="blueprint-node">
+              <div class="blueprint-node__top">
+                <span>Validator ID · Version</span>
+                <span class="scope-chip">SCOPE</span>
+              </div>
+              <h3>原子校验器 <span>Atomic Validator</span></h3>
+              <p>判据 × 执行引擎 → 可解释结论</p>
+              <div class="blueprint-node__contract">
+                <span>V / S / A / H</span>
+                <span>Cost Budget</span>
+              </div>
+            </article>
+            <div class="blueprint-port blueprint-port--output">
+              <span>OUTPUT ENVELOPE</span>
+              <strong>Verdict + Finding + Evidence</strong>
+              <small>稳定 ID、指标、诊断与修复草案</small>
+            </div>
+          </div>
+
+          <div class="design-element-grid" id="design-elements"></div>
+
+          <div class="scope-atlas-wrap">
+            <div class="subsection-label">
+              <span>SCOPE MODEL</span>
+              <h3>作用域决定结论能覆盖多大边界</h3>
+            </div>
+            <div class="scope-atlas" id="scope-atlas"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="relations-band" id="relations" aria-labelledby="relations-title">
+        <div class="page-shell">
+          <div class="section-heading">
+            <div>
+              <p class="section-number">03 / RELATION MODEL</p>
+              <h2 id="relations-title">校验器之间不是简单先后关系</h2>
+            </div>
+            <p>
+              依赖边必须表达语义：谁提供输入、谁构成门禁、谁只负责解释、哪些依赖按制品条件激活，以及何时升级到人工复核。
+            </p>
+          </div>
+          <div class="relations-layout">
+            <div class="relation-type-list" id="relation-types" aria-label="关系类型"></div>
+            <div class="relation-example-list" id="validator-relations" aria-label="校验器关系实例"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="dag-band" id="orchestration" aria-labelledby="dag-title">
+        <div class="page-shell">
+          <div class="section-heading">
+            <div>
+              <p class="section-number">04 / DAG ORCHESTRATION</p>
+              <h2 id="dag-title">以 DAG 组织执行，而不是写死流水线</h2>
+            </div>
+            <p>
+              manifest 决定本次运行需要哪些节点；编排器按依赖拓扑调度、并行扇出、门禁传播、结果扇入，并把人工批准建模为显式节点。
+            </p>
+          </div>
+
+          <div class="readiness-rule">
+            <span>NODE READINESS</span>
+            <code id="readiness-rule"></code>
+          </div>
+          <div class="dag-canvas" id="dag-canvas" aria-label="校验器 DAG 编排示意"></div>
+
+          <div class="orchestration-detail-grid">
+            <div>
+              <div class="subsection-label">
+                <span>RUNTIME POLICIES</span>
+                <h3>编排器必须保证的运行语义</h3>
+              </div>
+              <div class="policy-grid" id="dag-policies"></div>
+            </div>
+            <div>
+              <div class="subsection-label">
+                <span>FAILURE ROUTING</span>
+                <h3>结论如何传播和收敛</h3>
+              </div>
+              <div class="failure-route-list" id="failure-routes"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="map-band" aria-labelledby="map-title">
+        <div class="page-shell">
+          <div class="section-heading">
+            <div>
+              <p class="section-number">05 / COVERAGE MAP</p>
+              <h2 id="map-title">校验覆盖链路</h2>
+            </div>
+            <p>这里表达校验范围而非固定执行顺序；实际运行顺序由上方 DAG、manifest 与条件依赖共同决定。</p>
+          </div>
+          <nav class="pipeline" id="pipeline" aria-label="校验章节导航"></nav>
+
+          <div class="legend-wrap">
+            <div class="legend-group" id="authority-legend" aria-label="权限图例"></div>
+            <div class="legend-group legend-group--cost" id="cost-legend" aria-label="成本图例"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls-band" aria-label="图谱筛选">
+        <div class="page-shell controls-grid">
+          <div class="control-block">
+            <span class="control-label">视图</span>
+            <div class="segmented" role="group" aria-label="选择展示范围">
+              <button class="segment is-active" data-view="core" type="button" aria-pressed="true">核心视图</button>
+              <button class="segment" data-view="all" type="button" aria-pressed="false">完整视图</button>
+            </div>
+          </div>
+
+          <label class="search-field">
+            <span class="control-label">搜索</span>
+            <input id="search-input" type="search" placeholder="校验项、判据或方法" autocomplete="off" />
+          </label>
+
+          <label class="select-field">
+            <span class="control-label">章节</span>
+            <select id="chapter-select">
+              <option value="all">全部章节</option>
+            </select>
+          </label>
+
+          <label class="select-field">
+            <span class="control-label">权限</span>
+            <select id="authority-select">
+              <option value="all">全部权限</option>
+            </select>
+          </label>
+
+          <label class="select-field">
+            <span class="control-label">成本</span>
+            <select id="cost-select">
+              <option value="all">全部成本</option>
+            </select>
+          </label>
+        </div>
+        <div class="page-shell result-line" aria-live="polite">
+          <span id="result-count">正在加载注册表</span>
+          <button class="quiet-button" id="reset-button" type="button">重置筛选</button>
+        </div>
+      </section>
+
+      <div id="chapters" class="chapter-list" aria-live="polite"></div>
+
+      <section class="closing-band" aria-labelledby="closing-title">
+        <div class="page-shell closing-grid">
+          <div>
+            <p class="section-number">DESIGN BASELINE</p>
+            <h2 id="closing-title">可信发布不是一个通过按钮</h2>
+          </div>
+          <p>
+            最终结论应同时保留机器合规、质量风险、证据状态、变更影响、人工决策和校验器盲区。
+          </p>
+          <div class="reference-list" id="reference-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <div class="node-tooltip" id="node-tooltip" role="tooltip" aria-hidden="true"></div>
+
+    <dialog class="node-dialog" id="node-dialog" aria-labelledby="dialog-title">
+      <div id="dialog-content"></div>
+      <form method="dialog" class="dialog-actions">
+        <button class="text-button text-button--solid" type="submit">关闭</button>
+      </form>
+    </dialog>
+
+    <template id="load-error-template">
+      <section class="error-state">
+        <p class="section-number">REGISTRY ERROR</p>
+        <h2>无法读取校验器注册表</h2>
+        <p>请通过本地 HTTP 服务打开此入口，并确认 JSON 文件与页面位于同一目录。</p>
+      </section>
+    </template>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

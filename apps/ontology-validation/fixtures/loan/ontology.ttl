@@ -1,0 +1,118 @@
+@prefix ex:   <http://example.org/loan#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+ex: a owl:Ontology ;
+    rdfs:label "贷款审批领域本体（demo）" ;
+    rdfs:comment "知识校验 demo 的业务串联场景本体，内含预埋缺陷 O8/O9，见 specs/00-master-spec.md" .
+
+###############
+# 类
+###############
+
+ex:Applicant a owl:Class ;
+    rdfs:label "申请人" ;
+    rdfs:comment "提交贷款申请的自然人" .
+
+ex:Organization a owl:Class ;
+    rdfs:label "机构" ;
+    rdfs:comment "法人组织" ;
+    owl:disjointWith ex:Applicant .
+
+ex:LoanApplication a owl:Class ;
+    rdfs:label "贷款申请" ;
+    rdfs:comment "一笔贷款申请记录" .
+
+ex:RiskAssessment a owl:Class ;
+    rdfs:label "风险评估" ;
+    rdfs:comment "针对一笔申请的风险评估记录" .
+
+ex:Document a owl:Class ;
+    rdfs:label "材料文档" ;
+    rdfs:comment "申请所需的证明材料" .
+
+ex:Employee a owl:Class ;
+    rdfs:label "银行员工" ;
+    rdfs:comment "执行评估与审批的银行员工" .
+
+# --- 预埋 O9（语义缺陷，逻辑自洽）：临时雇员被建模为「材料文档」的子类 ---
+ex:TemporaryEmployee a owl:Class ;
+    rdfs:label "临时雇员" ;
+    rdfs:comment "劳务派遣性质的雇员" ;
+    rdfs:subClassOf ex:Document .
+
+# --- 预埋 O8a（pitfall）：无 label/comment 的类 ---
+ex:Cls_0042 a owl:Class .
+
+# --- 预埋 O8c（pitfall）：subclass 环 ---
+ex:RetailCustomer a owl:Class ;
+    rdfs:label "零售客户" ;
+    rdfs:subClassOf ex:PersonalCustomer .
+ex:PersonalCustomer a owl:Class ;
+    rdfs:label "个人客户" ;
+    rdfs:subClassOf ex:RetailCustomer .
+
+###############
+# 对象属性
+###############
+
+ex:hasApplicant a owl:ObjectProperty ;
+    rdfs:label "申请人为" ;
+    rdfs:domain ex:LoanApplication ;
+    rdfs:range  ex:Applicant .
+
+ex:hasDocument a owl:ObjectProperty ;
+    rdfs:label "附有材料" ;
+    rdfs:domain ex:LoanApplication ;
+    rdfs:range  ex:Document .
+
+ex:hasRiskAssessment a owl:ObjectProperty ;
+    rdfs:label "风险评估为" ;
+    rdfs:domain ex:LoanApplication ;
+    rdfs:range  ex:RiskAssessment .
+
+ex:assessedBy a owl:ObjectProperty ;
+    rdfs:label "评估人" ;
+    rdfs:domain ex:RiskAssessment ;
+    rdfs:range  ex:Employee .
+
+###############
+# 数据属性
+###############
+
+ex:age a owl:DatatypeProperty ;
+    rdfs:label "年龄" ;
+    rdfs:domain ex:Applicant ;
+    rdfs:range  xsd:integer .
+
+ex:monthlyIncome a owl:DatatypeProperty ;
+    rdfs:label "月收入" ;
+    rdfs:domain ex:Applicant ;
+    rdfs:range  xsd:decimal .
+
+ex:creditScore a owl:DatatypeProperty ;
+    rdfs:label "信用分" ;
+    rdfs:domain ex:Applicant ;
+    rdfs:range  xsd:integer .
+
+ex:birthDate a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label "出生日期" ;
+    rdfs:domain ex:Applicant ;
+    rdfs:range  xsd:date .
+
+ex:loanAmount a owl:DatatypeProperty ;
+    rdfs:label "贷款金额" ;
+    rdfs:domain ex:LoanApplication ;
+    rdfs:range  xsd:decimal .
+
+ex:riskLevel a owl:DatatypeProperty ;
+    rdfs:label "风险等级" ;
+    rdfs:comment "取值 LOW / MEDIUM / HIGH" ;
+    rdfs:domain ex:LoanApplication ;
+    rdfs:range  xsd:string .
+
+# --- 预埋 O8b（pitfall）：无 domain/range 的属性 ---
+ex:miscFlag a owl:DatatypeProperty ;
+    rdfs:label "杂项标记" .

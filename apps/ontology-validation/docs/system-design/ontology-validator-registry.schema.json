@@ -1,0 +1,380 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/ontology-validator-registry.schema.json",
+  "title": "本体校验器注册表",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "registryId",
+    "title",
+    "subtitle",
+    "updated",
+    "language",
+    "sourceNote",
+    "counts",
+    "principles",
+    "designElements",
+    "scopes",
+    "authorities",
+    "costs",
+    "relationTypes",
+    "orchestration",
+    "chapters",
+    "references"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string" },
+    "registryId": { "type": "string", "pattern": "^[a-z][a-z0-9-]+$" },
+    "title": { "type": "string", "minLength": 1 },
+    "subtitle": { "type": "string", "minLength": 1 },
+    "updated": { "type": "string", "format": "date" },
+    "language": { "const": "zh-CN" },
+    "sourceNote": { "type": "string", "minLength": 1 },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chapters", "validators", "coreValidators"],
+      "properties": {
+        "chapters": { "type": "integer", "minimum": 1 },
+        "validators": { "type": "integer", "minimum": 1 },
+        "coreValidators": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "principles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "text"],
+        "properties": {
+          "title": { "type": "string", "minLength": 1 },
+          "text": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "designElements": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/designElement" }
+    },
+    "scopes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "package",
+        "ontology",
+        "closure",
+        "graph",
+        "evidence",
+        "source",
+        "task",
+        "corpus",
+        "runtime",
+        "release",
+        "validator"
+      ],
+      "properties": {
+        "package": { "$ref": "#/$defs/scope" },
+        "ontology": { "$ref": "#/$defs/scope" },
+        "closure": { "$ref": "#/$defs/scope" },
+        "graph": { "$ref": "#/$defs/scope" },
+        "evidence": { "$ref": "#/$defs/scope" },
+        "source": { "$ref": "#/$defs/scope" },
+        "task": { "$ref": "#/$defs/scope" },
+        "corpus": { "$ref": "#/$defs/scope" },
+        "runtime": { "$ref": "#/$defs/scope" },
+        "release": { "$ref": "#/$defs/scope" },
+        "validator": { "$ref": "#/$defs/scope" }
+      }
+    },
+    "authorities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["veto", "score", "advise", "human"],
+      "properties": {
+        "veto": { "$ref": "#/$defs/authority" },
+        "score": { "$ref": "#/$defs/authority" },
+        "advise": { "$ref": "#/$defs/authority" },
+        "human": { "$ref": "#/$defs/authority" }
+      }
+    },
+    "costs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["low", "medium", "high", "research"],
+      "properties": {
+        "low": { "$ref": "#/$defs/cost" },
+        "medium": { "$ref": "#/$defs/cost" },
+        "high": { "$ref": "#/$defs/cost" },
+        "research": { "$ref": "#/$defs/cost" }
+      }
+    },
+    "relationTypes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requires", "supplies", "gates", "explains", "conditional", "escalates"],
+      "properties": {
+        "requires": { "$ref": "#/$defs/relationType" },
+        "supplies": { "$ref": "#/$defs/relationType" },
+        "gates": { "$ref": "#/$defs/relationType" },
+        "explains": { "$ref": "#/$defs/relationType" },
+        "conditional": { "$ref": "#/$defs/relationType" },
+        "escalates": { "$ref": "#/$defs/relationType" }
+      }
+    },
+    "orchestration": { "$ref": "#/$defs/orchestration" },
+    "chapters": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/chapter" }
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "url"],
+        "properties": {
+          "label": { "type": "string", "minLength": 1 },
+          "url": { "type": "string", "format": "uri" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "authorityId": {
+      "enum": ["veto", "score", "advise", "human"]
+    },
+    "scopeId": {
+      "enum": [
+        "package",
+        "ontology",
+        "closure",
+        "graph",
+        "evidence",
+        "source",
+        "task",
+        "corpus",
+        "runtime",
+        "release",
+        "validator"
+      ]
+    },
+    "designElement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "term", "question", "contract"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]+$" },
+        "label": { "type": "string", "minLength": 1 },
+        "term": { "type": "string", "minLength": 1 },
+        "question": { "type": "string", "minLength": 1 },
+        "contract": { "type": "string", "minLength": 1 }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "label", "term", "description"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[A-Z]{2,5}$" },
+        "label": { "type": "string", "minLength": 1 },
+        "term": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "label", "term", "description", "color"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[VSAH]$" },
+        "label": { "type": "string", "minLength": 1 },
+        "term": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+      }
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "description"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 }
+      }
+    },
+    "relationType": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "term", "style", "description"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1 },
+        "term": { "type": "string", "minLength": 1 },
+        "style": { "enum": ["solid", "data", "gate", "dotted", "dashed", "review"] },
+        "description": { "type": "string", "minLength": 1 }
+      }
+    },
+    "orchestration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["readinessRule", "policies", "phases", "validatorRelations", "failureRoutes"],
+      "properties": {
+        "readinessRule": { "type": "string", "minLength": 1 },
+        "policies": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/orchestrationPolicy" }
+        },
+        "phases": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/orchestrationPhase" }
+        },
+        "validatorRelations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/validatorRelation" }
+        },
+        "failureRoutes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/failureRoute" }
+        }
+      }
+    },
+    "orchestrationPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "term", "text"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "term": { "type": "string", "minLength": 1 },
+        "text": { "type": "string", "minLength": 1 }
+      }
+    },
+    "orchestrationPhase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "order", "title", "term", "nodes"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]+$" },
+        "order": { "type": "integer", "minimum": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "term": { "type": "string", "minLength": 1 },
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/dagNode" }
+        }
+      }
+    },
+    "dagNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "description",
+        "scope",
+        "authority",
+        "validatorRefs",
+        "dependsOn",
+        "conditionalOn"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^dag\\.[a-z][a-z0-9-]+$" },
+        "label": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "scope": { "$ref": "#/$defs/scopeId" },
+        "authority": { "$ref": "#/$defs/authorityId" },
+        "validatorRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]+\\.[a-z][a-z0-9-]+$" }
+        },
+        "dependsOn": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^dag\\.[a-z][a-z0-9-]+$" }
+        },
+        "conditionalOn": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^dag\\.[a-z][a-z0-9-]+$" }
+        }
+      }
+    },
+    "validatorRelation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "type", "reason"],
+      "properties": {
+        "from": { "type": "string", "pattern": "^[a-z][a-z0-9-]+\\.[a-z][a-z0-9-]+$" },
+        "to": { "type": "string", "pattern": "^[a-z][a-z0-9-]+\\.[a-z][a-z0-9-]+$" },
+        "type": { "enum": ["requires", "supplies", "gates", "explains", "conditional", "escalates"] },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "failureRoute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "label", "tone", "route"],
+      "properties": {
+        "verdict": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "tone": { "$ref": "#/$defs/authorityId" },
+        "route": { "type": "string", "minLength": 1 }
+      }
+    },
+    "chapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "order", "title", "shortTitle", "summary", "scope", "validators"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]+$" },
+        "order": { "type": "integer", "minimum": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "shortTitle": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string", "minLength": 1 },
+        "scope": { "$ref": "#/$defs/scopeId" },
+        "validators": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/validator" }
+        }
+      }
+    },
+    "validator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "code",
+        "label",
+        "term",
+        "criterion",
+        "method",
+        "authority",
+        "authorityPlan",
+        "cost",
+        "core"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]+\\.[a-z][a-z0-9-]+$" },
+        "code": { "type": "string", "pattern": "^[A-Z][0-9]{2}$" },
+        "label": { "type": "string", "minLength": 1 },
+        "term": { "type": "string" },
+        "criterion": { "type": "string", "minLength": 1 },
+        "method": { "type": "string", "minLength": 1 },
+        "authority": { "enum": ["veto", "score", "advise", "human"] },
+        "authorityPlan": { "type": "string", "minLength": 1 },
+        "cost": { "enum": ["low", "medium", "high", "research"] },
+        "core": { "type": "boolean" },
+        "scope": { "$ref": "#/$defs/scopeId" }
+      }
+    }
+  }
+}

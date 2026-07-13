@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "version", "description", "designRegistry", "mappings"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "type": "string" },
+    "description": { "type": "string", "minLength": 1 },
+    "designRegistry": { "type": "string", "minLength": 1 },
+    "mappings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["runtimeValidatorId", "designValidatorIds", "mappingKind"],
+        "properties": {
+          "runtimeValidatorId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]+\\.[a-z][a-z0-9-]+$"
+          },
+          "designValidatorIds": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]+\\.[a-z][a-z0-9-]+$"
+            }
+          },
+          "mappingKind": {
+            "enum": ["implements", "aggregates", "supports"]
+          }
+        }
+      }
+    }
+  }
+}

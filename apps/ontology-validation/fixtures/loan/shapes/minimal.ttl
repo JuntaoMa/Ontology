@@ -1,0 +1,23 @@
+@prefix ex:  <http://example.org/loan#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+###############################################################
+# 最低入库 shape（veto 层）：违反 → focusNode 进 quarantine
+# 只放「没有它对象就不可用」的硬约束，刻意保持极小
+###############################################################
+
+ex:LoanApplicationMinimalShape
+    a sh:NodeShape ;
+    sh:targetClass ex:LoanApplication ;
+    sh:severity sh:Violation ;
+    sh:property [
+        sh:path ex:hasApplicant ;
+        sh:minCount 1 ;
+        sh:message "贷款申请必须关联至少一个申请人（最低入库要求）" ;
+    ] ;
+    sh:property [
+        sh:path ex:loanAmount ;
+        sh:minCount 1 ;
+        sh:message "贷款申请必须有贷款金额（最低入库要求）" ;
+    ] .

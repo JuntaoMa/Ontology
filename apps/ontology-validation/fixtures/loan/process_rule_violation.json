@@ -1,0 +1,46 @@
+{
+  "process_id": "loan_rule_violation",
+  "description": "缺陷变体 AC-P-CROSS：gateway 人工复核阈值被改为 80万（规则 R10 要求 50万）——流程自身完全健全，只有规则×流程交叉验证环能抓",
+  "_seeded_defect": "AC-P-CROSS：金额在(50万,80万]的 case 违反 R10 派生约束 conditional_occurrence(loan_amount>500000 ⇒ manual_review)",
+  "start": "submit",
+  "ends": ["notify"],
+  "activity_action_map": {"manual_review": "manual_review"},
+  "steps": [
+    {"id": "submit", "name": "提交申请",
+     "evidence": [{"quote": "客户通过柜面或线上渠道提交贷款申请", "source": "操作规程§1"}]},
+    {"id": "completeness_check", "name": "完整性检查",
+     "evidence": [{"quote": "受理后首先核对申请材料的完整性", "source": "操作规程§2"}]},
+    {"id": "risk_assessment", "name": "风险评估",
+     "evidence": [{"quote": "材料齐备后进行风险评估", "source": "操作规程§3"}]},
+    {"id": "manual_review", "name": "人工复核",
+     "evidence": [{"quote": "大额申请须由审批岗人工复核", "source": "操作规程§4"}]},
+    {"id": "approval_decision", "name": "审批决定",
+     "evidence": [{"quote": "人工复核后出具审批决定", "source": "操作规程§4"}]},
+    {"id": "auto_approve", "name": "自动审批",
+     "evidence": [{"quote": "其余申请进入系统自动审批", "source": "操作规程§5"}]},
+    {"id": "notify", "name": "结果通知",
+     "evidence": [{"quote": "审批结束后通知客户结果", "source": "操作规程§6"}]}
+  ],
+  "gateways": [
+    {"id": "g1", "type": "XOR",
+     "evidence": [{"quote": "按申请金额分流（系统配置误设为80万）", "source": "操作规程§3"}]}
+  ],
+  "edges": [
+    {"from": "submit", "to": "completeness_check",
+     "evidence": [{"quote": "提交后进入材料完整性检查环节", "source": "操作规程§2"}]},
+    {"from": "completeness_check", "to": "risk_assessment",
+     "evidence": [{"quote": "完整性检查通过后转入风险评估", "source": "操作规程§3"}]},
+    {"from": "risk_assessment", "to": "g1",
+     "evidence": [{"quote": "评估完成后按金额分流", "source": "操作规程§3"}]},
+    {"from": "g1", "to": "manual_review", "condition": "loan_amount > 800000",
+     "evidence": [{"quote": "大额申请转人工复核", "source": "操作规程§4"}]},
+    {"from": "g1", "to": "auto_approve", "condition": "loan_amount <= 800000",
+     "evidence": [{"quote": "其余进入自动审批", "source": "操作规程§5"}]},
+    {"from": "manual_review", "to": "approval_decision",
+     "evidence": [{"quote": "人工复核后出具审批决定", "source": "操作规程§4"}]},
+    {"from": "approval_decision", "to": "notify",
+     "evidence": [{"quote": "决定形成后通知客户", "source": "操作规程§6"}]},
+    {"from": "auto_approve", "to": "notify",
+     "evidence": [{"quote": "自动审批完成后通知客户", "source": "操作规程§6"}]}
+  ]
+}

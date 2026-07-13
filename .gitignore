@@ -17,6 +17,7 @@ datasets/
 
 # Python/uv local environments
 .venv/
+apps/ontology-validation/var/
 
 # Logs
 *.log

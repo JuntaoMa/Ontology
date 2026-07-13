@@ -1,0 +1,27 @@
+{
+  "cq_set_id": "pizza_cqs_v1",
+  "prefixes": {"pizza": "http://www.co-ode.org/ontologies/pizza/pizza.owl#", "rdfs": "http://www.w3.org/2000/01/rdf-schema#", "owl": "http://www.w3.org/2002/07/owl#"},
+  "cqs": [
+    {
+      "cq_id": "pcq_001",
+      "nl_question": "本体中是否定义了披萨类（NamedPizza 的子类）？",
+      "query": "SELECT ?c WHERE { ?c rdfs:subClassOf pizza:NamedPizza }",
+      "expected": {"mode": "non_empty"},
+      "_expect": "pass"
+    },
+    {
+      "cq_id": "pcq_002",
+      "nl_question": "Margherita 是否被建模为一种 NamedPizza？",
+      "query": "SELECT ?c WHERE { pizza:Margherita rdfs:subClassOf ?c }",
+      "expected": {"mode": "contains", "answers": ["http://www.co-ode.org/ontologies/pizza/pizza.owl#NamedPizza"]},
+      "_expect": "pass"
+    },
+    {
+      "cq_id": "pcq_003",
+      "nl_question": "本体是否声明了互斥的披萨底类型？",
+      "query": "SELECT ?b WHERE { pizza:DeepPanBase owl:disjointWith ?b }",
+      "expected": {"mode": "contains", "answers": ["http://www.co-ode.org/ontologies/pizza/pizza.owl#ThinAndCrispyBase"]},
+      "_expect": "pass"
+    }
+  ]
+}
