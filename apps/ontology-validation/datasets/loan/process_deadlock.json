@@ -1,0 +1,50 @@
+{
+  "process_id": "loan_deadlock",
+  "description": "缺陷变体 AC-P-DEADLOCK：XOR-split(g1) 配 AND-join(g2)，经典 unsound 结构",
+  "_seeded_defect": "AC-P-DEADLOCK：分流走 XOR（只走一支），汇合却用 AND（要求两支都到）→ 死锁",
+  "start": "submit",
+  "ends": ["notify"],
+  "activity_action_map": {"manual_review": "manual_review"},
+  "steps": [
+    {"id": "submit", "name": "提交申请",
+     "evidence": [{"quote": "客户通过柜面或线上渠道提交贷款申请", "source": "操作规程§1"}]},
+    {"id": "completeness_check", "name": "完整性检查",
+     "evidence": [{"quote": "受理后首先核对申请材料的完整性", "source": "操作规程§2"}]},
+    {"id": "risk_assessment", "name": "风险评估",
+     "evidence": [{"quote": "材料齐备后进行风险评估", "source": "操作规程§3"}]},
+    {"id": "manual_review", "name": "人工复核",
+     "evidence": [{"quote": "大额申请须由审批岗人工复核", "source": "操作规程§4"}]},
+    {"id": "approval_decision", "name": "审批决定",
+     "evidence": [{"quote": "人工复核后出具审批决定", "source": "操作规程§4"}]},
+    {"id": "auto_approve", "name": "自动审批",
+     "evidence": [{"quote": "其余申请进入系统自动审批", "source": "操作规程§5"}]},
+    {"id": "notify", "name": "结果通知",
+     "evidence": [{"quote": "审批结束后通知客户结果", "source": "操作规程§6"}]}
+  ],
+  "gateways": [
+    {"id": "g1", "type": "XOR",
+     "evidence": [{"quote": "按申请金额是否超过50万元分流", "source": "操作规程§3"}]},
+    {"id": "g2", "type": "AND",
+     "evidence": [{"quote": "两条线路完成后汇总（抽取时误把任一汇合画成并行汇合）", "source": "操作规程§6"}]}
+  ],
+  "edges": [
+    {"from": "submit", "to": "completeness_check",
+     "evidence": [{"quote": "提交后进入材料完整性检查环节", "source": "操作规程§2"}]},
+    {"from": "completeness_check", "to": "risk_assessment",
+     "evidence": [{"quote": "完整性检查通过后转入风险评估", "source": "操作规程§3"}]},
+    {"from": "risk_assessment", "to": "g1",
+     "evidence": [{"quote": "评估完成后按金额分流", "source": "操作规程§3"}]},
+    {"from": "g1", "to": "manual_review", "condition": "loan_amount > 500000",
+     "evidence": [{"quote": "申请金额超过50万元的转人工复核", "source": "操作规程§4"}]},
+    {"from": "g1", "to": "auto_approve", "condition": "loan_amount <= 500000",
+     "evidence": [{"quote": "金额不超过50万元的进入自动审批", "source": "操作规程§5"}]},
+    {"from": "manual_review", "to": "approval_decision",
+     "evidence": [{"quote": "人工复核后出具审批决定", "source": "操作规程§4"}]},
+    {"from": "approval_decision", "to": "g2",
+     "evidence": [{"quote": "决定形成后进入汇总", "source": "操作规程§6"}]},
+    {"from": "auto_approve", "to": "g2",
+     "evidence": [{"quote": "自动审批完成后进入汇总", "source": "操作规程§6"}]},
+    {"from": "g2", "to": "notify",
+     "evidence": [{"quote": "汇总后通知客户", "source": "操作规程§6"}]}
+  ]
+}

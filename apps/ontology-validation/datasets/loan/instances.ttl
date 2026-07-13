@@ -1,0 +1,178 @@
+@prefix ex:   <http://example.org/loan#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+###############################################################
+# 实例数据：30 笔贷款申请 + 申请人 + 员工/评估记录
+# 预埋缺陷 O1–O7 与 CQ 数据缺口种子，见 specs/00-master-spec.md
+###############################################################
+
+# 员工
+ex:emp01 a ex:Employee ; rdfs:label "评估员-王" .
+ex:emp02 a ex:Employee ; rdfs:label "评估员-李" .
+
+###############
+# 缺陷实例区
+###############
+
+# --- O1（veto）：申请缺 hasApplicant ---
+ex:app001 a ex:LoanApplication ;
+    ex:loanAmount "80000"^^xsd:decimal ;
+    ex:riskLevel "LOW" .
+
+# --- O2：monthlyIncome 非数值 ---
+ex:p002 a ex:Applicant ;
+    rdfs:label "申请人-002" ;
+    ex:age 35 ;
+    ex:monthlyIncome "八千" ;
+    ex:creditScore 660 .
+ex:app002 a ex:LoanApplication ;
+    ex:hasApplicant ex:p002 ;
+    ex:loanAmount "60000"^^xsd:decimal ;
+    ex:riskLevel "LOW" .
+
+# --- O3：riskLevel 枚举越界（疑似 HIGH 笔误，留给 J3 提修复） ---
+ex:p003 a ex:Applicant ;
+    rdfs:label "申请人-003" ;
+    ex:age 41 ;
+    ex:monthlyIncome "9000"^^xsd:decimal ;
+    ex:creditScore 580 .
+ex:app003 a ex:LoanApplication ;
+    ex:hasApplicant ex:p003 ;
+    ex:loanAmount "300000"^^xsd:decimal ;
+    ex:riskLevel "EXTREME" .
+
+# --- O4：age 为负 / loanAmount 为 0 ---
+ex:p004 a ex:Applicant ;
+    rdfs:label "申请人-004" ;
+    ex:age -5 ;
+    ex:monthlyIncome "7000"^^xsd:decimal ;
+    ex:creditScore 700 .
+ex:app004 a ex:LoanApplication ;
+    ex:hasApplicant ex:p004 ;
+    ex:loanAmount "0"^^xsd:decimal ;
+    ex:riskLevel "MEDIUM" .
+
+# --- O5：hasApplicant 指向另一笔申请（range 违例） ---
+ex:app005 a ex:LoanApplication ;
+    ex:hasApplicant ex:app006 ;
+    ex:loanAmount "120000"^^xsd:decimal ;
+    ex:riskLevel "MEDIUM" .
+
+# app006 本身是一笔正常申请（被 app005 错误引用为申请人）
+ex:p006 a ex:Applicant ; rdfs:label "申请人-006" ; ex:age 32 ;
+    ex:monthlyIncome "7200"^^xsd:decimal ; ex:creditScore 668 .
+ex:app006 a ex:LoanApplication ;
+    ex:hasApplicant ex:p006 ;
+    ex:loanAmount "66000"^^xsd:decimal ;
+    ex:riskLevel "LOW" .
+
+# --- O6：同一实体既是申请人又是机构（disjoint 违例） ---
+ex:p007 a ex:Applicant , ex:Organization ;
+    rdfs:label "申请人-007（也被标为机构）" ;
+    ex:age 50 ;
+    ex:monthlyIncome "20000"^^xsd:decimal ;
+    ex:creditScore 720 .
+ex:app007 a ex:LoanApplication ;
+    ex:hasApplicant ex:p007 ;
+    ex:loanAmount "450000"^^xsd:decimal ;
+    ex:riskLevel "MEDIUM" .
+
+# --- O7：functional 属性两个值 ---
+ex:p008 a ex:Applicant ;
+    rdfs:label "申请人-008" ;
+    ex:age 29 ;
+    ex:birthDate "1997-03-15"^^xsd:date , "1996-12-01"^^xsd:date ;
+    ex:monthlyIncome "11000"^^xsd:decimal ;
+    ex:creditScore 690 .
+ex:app008 a ex:LoanApplication ;
+    ex:hasApplicant ex:p008 ;
+    ex:loanAmount "90000"^^xsd:decimal ;
+    ex:riskLevel "LOW" .
+
+# --- CQ 数据缺口种子：HIGH 风险但无 RiskAssessment ---
+ex:p009 a ex:Applicant ;
+    rdfs:label "申请人-009" ;
+    ex:age 23 ;
+    ex:monthlyIncome "3500"^^xsd:decimal ;
+    ex:creditScore 510 .
+ex:app009 a ex:LoanApplication ;
+    ex:hasApplicant ex:p009 ;
+    ex:loanAmount "200000"^^xsd:decimal ;
+    ex:riskLevel "HIGH" .
+
+###############
+# 干净实例区（app010–app030）
+###############
+
+ex:p010 a ex:Applicant ; rdfs:label "申请人-010" ; ex:age 34 ; ex:monthlyIncome "8500"^^xsd:decimal ; ex:creditScore 705 ; ex:birthDate "1992-05-20"^^xsd:date .
+ex:app010 a ex:LoanApplication ; ex:hasApplicant ex:p010 ; ex:loanAmount "75000"^^xsd:decimal ; ex:riskLevel "LOW" .
+
+ex:p011 a ex:Applicant ; rdfs:label "申请人-011" ; ex:age 45 ; ex:monthlyIncome "15000"^^xsd:decimal ; ex:creditScore 760 .
+ex:app011 a ex:LoanApplication ; ex:hasApplicant ex:p011 ; ex:loanAmount "550000"^^xsd:decimal ; ex:riskLevel "HIGH" ;
+    ex:hasRiskAssessment ex:ra011 .
+ex:ra011 a ex:RiskAssessment ; rdfs:label "评估-011" ; ex:assessedBy ex:emp01 .
+
+ex:p012 a ex:Applicant ; rdfs:label "申请人-012" ; ex:age 38 ; ex:monthlyIncome "6200"^^xsd:decimal ; ex:creditScore 640 .
+ex:app012 a ex:LoanApplication ; ex:hasApplicant ex:p012 ; ex:loanAmount "45000"^^xsd:decimal ; ex:riskLevel "LOW" .
+
+ex:p013 a ex:Applicant ; rdfs:label "申请人-013" ; ex:age 52 ; ex:monthlyIncome "22000"^^xsd:decimal ; ex:creditScore 780 .
+ex:app013 a ex:LoanApplication ; ex:hasApplicant ex:p013 ; ex:loanAmount "800000"^^xsd:decimal ; ex:riskLevel "HIGH" ;
+    ex:hasRiskAssessment ex:ra013 .
+ex:ra013 a ex:RiskAssessment ; rdfs:label "评估-013" ; ex:assessedBy ex:emp02 .
+
+ex:p014 a ex:Applicant ; rdfs:label "申请人-014" ; ex:age 27 ; ex:monthlyIncome "5400"^^xsd:decimal ; ex:creditScore 615 .
+ex:app014 a ex:LoanApplication ; ex:hasApplicant ex:p014 ; ex:loanAmount "30000"^^xsd:decimal ; ex:riskLevel "LOW" .
+
+ex:p015 a ex:Applicant ; rdfs:label "申请人-015" ; ex:age 31 ; ex:monthlyIncome "9800"^^xsd:decimal ; ex:creditScore 688 .
+ex:app015 a ex:LoanApplication ; ex:hasApplicant ex:p015 ; ex:loanAmount "150000"^^xsd:decimal ; ex:riskLevel "MEDIUM" .
+
+ex:p016 a ex:Applicant ; rdfs:label "申请人-016" ; ex:age 47 ; ex:monthlyIncome "13500"^^xsd:decimal ; ex:creditScore 730 .
+ex:app016 a ex:LoanApplication ; ex:hasApplicant ex:p016 ; ex:loanAmount "260000"^^xsd:decimal ; ex:riskLevel "MEDIUM" .
+
+ex:p017 a ex:Applicant ; rdfs:label "申请人-017" ; ex:age 24 ; ex:monthlyIncome "4800"^^xsd:decimal ; ex:creditScore 602 .
+ex:app017 a ex:LoanApplication ; ex:hasApplicant ex:p017 ; ex:loanAmount "20000"^^xsd:decimal ; ex:riskLevel "LOW" .
+
+ex:p018 a ex:Applicant ; rdfs:label "申请人-018" ; ex:age 59 ; ex:monthlyIncome "17000"^^xsd:decimal ; ex:creditScore 745 .
+ex:app018 a ex:LoanApplication ; ex:hasApplicant ex:p018 ; ex:loanAmount "620000"^^xsd:decimal ; ex:riskLevel "HIGH" ;
+    ex:hasRiskAssessment ex:ra018 .
+ex:ra018 a ex:RiskAssessment ; rdfs:label "评估-018" ; ex:assessedBy ex:emp01 .
+
+ex:p019 a ex:Applicant ; rdfs:label "申请人-019" ; ex:age 36 ; ex:monthlyIncome "7600"^^xsd:decimal ; ex:creditScore 655 .
+ex:app019 a ex:LoanApplication ; ex:hasApplicant ex:p019 ; ex:loanAmount "85000"^^xsd:decimal ; ex:riskLevel "LOW" .
+
+ex:p020 a ex:Applicant ; rdfs:label "申请人-020" ; ex:age 42 ; ex:monthlyIncome "10500"^^xsd:decimal ; ex:creditScore 698 .
+ex:app020 a ex:LoanApplication ; ex:hasApplicant ex:p020 ; ex:loanAmount "175000"^^xsd:decimal ; ex:riskLevel "MEDIUM" .
+
+ex:p021 a ex:Applicant ; rdfs:label "申请人-021" ; ex:age 33 ; ex:monthlyIncome "8900"^^xsd:decimal ; ex:creditScore 672 .
+ex:app021 a ex:LoanApplication ; ex:hasApplicant ex:p021 ; ex:loanAmount "95000"^^xsd:decimal ; ex:riskLevel "LOW" .
+
+ex:p022 a ex:Applicant ; rdfs:label "申请人-022" ; ex:age 49 ; ex:monthlyIncome "19500"^^xsd:decimal ; ex:creditScore 766 .
+ex:app022 a ex:LoanApplication ; ex:hasApplicant ex:p022 ; ex:loanAmount "510000"^^xsd:decimal ; ex:riskLevel "HIGH" ;
+    ex:hasRiskAssessment ex:ra022 .
+ex:ra022 a ex:RiskAssessment ; rdfs:label "评估-022" ; ex:assessedBy ex:emp02 .
+
+ex:p023 a ex:Applicant ; rdfs:label "申请人-023" ; ex:age 26 ; ex:monthlyIncome "5100"^^xsd:decimal ; ex:creditScore 631 .
+ex:app023 a ex:LoanApplication ; ex:hasApplicant ex:p023 ; ex:loanAmount "40000"^^xsd:decimal ; ex:riskLevel "LOW" .
+
+ex:p024 a ex:Applicant ; rdfs:label "申请人-024" ; ex:age 55 ; ex:monthlyIncome "25000"^^xsd:decimal ; ex:creditScore 790 .
+ex:app024 a ex:LoanApplication ; ex:hasApplicant ex:p024 ; ex:loanAmount "380000"^^xsd:decimal ; ex:riskLevel "MEDIUM" .
+
+ex:p025 a ex:Applicant ; rdfs:label "申请人-025" ; ex:age 30 ; ex:monthlyIncome "6800"^^xsd:decimal ; ex:creditScore 645 .
+ex:app025 a ex:LoanApplication ; ex:hasApplicant ex:p025 ; ex:loanAmount "55000"^^xsd:decimal ; ex:riskLevel "LOW" .
+
+ex:p026 a ex:Applicant ; rdfs:label "申请人-026" ; ex:age 44 ; ex:monthlyIncome "12200"^^xsd:decimal ; ex:creditScore 710 .
+ex:app026 a ex:LoanApplication ; ex:hasApplicant ex:p026 ; ex:loanAmount "210000"^^xsd:decimal ; ex:riskLevel "MEDIUM" .
+
+ex:p027 a ex:Applicant ; rdfs:label "申请人-027" ; ex:age 39 ; ex:monthlyIncome "9300"^^xsd:decimal ; ex:creditScore 681 .
+ex:app027 a ex:LoanApplication ; ex:hasApplicant ex:p027 ; ex:loanAmount "130000"^^xsd:decimal ; ex:riskLevel "MEDIUM" .
+
+ex:p028 a ex:Applicant ; rdfs:label "申请人-028" ; ex:age 61 ; ex:monthlyIncome "14800"^^xsd:decimal ; ex:creditScore 752 .
+ex:app028 a ex:LoanApplication ; ex:hasApplicant ex:p028 ; ex:loanAmount "70000"^^xsd:decimal ; ex:riskLevel "LOW" .
+
+ex:p029 a ex:Applicant ; rdfs:label "申请人-029" ; ex:age 28 ; ex:monthlyIncome "5900"^^xsd:decimal ; ex:creditScore 624 .
+ex:app029 a ex:LoanApplication ; ex:hasApplicant ex:p029 ; ex:loanAmount "35000"^^xsd:decimal ; ex:riskLevel "LOW" .
+
+ex:p030 a ex:Applicant ; rdfs:label "申请人-030" ; ex:age 37 ; ex:monthlyIncome "16500"^^xsd:decimal ; ex:creditScore 740 .
+ex:app030 a ex:LoanApplication ; ex:hasApplicant ex:p030 ; ex:loanAmount "490000"^^xsd:decimal ; ex:riskLevel "MEDIUM" .

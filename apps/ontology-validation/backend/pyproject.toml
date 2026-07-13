@@ -1,0 +1,25 @@
+[project]
+name = "validation-demo-backend"
+version = "0.1.0"
+description = "知识校验系统 demo 后端：registry+DAG 编排、确定性引擎 + LLM judge"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "pydantic>=2.7",
+    "rdflib>=7.0",
+    "pyshacl>=0.30",
+    "owlrl>=7.0",
+    "z3-solver>=4.13",
+    "pm4py>=2.7.11",
+    "anthropic>=0.40",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "httpx>=0.27"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

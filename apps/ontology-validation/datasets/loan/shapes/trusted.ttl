@@ -1,0 +1,68 @@
+@prefix ex:  <http://example.org/loan#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+###############################################################
+# 可信层 shape（score 层）：违反 → finding（负证据），不删数据
+# datatype / 枚举 / 数值范围 / 关系 range / 基数
+###############################################################
+
+ex:ApplicantTrustedShape
+    a sh:NodeShape ;
+    sh:targetClass ex:Applicant ;
+    sh:property [
+        sh:path ex:age ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 120 ;
+        sh:message "年龄必须是 0–120 的整数" ;
+    ] ;
+    sh:property [
+        sh:path ex:monthlyIncome ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:message "月收入必须是非负数值（xsd:decimal）" ;
+    ] ;
+    sh:property [
+        sh:path ex:creditScore ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 300 ;
+        sh:maxInclusive 850 ;
+        sh:message "信用分必须是 300–850 的整数" ;
+    ] ;
+    sh:property [
+        sh:path ex:birthDate ;
+        sh:datatype xsd:date ;
+        sh:maxCount 1 ;
+        sh:message "出生日期是 functional 属性，至多一个值" ;
+    ] .
+
+ex:LoanApplicationTrustedShape
+    a sh:NodeShape ;
+    sh:targetClass ex:LoanApplication ;
+    sh:property [
+        sh:path ex:hasApplicant ;
+        sh:class ex:Applicant ;
+        sh:message "hasApplicant 必须指向 Applicant 实例（关系 range 约束）" ;
+    ] ;
+    sh:property [
+        sh:path ex:loanAmount ;
+        sh:datatype xsd:decimal ;
+        sh:minExclusive 0 ;
+        sh:message "贷款金额必须大于 0" ;
+    ] ;
+    sh:property [
+        sh:path ex:riskLevel ;
+        sh:in ( "LOW" "MEDIUM" "HIGH" ) ;
+        sh:message "风险等级必须是 LOW / MEDIUM / HIGH 之一" ;
+    ] .
+
+ex:RiskAssessmentTrustedShape
+    a sh:NodeShape ;
+    sh:targetClass ex:RiskAssessment ;
+    sh:property [
+        sh:path ex:assessedBy ;
+        sh:class ex:Employee ;
+        sh:minCount 1 ;
+        sh:message "风险评估必须有银行员工作为评估人" ;
+    ] .

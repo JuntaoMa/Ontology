@@ -1,0 +1,48 @@
+{
+  "cq_set_id": "loan_cqs_v1",
+  "prefixes": {"ex": "http://example.org/loan#"},
+  "cqs": [
+    {
+      "cq_id": "cq_001",
+      "nl_question": "系统中是否存在贷款申请？",
+      "query": "SELECT ?app WHERE { ?app a ex:LoanApplication }",
+      "expected": {"mode": "non_empty"},
+      "_expect": "pass（AC-CQ-PASS）"
+    },
+    {
+      "cq_id": "cq_002",
+      "nl_question": "每笔 HIGH 风险申请是否都有风险评估记录？",
+      "query": "SELECT ?app WHERE { ?app a ex:LoanApplication ; ex:riskLevel \"HIGH\" . FILTER NOT EXISTS { ?app ex:hasRiskAssessment ?ra } }",
+      "expected": {"mode": "empty"},
+      "_expect": "fail：app009 无评估记录 → 数据缺口（AC-CQ-DATAGAP）"
+    },
+    {
+      "cq_id": "cq_003",
+      "nl_question": "哪些申请有担保人？",
+      "query": "SELECT ?app ?g WHERE { ?app a ex:LoanApplication ; ex:hasGuarantor ?g }",
+      "expected": {"mode": "non_empty"},
+      "_expect": "fail：本体没有 hasGuarantor 属性 → 本体缺口（AC-CQ-ONTOGAP）"
+    },
+    {
+      "cq_id": "cq_004",
+      "nl_question": "是否能列出所有风险评估的评估人？",
+      "query": "SELECT ?ra ?emp WHERE { ?ra a ex:RiskAssessment ; ex:assessedBy ?emp }",
+      "expected": {"mode": "non_empty"},
+      "_expect": "pass"
+    },
+    {
+      "cq_id": "cq_005",
+      "nl_question": "申请人-011 的申请金额是否为 55 万元？",
+      "query": "SELECT ?amt WHERE { ex:app011 ex:loanAmount ?amt }",
+      "expected": {"mode": "exact_set", "answers": ["550000"]},
+      "_expect": "pass"
+    },
+    {
+      "cq_id": "cq_006",
+      "nl_question": "LOW 风险的申请中是否包含 app010？",
+      "query": "SELECT ?app WHERE { ?app a ex:LoanApplication ; ex:riskLevel \"LOW\" }",
+      "expected": {"mode": "contains", "answers": ["http://example.org/loan#app010"]},
+      "_expect": "pass"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+@prefix pizza: <http://www.co-ode.org/ontologies/pizza/pizza.owl#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+
+# 注错种子：一个个体同时属于互斥的 DeepPanBase 与 ThinAndCrispyBase
+# （pizza.owl 声明二者 owl:disjointWith）→ owlrl 物化 + disjoint 扫描应检出
+pizza:weirdBase a pizza:DeepPanBase , pizza:ThinAndCrispyBase ;
+    rdfs:label "注错种子：既是厚底又是薄脆底"@zh .
+
+# 干净个体对照
+pizza:okBase a pizza:DeepPanBase ;
+    rdfs:label "正常个体：厚底"@zh .
