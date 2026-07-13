@@ -1,7 +1,9 @@
-# 本体校验系统设计基线（v2.1）
+# 本体校验参考 Demo · 历史设计基线（v2.1）
 
 > 日期：2026-06-11（v2；v1 同日早些时候）
-> 状态：已实施并于 2026-07-13 迁移到 Ontology 仓库；本文保留为设计与决策记录
+> 状态：已实施并于 2026-07-13 迁移到 Ontology 仓库；本文仅保留为参考 Demo 的设计与决策记录。
+> 它不是当前目标系统设计；新基线见 [`./system-design/`](./system-design/) 和其中的
+> `ontology-validator-registry.json`。本文的 V0–V6 是历史实现编号，不应继续扩展为目标分类法。
 > 上游输入：
 > - KnowledgeExtraction 仓库的 `research/knowledge_extraction_survey/notes/knowledge-validation-tech-plan.md`（下称 **TP**）及全部 D_/E_ 系列调研笔记
 > - 项目根目录 `截屏2026-06-11 09.40.39.png`（网页版 Claude 产出的系统级概念架构图，下称 **概念图**）

@@ -4,6 +4,10 @@
 > 上游讨论结论（用户 4 项拍板）：①多 scope 各组重复出现 ②intake 独立成句法入口
 > ③真改 id ④真做选择性触发。本 spec 是实现锚点；旧 spec（00）的 AC 仍然有效，
 > 只是 `validator_id` 与「层」表述按本 spec 迁移。
+>
+> 本规格是当前 13 个 runtime validator 的迁移桥梁，不是 196 项目标设计注册表本身。目标设计使用
+> 更完整的作用域词表、原子校验项 ID 和模块级编排，见
+> `../docs/system-design/ontology-validator-registry.json`；两者通过 `runtime-design-map.json` 追踪。
 
 ## 1. 三条正交轴（不再揉进一个 V 编号）
 

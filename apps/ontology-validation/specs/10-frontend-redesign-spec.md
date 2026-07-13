@@ -3,6 +3,8 @@
 > 目标：把 demo 前端重构为「亮色企业风 + 左侧栏 + 统一 findings 收件箱」的现代扁平界面。
 > 本规格最初只改前端；迁移到 Ontology 后，前端位于应用根目录的 `src/`，后端 API 契约不变。
 > 上游：`../docs/design-plan.md`、本目录 `00-master-spec.md`（功能验收不变）。
+> 本文件描述已实现参考 Demo 的界面，不是新目标系统设计页面；目标设计 UI 位于
+> `../docs/system-design/index.html`，由目标注册表直接驱动。
 
 ## 设计决策（核心：双语义轴分通道）
 

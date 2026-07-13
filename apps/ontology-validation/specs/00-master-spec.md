@@ -1,8 +1,12 @@
-# 知识校验 Demo · 主验收规格（Master Spec）
+# 知识校验参考 Demo · 已实现验收规格（Master Spec）
 
 > 本文件是 spec 驱动开发的锚点：每条验收准则（AC）有唯一编号，pytest 测试以 AC 编号命名/标注，
 > 实现以让对应测试变绿为完成标准。上游设计：`../docs/design-plan.md`（v2.1）。
 > 数据集中的预埋缺陷即 gold set——**每个缺陷必须被预期的层捕获，预期漏报必须真的漏报**。
+>
+> 本规格只验收当前参考 Demo，不定义目标系统的完整覆盖面。新目标系统设计以
+> `../docs/system-design/ontology-validator-registry.json` 为准；当前 runtime 与目标设计的职责关系见
+> `runtime-design-map.json`。下文 V0–V6 均为历史验收编号。
 
 ## 术语
 

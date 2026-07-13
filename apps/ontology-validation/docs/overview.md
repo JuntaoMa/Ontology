@@ -1,7 +1,9 @@
-# 知识校验 Demo · 模块与设计思路总览（以 loan 场景为例）
+# 知识校验参考 Demo · 模块与实现思路（以 loan 场景为例）
 
-> 配套：设计文档 `./design-plan.md`（v2.1）、功能规格 `../specs/00-master-spec.md`、
-> 前端规格 `../specs/10-frontend-redesign-spec.md`。本文是 demo 的导览。
+> 本文只介绍已经实现的 loan Demo，不是目标系统设计。
+> 新目标架构以 [`./system-design/`](./system-design/) 及其中的
+> `ontology-validator-registry.json` 为准；旧实现的设计记录、功能规格和前端规格分别位于
+> `./design-plan.md`、`../specs/00-master-spec.md` 和 `../specs/10-frontend-redesign-spec.md`。
 
 ## 一、一句话定位
 
@@ -22,7 +24,10 @@
 加粗的三个（O9 / R11 / P-edge）是关键：**逻辑全自洽、确定性引擎全 miss，只有 LLM 能抓**
 ——它们存在就是为了证明确定性×LLM 的互补性。
 
-## 三、校验流水线：七层 + 横切（概念 V0–V6）
+## 三、参考实现流水线：七层 + 横切（历史编号 V0–V6）
+
+V0–V6 只用于解释当前 Demo 的实现组成，不再作为目标系统的分类或执行次序。目标系统按原子校验项
+的稳定目的 ID、作用域、权限和 DAG 依赖组织。
 
 ```
                     loan 三件套（含预埋缺陷）
@@ -86,7 +91,7 @@ evidence 原文」忠实性（5000≠五万、边向反了）；J3 复判确定�
 - **registry + DAG + 三级权限**：校验器注册元数据，拓扑调度，veto 短路，幂等缓存。
 - **judge 三模式自动选择**：CLI（订阅，零费）/ API / **cassette 回放**——无任何凭证也能离线全
   流程跑（含真实 opus 录制的 O9/R11/P-edge）。
-- **spec 驱动 + 53 测试**：每条 AC → pytest gold 断言，「预期捕获的必须抓、预期漏报的必须漏」。
+- **spec 驱动 + 55 测试**：每条 AC → pytest gold 断言，「预期捕获的必须抓、预期漏报的必须漏」。
 - **可复现性纪律**：rdflib/Z3 的遍历顺序与反例跨进程会漂移 → 排序、规范化、过滤 volatile，保证
   cassette 稳定命中（三 seed 验证过）。
 

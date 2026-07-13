@@ -1,9 +1,46 @@
 # Ontology Validation
 
-业务场景下本体 / 规则 / 流程的混合校验工作台：**确定性引擎做形式判定（veto/score），
-LLM judge 做语义判定与复判（advise），人工在写入闸门终审**。
-目标系统设计：`docs/system-design/index.html`；实现设计稿：`docs/design-plan.md`；
-功能验收：`specs/00-master-spec.md`；前端重设计规格：`specs/10-frontend-redesign-spec.md`。
+本项目包含两个必须区分的层次：
+
+1. **目标系统设计**：面向本体持续校验、任务验收和发布治理的完整设计图谱。它按 13 个章节组织
+   196 个原子校验项，以 11 类作用域、四级权限和 6 阶段模块 DAG 描述目标能力。
+2. **可运行参考实现**：以 loan / pizza fixture 验证混合校验思路的 Demo。确定性引擎负责形式判定，
+   LLM judge 负责语义判定与复判，人工在写入闸门终审。
+
+目标架构不再使用 V0–V6 作为系统分类法；校验项按稳定目的 ID 命名，执行次序只由 DAG 表达。
+V0–V6 仅保留在旧实现材料中，作为历史设计和 Demo 讲解编号。
+
+## 文档入口与状态
+
+| 文档 | 角色 | 状态 |
+|---|---|---|
+| [`docs/system-design/index.html`](docs/system-design/index.html) | 新目标系统设计的可视化入口 | **当前设计基线** |
+| [`docs/system-design/ontology-validator-registry.json`](docs/system-design/ontology-validator-registry.json) | 196 个原子校验项、关系与目标编排 DAG 的唯一数据源 | **当前设计基线** |
+| [`docs/system-design/README.md`](docs/system-design/README.md) | 注册表、作用域、权限和 DAG 语义 | **先读** |
+| [`specs/runtime-design-map.json`](specs/runtime-design-map.json) | 当前 runtime validator 到目标设计项的工程追踪 | 持续更新 |
+| [`docs/overview.md`](docs/overview.md) | loan Demo 的实现导览 | 已实现参考 |
+| [`docs/design-plan.md`](docs/design-plan.md) | 旧 V0–V6 Demo 的设计决策记录 | 历史基线 |
+| [`specs/00-master-spec.md`](specs/00-master-spec.md) | 当前 Demo 的功能验收 | 已实现参考 |
+| [`specs/20-validator-taxonomy-spec.md`](specs/20-validator-taxonomy-spec.md) | 当前 runtime 从旧 ID 迁移到目的 ID 的过渡规格 | 已实现桥接 |
+
+当前 runtime 有 13 个 validator，映射到目标注册表中的 35 个设计项；目标模块 DAG 引用了 71 个
+原子校验项。映射表示职责追踪，不表示 196 个设计项已经实现。
+
+## 目标设计预览
+
+```bash
+cd apps/ontology-validation/docs/system-design
+UV_CACHE_DIR=../../../../.uv-cache \
+  uv run --project ../../backend python -m http.server 8765
+```
+
+打开 `http://127.0.0.1:8765/`。页面以注册表 JSON 为唯一数据源，可查看校验器剖面、作用域、关系和
+目标 DAG。
+
+## 参考 Demo
+
+当前 Web 应用是目标设计的验证性子集，不代表目标系统的全部覆盖面。它重点验证本体 / 实例 / 规则 /
+流程的混合裁判、findings 收件箱、quarantine、错误注入和人工终审。
 
 前端为**亮色企业风 + 左侧栏 + 统一 findings 收件箱**（Tailwind v4 + 手写 shadcn 风格原语 +
 Cytoscape + ECharts）。核心设计约束:**双语义轴分通道**——严重度用填充色、权限(veto/score/advise)
@@ -41,7 +78,7 @@ pnpm serve:validation
 （含 gold 自检：O9/R11/P-edge 三个「仅 LLM 可抓」缺陷必须被真实 judge 命中）；
 变异算子的 judge 响应：`scripts/record_mutation_cassettes.py`。
 
-## 看什么（demo 剧本）
+## 看什么（参考 Demo 剧本）
 
 1. **总览仪表盘**：registry+DAG 执行表（veto/score/advise 三级权限徽章）、
    quarantine 数、**人工成本节约卡**（cassette 定格的真实复判：折叠 6/30 条省 20%；
@@ -68,7 +105,7 @@ findings 的逐条 triage 统一在**收件箱**完成(Sentry 式:按类型/对�
 judge 高置信项默认折叠、详情抽屉看 judge 复判与修复建议、accept/dismiss/accept_repair 落库);
 **写入闸门**只管 quarantine 恢复与可信图谱导出。
 
-## 与设计文档的两处实现偏差
+## 参考实现与旧设计记录的两处偏差
 
 - 流程图用 **cytoscape 渲染 IR**（而非 bpmn-js）：pm4py 生成的 BPMN XML 缺布局 DI 时
   bpmn-js 无法渲染，方案文档已列 fallback；IR 直渲更稳且能标注数据不可达活动。
