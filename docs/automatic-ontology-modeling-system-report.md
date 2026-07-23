@@ -519,7 +519,7 @@ Action 必须具备：
 | SHACL | pySHACL 或兼容处理器 |
 | 映射验证 | NPD 配套 Ontop/R2RML 工具链 |
 | 模型接入 | Provider abstraction + structured output；允许云模型和本地 vLLM |
-| 可视化与评审 | 复用当前 `packages/ontology-viz`，增加 candidate/evidence/diff 视图 |
+| 可视化与评审 | 复用当前 `apps/ontology-viz/src` 的本体模型和 G6 图谱边界，增加 candidate/evidence/diff 视图 |
 
 首期不建议立刻引入独立图数据库、向量数据库、搜索集群和复杂流处理。先用一个事实源完成 NPD 闭环，再根据查询和规模证据拆分。
 
@@ -561,7 +561,7 @@ Action 必须具备：
 当前仓库已经拥有三块可直接复用的资产：
 
 1. `SmartManufacturing` 已经定义 `Object/Link + Function/Action + runtime + logic` 的领域包边界，可作为 capability graph 和 Agent 运行时目标格式。
-2. `packages/ontology-viz` 已经解析和呈现 Class、ObjectProperty、DatatypeProperty、domain、range、subClassOf 等显式本体元素，可作为发布结果和候选 diff 的前端基础。
+2. `apps/ontology-viz/src` 已经解析和呈现 Class、ObjectProperty、DatatypeProperty、domain、range、subClassOf 等显式本体元素，可作为发布结果和候选 diff 的前端基础。
 3. `docs/structured-data-ontology-testsets.md` 已把 NPD、TM Forum、Spider/BIRD、W3C R2RML tests 等整理为评测路线，首期无需重新寻找 benchmark。
 
 建议新增一个独立后端子项目，例如：
