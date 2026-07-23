@@ -1,0 +1,2431 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OntologyViz Basic</title>
+  <style>
+    :root {
+      color: #1f2937;
+      background: #f5f7fa;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-synthesis: none;
+      --border: #dbe1e8;
+      --muted: #687386;
+      --detail-divider: #edf0f4;
+      --dream-blue: #99a4bc;
+      --shadow: 0 12px 32px rgba(32, 46, 63, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body,
+    #app {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      color: inherit;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    #app {
+      display: grid;
+      grid-template-rows: 54px minmax(0, 1fr);
+    }
+
+    .topbar {
+      z-index: 20;
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.4fr) minmax(180px, 1fr);
+      align-items: center;
+      gap: 16px;
+      min-width: 0;
+      padding: 0 14px 0 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.96);
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    .brand strong {
+      color: #365f78;
+      font-size: 15px;
+      font-weight: 750;
+    }
+
+    .brand span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 650;
+      text-transform: uppercase;
+    }
+
+    .file-meta {
+      justify-self: center;
+      width: 100%;
+      max-width: 560px;
+      min-width: 0;
+      overflow: hidden;
+      color: #364152;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      justify-self: end;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .graph-stats {
+      display: flex;
+      gap: 12px;
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .graph-stats strong {
+      margin-left: 4px;
+      color: #344256;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .import-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #ffffff;
+      color: #3f4c5f;
+      cursor: pointer;
+      transition: border-color 120ms ease, background-color 120ms ease;
+    }
+
+    .import-button {
+      gap: 7px;
+      flex: 0 0 auto;
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .import-button:hover {
+      border-color: #9aabb9;
+      background: #f7f9fb;
+    }
+
+    .import-icon {
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .layout-dialog {
+      width: min(390px, calc(100vw - 32px));
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: 0 20px 56px rgba(32, 46, 63, 0.2);
+      color: #283548;
+    }
+
+    .layout-dialog::backdrop {
+      background: rgba(31, 41, 55, 0.2);
+      backdrop-filter: blur(1px);
+    }
+
+    .layout-dialog__header,
+    .layout-dialog__footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+    }
+
+    .layout-dialog__header {
+      border-bottom: 1px solid var(--detail-divider);
+    }
+
+    .layout-dialog__header h2 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 750;
+      letter-spacing: 0;
+    }
+
+    .layout-dialog__close {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 0;
+      border-radius: 5px;
+      background: transparent;
+      color: #667487;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .layout-dialog__close:hover,
+    .layout-dialog__close:focus-visible {
+      background: #f1f4f7;
+      outline: none;
+    }
+
+    .layout-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      padding: 16px;
+      border: 0;
+      margin: 0;
+    }
+
+    .layout-option {
+      position: relative;
+      min-width: 0;
+    }
+
+    .layout-option input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .layout-option span {
+      display: flex;
+      align-items: center;
+      min-height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #ffffff;
+      color: #4a586b;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 680;
+    }
+
+    .layout-option input:checked+span {
+      border-color: #7f91b1;
+      background: #f1f3f8;
+      color: #40516c;
+      box-shadow: inset 0 0 0 1px #7f91b1;
+    }
+
+    .layout-option input:focus-visible+span {
+      outline: 2px solid rgba(54, 95, 120, 0.32);
+      outline-offset: 2px;
+    }
+
+    .layout-dialog__status {
+      min-height: 18px;
+      margin: -4px 16px 8px;
+      color: #8a4c51;
+      font-size: 11px;
+    }
+
+    .layout-dialog__footer {
+      justify-content: flex-end;
+      border-top: 1px solid var(--detail-divider);
+    }
+
+    .dialog-button {
+      min-height: 32px;
+      padding: 0 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #ffffff;
+      color: #4a586b;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .dialog-button--primary {
+      border-color: #55758a;
+      background: #55758a;
+      color: #ffffff;
+    }
+
+    .dialog-button:hover,
+    .dialog-button:focus-visible {
+      filter: brightness(0.97);
+      outline: none;
+    }
+
+    .workspace {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      background: #f5f7fa;
+    }
+
+    #container {
+      width: 100%;
+      height: 100%;
+      isolation: auto !important;
+    }
+
+    .empty-state,
+    .busy-state {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+    }
+
+    .empty-state__content,
+    .busy-state__content {
+      display: grid;
+      justify-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      pointer-events: auto;
+    }
+
+    .empty-state .import-button {
+      min-height: 38px;
+      padding: 0 16px;
+      border-color: #8599a8;
+      color: #365f78;
+    }
+
+    .busy-state {
+      background: rgba(245, 247, 250, 0.82);
+      backdrop-filter: blur(2px);
+    }
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid #cbd5df;
+      border-top-color: #55758a;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .error-message {
+      max-width: min(560px, calc(100vw - 40px));
+      color: #8a4c51;
+      line-height: 1.55;
+      text-align: center;
+    }
+
+    .detail-panel {
+      position: absolute;
+      z-index: 30;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      flex-direction: column;
+      width: min(390px, calc(100vw - 24px));
+      max-height: calc(100% - 24px);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.97);
+      box-shadow: var(--shadow);
+    }
+
+    .detail-header {
+      display: grid;
+      flex: 0 0 auto;
+      grid-template-columns: minmax(0, 1fr) 30px;
+      gap: 12px;
+      align-items: center;
+      padding: 16px 14px 13px 16px;
+      border-bottom: 1px solid #e4e8ee;
+    }
+
+    .detail-heading {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .detail-kind {
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      width: fit-content;
+      min-height: 20px;
+      padding: 0 7px;
+      border-radius: 4px;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 750;
+    }
+
+    .detail-title {
+      min-width: 0;
+      margin: 0;
+      overflow: hidden;
+      color: #243143;
+      font-size: 17px;
+      font-weight: 720;
+      line-height: 1.3;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .detail-close {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: #ffffff;
+      color: #677487;
+      cursor: pointer;
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .detail-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 0 16px 24px;
+    }
+
+    .detail-section {
+      padding: 14px 0 2px;
+      border-bottom: 1px solid var(--detail-divider);
+    }
+
+    .detail-section:last-child {
+      border-bottom: 0;
+    }
+
+    .detail-section--table {
+      border-bottom: 0;
+    }
+
+    .detail-section h3 {
+      margin: 0 0 9px;
+      color: var(--dream-blue);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .detail-table-wrap {
+      width: 100%;
+      margin: 0 0 12px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      overscroll-behavior-x: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #c8d0d9 transparent;
+    }
+
+    .detail-table {
+      width: max-content;
+      min-width: 100%;
+      border-top: 1px solid var(--detail-divider);
+      border-bottom: 1px solid var(--detail-divider);
+      border-collapse: collapse;
+      table-layout: auto;
+      color: #425064;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    .detail-table th {
+      padding: 4px 9px;
+      border-bottom: 1px solid var(--detail-divider);
+      background: transparent;
+      color: #718092;
+      font-size: 9px;
+      font-weight: 750;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .detail-table td {
+      padding: 4px 9px;
+      vertical-align: middle;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .detail-table th+th,
+    .detail-table td+td {
+      border-left: 1px solid var(--detail-divider);
+    }
+
+    .detail-table tbody tr:hover td {
+      background: rgba(241, 244, 247, 0.72);
+    }
+
+    .detail-table--property th:nth-child(1),
+    .detail-table--property td:nth-child(1) {
+      max-width: 190px;
+    }
+
+    .detail-table--property th:nth-child(2),
+    .detail-table--property td:nth-child(2) {
+      max-width: 240px;
+    }
+
+    .detail-table--property th:nth-child(3),
+    .detail-table--property td:nth-child(3) {
+      max-width: 250px;
+    }
+
+    .detail-table--property th:nth-child(4),
+    .detail-table--property td:nth-child(4) {
+      max-width: 170px;
+    }
+
+    .detail-table--property th:nth-child(5),
+    .detail-table--property td:nth-child(5) {
+      max-width: 220px;
+    }
+
+    .detail-table--relation th,
+    .detail-table--relation td {
+      max-width: 280px;
+    }
+
+    .detail-table--metadata th:nth-child(1),
+    .detail-table--metadata td:nth-child(1) {
+      max-width: 150px;
+    }
+
+    .detail-table--metadata th:nth-child(2),
+    .detail-table--metadata td:nth-child(2) {
+      max-width: 320px;
+    }
+
+    .detail-table__identity {
+      max-width: 190px;
+      white-space: normal;
+    }
+
+    .detail-table__primary,
+    .detail-table__secondary {
+      display: inline-flex;
+      align-items: center;
+      vertical-align: middle;
+    }
+
+    .detail-table__primary {
+      color: #334256;
+      font-weight: 720;
+    }
+
+    .detail-table__secondary {
+      max-width: 150px;
+      min-height: 18px;
+      margin-left: 6px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: #eef1f4;
+      color: #6f7b8b;
+      font-size: 9px;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .detail-table__description {
+      display: block;
+      max-width: 240px;
+      color: #5b6879;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .detail-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .detail-badge {
+      display: inline-flex;
+      align-items: flex-start;
+      min-height: 20px;
+      max-width: 210px;
+      padding: 2px 6px;
+      border: 1px solid #dce2e8;
+      border-radius: 4px;
+      background: #f6f8fa;
+      color: #596678;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .detail-badge--trait {
+      border-color: #e2ddd2;
+      background: #f7f4ed;
+      color: #746951;
+    }
+
+    .detail-badge--restriction {
+      border-color: #ded9e7;
+      background: #f5f2f8;
+      color: #695f7b;
+    }
+
+    .detail-value-range {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 5px 7px;
+      min-width: 0;
+    }
+
+    .detail-values {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 2px 6px;
+      min-width: 0;
+      color: #425064;
+    }
+
+    .detail-value {
+      overflow-wrap: anywhere;
+    }
+
+    .detail-value:not(:last-child)::after {
+      content: ";";
+    }
+
+    .detail-range-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 20px;
+      max-width: 150px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #ffffff;
+      font-size: 9px;
+      font-weight: 720;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .detail-more {
+      margin: 5px 0 10px;
+      color: #8791a0;
+      font-size: 10px;
+    }
+
+    .ontology-tooltip {
+      width: max-content;
+      max-width: min(310px, calc(100vw - 30px));
+      padding: 10px 11px;
+      border: 0;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 8px 24px rgba(31, 41, 55, 0.14);
+      color: #344256;
+      font-size: 11px;
+    }
+
+    .ontology-tooltip__title {
+      min-width: 0;
+      overflow: hidden;
+      color: #263548;
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.35;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ontology-tooltip__kind {
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      min-height: 18px;
+      padding: 0 6px;
+      border-radius: 4px;
+      color: #ffffff;
+      font-size: 9px;
+      font-weight: 750;
+    }
+
+    .ontology-tooltip__heading {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      margin-bottom: 7px;
+    }
+
+    .ontology-tooltip__row {
+      display: grid;
+      grid-template-columns: max-content minmax(0, 1fr);
+      gap: 7px;
+      width: 100%;
+      margin-top: 4px;
+      line-height: 1.45;
+    }
+
+    .ontology-tooltip__label {
+      color: #8791a0;
+    }
+
+    .ontology-tooltip__value {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ontology-tooltip__description {
+      display: -webkit-box;
+      overflow: hidden;
+      white-space: normal;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+    }
+
+    .g6-tooltip,
+    .g6-component-tooltip,
+    [class*="g6-tooltip"],
+    .tooltip {
+      z-index: 80 !important;
+    }
+
+    .g6-toolbar {
+      border: 1px solid var(--border) !important;
+      border-radius: 6px !important;
+      background: rgba(255, 255, 255, 0.94) !important;
+      box-shadow: 0 5px 16px rgba(31, 41, 55, 0.1) !important;
+    }
+
+    .g6-toolbar-item {
+      color: #556274 !important;
+    }
+
+    @media (max-width: 780px) {
+
+      .brand span,
+      .graph-stats {
+        display: none;
+      }
+
+      .topbar {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 10px;
+        padding-left: 12px;
+      }
+
+      .file-meta {
+        max-width: none;
+      }
+
+      .topbar-actions {
+        gap: 0;
+      }
+
+      .detail-panel {
+        top: 8px;
+        right: 8px;
+        width: calc(100vw - 16px);
+        max-height: calc(100% - 16px);
+      }
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "@antv/g6": "https://esm.sh/@antv/g6@5.1.1?bundle",
+        "n3": "https://esm.sh/n3@2.1.0?bundle",
+        "rdfxml-streaming-parser": "https://cdn.jsdelivr.net/npm/rdfxml-streaming-parser@3.2.0/+esm"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <strong>OntologyViz</strong>
+        <span>G6 Basic</span>
+      </div>
+      <div class="file-meta" id="file-name" title="未加载本体">未加载本体</div>
+      <div class="topbar-actions">
+        <div class="graph-stats" aria-live="polite">
+          <span>节点<strong id="node-count">0</strong></span>
+          <span>边<strong id="edge-count">0</strong></span>
+        </div>
+        <button class="import-button" type="button" data-import>
+          <span class="import-icon" aria-hidden="true">+</span>
+          <span>导入本体</span>
+        </button>
+        <input id="file-input" type="file" accept=".ttl,.nt,.n3,.trig,.nq,.owl,.rdf,.xml" hidden />
+      </div>
+    </header>
+
+    <main class="workspace">
+      <div id="container"></div>
+
+      <svg width="0" height="0" aria-hidden="true" focusable="false">
+        <symbol id="ontology-settings" viewBox="0 0 24 24">
+          <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" stroke-width="2" />
+          <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.08A1.7 1.7 0 0 0 8.94 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.57 15 1.7 1.7 0 0 0 3 14H3v-4h.08A1.7 1.7 0 0 0 4.6 8.94a1.7 1.7 0 0 0-.34-1.88L4.2 7l2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.57 1.7 1.7 0 0 0 10 3V3h4v.08a1.7 1.7 0 0 0 1.06 1.52 1.7 1.7 0 0 0 1.88-.34L17 4.2 19.83 7l-.06.06A1.7 1.7 0 0 0 19.43 9 1.7 1.7 0 0 0 21 10h.08v4H21a1.7 1.7 0 0 0-1.6 1Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </symbol>
+      </svg>
+
+      <dialog class="layout-dialog" id="layout-dialog" aria-labelledby="layout-dialog-title">
+        <form id="layout-form" method="dialog">
+          <header class="layout-dialog__header">
+            <h2 id="layout-dialog-title">布局设置</h2>
+            <button class="layout-dialog__close" type="button" data-layout-close aria-label="关闭">×</button>
+          </header>
+          <fieldset class="layout-options" aria-label="布局">
+            <label class="layout-option">
+              <input type="radio" name="layout" value="force-atlas2" checked />
+              <span>ForceAtlas2</span>
+            </label>
+            <label class="layout-option">
+              <input type="radio" name="layout" value="d3-force" />
+              <span>D3 Force</span>
+            </label>
+            <label class="layout-option">
+              <input type="radio" name="layout" value="antv-dagre" />
+              <span>层级布局</span>
+            </label>
+            <label class="layout-option">
+              <input type="radio" name="layout" value="circular" />
+              <span>环形布局</span>
+            </label>
+          </fieldset>
+          <div class="layout-dialog__status" id="layout-status" role="status" aria-live="polite"></div>
+          <footer class="layout-dialog__footer">
+            <button class="dialog-button" type="button" data-layout-close>取消</button>
+            <button class="dialog-button dialog-button--primary" type="submit">应用</button>
+          </footer>
+        </form>
+      </dialog>
+
+      <div class="empty-state" id="empty-state">
+        <div class="empty-state__content">
+          <button class="import-button" type="button" data-import>
+            <span class="import-icon" aria-hidden="true">+</span>
+            <span>导入 OWL / Turtle</span>
+          </button>
+          <span>RDF/XML、Turtle、N-Triples、TriG、N-Quads</span>
+        </div>
+      </div>
+
+      <div class="busy-state" id="busy-state" hidden>
+        <div class="busy-state__content">
+          <div class="spinner" aria-hidden="true"></div>
+          <span id="busy-message">正在处理本体</span>
+        </div>
+      </div>
+
+      <aside class="detail-panel" id="detail-panel" hidden aria-label="本体详情">
+        <header class="detail-header">
+          <div class="detail-heading">
+            <h2 class="detail-title" id="detail-title"></h2>
+            <span class="detail-kind" id="detail-kind"></span>
+          </div>
+          <button class="detail-close" id="detail-close" type="button" title="关闭" aria-label="关闭详情">×</button>
+        </header>
+        <div class="detail-body" id="detail-body"></div>
+      </aside>
+    </main>
+  </div>
+
+  <script type="module">
+    import {
+      CanvasEvent,
+      EdgeEvent,
+      Graph,
+      NodeEvent,
+    } from "@antv/g6";
+    import { Parser } from "n3";
+    import { RdfXmlParser } from "rdfxml-streaming-parser";
+
+    const RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+    const RDFS = "http://www.w3.org/2000/01/rdf-schema#";
+    const OWL = "http://www.w3.org/2002/07/owl#";
+    const SKOS = "http://www.w3.org/2004/02/skos/core#";
+    const DCTERMS = "http://purl.org/dc/terms/";
+    const XSD = "http://www.w3.org/2001/XMLSchema#";
+
+    const RDF_TYPE = `${RDF}type`;
+    const RDFS_LABEL = `${RDFS}label`;
+    const RDFS_COMMENT = `${RDFS}comment`;
+
+    const VIEW_CONFIG = Object.freeze({
+      graphKinds: ["Class", "Individual"],
+      labelLanguages: ["zh", "en", ""],
+      limits: { labels: 12, tooltipProperties: 6, relations: 30, annotations: 24, values: 5, properties: 60 },
+      performance: { dimUnrelated: 1500, arrows: 1500 },
+      viewport: {
+        minZoom: 0.25,
+        maxZoom: 4,
+        initialMaxZoom: 1.6,
+        labelZoomRatios: [1.5, 2.5, 4],
+      },
+    });
+
+    const LAYOUT_LABELS = Object.freeze({
+      "force-atlas2": "ForceAtlas2",
+      "d3-force": "D3 Force",
+      "antv-dagre": "层级布局",
+      circular: "环形布局",
+    });
+
+    const KIND_DEFINITIONS = {
+      Ontology: { label: "Ontology", color: "#657d8c", baseSize: 22 },
+      Class: { label: "Class", color: "#e38c7a", sizeRange: [8, 44] },
+      ObjectProperty: { label: "Object Property", color: "#887f9f", baseSize: 16 },
+      DatatypeProperty: { label: "Datatype Property", color: "#8a9274", baseSize: 15 },
+      AnnotationProperty: { label: "Annotation Property", color: "#9a7f87", baseSize: 14 },
+      Individual: { label: "Named Individual", color: "#99a4bc", sizeRange: [4, 30] },
+      Datatype: { label: "Datatype", color: "#739398", baseSize: 14 },
+      Restriction: { label: "Restriction", color: "#868292", baseSize: 14 },
+      External: { label: "External Reference", color: "#9299a3", baseSize: 13 },
+    };
+
+    const GRAPH_KINDS = new Set(VIEW_CONFIG.graphKinds);
+    const PROPERTY_KINDS = new Set(["ObjectProperty", "DatatypeProperty", "AnnotationProperty"]);
+    const PROPERTY_KIND_ORDER = ["ObjectProperty", "DatatypeProperty", "AnnotationProperty"];
+
+    const KIND_PRIORITY = [
+      "Ontology",
+      "Class",
+      "ObjectProperty",
+      "DatatypeProperty",
+      "AnnotationProperty",
+      "Individual",
+      "Datatype",
+      "Restriction",
+      "External",
+    ];
+
+    const ENTITY_TYPES = new Map([
+      [`${OWL}Ontology`, "Ontology"],
+      [`${OWL}Class`, "Class"],
+      [`${OWL}DeprecatedClass`, "Class"],
+      [`${RDFS}Class`, "Class"],
+      [`${OWL}ObjectProperty`, "ObjectProperty"],
+      [`${OWL}DatatypeProperty`, "DatatypeProperty"],
+      [`${OWL}AnnotationProperty`, "AnnotationProperty"],
+      [`${OWL}NamedIndividual`, "Individual"],
+      [`${RDFS}Datatype`, "Datatype"],
+      [`${OWL}Restriction`, "Restriction"],
+    ]);
+
+    const PROPERTY_TRAITS = new Map([
+      [`${OWL}FunctionalProperty`, "Functional"],
+      [`${OWL}InverseFunctionalProperty`, "Inverse functional"],
+      [`${OWL}TransitiveProperty`, "Transitive"],
+      [`${OWL}SymmetricProperty`, "Symmetric"],
+      [`${OWL}AsymmetricProperty`, "Asymmetric"],
+      [`${OWL}ReflexiveProperty`, "Reflexive"],
+      [`${OWL}IrreflexiveProperty`, "Irreflexive"],
+      [`${OWL}DeprecatedClass`, "Deprecated"],
+      [`${OWL}DeprecatedProperty`, "Deprecated"],
+    ]);
+
+    const EDGE_DEFINITIONS = new Map([
+      [`${RDFS}subClassOf`, { kind: "subClassOf", label: "subClassOf", description: "子类关系：源类的实例同时也是目标类的实例。", color: "#708091" }],
+      [`${OWL}equivalentClass`, { kind: "equivalentClass", label: "equivalentClass", description: "等价类公理。", color: "#7c8298" }],
+      [`${OWL}disjointWith`, { kind: "disjointWith", label: "disjointWith", description: "不相交类公理。", color: "#9a7479" }],
+      [`${OWL}sameAs`, { kind: "sameAs", label: "sameAs", description: "两个标识指向同一个个体。", color: "#6f9184" }],
+      [`${OWL}differentFrom`, { kind: "differentFrom", label: "differentFrom", description: "两个标识指向不同个体。", color: "#9a7479" }],
+      [`${OWL}complementOf`, { kind: "classExpression", label: "complementOf", description: "类补集表达式。", color: "#868292" }],
+    ]);
+
+    const RESTRICTION_OPERATORS = new Map([
+      [`${OWL}someValuesFrom`, "someValuesFrom"],
+      [`${OWL}allValuesFrom`, "allValuesFrom"],
+      [`${OWL}hasValue`, "hasValue"],
+      [`${OWL}cardinality`, "cardinality"],
+      [`${OWL}minCardinality`, "minCardinality"],
+      [`${OWL}maxCardinality`, "maxCardinality"],
+      [`${OWL}qualifiedCardinality`, "qualifiedCardinality"],
+      [`${OWL}minQualifiedCardinality`, "minQualifiedCardinality"],
+      [`${OWL}maxQualifiedCardinality`, "maxQualifiedCardinality"],
+      [`${OWL}onClass`, "onClass"],
+      [`${OWL}onDataRange`, "onDataRange"],
+    ]);
+
+    const RESTRICTION_OWNER_PREDICATES = new Set([
+      `${RDFS}subClassOf`,
+      `${OWL}equivalentClass`,
+    ]);
+
+    const META_TYPES = new Set([
+      ...ENTITY_TYPES.keys(),
+      ...PROPERTY_TRAITS.keys(),
+    ]);
+
+    const LABEL_PREDICATES = new Set([
+      RDFS_LABEL,
+      `${SKOS}prefLabel`,
+      `${SKOS}altLabel`,
+      `${DCTERMS}title`,
+    ]);
+
+    const DESCRIPTION_PREDICATES = new Set([
+      RDFS_COMMENT,
+      `${SKOS}definition`,
+      `${DCTERMS}description`,
+    ]);
+
+    const elements = {
+      container: document.querySelector("#container"),
+      fileInput: document.querySelector("#file-input"),
+      fileName: document.querySelector("#file-name"),
+      nodeCount: document.querySelector("#node-count"),
+      edgeCount: document.querySelector("#edge-count"),
+      emptyState: document.querySelector("#empty-state"),
+      busyState: document.querySelector("#busy-state"),
+      busyMessage: document.querySelector("#busy-message"),
+      detailPanel: document.querySelector("#detail-panel"),
+      detailKind: document.querySelector("#detail-kind"),
+      detailTitle: document.querySelector("#detail-title"),
+      detailBody: document.querySelector("#detail-body"),
+      detailClose: document.querySelector("#detail-close"),
+      layoutDialog: document.querySelector("#layout-dialog"),
+      layoutForm: document.querySelector("#layout-form"),
+      layoutStatus: document.querySelector("#layout-status"),
+    };
+
+    let graph;
+    let currentModel;
+    let currentLayoutMode = "force-atlas2";
+    let currentLabelTier = -1;
+    let labelReferenceZoom = 1;
+    let nodeSizeFixZoom = 1;
+
+    function termId(term) {
+      if (!term) return undefined;
+      if (term.termType === "NamedNode") return term.value;
+      if (term.termType === "BlankNode") return `_:${term.value}`;
+      return undefined;
+    }
+
+    function localName(value) {
+      if (!value) return "";
+      if (value.startsWith("_:")) return value;
+      const hashIndex = value.lastIndexOf("#");
+      const slashIndex = value.lastIndexOf("/");
+      const colonIndex = value.lastIndexOf(":");
+      const index = Math.max(hashIndex, slashIndex, colonIndex);
+      const raw = index >= 0 ? value.slice(index + 1) : value;
+      try {
+        return decodeURIComponent(raw) || value;
+      } catch {
+        return raw || value;
+      }
+    }
+
+    function collectPrefixes(text) {
+      const prefixes = new Map([
+        [RDF, "rdf"],
+        [RDFS, "rdfs"],
+        [OWL, "owl"],
+        [SKOS, "skos"],
+        [DCTERMS, "dcterms"],
+        [XSD, "xsd"],
+      ]);
+      const patterns = [
+        /@prefix\s+([A-Za-z][\w-]*)?:\s*<([^>]+)>\s*\./gi,
+        /PREFIX\s+([A-Za-z][\w-]*)?:\s*<([^>]+)>/gi,
+        /xmlns(?::([A-Za-z][\w-]*))?=["']([^"']+)["']/gi,
+      ];
+      for (const pattern of patterns) {
+        for (const match of text.matchAll(pattern)) {
+          prefixes.set(match[2], match[1] || "");
+        }
+      }
+      return prefixes;
+    }
+
+    function compactIri(value, prefixes) {
+      if (!value || value.startsWith("_:")) return value || "";
+      let best;
+      for (const [namespace, prefix] of prefixes) {
+        if (!value.startsWith(namespace)) continue;
+        if (!best || namespace.length > best.namespace.length) best = { namespace, prefix };
+      }
+      if (!best) return value;
+      const suffix = value.slice(best.namespace.length);
+      return `${best.prefix ? `${best.prefix}:` : ":"}${suffix}`;
+    }
+
+    function fileFormat(name) {
+      const extension = name.toLowerCase().split(".").pop();
+      if (extension === "nt") return "N-Triples";
+      if (extension === "nq") return "N-Quads";
+      if (extension === "trig") return "TriG";
+      return "text/turtle";
+    }
+
+    function parseRdfXml(text, fallbackBaseIRI) {
+      return new Promise((resolve, reject) => {
+        const quads = [];
+        const parser = new RdfXmlParser({ baseIRI: fallbackBaseIRI });
+        parser.on("data", (quad) => quads.push(quad));
+        parser.on("error", reject);
+        parser.on("end", () => resolve(quads));
+        parser.end(text);
+      });
+    }
+
+    function addLocalizedValue(map, id, literal, predicate) {
+      if (!id || literal.termType !== "Literal") return;
+      const values = map.get(id) || [];
+      values.push({
+        predicate,
+        value: literal.value,
+        language: (literal.language || "").toLowerCase(),
+        datatype: literal.datatype?.value,
+      });
+      map.set(id, values);
+    }
+
+    function chooseLocalizedEntry(values) {
+      if (!values?.length) return undefined;
+      for (const language of VIEW_CONFIG.labelLanguages) {
+        const entry = values.find((item) => language
+          ? item.language.startsWith(language)
+          : !item.language);
+        if (entry) return entry;
+      }
+      return values[0];
+    }
+
+    function chooseLocalizedValue(values, fallback) {
+      return chooseLocalizedEntry(values)?.value || fallback;
+    }
+
+    function chooseKind(kinds) {
+      for (const kind of KIND_PRIORITY) {
+        if (kinds.has(kind)) return kind;
+      }
+      return "External";
+    }
+
+    async function parseOntology(text, fileName, filePath = fileName) {
+      const fallbackBaseIRI = `urn:ontology-file:${encodeURIComponent(fileName)}:`;
+      const isRdfXml = /^\s*(<\?xml|<rdf:RDF|<[^>]+\s+xmlns(?::rdf)?=)/i.test(text);
+      const quads = isRdfXml
+        ? await parseRdfXml(text, fallbackBaseIRI)
+        : new Parser({ baseIRI: fallbackBaseIRI, format: fileFormat(fileName) }).parse(text);
+      const prefixes = collectPrefixes(text);
+      const kindsById = new Map();
+      const traitsById = new Map();
+      const labelsById = new Map();
+      const descriptionsById = new Map();
+      const annotationsById = new Map();
+      const objectProperties = new Set();
+
+      const addKind = (id, kind) => {
+        if (!id) return;
+        const kinds = kindsById.get(id) || new Set();
+        kinds.add(kind);
+        kindsById.set(id, kinds);
+      };
+
+      for (const quad of quads) {
+        const subject = termId(quad.subject);
+        const predicate = quad.predicate.value;
+        const object = termId(quad.object);
+
+        if (predicate === RDF_TYPE && object) {
+          const declaredKind = ENTITY_TYPES.get(object);
+          const trait = PROPERTY_TRAITS.get(object);
+          if (declaredKind) {
+            addKind(subject, declaredKind);
+            if (declaredKind === "ObjectProperty") objectProperties.add(subject);
+          }
+          if (trait) {
+            const traits = traitsById.get(subject) || new Set();
+            traits.add(trait);
+            traitsById.set(subject, traits);
+            if (!declaredKind) addKind(subject, "External");
+          } else if (!declaredKind && !META_TYPES.has(object)) {
+            addKind(subject, "Individual");
+          }
+        }
+
+        if (LABEL_PREDICATES.has(predicate)) addLocalizedValue(labelsById, subject, quad.object, predicate);
+        if (DESCRIPTION_PREDICATES.has(predicate)) addLocalizedValue(descriptionsById, subject, quad.object, predicate);
+
+        if (quad.object.termType === "Literal") {
+          const annotations = annotationsById.get(subject) || [];
+          annotations.push({
+            predicate,
+            value: quad.object.value,
+            language: quad.object.language || "",
+            datatype: quad.object.datatype?.value,
+          });
+          annotationsById.set(subject, annotations);
+        }
+      }
+
+      const entities = new Map();
+
+      const ensureEntity = (id, suggestedKind = "External") => {
+        if (!id) return undefined;
+        const existing = entities.get(id);
+        if (existing) return existing;
+        if (!kindsById.has(id)) addKind(id, id.startsWith(XSD) ? "Datatype" : suggestedKind);
+        const kinds = kindsById.get(id) || new Set([suggestedKind]);
+        const descriptions = descriptionsById.get(id) || [];
+        const descriptionEntry = chooseLocalizedEntry(descriptions);
+        const entity = {
+          id,
+          iri: id,
+          compactIri: compactIri(id, prefixes),
+          localName: localName(id),
+          kind: chooseKind(kinds),
+          label: chooseLocalizedValue(labelsById.get(id), localName(id)),
+          labels: labelsById.get(id) || [],
+          description: descriptionEntry?.value || "",
+          descriptionEntry,
+          traits: [...(traitsById.get(id) || [])],
+          annotations: annotationsById.get(id) || [],
+          properties: [],
+          graphOutgoing: [],
+          graphIncoming: [],
+          graphDegree: 0,
+        };
+        entities.set(id, entity);
+        return entity;
+      };
+
+      for (const id of kindsById.keys()) ensureEntity(id);
+
+      const propertyEntities = new Map(
+        [...entities].filter(([, entity]) => PROPERTY_KINDS.has(entity.kind)),
+      );
+      for (const property of propertyEntities.values()) {
+        property.domains = [];
+        property.ranges = [];
+      }
+
+      const associationsByOwner = new Map();
+      const ensurePropertyAssociation = (ownerId, propertyId) => {
+        const owner = entities.get(ownerId);
+        const property = propertyEntities.get(propertyId);
+        if (!owner || !GRAPH_KINDS.has(owner.kind) || !property) return undefined;
+        let associations = associationsByOwner.get(ownerId);
+        if (!associations) {
+          associations = new Map();
+          associationsByOwner.set(ownerId, associations);
+        }
+        let association = associations.get(propertyId);
+        if (!association) {
+          association = {
+            property,
+            values: [],
+            restrictions: [],
+          };
+          associations.set(propertyId, association);
+        }
+        return association;
+      };
+
+      const restrictionById = new Map();
+      for (const [id, entity] of entities) {
+        if (entity.kind === "Restriction") {
+          restrictionById.set(id, { propertyId: undefined, conditions: [] });
+        }
+      }
+
+      const valueFromTerm = (term) => {
+        if (term.termType === "Literal") {
+          return {
+            kind: "literal",
+            value: term.value,
+            language: term.language || "",
+            datatype: term.datatype?.value,
+          };
+        }
+        const id = termId(term);
+        return id ? { kind: "resource", id } : undefined;
+      };
+
+      for (const quad of quads) {
+        const subject = termId(quad.subject);
+        const target = termId(quad.object);
+        const predicate = quad.predicate.value;
+        const property = propertyEntities.get(subject);
+
+        if (property && predicate === `${RDFS}domain` && target && !property.domains.includes(target)) {
+          property.domains.push(target);
+        }
+        if (property && predicate === `${RDFS}range` && target && !property.ranges.includes(target)) {
+          property.ranges.push(target);
+          ensureEntity(target, target.startsWith(XSD) ? "Datatype" : "External");
+        }
+
+        const restriction = restrictionById.get(subject);
+        if (restriction && predicate === `${OWL}onProperty` && target) {
+          restriction.propertyId = target;
+        } else if (restriction && RESTRICTION_OPERATORS.has(predicate)) {
+          const value = valueFromTerm(quad.object);
+          if (value) restriction.conditions.push({ operator: RESTRICTION_OPERATORS.get(predicate), value });
+        }
+      }
+
+      for (const property of propertyEntities.values()) {
+        for (const domainId of property.domains) {
+          ensurePropertyAssociation(domainId, property.id);
+        }
+      }
+
+      for (const quad of quads) {
+        const subject = termId(quad.subject);
+        const target = termId(quad.object);
+        const predicate = quad.predicate.value;
+
+        if (propertyEntities.has(predicate)) {
+          const association = ensurePropertyAssociation(subject, predicate);
+          const value = valueFromTerm(quad.object);
+          if (association && value) {
+            association.values.push(value);
+          }
+        }
+
+        if (RESTRICTION_OWNER_PREDICATES.has(predicate) && target) {
+          const restriction = restrictionById.get(target);
+          if (restriction?.propertyId) {
+            const association = ensurePropertyAssociation(subject, restriction.propertyId);
+            if (association) {
+              association.restrictions.push(restriction);
+            }
+          }
+        }
+      }
+
+      const propertyOrder = new Map(PROPERTY_KIND_ORDER.map((kind, index) => [kind, index]));
+      for (const [ownerId, associations] of associationsByOwner) {
+        const owner = entities.get(ownerId);
+        owner.properties = [...associations.values()].sort((left, right) => {
+          const kindDelta = (propertyOrder.get(left.property.kind) ?? 99) - (propertyOrder.get(right.property.kind) ?? 99);
+          return kindDelta || left.property.label.localeCompare(right.property.label);
+        });
+      }
+
+      const graphEntities = new Map(
+        [...entities].filter(([, entity]) => GRAPH_KINDS.has(entity.kind)),
+      );
+      const graphEdges = [];
+      for (const quad of quads) {
+        const source = termId(quad.subject);
+        const target = termId(quad.object);
+        if (!graphEntities.has(source) || !graphEntities.has(target)) continue;
+
+        const predicate = quad.predicate.value;
+        const isInstanceType = predicate === RDF_TYPE && !META_TYPES.has(target);
+        const structural = EDGE_DEFINITIONS.get(predicate);
+        const isObjectAssertion = objectProperties.has(predicate);
+        if (!structural && !isInstanceType && !isObjectAssertion) continue;
+
+        const property = entities.get(predicate);
+        const definition = structural || {
+          kind: isInstanceType ? "instanceOf" : "objectRelation",
+          label: isInstanceType ? "type" : property?.label || localName(predicate),
+          description: isInstanceType ? "类断言：源实体是目标类的实例。" : property?.description || "对象属性关系。",
+          color: isInstanceType ? "#6f9184" : "#887f9f",
+        };
+        const edge = {
+          id: `edge-${graphEdges.length}`,
+          source,
+          target,
+          predicate,
+          predicateIri: compactIri(predicate, prefixes),
+          label: definition.label,
+          kind: definition.kind,
+          description: property?.description || definition.description,
+          color: definition.color,
+        };
+        graphEdges.push(edge);
+        graphEntities.get(source).graphOutgoing.push(edge);
+        graphEntities.get(source).graphDegree += 1;
+        graphEntities.get(target).graphIncoming.push(edge);
+        if (target !== source) graphEntities.get(target).graphDegree += 1;
+      }
+
+      const ontology = [...entities.values()].find((entity) => entity.kind === "Ontology");
+      const ontologyName = ontology?.labels.length && ontology.label
+        ? ontology.label
+        : ontology?.localName && ontology.localName !== ontology.iri
+          ? ontology.localName
+          : fileName;
+
+      return {
+        fileName,
+        filePath,
+        displayName: ontologyName,
+        prefixes,
+        entities,
+        edgesById: new Map(graphEdges.map((edge) => [edge.id, edge])),
+        graphEntities,
+        graphEdges,
+      };
+    }
+
+    function nodeSize(entity, maxDegree) {
+      const [minSize, maxSize] = KIND_DEFINITIONS[entity.kind]?.sizeRange || [6, 32];
+      const ratio = maxDegree > 0
+        ? Math.log1p(entity.graphDegree) / Math.log1p(maxDegree)
+        : 0;
+      return Math.round(minSize + (maxSize - minSize) * ratio);
+    }
+
+    function createLabelLevels(entities) {
+      const byDegree = (left, right) => right.graphDegree - left.graphDegree;
+      const classes = entities.filter((entity) => entity.kind === "Class").sort(byDegree);
+      const individuals = entities.filter((entity) => entity.kind === "Individual").sort(byDegree);
+      const overviewCount = Math.min(classes.length, Math.max(12, Math.min(30, Math.round(Math.sqrt(classes.length)))));
+      const browseCount = Math.min(classes.length, Math.max(overviewCount, Math.min(120, Math.round(classes.length * 0.12))));
+      const detailCount = Math.min(classes.length, Math.max(browseCount, Math.min(400, Math.round(classes.length * 0.35))));
+      const inspectIndividualCount = Math.min(individuals.length, 600);
+      const levels = new Map();
+
+      classes.forEach((entity, index) => {
+        levels.set(entity.id, index < overviewCount ? 0 : index < browseCount ? 1 : index < detailCount ? 2 : 3);
+      });
+      individuals.slice(0, inspectIndividualCount).forEach((entity) => levels.set(entity.id, 3));
+      return levels;
+    }
+
+    function labelTypography(kind, level) {
+      if (kind === "Individual") {
+        return { fontSize: 8, fontWeight: 450, maxWidth: 84 };
+      }
+      const classStyles = [
+        { fontSize: 11, fontWeight: 650, maxWidth: 120 },
+        { fontSize: 10, fontWeight: 600, maxWidth: 108 },
+        { fontSize: 9, fontWeight: 550, maxWidth: 96 },
+        { fontSize: 8, fontWeight: 500, maxWidth: 84 },
+      ];
+      return classStyles[level] || classStyles[3];
+    }
+
+    function createGraphData(model) {
+      const entities = [...model.graphEntities.values()];
+      const maxDegree = Math.max(0, ...entities.map((entity) => entity.graphDegree));
+      const labelLevels = createLabelLevels(entities);
+      const showArrows = model.graphEdges.length <= VIEW_CONFIG.performance.arrows;
+
+      return {
+        nodes: entities.map((entity) => {
+          const definition = KIND_DEFINITIONS[entity.kind] || KIND_DEFINITIONS.External;
+          const size = nodeSize(entity, maxDegree);
+          const labelLevel = labelLevels.get(entity.id) ?? 3;
+          const typography = labelTypography(entity.kind, labelLevel);
+          return {
+            id: entity.id,
+            type: "circle",
+            data: {
+              legend: definition.label,
+              kind: entity.kind,
+              degree: entity.graphDegree,
+              label: entity.label,
+              labelLevel,
+              labelFontSize: typography.fontSize,
+              labelFontWeight: typography.fontWeight,
+              labelMaxWidth: typography.maxWidth,
+              size,
+            },
+            style: {
+              size,
+              fill: definition.color,
+              fillOpacity: 0.9,
+              stroke: "#ffffff",
+              strokeOpacity: 0.98,
+              lineWidth: 1.5,
+              cursor: "pointer",
+              labelText: labelLevel === 0 ? entity.label : undefined,
+              labelPlacement: "bottom",
+              labelOffsetY: 4,
+              labelFill: "#4a586b",
+              labelFontSize: typography.fontSize,
+              labelFontWeight: typography.fontWeight,
+              labelWordWrap: true,
+              labelMaxLines: 1,
+              labelMaxWidth: typography.maxWidth,
+              labelTextOverflow: "ellipsis",
+              labelOpacity: 0.76,
+            },
+          };
+        }),
+        edges: model.graphEdges.map((edge) => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          type: "line",
+          data: {
+            legend: edge.label,
+          },
+          style: {
+            stroke: edge.color,
+            strokeOpacity: edge.kind === "subClassOf" ? 0.42 : 0.25,
+            lineWidth: edge.kind === "subClassOf" ? 1.1 : 0.8,
+            increasedLineWidthForHitTesting: 4,
+            endArrow: showArrows,
+            cursor: "pointer",
+          },
+        })),
+      };
+    }
+
+    function createLayout(mode, nodeCount) {
+      const nodeSize = (node) => Math.max(24, node.data?.size || 6);
+
+      if (mode === "d3-force") {
+        return {
+          type: "d3-force",
+          animation: false,
+          iterations: nodeCount > 3500 ? 120 : 180,
+          preventOverlap: true,
+          nodeSize,
+          nodeSpacing: 16,
+          collideStrength: 1,
+          collideIterations: 3,
+          link: {
+            distance: 180,
+            strength: 0.4,
+          },
+          manyBody: {
+            strength: -160,
+          },
+          center: {
+            x: 0,
+            y: 0,
+            strength: 0.05,
+          },
+          x: {
+            x: 0,
+            strength: 0.05,
+          },
+          y: {
+            y: 0,
+            strength: 0.05,
+          },
+        };
+      }
+
+      if (mode === "antv-dagre") {
+        return {
+          type: "antv-dagre",
+          animation: false,
+          rankdir: "LR",
+          align: "UL",
+          nodesep: 44,
+          ranksep: 120,
+          nodeSize,
+          ranker: "network-simplex",
+          controlPoints: false,
+        };
+      }
+
+      if (mode === "circular") {
+        return {
+          type: "circular",
+          animation: false,
+          nodeSize,
+          nodeSpacing: 18,
+          ordering: "degree",
+        };
+      }
+
+      const forceIterations = nodeCount > 3500 ? 100 : 140;
+      return [
+        {
+          type: "force-atlas2",
+          animation: false,
+          iterations: forceIterations,
+          maxIteration: forceIterations,
+          preventOverlap: false,
+          kr: 44,
+          kg: 0.9,
+          mode: "normal",
+          barnesHut: true,
+          prune: false,
+          enableWorker: false,
+        },
+        {
+          type: "d3-force",
+          animation: false,
+          iterations: 60,
+          preventOverlap: true,
+          nodeSize,
+          nodeSpacing: 12,
+          collideStrength: 1,
+          collideIterations: 3,
+          link: false,
+          manyBody: false,
+          center: false,
+          x: false,
+          y: false,
+        },
+      ];
+    }
+
+    function labelTierForZoom(zoom) {
+      const ratio = zoom / Math.max(labelReferenceZoom, 0.001);
+      const [browseRatio, detailRatio, inspectRatio] = VIEW_CONFIG.viewport.labelZoomRatios;
+      if (ratio >= inspectRatio) return 3;
+      if (ratio >= detailRatio) return 2;
+      if (ratio >= browseRatio) return 1;
+      return 0;
+    }
+
+    async function syncLabelsForZoom() {
+      if (!graph || graph.destroyed) return;
+      const zoom = graph.getZoom();
+      const nextTier = labelTierForZoom(zoom);
+      if (nextTier === currentLabelTier) return;
+      currentLabelTier = nextTier;
+      const updates = graph.getNodeData().flatMap((node) => {
+        const visible = node.data?.labelLevel <= nextTier;
+        const labelText = visible ? node.data.label : "";
+        const textUnchanged = (node.style?.labelText || "") === labelText;
+        return textUnchanged
+          ? []
+          : [{
+            id: node.id,
+            style: {
+              labelText,
+            },
+          }];
+      });
+      if (!updates.length) return;
+      graph.updateNodeData(updates);
+      await graph.draw();
+    }
+
+    async function initializeViewport() {
+      await graph.fitView();
+      const fittedZoom = graph.getZoom();
+      const initialZoom = Math.min(
+        VIEW_CONFIG.viewport.initialMaxZoom,
+        Math.max(VIEW_CONFIG.viewport.minZoom, fittedZoom),
+      );
+      if (Math.abs(initialZoom - fittedZoom) > 0.001) await graph.zoomTo(initialZoom, false);
+      await graph.fitCenter();
+      labelReferenceZoom = initialZoom;
+      nodeSizeFixZoom = Math.max(1, initialZoom);
+      currentLabelTier = -1;
+      await syncLabelsForZoom();
+    }
+
+    async function applyLayout(mode) {
+      if (!LAYOUT_LABELS[mode]) return;
+      currentLayoutMode = mode;
+      if (!graph || graph.destroyed || !currentModel) return;
+
+      setBusy(true, `正在应用 ${LAYOUT_LABELS[mode]}`);
+      elements.detailPanel.hidden = true;
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      try {
+        graph.setLayout(createLayout(mode, currentModel.graphEntities.size));
+        await graph.layout();
+        await initializeViewport();
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function appendTooltipRow(container, label, value, description = false) {
+      if (!value) return;
+      const row = document.createElement("div");
+      row.className = "ontology-tooltip__row";
+      const key = document.createElement("span");
+      key.className = "ontology-tooltip__label";
+      key.textContent = label;
+      const content = document.createElement("span");
+      content.className = `ontology-tooltip__value${description ? " ontology-tooltip__description" : ""}`;
+      content.textContent = value;
+      row.append(key, content);
+      container.append(row);
+    }
+
+    function tooltipPropertyNames(entity) {
+      const names = entity.properties.map(({ property }) => property.label);
+      if (!names.length) return "";
+      const visible = names.slice(0, VIEW_CONFIG.limits.tooltipProperties);
+      return `${visible.join(", ")}${names.length > visible.length ? ` +${names.length - visible.length}` : ""}`;
+    }
+
+    function createTooltip(item) {
+      if (!item || !currentModel) return "";
+      const id = String(item.id || "");
+      const entity = currentModel.entities.get(id);
+      const edge = currentModel.edgesById.get(id);
+      if (!entity && !edge) return "";
+
+      const container = document.createElement("div");
+      container.className = "ontology-tooltip";
+      const title = document.createElement("div");
+      title.className = "ontology-tooltip__title";
+      title.textContent = entity?.label || edge.label;
+      title.title = title.textContent;
+      const kind = document.createElement("div");
+      kind.className = "ontology-tooltip__kind";
+      const definition = entity ? KIND_DEFINITIONS[entity.kind] || KIND_DEFINITIONS.External : undefined;
+      kind.textContent = definition?.label || "关系 / 公理";
+      kind.style.backgroundColor = definition?.color || edge.color;
+      const heading = document.createElement("div");
+      heading.className = "ontology-tooltip__heading";
+      heading.append(title, kind);
+      container.append(heading);
+
+      if (entity) {
+        appendTooltipRow(container, "IRI", entity.compactIri);
+        appendTooltipRow(container, "属性", tooltipPropertyNames(entity));
+        appendTooltipRow(container, "说明", entity.description, true);
+      } else {
+        const source = currentModel.entities.get(edge.source);
+        const target = currentModel.entities.get(edge.target);
+        appendTooltipRow(container, "关系", edge.predicateIri);
+        appendTooltipRow(container, "源", source?.label || localName(edge.source));
+        appendTooltipRow(container, "目标", target?.label || localName(edge.target));
+        appendTooltipRow(container, "说明", edge.description, true);
+      }
+      return container;
+    }
+
+    function canvasToolbar() {
+      const toolbarGraph = this;
+      return {
+        type: "toolbar",
+        key: "basic-toolbar",
+        position: "top-left",
+        getItems: () => [
+          { id: "zoom-in", value: "zoom-in", title: "放大" },
+          { id: "zoom-out", value: "zoom-out", title: "缩小" },
+          { id: "export", value: "export", title: "导出图片" },
+          { id: "request-fullscreen", value: "fullscreen", title: "全屏" },
+          { id: "ontology-settings", value: "settings", title: "布局设置" },
+        ],
+        onClick: async (value) => {
+          if (value === "zoom-in") {
+            await toolbarGraph.zoomBy(1.2);
+            await syncLabelsForZoom();
+          }
+          if (value === "zoom-out") {
+            await toolbarGraph.zoomBy(0.8);
+            await syncLabelsForZoom();
+          }
+          if (value === "export") {
+            const url = await toolbarGraph.toDataURL();
+            const anchor = document.createElement("a");
+            anchor.href = url;
+            anchor.download = `${currentModel?.fileName || "ontology"}.png`;
+            document.body.append(anchor);
+            anchor.click();
+            anchor.remove();
+          }
+          if (value === "fullscreen") {
+            const fullscreen = toolbarGraph.getPluginInstance("basic-fullscreen");
+            if (document.fullscreenElement) fullscreen.exit();
+            else fullscreen.request();
+          }
+          if (value === "settings") openLayoutDialog();
+        },
+      };
+    }
+
+    function openLayoutDialog() {
+      elements.layoutForm.elements.layout.value = currentLayoutMode;
+      elements.layoutStatus.textContent = "";
+      elements.layoutDialog.showModal();
+    }
+
+    function detailSection(titleText) {
+      const section = document.createElement("section");
+      section.className = "detail-section";
+      const title = document.createElement("h3");
+      title.textContent = titleText;
+      section.append(title);
+      return section;
+    }
+
+    function appendDetailRows(section, rows) {
+      const body = createDetailTable(section, ["字段", "值"], "metadata");
+      for (const [label, value, labelTitle, valueTitle] of rows) {
+        if (value === undefined || value === null || value === "") continue;
+        const row = document.createElement("tr");
+        const key = document.createElement("td");
+        appendTableIdentity(key, label);
+        key.title = labelTitle || label;
+        const content = document.createElement("td");
+        content.textContent = String(value);
+        content.title = valueTitle || String(value);
+        row.append(key, content);
+        body.append(row);
+      }
+    }
+
+    function createDetailTable(section, headers, variant) {
+      section.classList.add("detail-section--table");
+      const wrapper = document.createElement("div");
+      wrapper.className = "detail-table-wrap";
+      const table = document.createElement("table");
+      table.className = `detail-table${variant ? ` detail-table--${variant}` : ""}`;
+      const head = document.createElement("thead");
+      const headerRow = document.createElement("tr");
+      for (const header of headers) {
+        const cell = document.createElement("th");
+        cell.scope = "col";
+        cell.textContent = header;
+        headerRow.append(cell);
+      }
+      head.append(headerRow);
+      const body = document.createElement("tbody");
+      table.append(head, body);
+      wrapper.append(table);
+      section.append(wrapper);
+      return body;
+    }
+
+    function appendTableIdentity(cell, primaryText, secondaryText, fullText = secondaryText) {
+      cell.classList.add("detail-table__identity");
+      const primary = document.createElement("span");
+      primary.className = "detail-table__primary";
+      primary.textContent = primaryText;
+      cell.append(primary);
+      if (!secondaryText) return;
+      const secondary = document.createElement("span");
+      secondary.className = "detail-table__secondary";
+      secondary.textContent = secondaryText;
+      secondary.title = fullText || secondaryText;
+      cell.append(secondary);
+    }
+
+    function appendRelations(section, relations, direction) {
+      const body = createDetailTable(
+        section,
+        ["关系", direction === "out" ? "目标" : "来源"],
+        "relation",
+      );
+      const visibleRelations = relations.slice(0, VIEW_CONFIG.limits.relations);
+      for (const relation of visibleRelations) {
+        const otherId = direction === "out" ? relation.target : relation.source;
+        const other = currentModel.entities.get(otherId);
+        const row = document.createElement("tr");
+        const relationCell = document.createElement("td");
+        appendTableIdentity(relationCell, relation.label, relation.predicateIri, relation.predicate);
+        const entityCell = document.createElement("td");
+        appendTableIdentity(
+          entityCell,
+          other?.label || localName(otherId),
+          other?.compactIri || compactIri(otherId, currentModel.prefixes),
+          other?.iri || otherId,
+        );
+        row.append(relationCell, entityCell);
+        body.append(row);
+      }
+      if (relations.length > visibleRelations.length) {
+        const more = document.createElement("p");
+        more.className = "detail-more";
+        more.textContent = `另有 ${relations.length - visibleRelations.length} 条关系`;
+        section.append(more);
+      }
+    }
+
+    function appendOtherInfo(section, annotations) {
+      const visibleAnnotations = annotations.slice(0, VIEW_CONFIG.limits.annotations);
+      appendDetailRows(section, visibleAnnotations.map((annotation) => [
+        compactIri(annotation.predicate, currentModel.prefixes),
+        annotation.value,
+        annotation.predicate,
+        annotation.value,
+      ]));
+      if (annotations.length > visibleAnnotations.length) {
+        const more = document.createElement("p");
+        more.className = "detail-more";
+        more.textContent = `另有 ${annotations.length - visibleAnnotations.length} 条其他信息`;
+        section.append(more);
+      }
+    }
+
+    function propertyDescription(property) {
+      if (property.description) return property.description;
+      return property.annotations.find((annotation) => {
+        const name = localName(annotation.predicate).toLowerCase();
+        return name === "comment" || name === "description" || name === "definition";
+      })?.value || "";
+    }
+
+    function displayResource(id) {
+      const entity = currentModel.entities.get(id);
+      return entity?.label || compactIri(id, currentModel.prefixes);
+    }
+
+    function displayPropertyValue(value, showDatatype = false) {
+      if (value.kind === "resource") return displayResource(value.id);
+      const language = value.language ? `@${value.language}` : "";
+      const datatype = showDatatype && value.datatype ? ` · ${compactIri(value.datatype, currentModel.prefixes)}` : "";
+      return `${value.value}${language}${datatype}`;
+    }
+
+    function restrictionText(restriction) {
+      return restriction.conditions
+        .map((condition) => `${condition.operator} ${displayPropertyValue(condition.value, true)}`)
+        .join("; ");
+    }
+
+    function appendBadges(cell, items) {
+      const visibleItems = items.filter(({ value }) => value !== undefined && value !== null && value !== "");
+      if (!visibleItems.length) {
+        cell.textContent = "—";
+        return;
+      }
+      const badges = document.createElement("div");
+      badges.className = "detail-badges";
+      for (const item of visibleItems) {
+        const badge = document.createElement("span");
+        badge.className = `detail-badge${item.variant ? ` detail-badge--${item.variant}` : ""}`;
+        badge.title = item.title || String(item.value);
+        badge.append(document.createTextNode(String(item.value)));
+        badges.append(badge);
+      }
+      cell.append(badges);
+    }
+
+    function appendValueRange(cell, property, association) {
+      const visibleValues = association.values.slice(0, VIEW_CONFIG.limits.values);
+      if (!visibleValues.length && !property.ranges.length) {
+        cell.textContent = "—";
+        return;
+      }
+
+      const container = document.createElement("div");
+      container.className = "detail-value-range";
+      if (visibleValues.length) {
+        const values = document.createElement("span");
+        values.className = "detail-values";
+        for (const value of visibleValues) {
+          const item = document.createElement("span");
+          item.className = "detail-value";
+          item.textContent = displayPropertyValue(value, false);
+          item.title = value.kind === "resource" ? value.id : item.textContent;
+          values.append(item);
+        }
+        if (association.values.length > visibleValues.length) {
+          const more = document.createElement("span");
+          more.className = "detail-value";
+          more.textContent = `+${association.values.length - visibleValues.length}`;
+          values.append(more);
+        }
+        container.append(values);
+      }
+
+      for (const range of property.ranges) {
+        const rangeEntity = currentModel.entities.get(range);
+        const definition = KIND_DEFINITIONS[rangeEntity?.kind] || KIND_DEFINITIONS.External;
+        const badge = document.createElement("span");
+        badge.className = "detail-range-badge";
+        badge.textContent = displayResource(range);
+        badge.title = range;
+        badge.style.backgroundColor = definition.color;
+        container.append(badge);
+      }
+      cell.append(container);
+    }
+
+    function appendPropertyList(section, associations) {
+      const body = createDetailTable(section, ["属性", "说明", "值 / 范围", "特征", "限制"], "property");
+      const visibleAssociations = associations.slice(0, VIEW_CONFIG.limits.properties);
+
+      for (const association of visibleAssociations) {
+        const { property } = association;
+        const row = document.createElement("tr");
+        const propertyCell = document.createElement("td");
+        appendTableIdentity(propertyCell, property.label, property.compactIri, property.iri);
+        const descriptionCell = document.createElement("td");
+
+        const descriptionText = propertyDescription(property);
+        if (descriptionText) {
+          const description = document.createElement("span");
+          description.className = "detail-table__description";
+          description.textContent = descriptionText;
+          descriptionCell.append(description);
+        } else {
+          descriptionCell.textContent = "—";
+        }
+
+        const valueCell = document.createElement("td");
+        appendValueRange(valueCell, property, association);
+
+        const traitCell = document.createElement("td");
+        appendBadges(traitCell, property.traits.map((trait) => ({ value: trait, variant: "trait" })));
+
+        const restrictionCell = document.createElement("td");
+        appendBadges(restrictionCell, association.restrictions
+          .map(restrictionText)
+          .filter(Boolean)
+          .map((restriction) => ({ value: restriction, variant: "restriction" })));
+
+        row.append(propertyCell, descriptionCell, valueCell, traitCell, restrictionCell);
+        body.append(row);
+      }
+
+      if (associations.length > visibleAssociations.length) {
+        const more = document.createElement("p");
+        more.className = "detail-more";
+        more.textContent = `另有 ${associations.length - visibleAssociations.length} 个属性`;
+        section.append(more);
+      }
+    }
+
+    function labelsByLanguage(labels) {
+      const grouped = new Map();
+      for (const label of labels) {
+        const language = label.language || "默认";
+        const values = grouped.get(language) || [];
+        if (!values.includes(label.value)) values.push(label.value);
+        grouped.set(language, values);
+      }
+      return [...grouped].map(([language, values]) => [
+        language === "默认" ? "label" : `label@${language}`,
+        values.join("; "),
+      ]);
+    }
+
+    function showNodeDetail(id) {
+      const entity = currentModel?.entities.get(id);
+      if (!entity) return;
+      const definition = KIND_DEFINITIONS[entity.kind] || KIND_DEFINITIONS.External;
+      elements.detailKind.textContent = definition.label;
+      elements.detailKind.style.backgroundColor = definition.color;
+      elements.detailTitle.textContent = entity.label;
+      elements.detailTitle.title = entity.label;
+      elements.detailBody.replaceChildren();
+
+      const overview = detailSection("基本信息");
+      appendDetailRows(overview, [
+        ...labelsByLanguage(entity.labels).slice(0, VIEW_CONFIG.limits.labels),
+        [localName(entity.descriptionEntry?.predicate) || "description", entity.description],
+        ["IRI", entity.iri],
+        ["特征", entity.traits.join(", ")],
+      ]);
+      elements.detailBody.append(overview);
+
+      for (const kind of PROPERTY_KIND_ORDER) {
+        const associations = entity.properties.filter(({ property }) => property.kind === kind);
+        if (!associations.length) continue;
+        const properties = detailSection(`${KIND_DEFINITIONS[kind].label} · ${associations.length}`);
+        appendPropertyList(properties, associations);
+        elements.detailBody.append(properties);
+      }
+
+      if (entity.graphOutgoing.length) {
+        const outgoing = detailSection(`出向关系 · ${entity.graphOutgoing.length}`);
+        appendRelations(outgoing, entity.graphOutgoing, "out");
+        elements.detailBody.append(outgoing);
+      }
+
+      if (entity.graphIncoming.length) {
+        const incoming = detailSection(`入向关系 · ${entity.graphIncoming.length}`);
+        appendRelations(incoming, entity.graphIncoming, "in");
+        elements.detailBody.append(incoming);
+      }
+
+      const ontologyAnnotations = entity.annotations.filter(
+        (annotation) => !LABEL_PREDICATES.has(annotation.predicate)
+          && !DESCRIPTION_PREDICATES.has(annotation.predicate)
+          && !PROPERTY_KINDS.has(currentModel.entities.get(annotation.predicate)?.kind),
+      );
+      if (ontologyAnnotations.length) {
+        const annotations = detailSection("其他信息");
+        appendOtherInfo(annotations, ontologyAnnotations);
+        elements.detailBody.append(annotations);
+      }
+
+      elements.detailPanel.hidden = false;
+    }
+
+    function showEdgeDetail(id) {
+      const edge = currentModel?.edgesById.get(id);
+      if (!edge) return;
+      const source = currentModel.entities.get(edge.source);
+      const target = currentModel.entities.get(edge.target);
+      elements.detailKind.textContent = "关系 / 公理";
+      elements.detailKind.style.backgroundColor = edge.color;
+      elements.detailTitle.textContent = edge.label;
+      elements.detailTitle.title = edge.label;
+      elements.detailBody.replaceChildren();
+
+      const overview = detailSection("关系信息");
+      appendDetailRows(overview, [
+        ["description", edge.description],
+        ["关系 IRI", edge.predicate],
+        ["源", source?.label || localName(edge.source)],
+        ["源 IRI", source?.compactIri || edge.source],
+        ["目标", target?.label || localName(edge.target)],
+        ["目标 IRI", target?.compactIri || edge.target],
+      ]);
+      elements.detailBody.append(overview);
+      elements.detailPanel.hidden = false;
+    }
+
+    async function clearSelection() {
+      elements.detailPanel.hidden = true;
+      if (!graph || graph.destroyed) return;
+      const states = {};
+      for (const state of ["selected", "related", "inactive"]) {
+        const data = [
+          ...graph.getElementDataByState("node", state),
+          ...graph.getElementDataByState("edge", state),
+        ];
+        for (const datum of data) states[String(datum.id)] = [];
+      }
+      if (Object.keys(states).length) await graph.setElementState(states, false);
+    }
+
+    function setBusy(active, message = "正在处理本体") {
+      elements.busyMessage.textContent = message;
+      elements.busyState.hidden = !active;
+    }
+
+    function showError(error) {
+      elements.emptyState.hidden = false;
+      const content = elements.emptyState.querySelector(".empty-state__content");
+      let message = content.querySelector(".error-message");
+      if (!message) {
+        message = document.createElement("div");
+        message.className = "error-message";
+        content.append(message);
+      }
+      message.textContent = error instanceof Error ? error.message : String(error);
+    }
+
+    async function renderModel(model) {
+      if (graph && !graph.destroyed) graph.destroy();
+      currentModel = model;
+      const graphData = createGraphData(model);
+      const dimUnrelated = graphData.nodes.length <= VIEW_CONFIG.performance.dimUnrelated;
+      const legendCount = new Set([
+        ...graphData.nodes.map((node) => node.data.legend),
+        ...graphData.edges.map((edge) => edge.data.legend),
+      ]).size;
+      elements.container.replaceChildren();
+      elements.detailPanel.hidden = true;
+      currentLabelTier = -1;
+      labelReferenceZoom = 1;
+      nodeSizeFixZoom = 1;
+
+      graph = new Graph({
+        container: elements.container,
+        animation: false,
+        autoResize: true,
+        zoomRange: [VIEW_CONFIG.viewport.minZoom, VIEW_CONFIG.viewport.maxZoom],
+        data: graphData,
+        layout: createLayout(currentLayoutMode, graphData.nodes.length),
+        behaviors: [
+          "drag-canvas",
+          {
+            type: "zoom-canvas",
+            key: "basic-zoom",
+            enable: (event) => Boolean(event.ctrlKey),
+            sensitivity: 0.8,
+            onFinish: () => void syncLabelsForZoom(),
+          },
+          {
+            type: "scroll-canvas",
+            key: "basic-scroll",
+            enable: (event) => !event.ctrlKey,
+          },
+          {
+            type: "fix-element-size",
+            key: "basic-fix-node-size",
+            enable: (event) => (
+              (event.data?.scale ?? 1) > 1
+              && (graph?.getZoom() ?? 1) >= nodeSizeFixZoom
+            ),
+            node: [{ shape: "key" }],
+            edgeFilter: () => false,
+            comboFilter: () => false,
+            reset: true,
+          },
+          "drag-element",
+          {
+            type: "hover-activate",
+            key: "basic-hover",
+            degree: 0,
+            state: "hovered",
+            animation: false,
+          },
+          {
+            type: "click-select",
+            key: "basic-select",
+            degree: 1,
+            state: "selected",
+            neighborState: "related",
+            unselectedState: dimUnrelated ? "inactive" : undefined,
+            animation: false,
+          },
+          {
+            type: "optimize-viewport-transform",
+            key: "basic-optimize-viewport",
+            shapes: { node: ["key"] },
+          },
+        ],
+        plugins: [
+          {
+            type: "legend",
+            key: "basic-legend",
+            nodeField: "legend",
+            edgeField: "legend",
+            position: "bottom-left",
+            orientation: "vertical",
+            layout: "flex",
+            gridCol: 1,
+            gridRow: 24,
+            width: 180,
+            height: Math.min(360, Math.max(80, 24 + legendCount * 18)),
+            padding: [8, 10, 8, 10],
+            itemMarkerSize: 9,
+            itemLabelFontSize: 10,
+            rowPadding: 4,
+            colPadding: 0,
+            containerStyle: {
+              border: "1px solid rgba(207, 215, 224, 0.92)",
+              borderRadius: "6px",
+              background: "rgba(255, 255, 255, 0.9)",
+            },
+          },
+          {
+            type: "minimap",
+            key: "basic-minimap",
+            size: [180, 120],
+            position: "right-bottom",
+            shape: "key",
+            delay: 240,
+            filter: (_id, type) => type === "node",
+            containerStyle: {
+              border: "1px solid rgba(207, 215, 224, 0.92)",
+              borderRadius: "6px",
+              background: "rgba(255, 255, 255, 0.9)",
+            },
+          },
+          {
+            type: "tooltip",
+            key: "basic-tooltip",
+            trigger: "hover",
+            offset: [10, 10],
+            enterable: false,
+            style: {
+              ".tooltip": {
+                padding: "0",
+                "min-width": "0",
+                "max-width": "none",
+                width: "max-content",
+                "background-color": "transparent",
+                "box-shadow": "none",
+                "border-radius": "0",
+                "z-index": "80",
+              },
+            },
+            getContent: async (_event, items) => createTooltip(items[0]),
+          },
+          {
+            type: "fullscreen",
+            key: "basic-fullscreen",
+            autoFit: false,
+          },
+          canvasToolbar,
+        ],
+        node: {
+          state: {
+            hovered: {
+              lineWidth: 2.5,
+              stroke: "#365f78",
+              labelText: (node) => node.data?.label,
+              labelFontSize: (node) => node.data?.labelFontSize,
+              labelFontWeight: (node) => node.data?.labelFontWeight,
+              labelMaxWidth: (node) => node.data?.labelMaxWidth,
+              labelOpacity: 1,
+            },
+            selected: {
+              lineWidth: 3,
+              stroke: "#284f68",
+              halo: true,
+              haloStroke: "#55758a",
+              haloStrokeOpacity: 0.28,
+              labelText: (node) => node.data?.label,
+              labelFontSize: (node) => node.data?.labelFontSize,
+              labelFontWeight: (node) => node.data?.labelFontWeight,
+              labelMaxWidth: (node) => node.data?.labelMaxWidth,
+              labelOpacity: 1,
+            },
+            related: {
+              lineWidth: 2,
+              stroke: "#55758a",
+              fillOpacity: 1,
+              labelText: (node) => node.data?.label,
+              labelFontSize: (node) => node.data?.labelFontSize,
+              labelFontWeight: (node) => node.data?.labelFontWeight,
+              labelMaxWidth: (node) => node.data?.labelMaxWidth,
+              labelOpacity: 1,
+            },
+            inactive: {
+              fillOpacity: 0.12,
+              strokeOpacity: 0.1,
+              labelOpacity: 0.06,
+            },
+          },
+        },
+        edge: {
+          state: {
+            hovered: {
+              lineWidth: 2.2,
+              stroke: "#365f78",
+              strokeOpacity: 1,
+            },
+            selected: {
+              lineWidth: 2.5,
+              stroke: "#284f68",
+              strokeOpacity: 1,
+            },
+            related: {
+              lineWidth: 1.8,
+              stroke: "#55758a",
+              strokeOpacity: 0.9,
+            },
+            inactive: {
+              strokeOpacity: 0.04,
+            },
+          },
+        },
+      });
+
+      graph.on(NodeEvent.CLICK, (event) => {
+        if (event.target?.id !== undefined) showNodeDetail(String(event.target.id));
+      });
+      graph.on(EdgeEvent.CLICK, (event) => {
+        if (event.target?.id !== undefined) showEdgeDetail(String(event.target.id));
+      });
+      graph.on(CanvasEvent.CLICK, () => {
+        elements.detailPanel.hidden = true;
+      });
+
+      await graph.render();
+      await initializeViewport();
+      elements.nodeCount.textContent = String(graphData.nodes.length);
+      elements.edgeCount.textContent = String(graphData.edges.length);
+    }
+
+    async function loadFile(file) {
+      if (!file) return;
+      setBusy(true, "正在解析本体");
+      elements.emptyState.hidden = true;
+      elements.fileName.textContent = file.name;
+      const filePath = typeof file.path === "string" && file.path
+        ? file.path
+        : file.webkitRelativePath || file.name;
+      elements.fileName.title = filePath;
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
+      try {
+        const text = await file.text();
+        const model = await parseOntology(text, file.name, filePath);
+        elements.fileName.textContent = model.displayName;
+        elements.fileName.title = model.filePath;
+        setBusy(true, `ForceAtlas2 · ${model.graphEntities.size} 个节点`);
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        await renderModel(model);
+        setBusy(false);
+      } catch (error) {
+        setBusy(false);
+        showError(error);
+        console.error(error);
+      } finally {
+        elements.fileInput.value = "";
+      }
+    }
+
+    for (const button of document.querySelectorAll("[data-import]")) {
+      button.addEventListener("click", () => elements.fileInput.click());
+    }
+    elements.fileInput.addEventListener("change", (event) => loadFile(event.currentTarget.files?.[0]));
+    elements.detailClose.addEventListener("click", () => void clearSelection());
+    for (const button of document.querySelectorAll("[data-layout-close]")) {
+      button.addEventListener("click", () => elements.layoutDialog.close());
+    }
+    elements.layoutDialog.addEventListener("click", (event) => {
+      if (event.target === elements.layoutDialog) elements.layoutDialog.close();
+    });
+    elements.layoutForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const mode = new FormData(elements.layoutForm).get("layout");
+      if (typeof mode !== "string") return;
+      elements.layoutDialog.close();
+      void applyLayout(mode).catch((error) => {
+        console.error(error);
+        elements.layoutStatus.textContent = "无法应用所选布局";
+        elements.layoutDialog.showModal();
+      });
+    });
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !elements.detailPanel.hidden) void clearSelection();
+    });
+  </script>
+</body>
+
+</html>

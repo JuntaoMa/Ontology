@@ -1,0 +1,201 @@
+@prefix ex: <https://example.org/ontology-viz/mock#> .
+@prefix id: <https://example.org/ontology-viz/mock/id/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+# This fixture intentionally covers every information block rendered by basic.html.
+
+ex:CompleteDisplayMock a owl:Ontology ;
+  rdfs:label "本体可视化完整展示样例"@zh ;
+  rdfs:label "OntologyViz Complete Display Mock"@en ;
+  rdfs:comment "用于验证 OntologyViz 节点、关系、属性、限制和多语言内容的完整展示。"@zh ;
+  dcterms:creator "OntologyViz" ;
+  dcterms:version "1.0.0" .
+
+# Classes
+
+ex:Person a owl:Class ;
+  rdfs:label "人员"@zh ;
+  rdfs:label "Person"@en ;
+  rdfs:comment "组织中可被识别并参与项目的自然人。"@zh .
+
+ex:Employee a owl:Class ;
+  rdfs:subClassOf ex:Person ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty ex:worksFor ;
+    owl:someValuesFrom ex:Department
+  ] ;
+  owl:equivalentClass ex:StaffMember ;
+  rdfs:label "员工"@zh ;
+  rdfs:label "Employee"@en ;
+  skos:altLabel "雇员"@zh ;
+  skos:altLabel "Member of staff"@en ;
+  rdfs:comment "与某个部门建立正式雇佣关系的人员。"@zh ;
+  rdfs:comment "A person formally employed by a department."@en ;
+  ex:businessDefinition "由人力资源主数据确认的在职或离职员工。"@zh .
+
+ex:StaffMember a owl:Class ;
+  rdfs:label "工作人员"@zh ;
+  rdfs:label "Staff member"@en ;
+  rdfs:comment "员工类的等价业务术语，用于验证等价类关系。"@zh .
+
+ex:Contractor a owl:Class ;
+  rdfs:subClassOf ex:Person ;
+  owl:disjointWith ex:Employee ;
+  rdfs:label "外部承包人员"@zh ;
+  rdfs:label "Contractor"@en ;
+  rdfs:comment "由外部供应商提供、不是正式员工的人员。"@zh .
+
+ex:Department a owl:Class ;
+  rdfs:label "部门"@zh ;
+  rdfs:label "Department"@en ;
+  rdfs:comment "承担一组组织职责的管理单元。"@zh .
+
+ex:Project a owl:Class ;
+  rdfs:label "项目"@zh ;
+  rdfs:label "Project"@en ;
+  rdfs:comment "具有明确目标、周期和参与人员的工作集合。"@zh .
+
+ex:LegacyEmployee a owl:Class, owl:DeprecatedClass ;
+  rdfs:subClassOf ex:Employee ;
+  rdfs:label "旧员工分类"@zh ;
+  rdfs:label "Legacy employee"@en ;
+  rdfs:comment "已弃用的历史分类，用于验证类特征展示。"@zh .
+
+# Object properties
+
+ex:worksFor a owl:ObjectProperty, owl:FunctionalProperty ;
+  rdfs:domain ex:Employee ;
+  rdfs:range ex:Department ;
+  rdfs:label "任职于"@zh ;
+  rdfs:label "works for"@en ;
+  rdfs:comment "连接员工与其唯一的主要任职部门。"@zh .
+
+ex:participatesIn a owl:ObjectProperty ;
+  rdfs:domain ex:Person ;
+  rdfs:range ex:Project ;
+  rdfs:label "参与项目"@zh ;
+  rdfs:label "participates in"@en ;
+  rdfs:comment "连接人员与其参与的项目。"@zh .
+
+ex:manages a owl:ObjectProperty, owl:AsymmetricProperty, owl:IrreflexiveProperty ;
+  rdfs:domain ex:Employee ;
+  rdfs:range ex:Project ;
+  rdfs:label "管理"@zh ;
+  rdfs:label "manages"@en ;
+  rdfs:comment "表示员工对项目负有管理责任。"@zh .
+
+ex:reportsTo a owl:ObjectProperty, owl:TransitiveProperty ;
+  rdfs:domain ex:Employee ;
+  rdfs:range ex:Employee ;
+  rdfs:label "汇报给"@zh ;
+  rdfs:label "reports to"@en ;
+  rdfs:comment "表示员工之间的管理汇报关系。"@zh .
+
+# Datatype properties
+
+ex:employeeId a owl:DatatypeProperty, owl:FunctionalProperty ;
+  rdfs:domain ex:Employee ;
+  rdfs:range xsd:string ;
+  rdfs:label "员工编号"@zh ;
+  rdfs:label "employee ID"@en ;
+  rdfs:comment "人力资源系统分配的稳定员工编号。"@zh .
+
+ex:age a owl:DatatypeProperty ;
+  rdfs:domain ex:Person ;
+  rdfs:range xsd:integer ;
+  rdfs:label "年龄"@zh ;
+  rdfs:label "age"@en ;
+  rdfs:comment "按完整周岁记录的年龄。"@zh .
+
+ex:displayName a owl:DatatypeProperty ;
+  rdfs:domain ex:Person ;
+  rdfs:range rdf:langString ;
+  rdfs:label "显示名称"@zh ;
+  rdfs:label "display name"@en ;
+  rdfs:comment "面向用户界面显示的多语言名称。"@zh .
+
+ex:unexplainedFlag a owl:DatatypeProperty ;
+  rdfs:domain ex:Employee ;
+  rdfs:label "无说明标记"@zh ;
+  rdfs:label "unexplained flag"@en .
+
+# Annotation properties
+
+ex:businessDefinition a owl:AnnotationProperty ;
+  rdfs:domain ex:Employee ;
+  rdfs:label "业务定义"@zh ;
+  rdfs:label "business definition"@en ;
+  rdfs:comment "业务侧对术语含义的补充说明。"@zh .
+
+ex:tag a owl:AnnotationProperty ;
+  rdfs:domain ex:Person ;
+  rdfs:label "标签"@zh ;
+  rdfs:label "tag"@en ;
+  rdfs:comment "用于检索和筛选的自由文本标签。"@zh .
+
+# Named individuals and their assertions
+
+id:alice a owl:NamedIndividual, ex:Employee ;
+  rdfs:label "艾丽丝"@zh ;
+  rdfs:label "Alice"@en ;
+  skos:altLabel "A. Chen"@en ;
+  rdfs:comment "平台工程团队负责人，负责知识图谱迁移项目。"@zh ;
+  rdfs:comment "Platform engineering lead for the knowledge graph migration."@en ;
+  ex:employeeId "E-001"^^xsd:string ;
+  ex:age 34 ;
+  ex:displayName "艾丽丝"@zh ;
+  ex:displayName "Alice"@en ;
+  ex:worksFor id:platformEngineering ;
+  ex:participatesIn id:ontologyMigration ;
+  ex:manages id:ontologyMigration ;
+  ex:reportsTo id:carol ;
+  ex:businessDefinition "关键岗位人员"@zh ;
+  ex:tag "知识图谱"@zh ;
+  ex:tag "平台工程"@zh ;
+  ex:tag "负责人"@zh ;
+  ex:tag "架构"@zh ;
+  ex:tag "迁移项目"@zh ;
+  ex:tag "高优先级"@zh ;
+  ex:tag "样例数据"@zh ;
+  ex:sourceSystem "HR_MASTER" ;
+  dcterms:identifier "EMP-001" .
+
+id:bob a owl:NamedIndividual, ex:Contractor ;
+  rdfs:label "鲍勃"@zh ;
+  rdfs:label "Bob"@en ;
+  rdfs:comment "参与迁移项目的外部数据工程师。"@zh ;
+  ex:age 29 ;
+  ex:displayName "Bob"@en ;
+  ex:participatesIn id:ontologyMigration ;
+  owl:differentFrom id:alice .
+
+id:carol a owl:NamedIndividual, ex:Employee ;
+  rdfs:label "卡萝尔"@zh ;
+  rdfs:label "Carol"@en ;
+  rdfs:comment "艾丽丝的直属经理。"@zh ;
+  ex:employeeId "E-002"^^xsd:string ;
+  ex:worksFor id:platformEngineering .
+
+id:aliceAlias a owl:NamedIndividual, ex:Employee ;
+  rdfs:label "艾丽丝旧标识"@zh ;
+  rdfs:label "Alice legacy identifier"@en ;
+  rdfs:comment "历史系统中的同一人员标识。"@zh ;
+  owl:sameAs id:alice .
+
+id:platformEngineering a owl:NamedIndividual, ex:Department ;
+  rdfs:label "平台工程部"@zh ;
+  rdfs:label "Platform Engineering"@en ;
+  rdfs:comment "负责共享平台与工程基础设施的部门。"@zh ;
+  ex:costCenter "CC-4100" .
+
+id:ontologyMigration a owl:NamedIndividual, ex:Project ;
+  rdfs:label "本体迁移项目"@zh ;
+  rdfs:label "Ontology Migration"@en ;
+  rdfs:comment "将现有本体工具迁移到通用可视化组件的项目。"@zh ;
+  dcterms:identifier "PRJ-2026-07" .
