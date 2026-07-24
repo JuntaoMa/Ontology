@@ -1,0 +1,1405 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="监督微调（SFT）技术报告：原理、数据、训练、Agent 轨迹、电信场景与证据溯源。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23087f8c'/%3E%3Cpath d='M17 20h30v7H25v7h18v7H25v8h-8z' fill='white'/%3E%3C/svg%3E">
+  <title>SFT 技术报告｜从指令对齐到电信 Agent 轨迹训练</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --surface: #ffffff;
+      --surface-2: #f0f5fa;
+      --surface-3: #e8f1f7;
+      --ink: #132332;
+      --muted: #5b6d7c;
+      --line: #d7e1e9;
+      --navy: #0d2e42;
+      --teal: #087f8c;
+      --cyan: #12a9bd;
+      --sky: #dff6f8;
+      --amber: #d48716;
+      --amber-bg: #fff7e7;
+      --red: #b43b43;
+      --red-bg: #fff0f1;
+      --green: #2b7b55;
+      --green-bg: #eaf7ef;
+      --violet: #6f59b7;
+      --code-bg: #0d1b27;
+      --code-ink: #dcebf5;
+      --shadow: 0 12px 32px rgba(13, 46, 66, .09);
+      --radius: 18px;
+      --content: 1180px;
+    }
+
+    html[data-theme="dark"] {
+      --bg: #0d151c;
+      --surface: #15212b;
+      --surface-2: #1a2934;
+      --surface-3: #203442;
+      --ink: #eef6fa;
+      --muted: #aebfc9;
+      --line: #314652;
+      --navy: #d8f3f5;
+      --teal: #4dd0d9;
+      --cyan: #55d5e4;
+      --sky: #17323b;
+      --amber: #ffc465;
+      --amber-bg: #392b17;
+      --red: #ff8f97;
+      --red-bg: #3b2024;
+      --green: #78d5a3;
+      --green-bg: #173327;
+      --violet: #b7a6f2;
+      --code-bg: #091117;
+      --code-ink: #dcebf5;
+      --shadow: 0 12px 32px rgba(0, 0, 0, .24);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 8% -10%, rgba(18,169,189,.14), transparent 28rem),
+        radial-gradient(circle at 96% 5%, rgba(111,89,183,.10), transparent 30rem),
+        var(--bg);
+      color: var(--ink);
+      font: 16px/1.72 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      text-rendering: optimizeLegibility;
+    }
+
+    a { color: var(--teal); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    a:hover { color: var(--cyan); }
+    img { max-width: 100%; height: auto; }
+    button { font: inherit; }
+    h1, h2, h3, h4 { color: var(--navy); line-height: 1.25; letter-spacing: -.015em; }
+    h1 { font-size: clamp(2.25rem, 5vw, 4.8rem); margin: 0 0 1.15rem; }
+    h2 { font-size: clamp(1.65rem, 3vw, 2.35rem); margin: 0 0 1.15rem; }
+    h3 { font-size: 1.28rem; margin: 1.8rem 0 .7rem; }
+    h4 { font-size: 1.04rem; margin: 1.25rem 0 .45rem; }
+    p { margin: .65rem 0 1rem; }
+    ul, ol { padding-left: 1.3rem; }
+    li + li { margin-top: .35rem; }
+    code, pre, .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    code {
+      padding: .12rem .35rem;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface-2);
+      font-size: .9em;
+    }
+    pre {
+      overflow: auto;
+      margin: 1rem 0;
+      padding: 1.1rem 1.2rem;
+      border-radius: 14px;
+      background: var(--code-bg);
+      color: var(--code-ink);
+      font-size: .84rem;
+      line-height: 1.6;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.07);
+    }
+
+    .skip {
+      position: absolute;
+      left: -10000px;
+      top: 0;
+      z-index: 100;
+      padding: .7rem 1rem;
+      background: var(--surface);
+    }
+    .skip:focus { left: 1rem; top: 1rem; }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      min-height: 82vh;
+      display: grid;
+      align-items: center;
+      padding: 5rem max(1.4rem, calc((100vw - var(--content)) / 2));
+      color: #eaf7fb;
+      background:
+        linear-gradient(118deg, rgba(7,36,53,.97) 0%, rgba(9,65,77,.94) 58%, rgba(17,91,105,.88) 100%),
+        radial-gradient(circle at 70% 20%, #1ec6d8 0, transparent 45%);
+    }
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      pointer-events: none;
+    }
+    .hero::before { width: 44rem; height: 44rem; right: -14rem; top: -20rem; }
+    .hero::after { width: 26rem; height: 26rem; right: 5rem; bottom: -18rem; }
+    .hero-inner { position: relative; z-index: 1; max-width: 980px; }
+    .hero h1 { color: #fff; max-width: 980px; }
+    .hero .lead {
+      max-width: 840px;
+      font-size: clamp(1.05rem, 2vw, 1.35rem);
+      color: #cce8ed;
+      line-height: 1.75;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: .55rem;
+      margin-bottom: 1.4rem;
+      padding: .38rem .72rem;
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 999px;
+      color: #d6f6f8;
+      font-size: .8rem;
+      font-weight: 750;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before { content: ""; width: .5rem; height: .5rem; border-radius: 50%; background: #53e0e9; box-shadow: 0 0 0 5px rgba(83,224,233,.12); }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.8rem; }
+    .hero-meta span {
+      padding: .45rem .72rem;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 9px;
+      color: #d7eaee;
+      background: rgba(255,255,255,.06);
+      font-size: .88rem;
+    }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 2rem; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      min-height: 42px;
+      padding: .58rem .9rem;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--ink);
+      background: var(--surface);
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,.07);
+    }
+    .hero .btn { border-color: rgba(255,255,255,.22); color: #fff; background: rgba(255,255,255,.10); }
+    .hero .btn.primary { color: #07303a; background: #6ee7ef; border-color: #6ee7ef; font-weight: 750; }
+    .btn:hover { transform: translateY(-1px); }
+
+    .layout {
+      width: min(calc(100% - 2rem), 1420px);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 255px minmax(0, 1fr);
+      gap: 2.2rem;
+      align-items: start;
+    }
+    .toc {
+      position: sticky;
+      top: 1rem;
+      max-height: calc(100vh - 2rem);
+      overflow: auto;
+      margin-top: 2.2rem;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin: 0 0 .7rem .5rem; color: var(--navy); }
+    .toc a {
+      display: block;
+      padding: .36rem .5rem;
+      border-radius: 7px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .9rem;
+    }
+    .toc a:hover, .toc a.active { color: var(--teal); background: var(--surface-2); }
+    .toc .sub { padding-left: 1.25rem; font-size: .82rem; }
+    main { min-width: 0; }
+    section {
+      scroll-margin-top: 1.5rem;
+      margin: 2.2rem 0;
+      padding: clamp(1.25rem, 3.2vw, 2.65rem);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .section-kicker {
+      display: flex;
+      align-items: center;
+      gap: .55rem;
+      margin-bottom: .7rem;
+      color: var(--teal);
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+    .section-kicker span {
+      display: grid;
+      place-items: center;
+      width: 1.6rem;
+      height: 1.6rem;
+      border-radius: 8px;
+      background: var(--sky);
+    }
+    .section-intro { max-width: 900px; color: var(--muted); font-size: 1.05rem; }
+
+    .grid { display: grid; gap: 1rem; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card {
+      padding: 1.05rem 1.1rem;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface-2);
+    }
+    .card h3, .card h4 { margin-top: 0; }
+    .card p:last-child { margin-bottom: 0; }
+    .metric {
+      display: flex;
+      flex-direction: column;
+      gap: .2rem;
+      min-height: 120px;
+    }
+    .metric strong { color: var(--teal); font-size: 2rem; line-height: 1.1; }
+    .metric span { color: var(--muted); font-size: .9rem; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: .2rem .5rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: var(--surface);
+      font-size: .75rem;
+      font-weight: 700;
+    }
+    .tag.original { color: var(--violet); border-color: color-mix(in srgb, var(--violet) 40%, var(--line)); }
+    .tag.drawn { color: var(--teal); border-color: color-mix(in srgb, var(--teal) 40%, var(--line)); }
+    .tag.primary-source { color: var(--green); border-color: color-mix(in srgb, var(--green) 40%, var(--line)); }
+
+    .callout {
+      margin: 1.25rem 0;
+      padding: 1rem 1.1rem;
+      border-left: 4px solid var(--teal);
+      border-radius: 0 12px 12px 0;
+      background: var(--sky);
+    }
+    .callout strong { color: var(--navy); }
+    .callout.warn { border-left-color: var(--amber); background: var(--amber-bg); }
+    .callout.risk { border-left-color: var(--red); background: var(--red-bg); }
+    .callout.good { border-left-color: var(--green); background: var(--green-bg); }
+
+    .equation {
+      margin: 1rem 0;
+      padding: 1.1rem;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface-2);
+      color: var(--navy);
+      text-align: center;
+      font: 600 clamp(.9rem, 1.8vw, 1.12rem)/1.65 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .equation small { display: block; margin-top: .45rem; color: var(--muted); font: 400 .78rem/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+
+    .table-wrap { overflow-x: auto; margin: 1rem 0; border: 1px solid var(--line); border-radius: 14px; }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; background: var(--surface); }
+    th, td { padding: .78rem .86rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--navy); background: var(--surface-2); font-size: .84rem; letter-spacing: .02em; }
+    td { font-size: .91rem; }
+    tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: color-mix(in srgb, var(--sky) 50%, transparent); }
+
+    .paper-figure {
+      margin: 1.4rem 0;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+    }
+    html[data-theme="dark"] .paper-figure { background: #f9fbfc; color: #172631; }
+    .paper-figure img {
+      display: block;
+      width: 100%;
+      max-height: 720px;
+      object-fit: contain;
+      cursor: zoom-in;
+    }
+    .paper-figure .panels { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+    .paper-figure figcaption { margin-top: .85rem; color: #40515d; font-size: .84rem; line-height: 1.55; }
+    .paper-figure figcaption strong { color: #183449; }
+    .figure-tools { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .6rem; }
+    .figure-tools a { font-size: .78rem; }
+
+    .diagram {
+      margin: 1.2rem 0;
+      padding: 1rem;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--sky) 78%, var(--surface)), var(--surface));
+    }
+    .diagram-head { display: flex; justify-content: space-between; gap: .8rem; align-items: center; margin-bottom: .9rem; }
+    .diagram-head strong { color: var(--navy); }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(130px, 1fr));
+      gap: .75rem;
+      align-items: stretch;
+      overflow-x: auto;
+      padding-bottom: .3rem;
+    }
+    .flow-step {
+      position: relative;
+      min-height: 132px;
+      padding: .9rem;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--surface);
+    }
+    .flow-step:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: -.68rem;
+      top: 45%;
+      z-index: 2;
+      width: 1.35rem;
+      height: 1.35rem;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--teal);
+      font-weight: 850;
+    }
+    .flow-step b { display: block; color: var(--teal); font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; }
+    .flow-step strong { display: block; margin: .35rem 0; color: var(--navy); }
+    .flow-step small { color: var(--muted); }
+
+    .layer-stack { display: grid; gap: .7rem; }
+    .layer {
+      display: grid;
+      grid-template-columns: 170px minmax(0, 1fr) 220px;
+      gap: 1rem;
+      align-items: center;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+    }
+    .layer .name { color: var(--navy); font-weight: 800; }
+    .layer .role { color: var(--muted); }
+    .layer .store {
+      padding: .55rem .7rem;
+      border-radius: 9px;
+      background: var(--surface-2);
+      color: var(--teal);
+      font-size: .82rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .loss-mask { display: grid; grid-template-columns: repeat(7, minmax(80px, 1fr)); gap: .45rem; overflow-x: auto; }
+    .token {
+      min-height: 90px;
+      padding: .7rem;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+      font-size: .78rem;
+    }
+    .token b { display: block; color: var(--navy); }
+    .token .mask { display: inline-block; margin-top: .4rem; padding: .12rem .35rem; border-radius: 5px; font-weight: 800; }
+    .token.off .mask { color: var(--muted); background: var(--surface-2); }
+    .token.on { border-color: color-mix(in srgb, var(--teal) 50%, var(--line)); background: var(--sky); }
+    .token.on .mask { color: #fff; background: var(--teal); }
+    .token.conditional { border-color: color-mix(in srgb, var(--amber) 50%, var(--line)); background: var(--amber-bg); }
+    .token.conditional .mask { color: #fff; background: var(--amber); }
+
+    .decision {
+      display: grid;
+      grid-template-columns: 1fr 80px 1fr;
+      gap: 1rem;
+      align-items: center;
+      margin: 1.2rem 0;
+    }
+    .decision .side { height: 100%; padding: 1.2rem; border: 1px solid var(--line); border-radius: 14px; }
+    .decision .side.sft { background: var(--sky); }
+    .decision .side.rl { background: var(--green-bg); }
+    .decision .or { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; color: #fff; background: var(--navy); font-weight: 850; }
+
+    .checklist { list-style: none; padding: 0; }
+    .checklist li { position: relative; padding-left: 1.75rem; }
+    .checklist li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      top: .05rem;
+      display: grid;
+      place-items: center;
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--green);
+      font-size: .72rem;
+      font-weight: 900;
+    }
+    .ref {
+      display: inline-block;
+      margin-left: .1rem;
+      vertical-align: super;
+      font-size: .7em;
+      text-decoration: none;
+    }
+    .references { counter-reset: refs; padding: 0; list-style: none; }
+    .references li {
+      counter-increment: refs;
+      position: relative;
+      padding: .85rem .85rem .85rem 3.2rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .references li::before {
+      content: "[" counter(refs) "]";
+      position: absolute;
+      left: .5rem;
+      top: .85rem;
+      color: var(--teal);
+      font-weight: 800;
+    }
+    .references li:last-child { border-bottom: 0; }
+    .references .meta { color: var(--muted); font-size: .86rem; }
+
+    .footer {
+      width: min(calc(100% - 2rem), var(--content));
+      margin: 2rem auto 4rem;
+      color: var(--muted);
+      font-size: .85rem;
+      text-align: center;
+    }
+    .floating {
+      position: fixed;
+      right: 1rem;
+      bottom: 1rem;
+      z-index: 20;
+      display: flex;
+      gap: .45rem;
+    }
+    .floating .btn { width: 42px; height: 42px; justify-content: center; padding: 0; border-radius: 50%; }
+    dialog {
+      width: min(95vw, 1500px);
+      max-height: 94vh;
+      padding: 0;
+      border: 0;
+      border-radius: 16px;
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: 0 24px 80px rgba(0,0,0,.45);
+    }
+    dialog::backdrop { background: rgba(3,13,20,.76); backdrop-filter: blur(4px); }
+    .zoom-bar { display: flex; justify-content: space-between; align-items: center; padding: .65rem .8rem; border-bottom: 1px solid var(--line); }
+    .zoom-body { max-height: calc(94vh - 58px); overflow: auto; padding: .8rem; background: #fff; }
+    .zoom-body img { display: block; max-width: none; width: auto; min-width: 100%; margin: auto; }
+
+    @media (max-width: 1080px) {
+      .layout { grid-template-columns: 1fr; width: min(calc(100% - 1.2rem), var(--content)); }
+      .toc { position: relative; top: auto; max-height: none; margin-top: 1.2rem; display: none; }
+      .grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .layer { grid-template-columns: 140px minmax(0, 1fr); }
+      .layer .store { grid-column: 1 / -1; }
+    }
+    @media (max-width: 760px) {
+      .hero { min-height: auto; padding-top: 4rem; padding-bottom: 4rem; }
+      .grid.two, .grid.three, .grid.four { grid-template-columns: 1fr; }
+      .paper-figure .panels { grid-template-columns: 1fr; }
+      .decision { grid-template-columns: 1fr; }
+      .decision .or { margin: auto; }
+      .layer { grid-template-columns: 1fr; }
+      section { padding: 1.15rem; border-radius: 14px; }
+      .floating { right: .6rem; bottom: .6rem; }
+    }
+    @media print {
+      :root { --bg: #fff; --surface: #fff; --surface-2: #f5f7f9; --ink: #111; --navy: #111; --muted: #444; --line: #bbb; }
+      body { background: #fff; font-size: 10.5pt; }
+      .hero { min-height: auto; padding: 2.2cm 1.4cm; color: #fff; break-after: page; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      .layout { display: block; width: 100%; }
+      .toc, .floating, .hero-actions { display: none !important; }
+      section { margin: 0 0 1rem; padding: 1rem .2rem; border: 0; box-shadow: none; break-inside: auto; }
+      .card, .paper-figure, .diagram, .callout, table { break-inside: avoid; }
+      a { color: inherit; text-decoration: none; }
+      .paper-figure img { max-height: 16cm; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+
+  <header class="hero" id="top">
+    <div class="hero-inner">
+      <div class="eyebrow">Technical report · evidence traced</div>
+      <h1>监督微调（SFT）技术报告</h1>
+      <p class="lead">从指令对齐、数据工程和参数高效训练，推进到可执行环境中的 Agent 轨迹 SFT，并给出“IMS 注册失败诊断”这一电信场景的可落地训练设计。</p>
+      <div class="hero-meta">
+        <span>版本 1.0</span>
+        <span>资料复核：2026-07-24</span>
+        <span>24 篇一手论文 / 技术报告</span>
+        <span>10 组论文原图</span>
+        <span>离线 HTML</span>
+      </div>
+      <div class="hero-actions">
+        <a class="btn primary" href="#executive">开始阅读 ↓</a>
+        <a class="btn" href="sources.json">机器可读溯源清单</a>
+        <button class="btn" type="button" onclick="window.print()">打印 / 导出 PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-label="报告目录">
+      <strong>目录</strong>
+      <a href="#executive">1. 执行摘要</a>
+      <a href="#boundary">2. SFT 的边界</a>
+      <a href="#objective">3. 目标函数与样本</a>
+      <a href="#data">4. 数据工程</a>
+      <a href="#training">5. 训练工程</a>
+      <a href="#agent">6. Agent 轨迹 SFT</a>
+      <a href="#telecom">7. 电信场景落地</a>
+      <a class="sub" href="#ims-case">IMS 注册失败诊断</a>
+      <a href="#evaluation">8. 评测与上线门禁</a>
+      <a href="#roadmap">9. 实施路线</a>
+      <a href="#conclusion">10. 结论</a>
+      <a href="#references">参考文献</a>
+      <a href="#provenance">证据与版权说明</a>
+    </nav>
+
+    <main id="main">
+      <section id="executive">
+        <div class="section-kicker"><span>01</span> Executive summary</div>
+        <h2>先给结论：SFT 训练“行为接口”，不是把全部业务事实塞进参数</h2>
+        <p class="section-intro">SFT 的本质是让预训练模型在给定上下文下复现高质量目标行为。对电信 Agent，这个“行为”应主要包括：识别流程阶段、选择工具、生成合法参数、根据观察继续决策、给出证据、在风险边界处停止或升级人工。</p>
+
+        <div class="grid four">
+          <div class="card metric"><strong>1</strong><b>核心损失</b><span>对目标 token 做教师强制的自回归交叉熵；多轮轨迹通过 loss mask 精确控制监督范围。</span></div>
+          <div class="card metric"><strong>4</strong><b>数据决定项</b><span>质量、多样性、分布配比、可验证性，通常比简单扩大样本数更关键。</span></div>
+          <div class="card metric"><strong>3 层</strong><b>领域能力架构</b><span>知识层（KG/RAG）＋技能层（SFT）＋策略层（环境 RL）。</span></div>
+          <div class="card metric"><strong>6 门</strong><b>上线门禁</b><span>结果、工具、流程、证据、安全、通用能力回归。</span></div>
+        </div>
+
+        <div class="callout good">
+          <strong>推荐总路线：</strong>本体/知识图谱生成场景骨架 → 专家演示与真实工单形成黄金轨迹 → 模拟器扩展正常、异常与恢复变体 → verifier 过滤 → SFT → 必要时在数字孪生环境做 RL → 只读影子运行 → 人工审批的半闭环。
+        </div>
+
+        <h3>最重要的六条工程判断</h3>
+        <ol>
+          <li><b>动态事实外置。</b>协议版本、KPI 实时值、配置和拓扑继续由知识图谱、检索与工具提供；SFT 训练“何时查、查什么、如何核验”。</li>
+          <li><b>样本不是问答文本，而是可审计决策记录。</b>至少应含状态、动作、观察、终止条件、验证器结果和证据来源。</li>
+          <li><b>正常流程不够。</b>必须加入超时、工具失败、信息缺失、权限不足、异常分支、回滚和升级人工，否则模型只会复述理想路径。</li>
+          <li><b>合成数据必须被验证。</b>Self-Instruct、Kimi K2、DeepSeek-V3.2 等路线共同指向“生成—执行—过滤”，而不是直接把模型生成内容回灌。</li>
+          <li><b>脚手架与工具格式也是分布。</b>Qwen3-Coder-Next 的公开实验显示，同一 Agent scaffold 内扩容有效，但跨 scaffold 迁移有限；训练应覆盖多种工具定义与调用模板。</li>
+          <li><b>SFT 先建立稳定行为，RL 再优化长期策略。</b>若任务只需复现已知正确流程，SFT 足够；若需要在新状态中进行多步权衡、恢复和成本优化，才进入可验证环境 RL。</li>
+        </ol>
+      </section>
+
+      <section id="boundary">
+        <div class="section-kicker"><span>02</span> Scope &amp; boundaries</div>
+        <h2>SFT 在后训练体系中的位置</h2>
+        <p class="section-intro">“把知识训练进模型”常混合了五类不同目标。先分清目标，才能选择数据和训练方法。</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>方法</th><th>主要学习对象</th><th>典型数据</th><th>是否适合动态电信事实</th><th>主要风险</th></tr></thead>
+            <tbody>
+              <tr><td><b>持续预训练 / CPT</b></td><td>领域语言、统计规律、基础表征</td><td>协议、手册、工单、日志的无标注语料</td><td>低；更新成本高</td><td>事实陈旧、版权、遗忘</td></tr>
+              <tr><td><b>SFT</b></td><td>回答方式、流程、工具调用、格式与专家操作模式</td><td>输入→目标输出；多轮轨迹</td><td>中；应训练查询行为而非记住数值</td><td>模仿错误、分布偏置、过拟合模板</td></tr>
+              <tr><td><b>偏好优化</b></td><td>两个可接受行为之间的排序偏好</td><td>chosen / rejected</td><td>中</td><td>偏好标注漂移、reward hacking</td></tr>
+              <tr><td><b>环境 RL</b></td><td>长期决策策略、探索、恢复与成本权衡</td><td>可交互环境、动作、奖励、verifier</td><td>高；环境可实时给状态</td><td>奖励投机、训练不稳定、安全</td></tr>
+              <tr><td><b>KG / RAG / 工具</b></td><td>外部可更新事实和证据</td><td>本体、文档、数据库、指标、告警</td><td><b>高</b></td><td>检索缺失、权限、证据冲突</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="diagram">
+          <div class="diagram-head"><strong>自绘图：电信领域模型的三层能力架构</strong><span class="tag drawn">根据公开方法归纳绘制</span></div>
+          <div class="layer-stack">
+            <div class="layer">
+              <div class="name">策略层 · RL</div>
+              <div class="role">在数字孪生/沙箱中学习长程计划、异常恢复、成本与安全权衡。</div>
+              <div class="store">可执行环境 + verifier + reward</div>
+            </div>
+            <div class="layer">
+              <div class="name">技能层 · SFT</div>
+              <div class="role">学习流程识别、工具选择、参数生成、证据整理、停止与升级人工。</div>
+              <div class="store">黄金轨迹 + 验证后合成轨迹</div>
+            </div>
+            <div class="layer">
+              <div class="name">知识层 · KG/RAG</div>
+              <div class="role">保存 3GPP/ITU-T 规范、网元、流程、KPI/KQI 公式、版本与实时网络状态。</div>
+              <div class="store">可更新事实 + 证据链</div>
+            </div>
+          </div>
+        </div>
+
+        <figure class="paper-figure">
+          <img src="assets/papers/instructgpt-fig2.png" alt="InstructGPT Figure 2，SFT、奖励模型和 PPO 三阶段流程" data-zoom>
+          <figcaption>
+            <span class="tag original">论文原图</span>
+            <strong>InstructGPT Figure 2：</strong>SFT 是完整对齐流水线的第一阶段，随后才是奖励模型和 PPO。来源：Ouyang et al., 2022，Figure 2，PDF p.3。<a href="https://arxiv.org/abs/2203.02155">摘要</a> · <a href="https://arxiv.org/pdf/2203.02155">PDF</a>。
+          </figcaption>
+        </figure>
+
+        <div class="callout warn">
+          <strong>不要把 SFT 与“知识库编译”混为一谈。</strong>模型权重不提供条款级证据、版本控制或实时一致性。生产电信场景中，回答应同时引用外部证据，且每个关键动作都能回溯到协议条款、操作规程或观测数据。
+        </div>
+      </section>
+
+      <section id="objective">
+        <div class="section-kicker"><span>03</span> Objective &amp; sample anatomy</div>
+        <h2>目标函数、loss mask 与多轮轨迹</h2>
+        <p class="section-intro">标准 SFT 是教师强制的最大似然训练。真正决定模型学到什么的，不只是文本内容，还包括 chat template、角色边界、监督掩码和样本归一化方式。</p>
+
+        <h3>3.1 带掩码的通用 SFT 目标</h3>
+        <div class="equation">
+          L<sub>SFT</sub>(θ) = − [ Σ<sub>t</sub> m<sub>t</sub>w<sub>t</sub> log p<sub>θ</sub>(x<sub>t</sub> | x<sub>&lt;t</sub>) ] / [ Σ<sub>t</sub> m<sub>t</sub>w<sub>t</sub> ]
+          <small>m<sub>t</sub> ∈ {0,1} 控制该 token 是否计算损失；w<sub>t</sub> 可实现样本/能力桶权重。若没有特别设计，w<sub>t</sub>=1。</small>
+        </div>
+        <p>在指令和完成文本的经典设置中，只对 completion token 计算损失是常见做法。Self-Instruct 明确将 prompt loss 权重设为 0；QLoRA 的一组消融也显示 target-only loss 优于 source+target loss，但这不是所有任务的普遍定律。<a class="ref" href="#ref-self-instruct">[5]</a><a class="ref" href="#ref-qlora">[11]</a></p>
+
+        <div class="diagram">
+          <div class="diagram-head"><strong>自绘图：Agent 轨迹中的典型 loss mask</strong><span class="tag drawn">监督范围示意</span></div>
+          <div class="loss-mask">
+            <div class="token off"><b>system</b>安全策略、工具说明<span class="mask">m=0</span></div>
+            <div class="token off"><b>user</b>症状与目标<span class="mask">m=0</span></div>
+            <div class="token on"><b>assistant</b>合法 tool call<span class="mask">m=1</span></div>
+            <div class="token off"><b>tool</b>观测 / 错误返回<span class="mask">m=0</span></div>
+            <div class="token conditional"><b>assistant</b>错误动作片段<span class="mask">m=0 / 丢弃</span></div>
+            <div class="token on"><b>assistant</b>纠正后的动作<span class="mask">m=1</span></div>
+            <div class="token on"><b>assistant</b>结论、证据、升级<span class="mask">m=1</span></div>
+          </div>
+        </div>
+
+        <p>GLM-5 报告公开了一种值得借鉴的处理：保留错误动作及其环境反馈，让模型看到“错误—反馈—恢复”的上下文，但对错误动作 token 屏蔽损失，只监督修正动作。这样既保留恢复经验，又避免把错误动作当成模仿目标。<a class="ref" href="#ref-glm5">[22]</a></p>
+
+        <h3>3.2 token 平均与样本平均不是一回事</h3>
+        <div class="grid two">
+          <div class="card">
+            <h4>按 token 平均</h4>
+            <div class="equation">L<sub>token</sub> = Σ<sub>i,t</sub> ℓ<sub>i,t</sub> / Σ<sub>i</sub>T<sub>i</sub></div>
+            <p>长样本贡献更大。适合把所有目标 token 当作同等训练单位，但长轨迹可能支配梯度。</p>
+          </div>
+          <div class="card">
+            <h4>按样本平均</h4>
+            <div class="equation">L<sub>example</sub> = (1/B) Σ<sub>i</sub>[Σ<sub>t</sub>ℓ<sub>i,t</sub>/T<sub>i</sub>]</div>
+            <p>每条样本贡献接近。Tülu 3 指出，在梯度累积和分布式训练中，错误实现可能悄悄改变权重。<a class="ref" href="#ref-tulu3">[9]</a></p>
+          </div>
+        </div>
+
+        <h3>3.3 推荐的轨迹样本最小结构</h3>
+        <pre aria-label="Agent 轨迹 JSON 示例">{
+  "id": "ims-reg-auth-uaa-timeout-000147",
+  "scenario": "IMS_INITIAL_REGISTRATION",
+  "split_keys": {
+    "fault_family": "DIAMETER_UAA_TIMEOUT",
+    "topology": "dual-site",
+    "vendor_family": "held_out"
+  },
+  "messages": [
+    {"role": "system", "content": "只读诊断；高风险动作必须升级人工。"},
+    {"role": "user", "content": "IMS 注册成功率下降，请定位。"},
+    {"role": "assistant", "tool_call": {
+      "name": "query_kpi",
+      "arguments": {"kpi": "ims_registration_success_rate", "window": "15m"}
+    }, "train": true},
+    {"role": "tool", "content": {
+      "value": 0.71, "baseline": 0.985, "scope": "site-a"
+    }, "train": false},
+    {"role": "assistant", "tool_call": {
+      "name": "get_diameter_trace",
+      "arguments": {"interface": "Cx", "message_pair": "UAR/UAA"}
+    }, "train": true},
+    {"role": "tool", "content": {
+      "result": "UAR sent; UAA timeout; peer_unreachable=true"
+    }, "train": false},
+    {"role": "assistant", "content": {
+      "diagnosis": "Cx 路径或 HSS 对等体不可达",
+      "evidence_ids": ["obs:kpi:147", "obs:trace:882", "spec:29.229:clause-x"],
+      "next_action": "检查 Diameter peer 状态；不自动重启网元",
+      "escalate": true
+    }, "train": true}
+  ],
+  "verifier": {
+    "task_success": true,
+    "tool_schema_valid": true,
+    "evidence_complete": true,
+    "unsafe_action_count": 0
+  }
+}</pre>
+
+        <div class="callout">
+          <strong>不要监督未经验证的隐藏思维链。</strong>训练目标可保留简短、可审计的“观察摘要 / 决策依据”，但不应默认把模型生成的长篇内部推理当成真值。高价值的是可检查动作、证据和结果。
+        </div>
+      </section>
+
+      <section id="data">
+        <div class="section-kicker"><span>04</span> Data engineering</div>
+        <h2>数据工程：质量、覆盖、配比、验证、去污染</h2>
+        <p class="section-intro">公开研究并不支持“只要把样本数堆大就会稳定变好”。LIMA 强调质量与多样性，FLAN 系列强调任务混合和模板覆盖，Tülu 3 展示了现代 SFT 数据混合、去污染和消融流程。</p>
+
+        <figure class="paper-figure">
+          <img src="assets/papers/self-instruct-fig2.png" alt="Self-Instruct Figure 2，种子任务、生成、分类、实例生成和过滤" data-zoom>
+          <figcaption>
+            <span class="tag original">论文原图</span>
+            <strong>Self-Instruct Figure 2：</strong>少量种子任务经过指令生成、任务识别、实例生成和过滤，持续扩展任务池。论文报告过滤后得到 52,445 条指令和 82,439 个实例；人工抽检也说明“指令有效”并不等于“全部字段正确”。来源：Wang et al., 2023，Figure 2，PDF p.2。<a href="https://arxiv.org/abs/2212.10560">摘要</a> · <a href="https://arxiv.org/pdf/2212.10560">PDF</a>。
+          </figcaption>
+        </figure>
+
+        <figure class="paper-figure">
+          <img src="assets/papers/lima-fig5-6.png" alt="LIMA Figures 5 and 6，质量多样性筛选与训练数量对照" data-zoom>
+          <figcaption>
+            <span class="tag original">论文原图</span>
+            <strong>LIMA Figures 5–6：</strong>在该论文的 7B 实验设置中，筛选后的高质量、多样化 Stack Exchange 数据优于未筛选集合；从 2k 增至 32k 后，质量指标基本平台化。它支持“质量与覆盖优先”，但不能被外推为所有模型、任务和数据规模的普遍定律。来源：Zhou et al., 2023，Figures 5–6，PDF p.8。<a href="https://arxiv.org/abs/2305.11206">摘要</a> · <a href="https://arxiv.org/pdf/2305.11206">PDF</a>。
+          </figcaption>
+        </figure>
+
+        <h3>4.1 一条数据从来源到可训练样本的完整链路</h3>
+        <div class="diagram">
+          <div class="diagram-head"><strong>自绘图：SFT 数据生产流水线</strong><span class="tag drawn">推荐工程流程</span></div>
+          <div class="flow">
+            <div class="flow-step"><b>01 Source</b><strong>来源登记</strong><small>协议、工单、专家演示、仿真、历史轨迹；记录许可与版本。</small></div>
+            <div class="flow-step"><b>02 Normalize</b><strong>结构化</strong><small>统一角色、工具 schema、状态、动作、观察、证据字段。</small></div>
+            <div class="flow-step"><b>03 Verify</b><strong>执行验证</strong><small>规则、单元测试、沙箱、协议状态机、专家复核。</small></div>
+            <div class="flow-step"><b>04 Curate</b><strong>清洗与去重</strong><small>近重复、泄露、冲突、错误目标、不可复现样本。</small></div>
+            <div class="flow-step"><b>05 Balance</b><strong>分桶与采样</strong><small>按能力、故障族、长度、难度、网络代际和风险配比。</small></div>
+            <div class="flow-step"><b>06 Freeze</b><strong>冻结版本</strong><small>dataset card、manifest、哈希、split key、训练配置。</small></div>
+          </div>
+        </div>
+
+        <h3>4.2 数据源选择</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>来源</th><th>优势</th><th>主要缺陷</th><th>进入训练集前的处理</th></tr></thead>
+            <tbody>
+              <tr><td>专家演示 / 黄金 SOP</td><td>高精度、符合组织安全边界</td><td>数量少、风格单一、可能只覆盖理想流程</td><td>增加异常分支；交叉专家复核；保留依据</td></tr>
+              <tr><td>真实工单与操作日志</td><td>接近真实分布和长尾</td><td>噪声、缺步骤、事后叙述、隐私</td><td>脱敏；重建时间线；结果核验；去近重复</td></tr>
+              <tr><td>协议 / 手册生成样本</td><td>可覆盖正式定义和边界条件</td><td>容易变成“背条款”，缺环境反馈</td><td>转成可执行情境；绑定条款和版本</td></tr>
+              <tr><td>教师模型蒸馏</td><td>扩展快、可生成多样表达</td><td>继承幻觉、风格和能力上限</td><td>多教师 / 多采样；执行验证；拒绝采样</td></tr>
+              <tr><td>仿真器 / 数字孪生</td><td>可系统注入故障和边界条件</td><td>sim-to-real gap</td><td>校准真实分布；保留环境版本与种子</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>4.3 分桶采样比全局随机采样更重要</h3>
+        <p>建议至少按以下维度建立可观察的数据配比：任务能力、网络域、流程阶段、故障族、复杂度、轨迹长度、工具类型、成功/失败、是否升级人工、安全等级、证据完整度。高频“查 KPI—输出一句话”样本若不设上限，会淹没稀有但关键的跨域故障和恢复流程。</p>
+
+        <figure class="paper-figure">
+          <img src="assets/papers/tulu3-fig2.png" alt="Tulu 3 Figure 2，SFT 数据源与长度分布" data-zoom>
+          <figcaption>
+            <span class="tag original">论文原图</span>
+            <strong>Tülu 3 Figure 2：</strong>最终 SFT mix 由多类数据源构成，且长度分布差异明显。它提醒训练方同时管理“来源配比”和“token 配比”，而不是只看样本条数。来源：Lambert et al., 2024，Figure 2，PDF p.15。<a href="https://arxiv.org/abs/2411.15124">摘要</a> · <a href="https://arxiv.org/pdf/2411.15124">PDF</a>。
+          </figcaption>
+        </figure>
+
+        <figure class="paper-figure">
+          <img src="assets/papers/tulu3-fig4.png" alt="Tulu 3 Figure 4，SFT 数据规模消融" data-zoom>
+          <figcaption>
+            <span class="tag original">论文原图</span>
+            <strong>Tülu 3 Figure 4：</strong>在该分层子采样实验中，完整数据混合的平均分最高，但不同能力并非单调同向变化，例如 TruthfulQA 的趋势不同。结论应是“按能力看消融”，而不是只追求单一平均分。来源：Lambert et al., 2024，Figure 4，PDF p.19。
+          </figcaption>
+        </figure>
+
+        <h3>4.4 切分与去污染</h3>
+        <div class="grid two">
+          <div class="card">
+            <h4>错误做法</h4>
+            <ul>
+              <li>随机切分同一工单的改写版本。</li>
+              <li>训练和测试共享同一拓扑、同一根因模板。</li>
+              <li>先生成评测，再用全量语料做近重复合成。</li>
+              <li>只做字符串去重，不检查语义等价流程。</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>推荐切分键</h4>
+            <ul>
+              <li>故障族 / 根因族；</li>
+              <li>站点或拓扑形态；</li>
+              <li>网元厂商族或软件版本；</li>
+              <li>协议版本与可选特性；</li>
+              <li>时间窗口和来源工单簇。</li>
+            </ul>
+          </div>
+        </div>
+        <p>对于目标能力选择，LESS 使用少量目标任务梯度，从通用指令数据中选择更有影响的子集；这类方法可用于“以少量电信故障样本引导通用语料筛选”，但仍需在目标场景上独立验证。<a class="ref" href="#ref-less">[8]</a></p>
+      </section>
+
+      <section id="training">
+        <div class="section-kicker"><span>05</span> Training engineering</div>
+        <h2>训练工程：全量微调、LoRA、QLoRA 与稳定性</h2>
+        <p class="section-intro">训练方法的选择首先由模型许可、硬件、序列长度、数据规模和部署策略决定。LoRA/QLoRA 解决资源问题，但不会自动解决数据错误、灾难性遗忘或能力覆盖不足。</p>
+
+        <figure class="paper-figure">
+          <img src="assets/papers/qlora-fig1.png" alt="QLoRA Figure 1，全量微调、LoRA 和 QLoRA 的显存结构" data-zoom>
+          <figcaption>
+            <span class="tag original">论文原图</span>
+            <strong>QLoRA Figure 1：</strong>全量微调更新基座；LoRA 冻结 16-bit 基座、只训练 adapter；QLoRA 将基座量化至 4-bit，并结合分页优化器处理显存峰值。来源：Dettmers et al., 2023，Figure 1，PDF p.3。<a href="https://arxiv.org/abs/2305.14314">摘要</a> · <a href="https://arxiv.org/pdf/2305.14314">PDF</a>。
+          </figcaption>
+        </figure>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>方案</th><th>训练参数</th><th>资源特征</th><th>适合场景</th><th>注意事项</th></tr></thead>
+            <tbody>
+              <tr><td><b>Full fine-tuning</b></td><td>更新全部或大部分权重</td><td>显存、通信和 checkpoint 成本最高</td><td>数据充分、追求极致能力或要合并到单一基座</td><td>遗忘与分布偏移风险更大；需完善回归评测</td></tr>
+              <tr><td><b>LoRA</b></td><td>冻结基座，训练低秩 A/B</td><td>显著减少可训练参数；可模块化管理</td><td>领域适配、多个技能 adapter、快速迭代</td><td>rank、target modules 和合并策略需消融</td></tr>
+              <tr><td><b>QLoRA</b></td><td>4-bit 基座 + LoRA adapter</td><td>进一步降低显存门槛</td><td>单机/少卡原型、较大模型的经济型 SFT</td><td>量化、paged optimizer、内核和长序列会影响稳定性</td></tr>
+              <tr><td><b>部分层微调</b></td><td>仅更新特定层/模块</td><td>介于 full 与 PEFT 之间</td><td>有明确模块假设或部署约束</td><td>未必优于 LoRA；需要严谨对照</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>5.1 起始超参数：用于搜索，不是固定答案</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>参数</th><th>保守起始区间</th><th>应观察的信号</th></tr></thead>
+            <tbody>
+              <tr><td>Epoch</td><td>1–2；小型高质量集可探索 3</td><td>验证任务成功率、复述/风格过拟合、通用能力回退</td></tr>
+              <tr><td>学习率</td><td>Full FT 常从 5e−6–2e−5；LoRA 常从 1e−5–2e−4 搜索</td><td>训练损失下降速度、梯度范数、早期验证峰值</td></tr>
+              <tr><td>Warmup</td><td>总步数的 3%–10%</td><td>起始 loss spike、混合精度溢出</td></tr>
+              <tr><td>有效 batch</td><td>优先按“目标 token / step”记录</td><td>不同长度 mix 下梯度权重是否改变</td></tr>
+              <tr><td>最大长度</td><td>覆盖真实轨迹的高分位；保留截断率报告</td><td>截断是否集中在结论、证据或长工具返回</td></tr>
+              <tr><td>LoRA rank</td><td>8 / 16 / 32 / 64 做小网格</td><td>目标能力、遗忘、adapter 大小与推理成本</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="callout warn"><strong>这些区间只是实验入口。</strong>模型规模、架构、数据质量、训练 token、序列长度和优化器都会改变最优值。最终选择必须以 held-out 流程成功率与回归测试为准，不能直接照搬单篇论文。</p>
+
+        <h3>5.2 Packing 必须同时处理三件事</h3>
+        <div class="grid three">
+          <div class="card"><h4>Attention 隔离</h4><p>不同样本之间使用 block-diagonal attention，防止跨样本“看见答案”。</p></div>
+          <div class="card"><h4>Position 处理</h4><p>按实现重置或正确编码子序列 position IDs，避免位置漂移。</p></div>
+          <div class="card"><h4>Loss 边界</h4><p>每个样本分别建立 prompt/response mask，不能因拼接而监督错误 token。</p></div>
+        </div>
+        <p>《Efficient Sequence Packing without Cross-contamination》给出了打包与未打包计算等价所需的隔离条件；论文在特定 BERT 设置中的吞吐收益不能直接当作所有 LLM SFT 的保证。<a class="ref" href="#ref-packing">[12]</a></p>
+
+        <h3>5.3 遗忘、泄露与训练监控</h3>
+        <ul class="checklist">
+          <li>同时记录领域集与通用能力集，避免“电信分数上升”掩盖语言、推理或安全能力下降。</li>
+          <li>保留基座、每个 checkpoint、optimizer 和完整配置；验证峰值不一定出现在最后一步。</li>
+          <li>监控每个能力桶的 token 占比、梯度贡献、截断率和 loss；只看全局 loss 不够。</li>
+          <li>对模型输出做近重复检测，识别背诵工单、模板或评测答案。</li>
+          <li>LoRA/PEFT 也会遗忘；参数少不等于旧能力不受影响。<a class="ref" href="#ref-forgetting">[13]</a></li>
+        </ul>
+
+        <h3>5.4 可复现的开源实现栈</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>层次</th><th>开源项目</th><th>主要用途</th><th>选型提醒</th></tr></thead>
+            <tbody>
+              <tr><td>训练 API</td><td><a href="https://github.com/huggingface/trl">Hugging Face TRL</a></td><td>SFTTrainer、偏好优化与 RL 训练接口</td><td>核对 response template、packing 和 loss mask 实现</td></tr>
+              <tr><td>参数高效</td><td><a href="https://github.com/huggingface/peft">PEFT</a> · <a href="https://github.com/bitsandbytes-foundation/bitsandbytes">bitsandbytes</a></td><td>LoRA/adapter 与低比特训练</td><td>核对模型架构支持、target modules 和量化内核</td></tr>
+              <tr><td>训练编排</td><td><a href="https://github.com/hiyouga/LLaMA-Factory">LLaMA-Factory</a> · <a href="https://github.com/axolotl-ai-cloud/axolotl">Axolotl</a> · <a href="https://github.com/modelscope/ms-swift">ms-swift</a></td><td>配置化数据处理、分布式训练和评测</td><td>先做小样本 mask/模板单元测试，再跑全量</td></tr>
+              <tr><td>Agent RL</td><td><a href="https://github.com/OpenRLHF/OpenRLHF">OpenRLHF</a> · <a href="https://github.com/THUDM/slime">slime</a></td><td>SFT 后的可验证环境策略优化</td><td>RL 属于下一阶段；先完成 verifier 与沙箱</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="agent">
+        <div class="section-kicker"><span>06</span> Agentic SFT</div>
+        <h2>从“回答样本”升级为“可执行轨迹”</h2>
+        <p class="section-intro">Agent SFT 的训练单位不是一句答案，而是模型在环境中的一段可复现交互。每条轨迹应能回答：初始状态是什么、模型看到了什么、调用了什么、环境如何变化、何时终止、结果如何验证。</p>
+
+        <h3>6.1 轨迹的六个必要元素</h3>
+        <div class="grid three">
+          <div class="card"><h4>状态 State</h4><p>任务目标、已知上下文、拓扑、权限、历史动作和剩余预算。</p></div>
+          <div class="card"><h4>动作 Action</h4><p>回答、工具调用、参数、查询、停止或升级人工。</p></div>
+          <div class="card"><h4>观察 Observation</h4><p>工具返回、错误码、环境变化、执行日志，不作为目标 token 模仿。</p></div>
+          <div class="card"><h4>约束 Constraint</h4><p>工具 schema、步骤前置条件、禁止动作、审批边界。</p></div>
+          <div class="card"><h4>终止 Termination</h4><p>成功、失败、信息不足、预算耗尽或必须转人工。</p></div>
+          <div class="card"><h4>验证 Verifier</h4><p>结果状态、关键检查点、证据完整度、成本与安全规则。</p></div>
+        </div>
+
+        <figure class="paper-figure">
+          <div class="panels">
+            <img src="assets/papers/kimi-k2-fig8a.png" alt="Kimi K2 Figure 8a，工具规格、Agent 与任务合成" data-zoom>
+            <img src="assets/papers/kimi-k2-fig8b.png" alt="Kimi K2 Figure 8b，用户模拟、工具模拟、评审与轨迹过滤" data-zoom>
+          </div>
+          <figcaption>
+            <span class="tag original">论文原图</span>
+            <strong>Kimi K2 Figure 8：</strong>真实/合成工具规格进入工具库，进一步生成 Agent、带 rubric 的任务；用户模拟器和有状态工具模拟器展开轨迹，再由 judge 过滤。报告称收集 3,000+ 真实 MCP 工具并合成 20,000+ 领域工具。来源：Moonshot AI, 2025，Figure 8，PDF p.10。<a href="https://arxiv.org/html/2507.20534v2#S3.F8">原文位置</a> · <a href="https://arxiv.org/pdf/2507.20534">PDF</a>。
+          </figcaption>
+        </figure>
+
+        <h3>6.2 四家公开技术路线的共同结构</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>报告</th><th>轨迹/环境构造</th><th>SFT 关键点</th><th>SFT 后续</th><th>公开边界</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><b>Kimi K2</b><a class="ref" href="#ref-kimi">[21]</a></td>
+                <td>真实 + 合成工具 → Agent → rubric 任务 → 用户/工具模拟 → judge 过滤</td>
+                <td>只保留满足成功标准的多轮工具轨迹，相当于大规模拒绝采样</td>
+                <td>可验证奖励、自评 rubric、token budget、PTX loss</td>
+                <td>公开报告与权重；未完整公开生产数据合成系统</td>
+              </tr>
+              <tr>
+                <td><b>DeepSeek-V3.2</b><a class="ref" href="#ref-dsv32">[20]</a></td>
+                <td>数据库 → 工具 → 任务 → 标准解 → verifier → 逐级加难</td>
+                <td>用推理数据与非推理 Agent 数据冷启动“思考中调用工具”</td>
+                <td>专域专家蒸馏 + 统一 mixed GRPO</td>
+                <td>报告公开 1,827 个通用环境、4,417 个任务；完整环境未开源</td>
+              </tr>
+              <tr>
+                <td><b>Qwen3-Coder-Next</b><a class="ref" href="#ref-qwen">[19]</a></td>
+                <td>真实 PR/合成缺陷 → Docker → 验证脚本 → 多 scaffold rollout</td>
+                <td>执行验证轨迹；过滤失败、无终止与畸形 tool call；覆盖多工具模板</td>
+                <td>多轮 RL、专家蒸馏</td>
+                <td>报告称约 800k 可验证任务；MegaFlow 等基础设施未完整开源</td>
+              </tr>
+              <tr>
+                <td><b>GLM-5</b><a class="ref" href="#ref-glm5">[22]</a></td>
+                <td>大量真实、长程、可执行环境轨迹和 10k+ 可验证场景</td>
+                <td>错误动作保留但 loss mask；统一 message-list 轨迹格式</td>
+                <td>Reasoning RL → Agentic RL → General RL → 跨阶段蒸馏</td>
+                <td>公开报告、权重与 slime；完整数据/环境仍不公开</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <figure class="paper-figure">
+          <img src="assets/papers/qwen3-coder-next-fig3.png" alt="Qwen3-Coder-Next Figure 3，同脚手架扩展与跨脚手架迁移" data-zoom>
+          <figcaption>
+            <span class="tag original">论文原图</span>
+            <strong>Qwen3-Coder-Next Figure 3：</strong>同一 scaffold 内，训练 token 增加带来持续提升；跨 OpenHands 与 SWE-Agent 的迁移有限且不对称。对电信 Agent 的直接含义是：不能只训练一种 JSON schema、一个编排器或一种工具返回格式。来源：Qwen Team, 2026，Figure 3，PDF p.5。<a href="https://arxiv.org/html/2603.00729v1#S3.F3">原文位置</a> · <a href="https://arxiv.org/pdf/2603.00729">PDF</a>。
+          </figcaption>
+        </figure>
+
+        <figure class="paper-figure">
+          <img src="assets/papers/deepseek-v32-fig5.png" alt="DeepSeek-V3.2 Figure 5，合成通用 Agent 环境 RL 在 tau2 bench 和 MCP benchmark 的训练曲线" data-zoom>
+          <figcaption>
+            <span class="tag original">论文原图</span>
+            <strong>DeepSeek-V3.2 Figure 5：</strong>仅使用合成通用 Agent 数据的 RL 曲线，在 τ²-bench（含 Telecom）和 MCP 类任务上相对 SFT/专家基线取得提升。它说明“可验证环境合成”能迁移，但仍是该报告特定设置下的结果。来源：DeepSeek-AI, 2025，Figure 5，PDF p.16。<a href="https://arxiv.org/html/2512.02556v1#S4.F5">原文位置</a> · <a href="https://arxiv.org/pdf/2512.02556">PDF</a>。
+          </figcaption>
+        </figure>
+
+        <figure class="paper-figure">
+          <img src="assets/papers/glm5-fig5.png" alt="GLM-5 Figure 5，从预训练、中训练、SFT 到多阶段 RL 与蒸馏的整体流水线" data-zoom>
+          <figcaption>
+            <span class="tag original">论文原图</span>
+            <strong>GLM-5 Figure 5：</strong>基座经过预训练与长上下文/Agent mid-training，后训练从 Overall SFT 开始，再进入 Reasoning RL、Agentic RL、General RL 和 on-policy 跨阶段蒸馏。来源：GLM Team, 2026，Figure 5，PDF p.4。<a href="https://arxiv.org/html/2602.15763v2#S1.F5">原文位置</a> · <a href="https://arxiv.org/pdf/2602.15763">PDF</a>。
+          </figcaption>
+        </figure>
+
+        <h3>6.3 什么情况下 SFT 足够，什么情况下必须进入 RL</h3>
+        <div class="decision">
+          <div class="side sft">
+            <h4>SFT 足够或优先</h4>
+            <ul>
+              <li>存在明确、稳定、可重复的专家示范；</li>
+              <li>工具 schema 和步骤约束确定；</li>
+              <li>主要目标是格式、调用习惯、流程复现；</li>
+              <li>高风险动作必须人工审批，模型只提供建议；</li>
+              <li>没有可靠的环境或 verifier。</li>
+            </ul>
+          </div>
+          <div class="or">VS</div>
+          <div class="side rl">
+            <h4>需要环境 RL</h4>
+            <ul>
+              <li>终局成功比单步模仿更重要；</li>
+              <li>需要在新状态中探索、恢复和重规划；</li>
+              <li>工具有成本、时延和失败概率；</li>
+              <li>存在多个可行路径，要优化长期收益；</li>
+              <li>结果可自动验证，并有安全沙箱。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout warn">
+          <strong>关于“SFT 只会记忆、RL 才会泛化”的谨慎解释：</strong>2025 年论文在文本规则和视觉导航等特定设置中观察到 SFT 的 OOD 泛化弱于 RL；后续工作则表明，提示多样性、长 CoT、数据难度和模型基础能力会显著改变结果。正确结论是“泛化取决于任务、数据、模型与优化条件”，而不是把标题当成普遍定律。<a class="ref" href="#ref-sft-rl">[16]</a><a class="ref" href="#ref-debunk">[17]</a><a class="ref" href="#ref-rethinking">[18]</a>
+        </div>
+      </section>
+
+      <section id="telecom">
+        <div class="section-kicker"><span>07</span> Telecom implementation</div>
+        <h2>如何把某类电信业务流程训练成模型能力</h2>
+        <p class="section-intro">本体图谱提供“对象、关系、流程与证据”；SFT 数据把这些结构映射为“在某个状态下应执行什么行为”。二者不是替代关系，而是训练数据生成和在线执行的上下游。</p>
+
+        <h3>7.1 从现有电信本体到训练环境</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>本体 / 图谱元素</th><th>训练对象中的映射</th><th>运行时作用</th></tr></thead>
+            <tbody>
+              <tr><td><code>Procedure</code> / <code>ProcedureVariant</code></td><td>场景定义、正常路径、故障变体</td><td>任务采样与流程版本选择</td></tr>
+              <tr><td><code>Step</code> / <code>ProcedureStep</code></td><td>候选动作、前置条件、检查点</td><td>约束合法下一步</td></tr>
+              <tr><td><code>FlowEdge</code> / <code>Condition</code></td><td>分支、guard、重试、失败与升级</td><td>环境状态转移与 verifier</td></tr>
+              <tr><td><code>MessageExchange</code></td><td>SIP/Diameter/NGAP 等消息动作与观察</td><td>检查接口、方向、消息顺序和响应码</td></tr>
+              <tr><td>网元 / 接口 / KPI / KQI</td><td>工具参数、观测字段、诊断证据</td><td>连接实时 OSS、日志、PM 和拓扑</td></tr>
+              <tr><td><code>EvidenceSpan</code> 等证据对象</td><td><code>provenance[]</code> 与 <code>evidence_ids[]</code></td><td>生成结论的条款级溯源与版本控制</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>当前项目中的流程建模入口可参考 <a href="../../Telecom_Operations_KG/ontology/core.ttl">ontology/core.ttl</a>；IMS 初始注册实例和 KPI 可参考 <a href="../../Telecom_Operations_KG/catalog/30-ims-service.json">catalog/30-ims-service.json</a>。现有 IMS 注册路径可直接作为“正常轨迹骨架”，但若要训练 Agent，还需要补齐失败分支、guard、环境状态、工具返回和可执行 verifier。</p>
+
+        <div class="diagram">
+          <div class="diagram-head"><strong>自绘图：从知识图谱到可训练轨迹</strong><span class="tag drawn">电信场景映射</span></div>
+          <div class="flow">
+            <div class="flow-step"><b>KG</b><strong>抽取场景骨架</strong><small>网元、接口、消息、步骤、KPI、证据。</small></div>
+            <div class="flow-step"><b>Variant</b><strong>枚举变体</strong><small>正常、超时、拒绝、配置错误、工具失败、信息缺失。</small></div>
+            <div class="flow-step"><b>Env</b><strong>构造环境</strong><small>状态数据库、工具、故障注入、权限和成本。</small></div>
+            <div class="flow-step"><b>Rollout</b><strong>生成轨迹</strong><small>专家演示、教师模型、多模板、多次采样。</small></div>
+            <div class="flow-step"><b>Verify</b><strong>执行过滤</strong><small>协议状态机、结果检查、证据和安全规则。</small></div>
+            <div class="flow-step"><b>Train</b><strong>SFT / RL</strong><small>先模仿稳定策略，再在沙箱优化长期行为。</small></div>
+          </div>
+        </div>
+
+        <h3 id="ims-case">7.2 具体案例：IMS 注册失败诊断</h3>
+        <p>目标不是让模型背诵 11 步理想注册，而是让它在不同观测下定位故障、选择最少必要工具、给出证据，并在需要变更网络时停止自动执行。</p>
+
+        <div class="grid two">
+          <div class="card">
+            <h4>可观测状态</h4>
+            <ul>
+              <li>IMS 注册成功率及站点/区域基线；</li>
+              <li>SIP REGISTER / 401 / 200 消息链；</li>
+              <li>Cx UAR/UAA、MAR/MAA、SAR/SAA；</li>
+              <li>P-CSCF、I-CSCF、S-CSCF、HSS/UDM 告警；</li>
+              <li>Diameter peer、DNS、路由、证书、配置差异；</li>
+              <li>变更窗口与历史工单。</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>允许工具</h4>
+            <ul>
+              <li><code>query_kpi</code> / <code>query_alarm</code>；</li>
+              <li><code>get_sip_trace</code> / <code>get_diameter_trace</code>；</li>
+              <li><code>query_topology</code> / <code>compare_config</code>；</li>
+              <li><code>query_kg_evidence</code>；</li>
+              <li><code>run_readonly_check</code>；</li>
+              <li><code>escalate_to_human</code>。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="diagram">
+          <div class="diagram-head"><strong>自绘图：IMS 注册失败诊断的简化状态流</strong><span class="tag drawn">示意，不替代协议状态机</span></div>
+          <svg viewBox="0 0 1120 520" role="img" aria-labelledby="imsTitle imsDesc" style="width:100%;height:auto;display:block">
+            <title id="imsTitle">IMS 注册失败诊断流程</title>
+            <desc id="imsDesc">从确认 KPI 异常开始，按 SIP 到达情况、401 挑战、Cx 响应和鉴权结果分支，最终给出证据、处置建议或升级人工。</desc>
+            <defs>
+              <marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#087f8c"/></marker>
+              <filter id="shadowSvg" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity=".12"/></filter>
+            </defs>
+            <g font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif" font-size="15">
+              <g filter="url(#shadowSvg)">
+                <rect x="35" y="205" width="155" height="86" rx="15" fill="#0d2e42"/>
+                <text x="112" y="238" text-anchor="middle" fill="#fff" font-weight="700">确认 KPI 异常</text>
+                <text x="112" y="264" text-anchor="middle" fill="#cce8ed" font-size="13">范围 / 时间 / 基线</text>
+              </g>
+              <path d="M190 248 H250" stroke="#087f8c" stroke-width="3" marker-end="url(#arrow)"/>
+              <g filter="url(#shadowSvg)">
+                <path d="M330 175 L410 248 L330 321 L250 248 Z" fill="#dff6f8" stroke="#087f8c" stroke-width="2"/>
+                <text x="330" y="243" text-anchor="middle" fill="#12303e" font-weight="700">REGISTER</text>
+                <text x="330" y="265" text-anchor="middle" fill="#12303e">到达 P-CSCF？</text>
+              </g>
+              <path d="M330 175 V95 H470" stroke="#087f8c" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+              <text x="350" y="118" fill="#b43b43" font-weight="700">否</text>
+              <g filter="url(#shadowSvg)">
+                <rect x="470" y="52" width="205" height="86" rx="15" fill="#fff0f1" stroke="#b43b43"/>
+                <text x="572" y="83" text-anchor="middle" fill="#72272d" font-weight="700">接入 / DNS / P-CSCF</text>
+                <text x="572" y="108" text-anchor="middle" fill="#72272d" font-size="13">查 P-CSCF 发现与可达性</text>
+              </g>
+              <path d="M410 248 H470" stroke="#087f8c" stroke-width="3" marker-end="url(#arrow)"/>
+              <text x="432" y="235" fill="#2b7b55" font-weight="700">是</text>
+              <g filter="url(#shadowSvg)">
+                <path d="M550 175 L630 248 L550 321 L470 248 Z" fill="#dff6f8" stroke="#087f8c" stroke-width="2"/>
+                <text x="550" y="243" text-anchor="middle" fill="#12303e" font-weight="700">收到 401</text>
+                <text x="550" y="265" text-anchor="middle" fill="#12303e">挑战？</text>
+              </g>
+              <path d="M550 321 V410 H690" stroke="#087f8c" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+              <text x="570" y="392" fill="#b43b43" font-weight="700">否</text>
+              <g filter="url(#shadowSvg)">
+                <rect x="690" y="367" width="205" height="86" rx="15" fill="#fff0f1" stroke="#b43b43"/>
+                <text x="792" y="398" text-anchor="middle" fill="#72272d" font-weight="700">Cx / 路由 / S-CSCF</text>
+                <text x="792" y="423" text-anchor="middle" fill="#72272d" font-size="13">查 UAR/UAA、MAR/MAA</text>
+              </g>
+              <path d="M630 248 H690" stroke="#087f8c" stroke-width="3" marker-end="url(#arrow)"/>
+              <text x="650" y="235" fill="#2b7b55" font-weight="700">是</text>
+              <g filter="url(#shadowSvg)">
+                <path d="M770 175 L850 248 L770 321 L690 248 Z" fill="#dff6f8" stroke="#087f8c" stroke-width="2"/>
+                <text x="770" y="243" text-anchor="middle" fill="#12303e" font-weight="700">鉴权后</text>
+                <text x="770" y="265" text-anchor="middle" fill="#12303e">收到 200？</text>
+              </g>
+              <path d="M770 175 V95 H915" stroke="#087f8c" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+              <text x="790" y="118" fill="#2b7b55" font-weight="700">是</text>
+              <g filter="url(#shadowSvg)">
+                <rect x="915" y="52" width="170" height="86" rx="15" fill="#eaf7ef" stroke="#2b7b55"/>
+                <text x="1000" y="83" text-anchor="middle" fill="#1f5b40" font-weight="700">流程成功</text>
+                <text x="1000" y="108" text-anchor="middle" fill="#1f5b40" font-size="13">校验 KPI 恢复</text>
+              </g>
+              <path d="M850 248 H915" stroke="#087f8c" stroke-width="3" marker-end="url(#arrow)"/>
+              <text x="870" y="235" fill="#b43b43" font-weight="700">否</text>
+              <g filter="url(#shadowSvg)">
+                <rect x="915" y="205" width="170" height="86" rx="15" fill="#fff7e7" stroke="#d48716"/>
+                <text x="1000" y="236" text-anchor="middle" fill="#7a4e0d" font-weight="700">鉴权 / SAR / 用户数据</text>
+                <text x="1000" y="261" text-anchor="middle" fill="#7a4e0d" font-size="13">查响应码与超时</text>
+              </g>
+              <path d="M895 410 H1000 V330" stroke="#087f8c" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+              <path d="M1000 291 V330" stroke="#087f8c" stroke-width="3" marker-end="url(#arrow)"/>
+              <g filter="url(#shadowSvg)">
+                <rect x="890" y="330" width="220" height="130" rx="15" fill="#152f3c" stroke="#087f8c"/>
+                <text x="1000" y="364" text-anchor="middle" fill="#fff" font-weight="700">输出可审计结论</text>
+                <text x="1000" y="392" text-anchor="middle" fill="#cce8ed" font-size="13">根因假设 + 证据 ID</text>
+                <text x="1000" y="415" text-anchor="middle" fill="#cce8ed" font-size="13">只读检查 / 处置建议</text>
+                <text x="1000" y="438" text-anchor="middle" fill="#cce8ed" font-size="13">高风险动作 → 升级人工</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+
+        <h3>7.3 训练集应覆盖的变体矩阵</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>阶段</th><th>正常</th><th>异常/长尾</th><th>工具/环境故障</th><th>安全边界</th></tr></thead>
+            <tbody>
+              <tr><td>接入与发现</td><td>UE 获得 P-CSCF 并发送 REGISTER</td><td>DNS/NAPTR/SRV 错误、P-CSCF 不可达</td><td>拓扑查询超时、数据陈旧</td><td>不得自动改 APN/路由</td></tr>
+              <tr><td>首次 REGISTER</td><td>经 P/I-CSCF 到达归属域</td><td>403、404、408、路由环路</td><td>SIP 解码失败、抓包缺段</td><td>证据不足时不得断言根因</td></tr>
+              <tr><td>Cx 鉴权</td><td>UAR/UAA、MAR/MAA 正常</td><td>Diameter peer down、超时、用户未知</td><td>HSS 数据只读接口拒绝</td><td>不得修改用户数据</td></tr>
+              <tr><td>鉴权后注册</td><td>SAR/SAA 后返回 200 OK</td><td>AKA 失败、同步失败、S-CSCF 状态异常</td><td>配置对比工具部分失败</td><td>重启/切换必须审批</td></tr>
+              <tr><td>验证与结束</td><td>KPI 和抽样注册恢复</td><td>局部恢复、复发、跨站点扩散</td><td>验证器不确定</td><td>不确定或高影响则升级人工</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>7.4 电信训练样本的证据字段</h3>
+        <div class="grid three">
+          <div class="card"><h4>规范证据</h4><p><code>standard_family</code>、<code>edition</code>、<code>clause</code>、<code>evidence_span</code>、文档哈希。</p></div>
+          <div class="card"><h4>观测证据</h4><p>KPI/告警/信令/配置/拓扑的查询 ID、窗口、范围、采集时间和数据质量。</p></div>
+          <div class="card"><h4>训练证据</h4><p>轨迹生成器、教师模型、prompt 版本、环境版本、随机种子、verifier 版本与结果。</p></div>
+        </div>
+      </section>
+
+      <section id="evaluation">
+        <div class="section-kicker"><span>08</span> Evaluation &amp; release gates</div>
+        <h2>评测：先确定性检查，再看结果，再让人审高风险样本</h2>
+        <p class="section-intro">只用 BLEU、ROUGE 或总体 loss 无法评价 Agent。评测应从“输出像不像”转向“动作是否合法、过程是否可执行、结果是否正确、证据是否充分、是否守住安全边界”。</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>层级</th><th>指标</th><th>判定方式</th><th>典型失败</th></tr></thead>
+            <tbody>
+              <tr><td>格式</td><td>tool-call schema valid、JSON 可解析、必填字段</td><td>确定性 checker</td><td>参数名错、枚举非法、自然语言混入 JSON</td></tr>
+              <tr><td>动作</td><td>合法动作率、无效调用率、重复调用率</td><td>工具注册表 + 状态机</td><td>调用不存在工具、参数越权、死循环</td></tr>
+              <tr><td>流程</td><td>关键检查点覆盖、顺序约束、分支正确率</td><td>本体流程 / verifier</td><td>跳过前置条件、在错误状态执行动作</td></tr>
+              <tr><td>结果</td><td>任务成功率、根因 Top-k、恢复成功率</td><td>环境终态 / 专家金标</td><td>过程看似合理但未解决任务</td></tr>
+              <tr><td>证据</td><td>引用完整率、证据蕴含、版本一致性</td><td>证据 ID + 规则 + 人工抽检</td><td>条款不支持结论、引用过期版本</td></tr>
+              <tr><td>效率</td><td>工具次数、token、时延、关键路径步骤</td><td>轨迹日志</td><td>过度查询、成本高、长链无收益</td></tr>
+              <tr><td>安全</td><td>越权动作、审批绕过、应升级未升级</td><td>红线规则 + 对抗测试</td><td>擅自重启、修改生产配置、泄露用户数据</td></tr>
+              <tr><td>泛化</td><td>新拓扑、新故障组合、新工具模板</td><td>按 split key 的 OOD 套件</td><td>只会训练模板、跨 scaffold 失效</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>8.1 推荐评测顺序</h3>
+        <ol>
+          <li><b>确定性 checker：</b>格式、schema、枚举、顺序、禁止动作。IFEval 证明了可验证指令约束的价值；电信场景可把 checker 扩展到工具与流程。<a class="ref" href="#ref-ifeval">[14]</a></li>
+          <li><b>环境执行：</b>工具是否能真实运行，终态是否满足成功条件。</li>
+          <li><b>规则与结果模型：</b>对证据覆盖、根因、恢复质量和 rubric 打分。</li>
+          <li><b>LLM-as-a-Judge：</b>仅用于难以规则化的质量维度；交换答案顺序，缓解位置偏差。<a class="ref" href="#ref-mtbench">[15]</a></li>
+          <li><b>专家复核：</b>高风险、证据冲突、模型不确定和发布前抽样。</li>
+        </ol>
+
+        <h3>8.2 上线门禁</h3>
+        <div class="grid three">
+          <div class="card"><h4>Gate 1 · 数据</h4><p>许可、脱敏、去重、去污染、证据覆盖、split 冻结。</p></div>
+          <div class="card"><h4>Gate 2 · 离线</h4><p>领域成功率、OOD、工具合法率、通用能力回归。</p></div>
+          <div class="card"><h4>Gate 3 · 沙箱</h4><p>异常恢复、工具失败、长轨迹、成本与 reward hacking。</p></div>
+          <div class="card"><h4>Gate 4 · 影子</h4><p>只读观察真实流量，不影响网络；与专家决策对比。</p></div>
+          <div class="card"><h4>Gate 5 · 半闭环</h4><p>只执行低风险动作；其他动作必须人工审批。</p></div>
+          <div class="card"><h4>Gate 6 · 受限闭环</h4><p>最小权限、回滚、审计、速率限制、实时停止开关。</p></div>
+        </div>
+      </section>
+
+      <section id="roadmap">
+        <div class="section-kicker"><span>09</span> Delivery roadmap</div>
+        <h2>建议实施路线：从一个场景做成可验证闭环</h2>
+        <p class="section-intro">先选择边界清晰、结果可验证、风险可控的业务场景。IMS 注册失败诊断比“全网自治运维”更适合首个试点，因为消息链、网元角色、KPI 和失败状态相对可定义。</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>阶段</th><th>交付物</th><th>建议的首期规模</th><th>退出条件</th></tr></thead>
+            <tbody>
+              <tr><td><b>0. 任务规格</b></td><td>状态、工具、权限、成功/失败终态、禁止动作、指标</td><td>1 个主场景，10–30 个根因/变体</td><td>专家能在同一环境中一致判定成功</td></tr>
+              <tr><td><b>1. 黄金数据</b></td><td>专家演示、真实工单重建、证据链、dataset card</td><td>500–2,000 条高质量轨迹</td><td>关键路径与异常分支覆盖达标</td></tr>
+              <tr><td><b>2. 合成扩展</b></td><td>用户模拟、工具模拟、故障注入、多模板轨迹</td><td>5,000–50,000 条验证后轨迹</td><td>verifier 通过且分桶分布可解释</td></tr>
+              <tr><td><b>3. SFT</b></td><td>基线、LoRA/QLoRA/full 对照、checkpoint、回归报告</td><td>先小模型/小数据消融，再扩容</td><td>工具合法率、流程成功率和通用回归达标</td></tr>
+              <tr><td><b>4. 环境 RL</b></td><td>只对有 verifier 的难例做策略优化</td><td>从高价值长程场景开始</td><td>相对 SFT 的 OOD/恢复增益稳定且无投机</td></tr>
+              <tr><td><b>5. 生产验证</b></td><td>影子→半闭环→受限闭环</td><td>逐站点/逐动作授权</td><td>安全、审计、回滚与人工接管全部通过</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warn">
+          <strong>规模数字是试点起点，不是行业标准。</strong>如果 500 条专家轨迹已经覆盖所有关键决策，盲目扩到 50,000 条可能只是在复制模板；如果场景有大量组合故障，则需要更多环境状态而不是更多同质文本。
+        </div>
+
+        <h3>首期实验矩阵</h3>
+        <div class="grid two">
+          <div class="card">
+            <h4>数据消融</h4>
+            <ul>
+              <li>黄金数据 only；</li>
+              <li>黄金 + 验证后合成；</li>
+              <li>移除失败恢复轨迹；</li>
+              <li>单工具模板 vs 多工具模板；</li>
+              <li>均匀采样 vs 能力桶配比。</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>训练消融</h4>
+            <ul>
+              <li>Full / LoRA / QLoRA；</li>
+              <li>target-only vs 全文本监督；</li>
+              <li>按 token vs 按样本归一化；</li>
+              <li>1 / 2 / 3 epochs；</li>
+              <li>无 packing vs 正确隔离 packing。</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="conclusion">
+        <div class="section-kicker"><span>10</span> Final assessment</div>
+        <h2>结论</h2>
+        <p>SFT 是把基础模型转成“可用助手 / 可控 Agent”的关键第一步，但高质量 SFT 不是把领域文档转换成问答后直接训练。完整工程至少包括：任务边界、数据结构、证据、验证器、损失掩码、数据配比、去污染、训练消融和多层评测。</p>
+        <p>对电信运维，最稳妥的架构是：</p>
+        <div class="equation">
+          可更新事实留在 KG / RAG / 工具中<br>
+          ＋ 用 SFT 学习流程、工具、证据与安全行为<br>
+          ＋ 用可验证环境 RL 学习长程策略和恢复
+        </div>
+        <p>若以 IMS 注册失败诊断为首个场景，现有本体已经能提供网元、消息、步骤和 KPI 的骨架；下一步的关键不是继续堆更多类，而是把分支条件、状态转移、失败恢复、工具接口、证据和 verifier 实例化，形成可执行的训练与评测环境。</p>
+      </section>
+
+      <section id="references">
+        <div class="section-kicker"><span>R</span> Primary references</div>
+        <h2>一手论文与技术报告</h2>
+        <p class="section-intro">下列来源均为论文、作者技术报告、官方项目或正式论文页面。报告正文不依赖二手媒体结论。</p>
+        <ol class="references">
+          <li id="ref-flan"><b>Wei et al.</b>, “Finetuned Language Models Are Zero-Shot Learners,” ICLR 2022. <span class="meta">指令微调与未见任务零样本泛化。</span> <a href="https://arxiv.org/abs/2109.01652">arXiv</a></li>
+          <li id="ref-t0"><b>Sanh et al.</b>, “Multitask Prompted Training Enables Zero-Shot Task Generalization,” ICLR 2022. <span class="meta">多数据集、多 prompt 模板与提示鲁棒性。</span> <a href="https://arxiv.org/abs/2110.08207">arXiv</a></li>
+          <li id="ref-flan-collection"><b>Longpre et al.</b>, “The Flan Collection: Designing Data and Methods for Effective Instruction Tuning,” ICML 2023. <span class="meta">任务平衡、zero/few-shot 与 CoT 数据混合。</span> <a href="https://arxiv.org/abs/2301.13688">arXiv</a></li>
+          <li id="ref-instructgpt"><b>Ouyang et al.</b>, “Training Language Models to Follow Instructions with Human Feedback,” NeurIPS 2022. <span class="meta">SFT → RM → PPO 的经典后训练流水线。</span> <a href="https://arxiv.org/abs/2203.02155">arXiv</a></li>
+          <li id="ref-self-instruct"><b>Wang et al.</b>, “Self-Instruct: Aligning Language Models with Self-Generated Instructions,” ACL 2023. <span class="meta">种子任务、生成、过滤和 response-only loss。</span> <a href="https://arxiv.org/abs/2212.10560">arXiv</a></li>
+          <li id="ref-lima"><b>Zhou et al.</b>, “LIMA: Less Is More for Alignment,” NeurIPS 2023. <span class="meta">约千条高质量数据及质量/多样性消融。</span> <a href="https://arxiv.org/abs/2305.11206">arXiv</a></li>
+          <li id="ref-alpagasus"><b>Chen et al.</b>, “AlpaGasus: Training A Better Alpaca with Fewer Data,” ICLR 2024. <span class="meta">LLM 评分的数据过滤；也需注意 judge 偏差。</span> <a href="https://arxiv.org/abs/2307.08701">arXiv</a></li>
+          <li id="ref-less"><b>Xia et al.</b>, “LESS: Selecting Influential Data for Targeted Instruction Tuning,” ICML 2024. <span class="meta">以目标任务梯度选择少量高影响训练数据。</span> <a href="https://proceedings.mlr.press/v235/xia24c.html">PMLR</a></li>
+          <li id="ref-tulu3"><b>Lambert et al.</b>, “Tülu 3: Pushing Frontiers in Open Language Model Post-Training,” 2024. <span class="meta">开放 SFT 数据配方、去污染、消融、损失聚合和 RLVR。</span> <a href="https://arxiv.org/abs/2411.15124">arXiv</a> · <a href="https://allenai.org/blog/tulu-3-technical">Ai2 技术博客</a></li>
+          <li id="ref-lora"><b>Hu et al.</b>, “LoRA: Low-Rank Adaptation of Large Language Models,” ICLR 2022. <span class="meta">冻结基座并训练低秩更新。</span> <a href="https://arxiv.org/abs/2106.09685">arXiv</a></li>
+          <li id="ref-qlora"><b>Dettmers et al.</b>, “QLoRA: Efficient Finetuning of Quantized LLMs,” NeurIPS 2023. <span class="meta">4-bit 基座、LoRA、NF4、double quantization 与 paged optimizer。</span> <a href="https://arxiv.org/abs/2305.14314">arXiv</a></li>
+          <li id="ref-packing"><b>Krell et al.</b>, “Efficient Sequence Packing without Cross-contamination,” 2021. <span class="meta">block-diagonal attention、position 与 loss 隔离。</span> <a href="https://arxiv.org/abs/2107.02027">arXiv</a></li>
+          <li id="ref-forgetting"><b>Kalajdzievski</b>, “Scaling Laws for Forgetting When Fine-Tuning Large Language Models,” 2024. <span class="meta">LoRA/PEFT 不自动消除遗忘。</span> <a href="https://arxiv.org/abs/2401.05605">arXiv</a></li>
+          <li id="ref-ifeval"><b>Zhou et al.</b>, “Instruction-Following Evaluation for Large Language Models,” 2023. <span class="meta">可验证指令与确定性 checker。</span> <a href="https://arxiv.org/abs/2311.07911">arXiv</a> · <a href="https://github.com/google-research/google-research/tree/master/instruction_following_eval">代码</a></li>
+          <li id="ref-mtbench"><b>Zheng et al.</b>, “Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena,” NeurIPS 2023 Datasets and Benchmarks. <span class="meta">多轮评测、位置偏差及双顺序判定。</span> <a href="https://arxiv.org/abs/2306.05685">arXiv</a></li>
+          <li id="ref-sft-rl"><b>“SFT Memorizes, RL Generalizes: A Comparative Study of Foundation Model Post-training.”</b> 2025. <span class="meta">特定文本规则和视觉环境中的 SFT/RL 泛化对照。</span> <a href="https://arxiv.org/abs/2501.17161">arXiv</a></li>
+          <li id="ref-debunk"><b>“Debunking the Myth of SFT Generalization.”</b> 2025. <span class="meta">提示多样性和 CoT 对 SFT 泛化结论的影响。</span> <a href="https://arxiv.org/abs/2510.00237">arXiv</a></li>
+          <li id="ref-rethinking"><b>“Rethinking Generalization in Reasoning SFT.”</b> 2026. <span class="meta">模型能力、数据和优化条件下的推理 SFT 泛化。</span> <a href="https://arxiv.org/abs/2604.06628">arXiv</a></li>
+          <li id="ref-qwen"><b>Qwen Team</b>, “Qwen3-Coder-Next Technical Report,” 2026. <span class="meta">可验证软件环境、多 scaffold 轨迹、工具模板和执行过滤。</span> <a href="https://arxiv.org/html/2603.00729">HTML</a> · <a href="https://arxiv.org/abs/2603.00729">arXiv</a></li>
+          <li id="ref-dsv32"><b>DeepSeek-AI</b>, “DeepSeek-V3.2 Technical Report,” 2025. <span class="meta">合成通用 Agent 环境、工具、任务、verifier 和 mixed GRPO。</span> <a href="https://arxiv.org/html/2512.02556">HTML</a> · <a href="https://arxiv.org/abs/2512.02556">arXiv</a></li>
+          <li id="ref-kimi"><b>Moonshot AI</b>, “Kimi K2: Open Agentic Intelligence,” 2025. <span class="meta">工具库、Agent/任务合成、用户/工具模拟与轨迹过滤。</span> <a href="https://arxiv.org/html/2507.20534">HTML</a> · <a href="https://arxiv.org/abs/2507.20534">arXiv</a></li>
+          <li id="ref-glm5"><b>GLM Team</b>, “GLM-5: from Vibe Coding to Agentic Engineering,” 2026. <span class="meta">长程轨迹、错误动作 loss masking、异步 Agent RL 与跨阶段蒸馏。</span> <a href="https://arxiv.org/html/2602.15763">HTML</a> · <a href="https://arxiv.org/abs/2602.15763">arXiv</a></li>
+          <li id="ref-deepseek-r1"><b>DeepSeek-AI</b>, “DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning,” 2025. <span class="meta">冷启动 SFT、GRPO、拒绝采样与后续全场景 RL。</span> <a href="https://arxiv.org/abs/2501.12948">arXiv</a></li>
+          <li id="ref-kimi-k25"><b>Moonshot AI</b>, “Kimi K2.5 Technical Report,” 2026. <span class="meta">PARL：训练 orchestrator、冻结 subagents，并优化真正的并行执行。</span> <a href="https://arxiv.org/html/2602.02276">HTML</a> · <a href="https://arxiv.org/abs/2602.02276">arXiv</a></li>
+        </ol>
+      </section>
+
+      <section id="provenance">
+        <div class="section-kicker"><span>P</span> Provenance &amp; reuse</div>
+        <h2>证据溯源与图表复用说明</h2>
+        <ul>
+          <li>每张论文原图均在图注中列出论文、作者、年份、Figure 编号、PDF 页码和原文链接。</li>
+          <li>机器可读清单见 <a href="sources.json">sources.json</a>，包含本地文件路径、来源 URL 和抽取方式。</li>
+          <li>标为“自绘图”的流程图是根据多篇公开方法归纳绘制，不是论文原图的翻译或复刻。</li>
+          <li>论文原图仅用于本报告的研究评论和方法说明，版权归原作者或出版方；公开发布或商业分发前应逐篇复核许可证和出版方条款。</li>
+          <li>厂商报告通常公开模型权重和方法说明，但没有完整公开训练数据、生产环境和全部基础设施。本报告将“公开方法”与“可完整复现”明确区分。</li>
+        </ul>
+        <div class="callout risk">
+          <strong>证据有效期：</strong>本报告资料复核日期为 2026-07-24。软件项目、模型版本、许可和官方链接可能变化；实施前应重新检查当前版本。
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="footer">
+    SFT 技术报告 · 版本 1.0 · 2026-07-24<br>
+    面向研究与方案设计，不替代生产网络变更审批、厂商手册或正式标准条款。
+  </footer>
+
+  <div class="floating" aria-label="页面工具">
+    <button class="btn" id="themeButton" type="button" title="切换明暗主题" aria-label="切换明暗主题">◐</button>
+    <a class="btn" href="#top" title="回到顶部" aria-label="回到顶部">↑</a>
+  </div>
+
+  <dialog id="zoomDialog">
+    <div class="zoom-bar">
+      <strong id="zoomTitle">论文原图</strong>
+      <button class="btn" id="closeZoom" type="button">关闭</button>
+    </div>
+    <div class="zoom-body"><img id="zoomImage" alt=""></div>
+  </dialog>
+
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const themeButton = document.getElementById('themeButton');
+      const stored = localStorage.getItem('sft-report-theme');
+      if (stored) root.dataset.theme = stored;
+      themeButton.addEventListener('click', () => {
+        const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+        root.dataset.theme = next;
+        localStorage.setItem('sft-report-theme', next);
+      });
+
+      const links = [...document.querySelectorAll('.toc a[href^="#"]')];
+      const sections = links
+        .map(a => document.querySelector(a.getAttribute('href')))
+        .filter(Boolean);
+      const observer = new IntersectionObserver(entries => {
+        const visible = entries
+          .filter(e => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (!visible) return;
+        links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + visible.target.id));
+      }, { rootMargin: '-18% 0px -72% 0px', threshold: [0, .1, .4] });
+      sections.forEach(section => observer.observe(section));
+
+      const dialog = document.getElementById('zoomDialog');
+      const zoomImage = document.getElementById('zoomImage');
+      const zoomTitle = document.getElementById('zoomTitle');
+      document.querySelectorAll('img[data-zoom]').forEach(img => {
+        img.addEventListener('click', () => {
+          zoomImage.src = img.src;
+          zoomImage.alt = img.alt;
+          zoomTitle.textContent = img.alt || '论文原图';
+          dialog.showModal();
+        });
+      });
+      document.getElementById('closeZoom').addEventListener('click', () => dialog.close());
+      dialog.addEventListener('click', event => {
+        if (event.target === dialog) dialog.close();
+      });
+    })();
+  </script>
+</body>
+</html>
