@@ -1,0 +1,569 @@
+@prefix id: <https://example.org/tokg/id/> .
+@prefix tokg: <https://example.org/tokg/ontology#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.org/tokg/shapes>
+    a owl:Ontology ;
+    dcterms:title "Telecom Operations Knowledge Graph SHACL shapes"@en ;
+    owl:versionInfo "1.0.0" .
+
+#################################################################
+# Shared identity rules
+#################################################################
+
+tokg:ConceptShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:Concept ;
+    sh:nodeKind sh:IRI ;
+    sh:pattern "^https://example\\.org/tokg/id/" ;
+    sh:property [
+        sh:path tokg:canonicalKey ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:minLength 1 ;
+        sh:message "Every telecom concept must have one non-empty canonical key."@en
+    ] .
+
+#################################################################
+# Standards, artifacts, evidence and assertions
+#################################################################
+
+tokg:DocumentFamilyShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:DocumentFamily ;
+    sh:nodeKind sh:IRI ;
+    sh:pattern "^https://example\\.org/tokg/id/" ;
+    sh:property [ sh:path tokg:standardBody ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:StandardBody ] ;
+    sh:property [ sh:path tokg:documentType ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [ sh:path tokg:documentNumber ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [ sh:path dcterms:title ; sh:minCount 1 ; sh:maxCount 1 ] .
+
+tokg:DocumentEditionShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:DocumentEdition ;
+    sh:nodeKind sh:IRI ;
+    sh:pattern "^https://example\\.org/tokg/id/" ;
+    sh:property [ sh:path tokg:editionOf ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:DocumentFamily ] ;
+    sh:property [ sh:path tokg:versionString ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [ sh:path tokg:language ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:language ] ;
+    sh:property [
+        sh:path tokg:lifecycleStatus ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( id:lifecycle-draft id:lifecycle-approved id:lifecycle-in-force id:lifecycle-superseded id:lifecycle-withdrawn )
+    ] ;
+    sh:property [ sh:path tokg:approvalDate ; sh:maxCount 1 ; sh:datatype xsd:date ] ;
+    sh:sparql [
+        sh:message "An edition cannot be its own predecessor."@en ;
+        sh:select """
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE { $this tokg:predecessorEdition $this . }
+        """
+    ] .
+
+tokg:DocumentArtifactShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:DocumentArtifact ;
+    sh:nodeKind sh:IRI ;
+    sh:pattern "^https://example\\.org/tokg/id/artifact/sha256/[0-9a-f]{64}$" ;
+    sh:property [ sh:path tokg:artifactOfEdition ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:DocumentEdition ] ;
+    sh:property [ sh:path tokg:sourceUrl ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:anyURI ] ;
+    sh:property [ sh:path tokg:retrievedAt ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:dateTime ] ;
+    sh:property [ sh:path tokg:mediaType ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:pattern "^[^/\\s]+/[^/\\s]+$" ] ;
+    sh:property [ sh:path tokg:byteSize ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [
+        sh:path tokg:sha256 ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:string ; sh:pattern "^[0-9a-f]{64}$" ;
+        sh:message "Artifact SHA-256 must be 64 lower-case hexadecimal characters."@en
+    ] .
+
+tokg:DocumentPartShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:DocumentPart ;
+    sh:nodeKind sh:IRI ;
+    sh:property [ sh:path tokg:partOfArtifact ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:DocumentArtifact ] ;
+    sh:property [ sh:path tokg:partKind ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path tokg:canonicalLocator ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [
+        sh:path tokg:normativeStatus ; sh:maxCount 1 ;
+        sh:in ( id:normative id:informative id:normative-mixed id:normative-unknown )
+    ] .
+
+tokg:EvidenceSpanShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:EvidenceSpan ;
+    sh:nodeKind sh:IRI ;
+    sh:pattern "^https://example\\.org/tokg/id/evidence/sha256/[0-9a-f]{64}$" ;
+    sh:property [ sh:path tokg:evidenceArtifact ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:DocumentArtifact ] ;
+    sh:property [ sh:path tokg:evidencePart ; sh:maxCount 1 ; sh:class tokg:DocumentPart ] ;
+    sh:property [
+        sh:path tokg:normalizedTextSha256 ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:datatype xsd:string ; sh:pattern "^[0-9a-f]{64}$" ;
+        sh:message "Evidence must carry a normalized-text SHA-256."@en
+    ] ;
+    sh:property [ sh:path tokg:exactTextSha256 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:pattern "^[0-9a-f]{64}$" ] ;
+    sh:property [ sh:path tokg:startChar ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path tokg:endChar ; sh:maxCount 1 ; sh:datatype xsd:positiveInteger ] ;
+    sh:property [ sh:path tokg:pdfPageIndex ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:property [ sh:path tokg:reportedLocatorText ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [ sh:path tokg:fragmentIdentifier ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [ sh:path tokg:resolvedFragmentLocator ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [ sh:path tokg:resolvedSectionNumber ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:or (
+        [ sh:property [ sh:path tokg:evidencePart ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path tokg:locatorText ; sh:minCount 1 ; sh:minLength 1 ] ]
+        [ sh:property [ sh:path tokg:startChar ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path tokg:pdfPageIndex ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path tokg:xmlXPath ; sh:minCount 1 ; sh:minLength 1 ] ]
+        [ sh:property [ sh:path tokg:htmlSelector ; sh:minCount 1 ; sh:minLength 1 ] ]
+    ) ;
+    sh:sparql [
+        sh:message "startChar and endChar must occur together."@en ;
+        sh:select """
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              FILTER (
+                EXISTS { $this tokg:startChar ?s } !=
+                EXISTS { $this tokg:endChar ?e }
+              )
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "Evidence startChar must be smaller than endChar."@en ;
+        sh:select """
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:startChar ?start ; tokg:endChar ?end .
+              FILTER (?start >= ?end)
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "An exact quote requires its exact-text SHA-256."@en ;
+        sh:select """
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:exactQuote ?quote .
+              FILTER NOT EXISTS { $this tokg:exactTextSha256 ?hash }
+            }
+        """
+    ] .
+
+tokg:AssertionShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:Assertion ;
+    sh:nodeKind sh:IRI ;
+    sh:pattern "^https://example\\.org/tokg/id/assertion/sha256/[0-9a-f]{64}$" ;
+    sh:property [ sh:path tokg:assertionSubject ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+    sh:property [ sh:path tokg:assertionPredicate ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+    sh:xone (
+        [
+            sh:property [ sh:path tokg:assertionObject ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+            sh:property [ sh:path tokg:literalObject ; sh:maxCount 0 ]
+        ]
+        [
+            sh:property [ sh:path tokg:literalObject ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:Literal ] ;
+            sh:property [ sh:path tokg:assertionObject ; sh:maxCount 0 ]
+        ]
+    ) ;
+    sh:property [ sh:path tokg:polarity ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( id:polarity-positive id:polarity-negative ) ] ;
+    sh:property [
+        sh:path tokg:assertionModality ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( id:assertion-modality-asserted id:assertion-modality-derived id:assertion-modality-required id:assertion-modality-permitted id:assertion-modality-prohibited id:assertion-modality-recommended id:assertion-modality-inferred )
+    ] ;
+    sh:property [
+        sh:path tokg:assertionStatus ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( id:assertion-status-proposed id:assertion-status-extracted id:assertion-status-reviewed id:assertion-status-accepted id:assertion-status-rejected id:assertion-status-deprecated )
+    ] ;
+    sh:property [ sh:path tokg:confidence ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:decimal ; sh:minInclusive 0 ; sh:maxInclusive 1 ] ;
+    sh:property [ sh:path tokg:applicabilityScope ; sh:minCount 1 ; sh:nodeKind sh:IRI ] ;
+    sh:property [ sh:path tokg:derivationRule ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [ sh:path tokg:generatedBy ; sh:minCount 1 ; sh:class tokg:ExtractionActivity ] ;
+    sh:sparql [
+        sh:message "Reviewed or accepted assertions require supporting evidence."@en ;
+        sh:select """
+            PREFIX id: <https://example.org/tokg/id/>
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:assertionStatus ?status .
+              FILTER (
+                ?status = id:assertion-status-reviewed ||
+                ?status = id:assertion-status-accepted
+              )
+              FILTER NOT EXISTS {
+                $this tokg:hasAssertionEvidence ?link .
+                ?link tokg:forAssertion $this .
+                ?link tokg:evidenceRole id:evidence-role-supports .
+              }
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "Derived or inferred assertions require a derivation rule."@en ;
+        sh:select """
+            PREFIX id: <https://example.org/tokg/id/>
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:assertionModality ?modality .
+              FILTER (
+                ?modality = id:assertion-modality-derived ||
+                ?modality = id:assertion-modality-inferred
+              )
+              FILTER NOT EXISTS { $this tokg:derivationRule ?rule }
+            }
+        """
+    ] .
+
+tokg:AssertionEvidenceShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:AssertionEvidence ;
+    sh:nodeKind sh:IRI ;
+    sh:property [ sh:path tokg:forAssertion ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:Assertion ] ;
+    sh:property [ sh:path tokg:evidenceSpan ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:EvidenceSpan ] ;
+    sh:property [ sh:path tokg:evidenceRole ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( id:evidence-role-supports id:evidence-role-contradicts id:evidence-role-contextualizes ) ] ;
+    sh:property [ sh:path tokg:evidenceDirectness ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( id:evidence-explicit id:evidence-table-derived id:evidence-figure-derived id:evidence-calculated id:evidence-inferred ) ] ;
+    sh:property [ sh:path tokg:generatedBy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:ExtractionActivity ] ;
+    sh:sparql [
+        sh:message "An assertion-evidence link must be referenced by its declared assertion."@en ;
+        sh:select """
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:forAssertion ?assertion .
+              FILTER NOT EXISTS { ?assertion tokg:hasAssertionEvidence $this }
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "Inferred evidence requires a derivation rule on its assertion."@en ;
+        sh:select """
+            PREFIX id: <https://example.org/tokg/id/>
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:evidenceDirectness id:evidence-inferred ;
+                    tokg:forAssertion ?assertion .
+              FILTER NOT EXISTS { ?assertion tokg:derivationRule ?rule }
+            }
+        """
+    ] .
+
+#################################################################
+# Interfaces, procedures and signalling
+#################################################################
+
+tokg:InterfaceShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:Interface ;
+    sh:property [ sh:path tokg:hasEndpointRole ; sh:minCount 2 ; sh:class tokg:InterfaceEndpointRole ] ;
+    sh:property [ sh:path tokg:hasProtocolBinding ; sh:minCount 1 ; sh:class tokg:ProtocolBinding ] .
+
+tokg:InterfaceEndpointRoleShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:InterfaceEndpointRole ;
+    sh:property [ sh:path tokg:endpointType ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:ArchitectureConcept ] ;
+    sh:property [ sh:path tokg:direction ; sh:maxCount 1 ; sh:in ( id:direction-inbound id:direction-outbound id:direction-bidirectional ) ] .
+
+tokg:ProtocolBindingShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:ProtocolBinding ;
+    sh:property [ sh:path tokg:bindingForInterface ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:Interface ] ;
+    sh:property [ sh:path tokg:bindsProtocol ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:Protocol ] ;
+    sh:property [ sh:path tokg:atLayer ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:ProtocolLayer ] .
+
+tokg:ProcedureShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:Procedure ;
+    sh:property [
+        sh:path tokg:hasVariant ; sh:minCount 1 ; sh:class tokg:ProcedureVariant ;
+        sh:message "A procedure must have at least one explicit variant."@en
+    ] .
+
+tokg:ProcedureVariantShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:ProcedureVariant ;
+    sh:property [ sh:path tokg:variantOf ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:Procedure ] ;
+    sh:property [ sh:path tokg:hasStep ; sh:minCount 1 ; sh:class tokg:ProcedureStep ] .
+
+tokg:ProcedureStepShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:ProcedureStep ;
+    sh:property [ sh:path tokg:inProcedure ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:ProcedureVariant ] ;
+    sh:property [ sh:path tokg:stepKey ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [ sh:path tokg:stepIndex ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:positiveInteger ] ;
+    sh:sparql [
+        sh:message "stepIndex must be unique inside a procedure variant."@en ;
+        sh:select """
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:inProcedure ?procedure ; tokg:stepIndex ?index .
+              ?other tokg:inProcedure ?procedure ; tokg:stepIndex ?index .
+              FILTER (?other != $this)
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "stepKey must be unique inside a procedure variant."@en ;
+        sh:select """
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:inProcedure ?procedure ; tokg:stepKey ?key .
+              ?other tokg:inProcedure ?procedure ; tokg:stepKey ?key .
+              FILTER (?other != $this)
+            }
+        """
+    ] .
+
+tokg:FlowEdgeShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:FlowEdge ;
+    sh:property [ sh:path tokg:fromStep ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:ProcedureStep ] ;
+    sh:property [ sh:path tokg:toStep ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:ProcedureStep ] ;
+    sh:sparql [
+        sh:message "A flow edge must connect steps in the same procedure variant."@en ;
+        sh:select """
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:fromStep ?from ; tokg:toStep ?to .
+              ?from tokg:inProcedure ?p1 .
+              ?to tokg:inProcedure ?p2 .
+              FILTER (?p1 != ?p2)
+            }
+        """
+    ] .
+
+tokg:MessageExchangeShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:MessageExchange ;
+    sh:property [ sh:path tokg:inStep ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:ProcedureStep ] ;
+    sh:property [ sh:path tokg:senderRole ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:ParticipantRole ] ;
+    sh:property [ sh:path tokg:receiverRole ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:ParticipantRole ] ;
+    sh:property [ sh:path tokg:exchangeMessage ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:Message ] ;
+    sh:property [ sh:path tokg:overInterface ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:Interface ] ;
+    sh:sparql [
+        sh:message "Sender and receiver must differ unless loopbackAllowed is true."@en ;
+        sh:select """
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:senderRole ?role ; tokg:receiverRole ?role .
+              FILTER NOT EXISTS { $this tokg:loopbackAllowed true }
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "The exchange message protocol must be bound to the selected interface."@en ;
+        sh:select """
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:exchangeMessage ?message ; tokg:overInterface ?interface .
+              ?message tokg:definedByProtocol ?protocol .
+              FILTER NOT EXISTS {
+                ?interface tokg:hasProtocolBinding ?binding .
+                ?binding tokg:bindsProtocol ?protocol .
+              }
+            }
+        """
+    ] .
+
+#################################################################
+# Messages and information elements
+#################################################################
+
+tokg:MessageShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:Message ;
+    sh:property [ sh:path tokg:definedByProtocol ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:Protocol ] .
+
+tokg:IEUsageShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:IEUsage ;
+    sh:property [ sh:path tokg:usageMessage ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:Message ] ;
+    sh:property [ sh:path tokg:usesIE ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:InformationElement ] ;
+    sh:property [ sh:path tokg:presence ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( id:presence-mandatory id:presence-optional id:presence-conditional id:presence-conditional-optional ) ] ;
+    sh:property [ sh:path tokg:minOccurs ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+    sh:xone (
+        [
+            sh:property [ sh:path tokg:maxOccurs ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:nonNegativeInteger ] ;
+            sh:property [ sh:path tokg:unbounded ; sh:maxCount 0 ]
+        ]
+        [
+            sh:property [ sh:path tokg:unbounded ; sh:minCount 1 ; sh:maxCount 1 ; sh:hasValue true ] ;
+            sh:property [ sh:path tokg:maxOccurs ; sh:maxCount 0 ]
+        ]
+    ) ;
+    sh:sparql [
+        sh:message "minOccurs cannot exceed maxOccurs."@en ;
+        sh:select """
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:minOccurs ?min ; tokg:maxOccurs ?max .
+              FILTER (?min > ?max)
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "Mandatory IE usage requires minOccurs of at least one."@en ;
+        sh:select """
+            PREFIX id: <https://example.org/tokg/id/>
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:presence id:presence-mandatory ; tokg:minOccurs ?min .
+              FILTER (?min < 1)
+            }
+        """
+    ] ;
+    sh:sparql [
+        sh:message "Conditional IE usage requires an explicit condition."@en ;
+        sh:select """
+            PREFIX id: <https://example.org/tokg/id/>
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:presence ?presence .
+              FILTER (
+                ?presence = id:presence-conditional ||
+                ?presence = id:presence-conditional-optional
+              )
+              FILTER NOT EXISTS { $this tokg:usageCondition ?condition }
+            }
+        """
+    ] .
+
+#################################################################
+# Timers, alarms, metrics and service quality
+#################################################################
+
+tokg:TimerShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:Timer ;
+    sh:property [ sh:path tokg:timerDuration ; sh:maxCount 1 ; sh:datatype xsd:duration ] .
+
+tokg:CounterDefinitionShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:CounterDefinition ;
+    sh:property [ sh:path tokg:unit ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path tokg:measurementObject ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+    sh:property [ sh:path tokg:aggregationWindow ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:duration ] .
+
+tokg:FormulaShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:Formula ;
+    sh:property [ sh:path tokg:formulaExpression ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [ sh:path tokg:formulaLanguage ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ;
+    sh:property [ sh:path tokg:formulaNormative ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean ] ;
+    sh:property [ sh:path tokg:hasOperand ; sh:minCount 1 ; sh:class tokg:FormulaOperand ] .
+
+tokg:FormulaOperandShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:FormulaOperand ;
+    sh:property [ sh:path tokg:operandOf ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:Formula ] ;
+    sh:property [ sh:path tokg:referencesMetric ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:OperationsConcept ] ;
+    sh:property [ sh:path tokg:operandRole ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] .
+
+tokg:KPIShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:KPI ;
+    sh:property [ sh:path tokg:hasFormula ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:Formula ] ;
+    sh:property [ sh:path tokg:unit ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path tokg:measurementObject ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+    sh:property [ sh:path tokg:aggregationWindow ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:duration ] ;
+    sh:property [ sh:path tokg:aggregationFunction ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:AggregationFunction ] ;
+    sh:property [ sh:path tokg:zeroDenominatorPolicy ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:ZeroDenominatorPolicy ] .
+
+tokg:KQIShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:KQI ;
+    sh:property [ sh:path tokg:hasFormula ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:Formula ] ;
+    sh:property [ sh:path tokg:unit ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ] ;
+    sh:property [ sh:path tokg:aggregationWindow ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:duration ] ;
+    sh:property [ sh:path tokg:measuresService ; sh:minCount 1 ; sh:class tokg:Service ] ;
+    sh:property [ sh:path tokg:dependsOnMetric ; sh:minCount 1 ; sh:class tokg:KPI ] .
+
+tokg:AlarmDefinitionShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:AlarmDefinition ;
+    sh:or (
+        [ sh:property [ sh:path tokg:alarmCode ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] ]
+        [ sh:property [ sh:path tokg:probableCause ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:Cause ] ]
+    ) ;
+    sh:property [
+        sh:path tokg:perceivedSeverity ; sh:minCount 1 ;
+        sh:in ( id:severity-cleared id:severity-indeterminate id:severity-warning id:severity-minor id:severity-major id:severity-critical )
+    ] .
+
+#################################################################
+# Dependencies, requirements and baselines
+#################################################################
+
+tokg:DependencyShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:Dependency ;
+    sh:property [ sh:path tokg:dependencySource ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+    sh:property [ sh:path tokg:dependencyTarget ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+    sh:property [
+        sh:path tokg:dependencyType ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( id:dependency-signalling id:dependency-transport id:dependency-hosting id:dependency-configuration id:dependency-capacity id:dependency-availability id:dependency-security id:dependency-service id:dependency-metric )
+    ] ;
+    sh:property [ sh:path tokg:dependencyStrength ; sh:maxCount 1 ; sh:datatype xsd:decimal ; sh:minInclusive 0 ; sh:maxInclusive 1 ] ;
+    sh:sparql [
+        sh:message "A dependency cannot point to itself."@en ;
+        sh:select """
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:dependencySource ?resource ; tokg:dependencyTarget ?resource .
+            }
+        """
+    ] .
+
+tokg:RequirementShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:Requirement ;
+    sh:property [
+        sh:path tokg:requirementModality ; sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ( id:requirement-shall id:requirement-shall-not id:requirement-should id:requirement-should-not id:requirement-may )
+    ] ;
+    sh:property [ sh:path tokg:obligatedActorRole ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:ParticipantRole ] ;
+    sh:property [ sh:path tokg:requiredAction ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:Action ] ;
+    sh:property [ sh:path tokg:requiredObject ; sh:minCount 1 ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ;
+    sh:property [ sh:path tokg:normativeStatement ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1 ] .
+
+tokg:BaselineShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:Baseline ;
+    sh:nodeKind sh:IRI ;
+    sh:property [ sh:path tokg:targetRelease ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:Release ] ;
+    sh:property [ sh:path tokg:hasBaselineItem ; sh:minCount 1 ; sh:class tokg:BaselineItem ] ;
+    sh:sparql [
+        sh:message "A baseline may select only one main edition for each document family."@en ;
+        sh:select """
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:hasBaselineItem ?left, ?right .
+              ?left tokg:documentFamily ?family .
+              ?right tokg:documentFamily ?family .
+              FILTER (?left != ?right)
+              FILTER NOT EXISTS { ?left tokg:inclusionType ?lt . FILTER (?lt != "normative") }
+              FILTER NOT EXISTS { ?right tokg:inclusionType ?rt . FILTER (?rt != "normative") }
+            }
+        """
+    ] .
+
+tokg:BaselineItemShape
+    a sh:NodeShape ;
+    sh:targetClass tokg:BaselineItem ;
+    sh:property [ sh:path tokg:inBaseline ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:Baseline ] ;
+    sh:property [ sh:path tokg:documentFamily ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:DocumentFamily ] ;
+    sh:property [ sh:path tokg:selectedEdition ; sh:minCount 1 ; sh:maxCount 1 ; sh:class tokg:DocumentEdition ] ;
+    sh:property [ sh:path tokg:inclusionType ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:in ( "normative" "informative" "amendment" "corrigendum" ) ] ;
+    sh:sparql [
+        sh:message "A baseline item selectedEdition must be an edition of its documentFamily."@en ;
+        sh:select """
+            PREFIX tokg: <https://example.org/tokg/ontology#>
+            SELECT $this WHERE {
+              $this tokg:documentFamily ?family ; tokg:selectedEdition ?edition .
+              FILTER NOT EXISTS { ?edition tokg:editionOf ?family }
+            }
+        """
+    ] .

@@ -1,0 +1,32 @@
+[project]
+name = "telecom-operations-kg"
+version = "0.1.0"
+description = "Evidence-grounded telecom operations knowledge graph for 4G, 5G, IMS, transport, services, KPI and KQI"
+requires-python = ">=3.11"
+dependencies = [
+  "pyshacl>=0.30.1",
+  "rdflib>=7.1.4",
+]
+
+[project.scripts]
+tokg-sync-sources = "tokg.source_sync:main"
+tokg-audit-evidence = "tokg.evidence_audit:main"
+tokg-build = "tokg.build:main"
+tokg-validate = "tokg.validate:main"
+tokg-report = "tokg.report:main"
+
+[dependency-groups]
+dev = [
+  "pytest>=8.4.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tokg"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

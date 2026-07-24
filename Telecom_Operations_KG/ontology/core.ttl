@@ -1,0 +1,465 @@
+@base <https://example.org/tokg/ontology#> .
+@prefix tokg: <https://example.org/tokg/ontology#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://example.org/tokg/ontology>
+    a owl:Ontology ;
+    dcterms:title "Telecom Operations Knowledge Graph core ontology"@en ;
+    dcterms:description "Version-aware, evidence-grounded ontology for telecom architecture, signalling, transport, services and operations."@en ;
+    dcterms:created "2026-07-20"^^xsd:date ;
+    owl:versionInfo "1.0.0" ;
+    tokg:defaultInstanceNamespace "https://example.org/tokg/id/"^^xsd:anyURI .
+
+#################################################################
+# Annotation properties
+#################################################################
+
+tokg:defaultInstanceNamespace a owl:AnnotationProperty .
+tokg:canonicalKey a owl:DatatypeProperty ;
+    rdfs:label "canonical key"@en ;
+    rdfs:range xsd:string .
+
+#################################################################
+# Upper ontology and classification
+#################################################################
+
+tokg:KnowledgeEntity a owl:Class ;
+    rdfs:label "knowledge entity"@en ;
+    rdfs:subClassOf prov:Entity .
+
+tokg:Concept a owl:Class ;
+    rdfs:label "telecom concept"@en ;
+    rdfs:subClassOf tokg:KnowledgeEntity, skos:Concept .
+
+tokg:ScopeConcept a owl:Class ; rdfs:subClassOf tokg:Concept .
+tokg:ArchitectureConcept a owl:Class ; rdfs:subClassOf tokg:Concept .
+tokg:ProtocolConcept a owl:Class ; rdfs:subClassOf tokg:Concept .
+tokg:ProcessConcept a owl:Class ; rdfs:subClassOf tokg:Concept .
+tokg:OperationsConcept a owl:Class ; rdfs:subClassOf tokg:Concept .
+tokg:ServiceConcept a owl:Class ; rdfs:subClassOf tokg:Concept .
+tokg:TransportConcept a owl:Class ; rdfs:subClassOf tokg:Concept .
+tokg:RequirementConcept a owl:Class ; rdfs:subClassOf tokg:Concept .
+tokg:OperationalEntity a owl:Class ; rdfs:subClassOf tokg:KnowledgeEntity .
+tokg:QualifiedRelation a owl:Class ; rdfs:subClassOf tokg:KnowledgeEntity .
+
+tokg:Domain a owl:Class ; rdfs:subClassOf tokg:ScopeConcept .
+tokg:Technology a owl:Class ; rdfs:subClassOf tokg:ScopeConcept .
+tokg:Feature a owl:Class ; rdfs:subClassOf tokg:ScopeConcept .
+tokg:Release a owl:Class ; rdfs:subClassOf tokg:ScopeConcept .
+tokg:DeploymentOption a owl:Class ; rdfs:subClassOf tokg:ScopeConcept .
+tokg:ConformanceProfile a owl:Class ; rdfs:subClassOf tokg:ScopeConcept .
+
+tokg:CodeListValue a owl:Class ; rdfs:subClassOf tokg:Concept .
+tokg:Presence a owl:Class ; rdfs:subClassOf tokg:CodeListValue .
+tokg:Direction a owl:Class ; rdfs:subClassOf tokg:CodeListValue .
+tokg:Outcome a owl:Class ; rdfs:subClassOf tokg:CodeListValue .
+tokg:TimerActionKind a owl:Class ; rdfs:subClassOf tokg:CodeListValue .
+tokg:AlarmSeverity a owl:Class ; rdfs:subClassOf tokg:CodeListValue .
+tokg:DependencyType a owl:Class ; rdfs:subClassOf tokg:CodeListValue .
+tokg:RequirementModality a owl:Class ; rdfs:subClassOf tokg:CodeListValue .
+tokg:AssertionModality a owl:Class ; rdfs:subClassOf tokg:CodeListValue .
+tokg:Polarity a owl:Class ; rdfs:subClassOf tokg:CodeListValue .
+tokg:AssertionStatus a owl:Class ; rdfs:subClassOf tokg:CodeListValue .
+tokg:EvidenceRole a owl:Class ; rdfs:subClassOf tokg:CodeListValue .
+tokg:EvidenceDirectness a owl:Class ; rdfs:subClassOf tokg:CodeListValue .
+tokg:LifecycleStatus a owl:Class ; rdfs:subClassOf tokg:CodeListValue .
+tokg:NormativeStatus a owl:Class ; rdfs:subClassOf tokg:CodeListValue .
+tokg:AggregationFunction a owl:Class ; rdfs:subClassOf tokg:CodeListValue .
+tokg:ZeroDenominatorPolicy a owl:Class ; rdfs:subClassOf tokg:CodeListValue .
+
+tokg:belongsToDomain a owl:ObjectProperty ;
+    rdfs:domain tokg:Concept ; rdfs:range tokg:Domain .
+tokg:usesTechnology a owl:ObjectProperty ;
+    rdfs:domain tokg:Concept ; rdfs:range tokg:Technology .
+tokg:definesFeature a owl:ObjectProperty ;
+    rdfs:domain tokg:Technology ; rdfs:range tokg:Feature .
+tokg:applicableRelease a owl:ObjectProperty ; rdfs:range tokg:Release .
+tokg:deploymentOption a owl:ObjectProperty ; rdfs:range tokg:DeploymentOption .
+tokg:conformanceProfile a owl:ObjectProperty ; rdfs:range tokg:ConformanceProfile .
+tokg:introducedIn a owl:ObjectProperty ; rdfs:range tokg:DocumentEdition .
+tokg:deprecatedIn a owl:ObjectProperty ; rdfs:range tokg:DocumentEdition .
+tokg:withdrawnIn a owl:ObjectProperty ; rdfs:range tokg:DocumentEdition .
+tokg:replaces a owl:ObjectProperty ; rdfs:subPropertyOf dcterms:replaces .
+tokg:hasVersionVariant a owl:ObjectProperty ; rdfs:domain tokg:Concept ; rdfs:range tokg:Concept .
+
+#################################################################
+# Architecture, network elements and interfaces
+#################################################################
+
+tokg:NetworkElement a owl:Class ; rdfs:subClassOf tokg:ArchitectureConcept .
+tokg:NetworkElementType a owl:Class ; rdfs:subClassOf tokg:NetworkElement .
+tokg:NetworkElementInstance a owl:Class ; rdfs:subClassOf tokg:OperationalEntity .
+tokg:NetworkFunction a owl:Class ; rdfs:subClassOf tokg:ArchitectureConcept .
+tokg:NetworkFunctionType a owl:Class ; rdfs:subClassOf tokg:NetworkFunction .
+tokg:NetworkFunctionInstance a owl:Class ; rdfs:subClassOf tokg:OperationalEntity .
+tokg:Function a owl:Class ; rdfs:subClassOf tokg:ArchitectureConcept .
+tokg:Capability a owl:Class ; rdfs:subClassOf tokg:ArchitectureConcept .
+tokg:ManagedObjectClass a owl:Class ; rdfs:subClassOf tokg:ArchitectureConcept .
+tokg:ResourceType a owl:Class ; rdfs:subClassOf tokg:ArchitectureConcept .
+tokg:ResourceInstance a owl:Class ; rdfs:subClassOf tokg:OperationalEntity .
+tokg:ComponentType a owl:Class ; rdfs:subClassOf tokg:ArchitectureConcept .
+
+tokg:Interface a owl:Class ; rdfs:subClassOf tokg:ArchitectureConcept .
+tokg:ReferencePoint a owl:Class ; rdfs:subClassOf tokg:Interface .
+tokg:InterfaceEndpointRole a owl:Class ; rdfs:subClassOf tokg:ArchitectureConcept .
+tokg:ParticipantRole a owl:Class ; rdfs:subClassOf tokg:ProcessConcept .
+tokg:ProtocolBinding a owl:Class ; rdfs:subClassOf tokg:QualifiedRelation .
+
+tokg:instanceOfType a owl:ObjectProperty ; rdfs:domain tokg:OperationalEntity ; rdfs:range tokg:Concept .
+tokg:hosts a owl:ObjectProperty ; rdfs:domain tokg:NetworkElement ; rdfs:range tokg:NetworkFunction .
+tokg:realizes a owl:ObjectProperty .
+tokg:performsFunction a owl:ObjectProperty ; rdfs:range tokg:Function .
+tokg:requiresCapability a owl:ObjectProperty ; rdfs:range tokg:Capability .
+tokg:hasComponent a owl:ObjectProperty ; rdfs:range tokg:ComponentType .
+
+tokg:hasEndpointRole a owl:ObjectProperty ;
+    rdfs:domain tokg:Interface ; rdfs:range tokg:InterfaceEndpointRole .
+tokg:endpointType a owl:ObjectProperty ;
+    rdfs:domain tokg:InterfaceEndpointRole ; rdfs:range tokg:ArchitectureConcept .
+tokg:participantType a owl:ObjectProperty ;
+    rdfs:domain tokg:ParticipantRole ; rdfs:range tokg:ArchitectureConcept .
+tokg:roleType a owl:ObjectProperty ; rdfs:range tokg:CodeListValue .
+tokg:direction a owl:ObjectProperty ; rdfs:range tokg:Direction .
+tokg:multiplicityMinimum a owl:DatatypeProperty ; rdfs:range xsd:nonNegativeInteger .
+tokg:multiplicityMaximum a owl:DatatypeProperty ; rdfs:range xsd:nonNegativeInteger .
+tokg:hasProtocolBinding a owl:ObjectProperty ;
+    rdfs:domain tokg:Interface ; rdfs:range tokg:ProtocolBinding .
+tokg:bindingForInterface a owl:ObjectProperty ;
+    rdfs:domain tokg:ProtocolBinding ; rdfs:range tokg:Interface ;
+    owl:inverseOf tokg:hasProtocolBinding .
+
+#################################################################
+# Protocol, messages, IEs, timers and causes
+#################################################################
+
+tokg:Protocol a owl:Class ; rdfs:subClassOf tokg:ProtocolConcept .
+tokg:ProtocolLayer a owl:Class ; rdfs:subClassOf tokg:ProtocolConcept .
+tokg:ProtocolStack a owl:Class ; rdfs:subClassOf tokg:ProtocolConcept .
+tokg:Message a owl:Class ; rdfs:subClassOf tokg:ProtocolConcept .
+tokg:InformationElement a owl:Class ; rdfs:subClassOf tokg:ProtocolConcept .
+tokg:IE a owl:Class ; owl:equivalentClass tokg:InformationElement .
+tokg:IEUsage a owl:Class ; rdfs:subClassOf tokg:QualifiedRelation .
+tokg:ValueDomain a owl:Class ; rdfs:subClassOf tokg:ProtocolConcept .
+tokg:CodePoint a owl:Class ; rdfs:subClassOf tokg:ProtocolConcept .
+tokg:Timer a owl:Class ; rdfs:subClassOf tokg:ProtocolConcept .
+tokg:TimerAction a owl:Class ; rdfs:subClassOf tokg:QualifiedRelation .
+tokg:Cause a owl:Class ; rdfs:subClassOf tokg:ProtocolConcept .
+tokg:State a owl:Class ; rdfs:subClassOf tokg:ProcessConcept .
+tokg:StateTransition a owl:Class ; rdfs:subClassOf tokg:QualifiedRelation .
+tokg:FailureMode a owl:Class ; rdfs:subClassOf tokg:OperationsConcept .
+
+tokg:bindsProtocol a owl:ObjectProperty ;
+    rdfs:domain tokg:ProtocolBinding ; rdfs:range tokg:Protocol .
+tokg:atLayer a owl:ObjectProperty ; rdfs:range tokg:ProtocolLayer .
+tokg:hasProtocolLayer a owl:ObjectProperty ; rdfs:range tokg:ProtocolLayer .
+tokg:usesProtocolStack a owl:ObjectProperty ; rdfs:range tokg:ProtocolStack .
+tokg:definedByProtocol a owl:ObjectProperty ; rdfs:range tokg:Protocol .
+tokg:definesMessage a owl:ObjectProperty ;
+    rdfs:domain tokg:Protocol ; rdfs:range tokg:Message ;
+    owl:inverseOf tokg:definedByProtocol .
+
+tokg:hasIEUsage a owl:ObjectProperty ;
+    rdfs:domain tokg:Message ; rdfs:range tokg:IEUsage .
+tokg:usageMessage a owl:ObjectProperty ;
+    rdfs:domain tokg:IEUsage ; rdfs:range tokg:Message ;
+    owl:inverseOf tokg:hasIEUsage .
+tokg:usesIE a owl:ObjectProperty ;
+    rdfs:domain tokg:IEUsage ; rdfs:range tokg:InformationElement .
+tokg:presence a owl:ObjectProperty ; rdfs:domain tokg:IEUsage ; rdfs:range tokg:Presence .
+tokg:minOccurs a owl:DatatypeProperty ; rdfs:domain tokg:IEUsage ; rdfs:range xsd:nonNegativeInteger .
+tokg:maxOccurs a owl:DatatypeProperty ; rdfs:domain tokg:IEUsage ; rdfs:range xsd:nonNegativeInteger .
+tokg:unbounded a owl:DatatypeProperty ; rdfs:domain tokg:IEUsage ; rdfs:range xsd:boolean .
+tokg:usageCondition a owl:ObjectProperty ; rdfs:domain tokg:IEUsage ; rdfs:range tokg:Condition .
+tokg:criticality a owl:ObjectProperty ; rdfs:range tokg:CodeListValue .
+tokg:hasValueDomain a owl:ObjectProperty ; rdfs:range tokg:ValueDomain .
+tokg:hasCodePoint a owl:ObjectProperty ; rdfs:range tokg:CodePoint .
+tokg:codeValue a owl:DatatypeProperty ; rdfs:range rdfs:Literal .
+
+tokg:timer a owl:ObjectProperty ; rdfs:domain tokg:TimerAction ; rdfs:range tokg:Timer .
+tokg:timerActionKind a owl:ObjectProperty ; rdfs:domain tokg:TimerAction ; rdfs:range tokg:TimerActionKind .
+tokg:timerDuration a owl:DatatypeProperty ; rdfs:domain tokg:Timer ; rdfs:range xsd:duration .
+tokg:fromState a owl:ObjectProperty ; rdfs:range tokg:State .
+tokg:toState a owl:ObjectProperty ; rdfs:range tokg:State .
+tokg:triggeredBy a owl:ObjectProperty .
+tokg:belongsToCauseDomain a owl:ObjectProperty ; rdfs:range tokg:ValueDomain .
+
+#################################################################
+# Procedures and signalling flows
+#################################################################
+
+tokg:Procedure a owl:Class ; rdfs:subClassOf tokg:ProcessConcept .
+tokg:ProcedureVariant a owl:Class ; rdfs:subClassOf tokg:ProcessConcept .
+tokg:Step a owl:Class ; rdfs:subClassOf tokg:ProcessConcept .
+tokg:ProcedureStep a owl:Class ; rdfs:subClassOf tokg:Step .
+tokg:FlowEdge a owl:Class ; rdfs:subClassOf tokg:QualifiedRelation .
+tokg:MessageExchange a owl:Class ; rdfs:subClassOf tokg:QualifiedRelation .
+tokg:Action a owl:Class ; rdfs:subClassOf tokg:ProcessConcept .
+tokg:Condition a owl:Class ; rdfs:subClassOf tokg:ProcessConcept .
+
+tokg:hasVariant a owl:ObjectProperty ;
+    rdfs:domain tokg:Procedure ; rdfs:range tokg:ProcedureVariant .
+tokg:variantOf a owl:ObjectProperty ;
+    rdfs:domain tokg:ProcedureVariant ; rdfs:range tokg:Procedure ;
+    owl:inverseOf tokg:hasVariant .
+tokg:hasStep a owl:ObjectProperty ; rdfs:range tokg:ProcedureStep .
+tokg:inProcedure a owl:ObjectProperty ;
+    rdfs:domain tokg:ProcedureStep ; rdfs:range tokg:ProcedureVariant ;
+    owl:inverseOf tokg:hasStep .
+tokg:stepIndex a owl:DatatypeProperty ; rdfs:domain tokg:ProcedureStep ; rdfs:range xsd:positiveInteger .
+tokg:stepKey a owl:DatatypeProperty ; rdfs:domain tokg:ProcedureStep ; rdfs:range xsd:string .
+tokg:hasFlowEdge a owl:ObjectProperty ; rdfs:range tokg:FlowEdge .
+tokg:fromStep a owl:ObjectProperty ; rdfs:domain tokg:FlowEdge ; rdfs:range tokg:ProcedureStep .
+tokg:toStep a owl:ObjectProperty ; rdfs:domain tokg:FlowEdge ; rdfs:range tokg:ProcedureStep .
+tokg:guard a owl:ObjectProperty ; rdfs:range tokg:Condition .
+tokg:outcome a owl:ObjectProperty ; rdfs:range tokg:Outcome .
+tokg:iterationAllowed a owl:DatatypeProperty ; rdfs:range xsd:boolean .
+
+tokg:hasMessageExchange a owl:ObjectProperty ; rdfs:range tokg:MessageExchange .
+tokg:inStep a owl:ObjectProperty ; rdfs:domain tokg:MessageExchange ; rdfs:range tokg:ProcedureStep .
+tokg:senderRole a owl:ObjectProperty ; rdfs:domain tokg:MessageExchange ; rdfs:range tokg:ParticipantRole .
+tokg:receiverRole a owl:ObjectProperty ; rdfs:domain tokg:MessageExchange ; rdfs:range tokg:ParticipantRole .
+tokg:exchangeMessage a owl:ObjectProperty ; rdfs:domain tokg:MessageExchange ; rdfs:range tokg:Message .
+tokg:overInterface a owl:ObjectProperty ; rdfs:domain tokg:MessageExchange ; rdfs:range tokg:Interface .
+tokg:loopbackAllowed a owl:DatatypeProperty ; rdfs:domain tokg:MessageExchange ; rdfs:range xsd:boolean .
+tokg:precondition a owl:ObjectProperty ; rdfs:range tokg:Condition .
+tokg:postcondition a owl:ObjectProperty ; rdfs:range tokg:Condition .
+tokg:performsAction a owl:ObjectProperty ; rdfs:domain tokg:ProcedureStep ; rdfs:range tokg:Action .
+tokg:usesTimer a owl:ObjectProperty ; rdfs:domain tokg:ProcedureStep ; rdfs:range tokg:Timer .
+tokg:conditionText a owl:DatatypeProperty ; rdfs:range xsd:string .
+
+#################################################################
+# Operations, measurements, KPI and KQI
+#################################################################
+
+tokg:Alarm a owl:Class ; rdfs:subClassOf tokg:OperationsConcept .
+tokg:AlarmDefinition a owl:Class ; rdfs:subClassOf tokg:Alarm .
+tokg:AlarmObservation a owl:Class ; rdfs:subClassOf tokg:OperationalEntity .
+tokg:EventDefinition a owl:Class ; rdfs:subClassOf tokg:OperationsConcept .
+tokg:Counter a owl:Class ; rdfs:subClassOf tokg:OperationsConcept .
+tokg:CounterDefinition a owl:Class ; rdfs:subClassOf tokg:Counter .
+tokg:CounterObservation a owl:Class ; rdfs:subClassOf tokg:OperationalEntity .
+tokg:ConfigurationParameter a owl:Class ; rdfs:subClassOf tokg:OperationsConcept .
+tokg:MeasurementJob a owl:Class ; rdfs:subClassOf tokg:OperationsConcept .
+tokg:Threshold a owl:Class ; rdfs:subClassOf tokg:OperationsConcept .
+tokg:MetricDefinition a owl:Class ; rdfs:subClassOf tokg:OperationsConcept .
+tokg:KPI a owl:Class ; rdfs:subClassOf tokg:MetricDefinition .
+tokg:KQI a owl:Class ; rdfs:subClassOf tokg:MetricDefinition .
+tokg:Formula a owl:Class ; rdfs:subClassOf tokg:KnowledgeEntity .
+tokg:FormulaOperand a owl:Class ; rdfs:subClassOf tokg:QualifiedRelation .
+tokg:MetricObservation a owl:Class ; rdfs:subClassOf tokg:OperationalEntity .
+tokg:Incident a owl:Class ; rdfs:subClassOf tokg:OperationalEntity .
+tokg:RemediationAction a owl:Class ; rdfs:subClassOf tokg:OperationsConcept .
+
+tokg:alarmCode a owl:DatatypeProperty ; rdfs:range xsd:string .
+tokg:probableCause a owl:ObjectProperty ; rdfs:range tokg:Cause .
+tokg:perceivedSeverity a owl:ObjectProperty ; rdfs:range tokg:AlarmSeverity .
+tokg:clearingCondition a owl:ObjectProperty ; rdfs:range tokg:Condition .
+tokg:observesDefinition a owl:ObjectProperty ; rdfs:range tokg:Concept .
+tokg:observedAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
+tokg:observedValue a owl:DatatypeProperty ; rdfs:range rdfs:Literal .
+tokg:resetCondition a owl:ObjectProperty ; rdfs:range tokg:Condition .
+tokg:counterSemantics a owl:ObjectProperty ; rdfs:range tokg:CodeListValue .
+
+tokg:hasFormula a owl:ObjectProperty ; rdfs:range tokg:Formula .
+tokg:formulaExpression a owl:DatatypeProperty ; rdfs:domain tokg:Formula ; rdfs:range xsd:string .
+tokg:formulaLanguage a owl:DatatypeProperty ; rdfs:domain tokg:Formula ; rdfs:range xsd:string .
+tokg:formulaNormative a owl:DatatypeProperty ; rdfs:domain tokg:Formula ; rdfs:range xsd:boolean .
+tokg:hasOperand a owl:ObjectProperty ; rdfs:domain tokg:Formula ; rdfs:range tokg:FormulaOperand .
+tokg:operandOf a owl:ObjectProperty ; rdfs:domain tokg:FormulaOperand ; rdfs:range tokg:Formula .
+tokg:referencesMetric a owl:ObjectProperty ; rdfs:domain tokg:FormulaOperand ; rdfs:range tokg:OperationsConcept .
+tokg:operandRole a owl:DatatypeProperty ; rdfs:domain tokg:FormulaOperand ; rdfs:range xsd:string .
+tokg:weight a owl:DatatypeProperty ; rdfs:range xsd:decimal .
+tokg:unit a owl:DatatypeProperty ; rdfs:range xsd:string .
+tokg:measurementObject a owl:ObjectProperty ; rdfs:range tokg:KnowledgeEntity .
+tokg:aggregationWindow a owl:DatatypeProperty ; rdfs:range xsd:duration .
+tokg:aggregationFunction a owl:ObjectProperty ; rdfs:range tokg:AggregationFunction .
+tokg:zeroDenominatorPolicy a owl:ObjectProperty ; rdfs:range tokg:ZeroDenominatorPolicy .
+tokg:dependsOnMetric a owl:ObjectProperty ; rdfs:range tokg:MetricDefinition .
+
+#################################################################
+# Services, transport and dependencies
+#################################################################
+
+tokg:Service a owl:Class ; rdfs:subClassOf tokg:ServiceConcept .
+tokg:ServiceComponent a owl:Class ; rdfs:subClassOf tokg:ServiceConcept .
+tokg:ServiceJourney a owl:Class ; rdfs:subClassOf tokg:ServiceConcept .
+tokg:SLAObjective a owl:Class ; rdfs:subClassOf tokg:ServiceConcept .
+tokg:ServiceImpact a owl:Class ; rdfs:subClassOf tokg:QualifiedRelation .
+
+tokg:Transport a owl:Class ; rdfs:subClassOf tokg:TransportConcept .
+tokg:TransportResource a owl:Class ; rdfs:subClassOf tokg:Transport .
+tokg:LayerNetwork a owl:Class ; rdfs:subClassOf tokg:TransportResource .
+tokg:TransportNode a owl:Class ; rdfs:subClassOf tokg:TransportResource .
+tokg:TerminationPoint a owl:Class ; rdfs:subClassOf tokg:TransportResource .
+tokg:Link a owl:Class ; rdfs:subClassOf tokg:TransportResource .
+tokg:Tunnel a owl:Class ; rdfs:subClassOf tokg:TransportResource .
+tokg:Path a owl:Class ; rdfs:subClassOf tokg:TransportResource .
+tokg:Bearer a owl:Class ; rdfs:subClassOf tokg:TransportResource .
+tokg:Session a owl:Class ; rdfs:subClassOf tokg:TransportResource .
+tokg:Flow a owl:Class ; rdfs:subClassOf tokg:TransportResource .
+tokg:QoSProfile a owl:Class ; rdfs:subClassOf tokg:TransportConcept .
+
+tokg:Dependency a owl:Class ; rdfs:subClassOf tokg:QualifiedRelation .
+tokg:DependencyCondition a owl:Class ; rdfs:subClassOf tokg:Condition .
+tokg:RedundancyGroup a owl:Class ; rdfs:subClassOf tokg:ArchitectureConcept .
+tokg:ProtectionScheme a owl:Class ; rdfs:subClassOf tokg:TransportConcept .
+
+tokg:hasServiceComponent a owl:ObjectProperty ; rdfs:range tokg:ServiceComponent .
+tokg:hasServiceJourney a owl:ObjectProperty ; rdfs:range tokg:ServiceJourney .
+tokg:measuresService a owl:ObjectProperty ; rdfs:range tokg:Service .
+tokg:impactedService a owl:ObjectProperty ; rdfs:range tokg:Service .
+tokg:causedBy a owl:ObjectProperty .
+tokg:usesTransport a owl:ObjectProperty ; rdfs:range tokg:TransportResource .
+tokg:hasQoSProfile a owl:ObjectProperty ; rdfs:range tokg:QoSProfile .
+tokg:dependencySource a owl:ObjectProperty ; rdfs:domain tokg:Dependency .
+tokg:dependencyTarget a owl:ObjectProperty ; rdfs:domain tokg:Dependency .
+tokg:dependencyType a owl:ObjectProperty ; rdfs:domain tokg:Dependency ; rdfs:range tokg:DependencyType .
+tokg:dependencyCondition a owl:ObjectProperty ; rdfs:domain tokg:Dependency ; rdfs:range tokg:Condition .
+tokg:dependencyStrength a owl:DatatypeProperty ; rdfs:domain tokg:Dependency ; rdfs:range xsd:decimal .
+
+#################################################################
+# Requirements
+#################################################################
+
+tokg:Requirement a owl:Class ; rdfs:subClassOf tokg:RequirementConcept .
+tokg:RequirementCondition a owl:Class ; rdfs:subClassOf tokg:Condition .
+tokg:Exception a owl:Class ; rdfs:subClassOf tokg:RequirementConcept .
+tokg:ConformanceStatement a owl:Class ; rdfs:subClassOf tokg:RequirementConcept .
+
+tokg:obligatedActorRole a owl:ObjectProperty ; rdfs:domain tokg:Requirement ; rdfs:range tokg:ParticipantRole .
+tokg:requiredAction a owl:ObjectProperty ; rdfs:domain tokg:Requirement ; rdfs:range tokg:Action .
+tokg:requiredObject a owl:ObjectProperty ; rdfs:domain tokg:Requirement .
+tokg:requirementCondition a owl:ObjectProperty ; rdfs:domain tokg:Requirement ; rdfs:range tokg:RequirementCondition .
+tokg:hasException a owl:ObjectProperty ; rdfs:domain tokg:Requirement ; rdfs:range tokg:Exception .
+tokg:requirementModality a owl:ObjectProperty ; rdfs:domain tokg:Requirement ; rdfs:range tokg:RequirementModality .
+tokg:normativeStatement a owl:DatatypeProperty ; rdfs:domain tokg:Requirement ; rdfs:range xsd:string .
+
+#################################################################
+# Standards, provenance, evidence and assertions
+#################################################################
+
+tokg:StandardBody a owl:Class ; rdfs:subClassOf prov:Organization .
+tokg:DocumentFamily a owl:Class ; rdfs:subClassOf prov:Entity, dcterms:BibliographicResource .
+tokg:DocumentEdition a owl:Class ; rdfs:subClassOf prov:Entity, dcterms:BibliographicResource .
+tokg:DocumentArtifact a owl:Class ; rdfs:subClassOf prov:Entity .
+tokg:DocumentPart a owl:Class ; rdfs:subClassOf prov:Entity .
+tokg:EvidenceSpan a owl:Class ; rdfs:subClassOf prov:Entity .
+tokg:Assertion a owl:Class ; rdfs:subClassOf prov:Entity .
+tokg:AssertionEvidence a owl:Class ; rdfs:subClassOf prov:Influence, tokg:QualifiedRelation .
+tokg:ExtractionActivity a owl:Class ; rdfs:subClassOf prov:Activity .
+tokg:ReviewActivity a owl:Class ; rdfs:subClassOf prov:Activity .
+tokg:ReviewDecision a owl:Class ; rdfs:subClassOf prov:Entity .
+tokg:Baseline a owl:Class ; rdfs:subClassOf prov:Entity .
+tokg:BaselineItem a owl:Class ; rdfs:subClassOf tokg:QualifiedRelation .
+tokg:ChangeRequest a owl:Class ; rdfs:subClassOf prov:Entity, dcterms:BibliographicResource .
+tokg:ConflictSet a owl:Class ; rdfs:subClassOf prov:Entity .
+tokg:Resolution a owl:Class ; rdfs:subClassOf prov:Entity .
+
+tokg:standardBody a owl:ObjectProperty ; rdfs:domain tokg:DocumentFamily ; rdfs:range tokg:StandardBody .
+tokg:documentType a owl:DatatypeProperty ; rdfs:domain tokg:DocumentFamily ; rdfs:range xsd:string .
+tokg:documentNumber a owl:DatatypeProperty ; rdfs:domain tokg:DocumentFamily ; rdfs:range xsd:string .
+tokg:hasEdition a owl:ObjectProperty ; rdfs:domain tokg:DocumentFamily ; rdfs:range tokg:DocumentEdition .
+tokg:editionOf a owl:ObjectProperty ;
+    rdfs:domain tokg:DocumentEdition ; rdfs:range tokg:DocumentFamily ;
+    owl:inverseOf tokg:hasEdition .
+tokg:versionString a owl:DatatypeProperty ; rdfs:domain tokg:DocumentEdition ; rdfs:range xsd:string .
+tokg:release a owl:ObjectProperty ; rdfs:domain tokg:DocumentEdition ; rdfs:range tokg:Release .
+tokg:language a owl:DatatypeProperty ; rdfs:subPropertyOf dcterms:language ; rdfs:range xsd:language .
+tokg:approvalDate a owl:DatatypeProperty ; rdfs:range xsd:date .
+tokg:publicationDate a owl:DatatypeProperty ; rdfs:subPropertyOf dcterms:issued ; rdfs:range xsd:date .
+tokg:lifecycleStatus a owl:ObjectProperty ; rdfs:range tokg:LifecycleStatus .
+tokg:predecessorEdition a owl:ObjectProperty ;
+    rdfs:domain tokg:DocumentEdition ; rdfs:range tokg:DocumentEdition ;
+    rdfs:subPropertyOf prov:wasRevisionOf .
+tokg:amends a owl:ObjectProperty ; rdfs:range tokg:DocumentEdition .
+tokg:corrigendumOf a owl:ObjectProperty ; rdfs:range tokg:DocumentEdition .
+tokg:transposes a owl:ObjectProperty ; rdfs:range tokg:DocumentEdition .
+tokg:incorporatesChangeRequest a owl:ObjectProperty ; rdfs:range tokg:ChangeRequest .
+
+tokg:hasArtifact a owl:ObjectProperty ; rdfs:domain tokg:DocumentEdition ; rdfs:range tokg:DocumentArtifact .
+tokg:artifactOfEdition a owl:ObjectProperty ;
+    rdfs:domain tokg:DocumentArtifact ; rdfs:range tokg:DocumentEdition ;
+    owl:inverseOf tokg:hasArtifact .
+tokg:sourceUrl a owl:DatatypeProperty ; rdfs:subPropertyOf dcterms:source ; rdfs:range xsd:anyURI .
+tokg:resolvedUrl a owl:DatatypeProperty ; rdfs:range xsd:anyURI .
+tokg:retrievedAt a owl:DatatypeProperty ; rdfs:range xsd:dateTime .
+tokg:mediaType a owl:DatatypeProperty ; rdfs:range xsd:string .
+tokg:byteSize a owl:DatatypeProperty ; rdfs:range xsd:nonNegativeInteger .
+tokg:sha256 a owl:DatatypeProperty ; rdfs:range xsd:string .
+tokg:rightsStatement a owl:DatatypeProperty ; rdfs:subPropertyOf dcterms:rights ; rdfs:range xsd:string .
+
+tokg:partOfArtifact a owl:ObjectProperty ; rdfs:domain tokg:DocumentPart ; rdfs:range tokg:DocumentArtifact .
+tokg:parentPart a owl:ObjectProperty ; rdfs:domain tokg:DocumentPart ; rdfs:range tokg:DocumentPart .
+tokg:partKind a owl:DatatypeProperty ; rdfs:domain tokg:DocumentPart ; rdfs:range xsd:string .
+tokg:canonicalLocator a owl:DatatypeProperty ; rdfs:domain tokg:DocumentPart ; rdfs:range xsd:string .
+tokg:heading a owl:DatatypeProperty ; rdfs:domain tokg:DocumentPart ; rdfs:range rdf:langString .
+tokg:normativeStatus a owl:ObjectProperty ; rdfs:domain tokg:DocumentPart ; rdfs:range tokg:NormativeStatus .
+
+tokg:evidenceArtifact a owl:ObjectProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range tokg:DocumentArtifact .
+tokg:evidencePart a owl:ObjectProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range tokg:DocumentPart .
+tokg:locatorText a owl:DatatypeProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range xsd:string .
+tokg:reportedLocatorText a owl:DatatypeProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range xsd:string .
+tokg:fragmentIdentifier a owl:DatatypeProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range xsd:string .
+tokg:resolvedFragmentLocator a owl:DatatypeProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range xsd:string .
+tokg:resolvedSectionNumber a owl:DatatypeProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range xsd:string .
+tokg:exactQuote a owl:DatatypeProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range xsd:string .
+tokg:exactTextSha256 a owl:DatatypeProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range xsd:string .
+tokg:normalizedTextSha256 a owl:DatatypeProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range xsd:string .
+tokg:startChar a owl:DatatypeProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range xsd:nonNegativeInteger .
+tokg:endChar a owl:DatatypeProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range xsd:positiveInteger .
+tokg:pdfPageIndex a owl:DatatypeProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range xsd:nonNegativeInteger .
+tokg:printedPageLabel a owl:DatatypeProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range xsd:string .
+tokg:xmlXPath a owl:DatatypeProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range xsd:string .
+tokg:htmlSelector a owl:DatatypeProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range xsd:string .
+tokg:tableRow a owl:DatatypeProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range xsd:nonNegativeInteger .
+tokg:tableColumn a owl:DatatypeProperty ; rdfs:domain tokg:EvidenceSpan ; rdfs:range xsd:nonNegativeInteger .
+tokg:precedingContextHash a owl:DatatypeProperty ; rdfs:range xsd:string .
+tokg:followingContextHash a owl:DatatypeProperty ; rdfs:range xsd:string .
+
+tokg:assertionSubject a owl:ObjectProperty ; rdfs:domain tokg:Assertion .
+tokg:assertionPredicate a owl:ObjectProperty ; rdfs:domain tokg:Assertion ; rdfs:range rdf:Property .
+tokg:assertionObject a owl:ObjectProperty ; rdfs:domain tokg:Assertion .
+tokg:literalObject a owl:DatatypeProperty ; rdfs:domain tokg:Assertion .
+tokg:polarity a owl:ObjectProperty ; rdfs:domain tokg:Assertion ; rdfs:range tokg:Polarity .
+tokg:assertionModality a owl:ObjectProperty ; rdfs:domain tokg:Assertion ; rdfs:range tokg:AssertionModality .
+tokg:applicabilityScope a owl:ObjectProperty ; rdfs:domain tokg:Assertion .
+tokg:assertionStatus a owl:ObjectProperty ; rdfs:domain tokg:Assertion ; rdfs:range tokg:AssertionStatus .
+tokg:confidence a owl:DatatypeProperty ; rdfs:domain tokg:Assertion ; rdfs:range xsd:decimal .
+tokg:generatedBy a owl:ObjectProperty ; rdfs:subPropertyOf prov:wasGeneratedBy ; rdfs:range prov:Activity .
+tokg:derivedFrom a owl:ObjectProperty ; rdfs:subPropertyOf prov:wasDerivedFrom .
+tokg:derivationRule a owl:DatatypeProperty ; rdfs:domain tokg:Assertion ; rdfs:range xsd:string .
+tokg:parserName a owl:DatatypeProperty ; rdfs:domain tokg:ExtractionActivity ; rdfs:range xsd:string .
+tokg:parserVersion a owl:DatatypeProperty ; rdfs:domain tokg:ExtractionActivity ; rdfs:range xsd:string .
+tokg:hasAssertionEvidence a owl:ObjectProperty ; rdfs:domain tokg:Assertion ; rdfs:range tokg:AssertionEvidence .
+tokg:forAssertion a owl:ObjectProperty ;
+    rdfs:domain tokg:AssertionEvidence ; rdfs:range tokg:Assertion ;
+    owl:inverseOf tokg:hasAssertionEvidence .
+tokg:evidenceSpan a owl:ObjectProperty ; rdfs:domain tokg:AssertionEvidence ; rdfs:range tokg:EvidenceSpan .
+tokg:evidenceRole a owl:ObjectProperty ; rdfs:domain tokg:AssertionEvidence ; rdfs:range tokg:EvidenceRole .
+tokg:evidenceDirectness a owl:ObjectProperty ; rdfs:domain tokg:AssertionEvidence ; rdfs:range tokg:EvidenceDirectness .
+tokg:reviewDecision a owl:ObjectProperty ; rdfs:range tokg:ReviewDecision .
+
+tokg:targetRelease a owl:ObjectProperty ; rdfs:domain tokg:Baseline ; rdfs:range tokg:Release .
+tokg:effectiveDate a owl:DatatypeProperty ; rdfs:range xsd:date .
+tokg:hasBaselineItem a owl:ObjectProperty ; rdfs:domain tokg:Baseline ; rdfs:range tokg:BaselineItem .
+tokg:inBaseline a owl:ObjectProperty ;
+    rdfs:domain tokg:BaselineItem ; rdfs:range tokg:Baseline ;
+    owl:inverseOf tokg:hasBaselineItem .
+tokg:documentFamily a owl:ObjectProperty ; rdfs:domain tokg:BaselineItem ; rdfs:range tokg:DocumentFamily .
+tokg:selectedEdition a owl:ObjectProperty ; rdfs:domain tokg:BaselineItem ; rdfs:range tokg:DocumentEdition .
+tokg:inclusionType a owl:DatatypeProperty ; rdfs:domain tokg:BaselineItem ; rdfs:range xsd:string .
+
+tokg:hasConflictMember a owl:ObjectProperty ; rdfs:domain tokg:ConflictSet ; rdfs:range tokg:Assertion .
+tokg:conflictType a owl:ObjectProperty ; rdfs:range tokg:CodeListValue .
+tokg:hasResolution a owl:ObjectProperty ; rdfs:domain tokg:ConflictSet ; rdfs:range tokg:Resolution .
+tokg:selectedAssertion a owl:ObjectProperty ; rdfs:domain tokg:Resolution ; rdfs:range tokg:Assertion .
+tokg:resolutionRationale a owl:DatatypeProperty ; rdfs:domain tokg:Resolution ; rdfs:range xsd:string .
+tokg:resolvedForBaseline a owl:ObjectProperty ; rdfs:domain tokg:Resolution ; rdfs:range tokg:Baseline .
+tokg:supersedesAssertion a owl:ObjectProperty ; rdfs:domain tokg:Assertion ; rdfs:range tokg:Assertion ;
+    rdfs:subPropertyOf prov:wasRevisionOf .

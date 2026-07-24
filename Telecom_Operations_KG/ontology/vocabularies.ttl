@@ -1,0 +1,147 @@
+@base <https://example.org/tokg/id/> .
+@prefix id: <https://example.org/tokg/id/> .
+@prefix tokg: <https://example.org/tokg/ontology#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<https://example.org/tokg/vocabularies>
+    a owl:Ontology ;
+    dcterms:title "Telecom Operations Knowledge Graph controlled vocabularies"@en ;
+    owl:versionInfo "1.0.0" .
+
+id:scheme-domains a skos:ConceptScheme ; skos:prefLabel "Telecom domains"@en .
+id:domain-4g a tokg:Domain ; tokg:canonicalKey "domain:4g" ; skos:inScheme id:scheme-domains ; skos:prefLabel "4G/LTE"@en, "4G/LTE"@zh .
+id:domain-5g a tokg:Domain ; tokg:canonicalKey "domain:5g" ; skos:inScheme id:scheme-domains ; skos:prefLabel "5G"@en, "5G"@zh .
+id:domain-ims a tokg:Domain ; tokg:canonicalKey "domain:ims" ; skos:inScheme id:scheme-domains ; skos:prefLabel "IMS"@en, "IMS"@zh .
+id:domain-transport a tokg:Domain ; tokg:canonicalKey "domain:transport" ; skos:inScheme id:scheme-domains ; skos:prefLabel "Transport"@en, "传输"@zh .
+id:domain-service a tokg:Domain ; tokg:canonicalKey "domain:service" ; skos:inScheme id:scheme-domains ; skos:prefLabel "Service"@en, "业务"@zh .
+id:domain-management a tokg:Domain ; tokg:canonicalKey "domain:management" ; skos:inScheme id:scheme-domains ; skos:prefLabel "Operations and management"@en, "运维管理"@zh .
+
+id:scheme-technologies a skos:ConceptScheme ; skos:prefLabel "Telecom technologies"@en .
+id:technology-lte a tokg:Technology ; tokg:canonicalKey "technology:lte" ; skos:inScheme id:scheme-technologies ; skos:prefLabel "LTE"@en .
+id:technology-epc a tokg:Technology ; tokg:canonicalKey "technology:epc" ; skos:inScheme id:scheme-technologies ; skos:prefLabel "Evolved Packet Core"@en .
+id:technology-nr a tokg:Technology ; tokg:canonicalKey "technology:nr" ; skos:inScheme id:scheme-technologies ; skos:prefLabel "New Radio"@en .
+id:technology-5gc a tokg:Technology ; tokg:canonicalKey "technology:5gc" ; skos:inScheme id:scheme-technologies ; skos:prefLabel "5G Core"@en .
+id:technology-ims a tokg:Technology ; tokg:canonicalKey "technology:ims" ; skos:inScheme id:scheme-technologies ; skos:prefLabel "IP Multimedia Subsystem"@en .
+id:technology-sip a tokg:Technology ; tokg:canonicalKey "technology:sip" ; skos:inScheme id:scheme-technologies ; skos:prefLabel "SIP"@en .
+id:technology-diameter a tokg:Technology ; tokg:canonicalKey "technology:diameter" ; skos:inScheme id:scheme-technologies ; skos:prefLabel "Diameter"@en .
+id:technology-ip a tokg:Technology ; tokg:canonicalKey "technology:ip" ; skos:inScheme id:scheme-technologies ; skos:prefLabel "Internet Protocol"@en .
+id:technology-mpls a tokg:Technology ; tokg:canonicalKey "technology:mpls" ; skos:inScheme id:scheme-technologies ; skos:prefLabel "MPLS"@en .
+id:technology-otn a tokg:Technology ; tokg:canonicalKey "technology:otn" ; skos:inScheme id:scheme-technologies ; skos:prefLabel "Optical Transport Network"@en .
+
+id:scheme-presence a skos:ConceptScheme ; skos:prefLabel "Information element presence"@en .
+id:presence-mandatory a tokg:Presence ; tokg:canonicalKey "presence:mandatory" ; skos:inScheme id:scheme-presence ; skos:prefLabel "Mandatory"@en, "必选"@zh .
+id:presence-optional a tokg:Presence ; tokg:canonicalKey "presence:optional" ; skos:inScheme id:scheme-presence ; skos:prefLabel "Optional"@en, "可选"@zh .
+id:presence-conditional a tokg:Presence ; tokg:canonicalKey "presence:conditional" ; skos:inScheme id:scheme-presence ; skos:prefLabel "Conditional"@en, "条件必选"@zh .
+id:presence-conditional-optional a tokg:Presence ; tokg:canonicalKey "presence:conditional-optional" ; skos:inScheme id:scheme-presence ; skos:prefLabel "Conditional optional"@en, "条件可选"@zh .
+
+id:scheme-directions a skos:ConceptScheme ; skos:prefLabel "Directions"@en .
+id:direction-inbound a tokg:Direction ; tokg:canonicalKey "direction:inbound" ; skos:inScheme id:scheme-directions ; skos:prefLabel "Inbound"@en .
+id:direction-outbound a tokg:Direction ; tokg:canonicalKey "direction:outbound" ; skos:inScheme id:scheme-directions ; skos:prefLabel "Outbound"@en .
+id:direction-bidirectional a tokg:Direction ; tokg:canonicalKey "direction:bidirectional" ; skos:inScheme id:scheme-directions ; skos:prefLabel "Bidirectional"@en .
+
+id:scheme-outcomes a skos:ConceptScheme ; skos:prefLabel "Procedure outcomes"@en .
+id:outcome-success a tokg:Outcome ; tokg:canonicalKey "outcome:success" ; skos:inScheme id:scheme-outcomes ; skos:prefLabel "Success"@en .
+id:outcome-failure a tokg:Outcome ; tokg:canonicalKey "outcome:failure" ; skos:inScheme id:scheme-outcomes ; skos:prefLabel "Failure"@en .
+id:outcome-timeout a tokg:Outcome ; tokg:canonicalKey "outcome:timeout" ; skos:inScheme id:scheme-outcomes ; skos:prefLabel "Timeout"@en .
+id:outcome-retry a tokg:Outcome ; tokg:canonicalKey "outcome:retry" ; skos:inScheme id:scheme-outcomes ; skos:prefLabel "Retry"@en .
+
+id:scheme-timer-actions a skos:ConceptScheme ; skos:prefLabel "Timer actions"@en .
+id:timer-action-start a tokg:TimerActionKind ; tokg:canonicalKey "timer-action:start" ; skos:inScheme id:scheme-timer-actions ; skos:prefLabel "Start"@en .
+id:timer-action-stop a tokg:TimerActionKind ; tokg:canonicalKey "timer-action:stop" ; skos:inScheme id:scheme-timer-actions ; skos:prefLabel "Stop"@en .
+id:timer-action-restart a tokg:TimerActionKind ; tokg:canonicalKey "timer-action:restart" ; skos:inScheme id:scheme-timer-actions ; skos:prefLabel "Restart"@en .
+id:timer-action-expire a tokg:TimerActionKind ; tokg:canonicalKey "timer-action:expire" ; skos:inScheme id:scheme-timer-actions ; skos:prefLabel "Expire"@en .
+
+id:scheme-alarm-severities a skos:ConceptScheme ; skos:prefLabel "Alarm severities"@en .
+id:severity-cleared a tokg:AlarmSeverity ; tokg:canonicalKey "alarm-severity:cleared" ; skos:inScheme id:scheme-alarm-severities ; skos:prefLabel "Cleared"@en .
+id:severity-indeterminate a tokg:AlarmSeverity ; tokg:canonicalKey "alarm-severity:indeterminate" ; skos:inScheme id:scheme-alarm-severities ; skos:prefLabel "Indeterminate"@en .
+id:severity-warning a tokg:AlarmSeverity ; tokg:canonicalKey "alarm-severity:warning" ; skos:inScheme id:scheme-alarm-severities ; skos:prefLabel "Warning"@en .
+id:severity-minor a tokg:AlarmSeverity ; tokg:canonicalKey "alarm-severity:minor" ; skos:inScheme id:scheme-alarm-severities ; skos:prefLabel "Minor"@en .
+id:severity-major a tokg:AlarmSeverity ; tokg:canonicalKey "alarm-severity:major" ; skos:inScheme id:scheme-alarm-severities ; skos:prefLabel "Major"@en .
+id:severity-critical a tokg:AlarmSeverity ; tokg:canonicalKey "alarm-severity:critical" ; skos:inScheme id:scheme-alarm-severities ; skos:prefLabel "Critical"@en .
+
+id:scheme-dependency-types a skos:ConceptScheme ; skos:prefLabel "Dependency types"@en .
+id:dependency-signalling a tokg:DependencyType ; tokg:canonicalKey "dependency:signalling" ; skos:inScheme id:scheme-dependency-types ; skos:prefLabel "Signalling"@en .
+id:dependency-transport a tokg:DependencyType ; tokg:canonicalKey "dependency:transport" ; skos:inScheme id:scheme-dependency-types ; skos:prefLabel "Transport"@en .
+id:dependency-hosting a tokg:DependencyType ; tokg:canonicalKey "dependency:hosting" ; skos:inScheme id:scheme-dependency-types ; skos:prefLabel "Hosting"@en .
+id:dependency-configuration a tokg:DependencyType ; tokg:canonicalKey "dependency:configuration" ; skos:inScheme id:scheme-dependency-types ; skos:prefLabel "Configuration"@en .
+id:dependency-capacity a tokg:DependencyType ; tokg:canonicalKey "dependency:capacity" ; skos:inScheme id:scheme-dependency-types ; skos:prefLabel "Capacity"@en .
+id:dependency-availability a tokg:DependencyType ; tokg:canonicalKey "dependency:availability" ; skos:inScheme id:scheme-dependency-types ; skos:prefLabel "Availability"@en .
+id:dependency-security a tokg:DependencyType ; tokg:canonicalKey "dependency:security" ; skos:inScheme id:scheme-dependency-types ; skos:prefLabel "Security"@en .
+id:dependency-service a tokg:DependencyType ; tokg:canonicalKey "dependency:service" ; skos:inScheme id:scheme-dependency-types ; skos:prefLabel "Service"@en .
+id:dependency-metric a tokg:DependencyType ; tokg:canonicalKey "dependency:metric" ; skos:inScheme id:scheme-dependency-types ; skos:prefLabel "Metric"@en .
+
+id:scheme-requirement-modalities a skos:ConceptScheme ; skos:prefLabel "Requirement modalities"@en .
+id:requirement-shall a tokg:RequirementModality ; tokg:canonicalKey "requirement-modality:shall" ; skos:inScheme id:scheme-requirement-modalities ; skos:prefLabel "SHALL"@en .
+id:requirement-shall-not a tokg:RequirementModality ; tokg:canonicalKey "requirement-modality:shall-not" ; skos:inScheme id:scheme-requirement-modalities ; skos:prefLabel "SHALL NOT"@en .
+id:requirement-should a tokg:RequirementModality ; tokg:canonicalKey "requirement-modality:should" ; skos:inScheme id:scheme-requirement-modalities ; skos:prefLabel "SHOULD"@en .
+id:requirement-should-not a tokg:RequirementModality ; tokg:canonicalKey "requirement-modality:should-not" ; skos:inScheme id:scheme-requirement-modalities ; skos:prefLabel "SHOULD NOT"@en .
+id:requirement-may a tokg:RequirementModality ; tokg:canonicalKey "requirement-modality:may" ; skos:inScheme id:scheme-requirement-modalities ; skos:prefLabel "MAY"@en .
+
+id:scheme-assertion-modalities a skos:ConceptScheme ; skos:prefLabel "Assertion modalities"@en .
+id:assertion-modality-asserted a tokg:AssertionModality ; tokg:canonicalKey "assertion-modality:asserted" ; skos:inScheme id:scheme-assertion-modalities ; skos:prefLabel "Asserted"@en .
+id:assertion-modality-derived a tokg:AssertionModality ; tokg:canonicalKey "assertion-modality:derived" ; skos:inScheme id:scheme-assertion-modalities ; skos:prefLabel "Derived"@en .
+id:assertion-modality-required a tokg:AssertionModality ; tokg:canonicalKey "assertion-modality:required" ; skos:inScheme id:scheme-assertion-modalities ; skos:prefLabel "Required"@en .
+id:assertion-modality-permitted a tokg:AssertionModality ; tokg:canonicalKey "assertion-modality:permitted" ; skos:inScheme id:scheme-assertion-modalities ; skos:prefLabel "Permitted"@en .
+id:assertion-modality-prohibited a tokg:AssertionModality ; tokg:canonicalKey "assertion-modality:prohibited" ; skos:inScheme id:scheme-assertion-modalities ; skos:prefLabel "Prohibited"@en .
+id:assertion-modality-recommended a tokg:AssertionModality ; tokg:canonicalKey "assertion-modality:recommended" ; skos:inScheme id:scheme-assertion-modalities ; skos:prefLabel "Recommended"@en .
+id:assertion-modality-inferred a tokg:AssertionModality ; tokg:canonicalKey "assertion-modality:inferred" ; skos:inScheme id:scheme-assertion-modalities ; skos:prefLabel "Inferred"@en .
+
+id:scheme-polarities a skos:ConceptScheme ; skos:prefLabel "Assertion polarities"@en .
+id:polarity-positive a tokg:Polarity ; tokg:canonicalKey "polarity:positive" ; skos:inScheme id:scheme-polarities ; skos:prefLabel "Positive"@en .
+id:polarity-negative a tokg:Polarity ; tokg:canonicalKey "polarity:negative" ; skos:inScheme id:scheme-polarities ; skos:prefLabel "Negative"@en .
+
+id:scheme-assertion-statuses a skos:ConceptScheme ; skos:prefLabel "Assertion statuses"@en .
+id:assertion-status-proposed a tokg:AssertionStatus ; tokg:canonicalKey "assertion-status:proposed" ; skos:inScheme id:scheme-assertion-statuses ; skos:prefLabel "Proposed"@en .
+id:assertion-status-extracted a tokg:AssertionStatus ; tokg:canonicalKey "assertion-status:extracted" ; skos:inScheme id:scheme-assertion-statuses ; skos:prefLabel "Extracted"@en .
+id:assertion-status-reviewed a tokg:AssertionStatus ; tokg:canonicalKey "assertion-status:reviewed" ; skos:inScheme id:scheme-assertion-statuses ; skos:prefLabel "Reviewed"@en .
+id:assertion-status-accepted a tokg:AssertionStatus ; tokg:canonicalKey "assertion-status:accepted" ; skos:inScheme id:scheme-assertion-statuses ; skos:prefLabel "Accepted"@en .
+id:assertion-status-rejected a tokg:AssertionStatus ; tokg:canonicalKey "assertion-status:rejected" ; skos:inScheme id:scheme-assertion-statuses ; skos:prefLabel "Rejected"@en .
+id:assertion-status-deprecated a tokg:AssertionStatus ; tokg:canonicalKey "assertion-status:deprecated" ; skos:inScheme id:scheme-assertion-statuses ; skos:prefLabel "Deprecated"@en .
+
+id:scheme-evidence-roles a skos:ConceptScheme ; skos:prefLabel "Evidence roles"@en .
+id:evidence-role-supports a tokg:EvidenceRole ; tokg:canonicalKey "evidence-role:supports" ; skos:inScheme id:scheme-evidence-roles ; skos:prefLabel "Supports"@en .
+id:evidence-role-contradicts a tokg:EvidenceRole ; tokg:canonicalKey "evidence-role:contradicts" ; skos:inScheme id:scheme-evidence-roles ; skos:prefLabel "Contradicts"@en .
+id:evidence-role-contextualizes a tokg:EvidenceRole ; tokg:canonicalKey "evidence-role:contextualizes" ; skos:inScheme id:scheme-evidence-roles ; skos:prefLabel "Contextualizes"@en .
+
+id:scheme-evidence-directness a skos:ConceptScheme ; skos:prefLabel "Evidence directness"@en .
+id:evidence-explicit a tokg:EvidenceDirectness ; tokg:canonicalKey "evidence-directness:explicit" ; skos:inScheme id:scheme-evidence-directness ; skos:prefLabel "Explicit"@en .
+id:evidence-table-derived a tokg:EvidenceDirectness ; tokg:canonicalKey "evidence-directness:table-derived" ; skos:inScheme id:scheme-evidence-directness ; skos:prefLabel "Table-derived"@en .
+id:evidence-figure-derived a tokg:EvidenceDirectness ; tokg:canonicalKey "evidence-directness:figure-derived" ; skos:inScheme id:scheme-evidence-directness ; skos:prefLabel "Figure-derived"@en .
+id:evidence-calculated a tokg:EvidenceDirectness ; tokg:canonicalKey "evidence-directness:calculated" ; skos:inScheme id:scheme-evidence-directness ; skos:prefLabel "Calculated"@en .
+id:evidence-inferred a tokg:EvidenceDirectness ; tokg:canonicalKey "evidence-directness:inferred" ; skos:inScheme id:scheme-evidence-directness ; skos:prefLabel "Inferred"@en .
+
+id:scheme-lifecycle-statuses a skos:ConceptScheme ; skos:prefLabel "Document lifecycle statuses"@en .
+id:lifecycle-draft a tokg:LifecycleStatus ; tokg:canonicalKey "lifecycle:draft" ; skos:inScheme id:scheme-lifecycle-statuses ; skos:prefLabel "Draft"@en .
+id:lifecycle-approved a tokg:LifecycleStatus ; tokg:canonicalKey "lifecycle:approved" ; skos:inScheme id:scheme-lifecycle-statuses ; skos:prefLabel "Approved"@en .
+id:lifecycle-in-force a tokg:LifecycleStatus ; tokg:canonicalKey "lifecycle:in-force" ; skos:inScheme id:scheme-lifecycle-statuses ; skos:prefLabel "In force"@en .
+id:lifecycle-superseded a tokg:LifecycleStatus ; tokg:canonicalKey "lifecycle:superseded" ; skos:inScheme id:scheme-lifecycle-statuses ; skos:prefLabel "Superseded"@en .
+id:lifecycle-withdrawn a tokg:LifecycleStatus ; tokg:canonicalKey "lifecycle:withdrawn" ; skos:inScheme id:scheme-lifecycle-statuses ; skos:prefLabel "Withdrawn"@en .
+
+id:scheme-normative-statuses a skos:ConceptScheme ; skos:prefLabel "Normative statuses"@en .
+id:normative a tokg:NormativeStatus ; tokg:canonicalKey "normative-status:normative" ; skos:inScheme id:scheme-normative-statuses ; skos:prefLabel "Normative"@en .
+id:informative a tokg:NormativeStatus ; tokg:canonicalKey "normative-status:informative" ; skos:inScheme id:scheme-normative-statuses ; skos:prefLabel "Informative"@en .
+id:normative-mixed a tokg:NormativeStatus ; tokg:canonicalKey "normative-status:mixed" ; skos:inScheme id:scheme-normative-statuses ; skos:prefLabel "Mixed"@en .
+id:normative-unknown a tokg:NormativeStatus ; tokg:canonicalKey "normative-status:unknown" ; skos:inScheme id:scheme-normative-statuses ; skos:prefLabel "Unknown"@en .
+
+id:scheme-aggregation-functions a skos:ConceptScheme ; skos:prefLabel "Aggregation functions"@en .
+id:aggregation-sum a tokg:AggregationFunction ; tokg:canonicalKey "aggregation:sum" ; skos:inScheme id:scheme-aggregation-functions ; skos:prefLabel "Sum"@en .
+id:aggregation-average a tokg:AggregationFunction ; tokg:canonicalKey "aggregation:average" ; skos:inScheme id:scheme-aggregation-functions ; skos:prefLabel "Average"@en .
+id:aggregation-minimum a tokg:AggregationFunction ; tokg:canonicalKey "aggregation:minimum" ; skos:inScheme id:scheme-aggregation-functions ; skos:prefLabel "Minimum"@en .
+id:aggregation-maximum a tokg:AggregationFunction ; tokg:canonicalKey "aggregation:maximum" ; skos:inScheme id:scheme-aggregation-functions ; skos:prefLabel "Maximum"@en .
+id:aggregation-percentile a tokg:AggregationFunction ; tokg:canonicalKey "aggregation:percentile" ; skos:inScheme id:scheme-aggregation-functions ; skos:prefLabel "Percentile"@en .
+id:aggregation-ratio a tokg:AggregationFunction ; tokg:canonicalKey "aggregation:ratio" ; skos:inScheme id:scheme-aggregation-functions ; skos:prefLabel "Ratio"@en .
+
+id:scheme-zero-policies a skos:ConceptScheme ; skos:prefLabel "Zero denominator policies"@en .
+id:zero-policy-null a tokg:ZeroDenominatorPolicy ; tokg:canonicalKey "zero-policy:null" ; skos:inScheme id:scheme-zero-policies ; skos:prefLabel "Return null"@en .
+id:zero-policy-zero a tokg:ZeroDenominatorPolicy ; tokg:canonicalKey "zero-policy:zero" ; skos:inScheme id:scheme-zero-policies ; skos:prefLabel "Return zero"@en .
+id:zero-policy-not-applicable a tokg:ZeroDenominatorPolicy ; tokg:canonicalKey "zero-policy:not-applicable" ; skos:inScheme id:scheme-zero-policies ; skos:prefLabel "Not applicable"@en .
+
+id:release-5 a tokg:Release ; tokg:canonicalKey "3gpp-release:5" ; skos:prefLabel "3GPP Release 5"@en .
+id:release-8 a tokg:Release ; tokg:canonicalKey "3gpp-release:8" ; skos:prefLabel "3GPP Release 8"@en .
+id:release-15 a tokg:Release ; tokg:canonicalKey "3gpp-release:15" ; skos:prefLabel "3GPP Release 15"@en .
+id:release-16 a tokg:Release ; tokg:canonicalKey "3gpp-release:16" ; skos:prefLabel "3GPP Release 16"@en .
+id:release-17 a tokg:Release ; tokg:canonicalKey "3gpp-release:17" ; skos:prefLabel "3GPP Release 17"@en .
+id:release-18 a tokg:Release ; tokg:canonicalKey "3gpp-release:18" ; skos:prefLabel "3GPP Release 18"@en .
+id:release-19 a tokg:Release ; tokg:canonicalKey "3gpp-release:19" ; skos:prefLabel "3GPP Release 19"@en .

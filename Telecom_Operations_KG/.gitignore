@@ -1,0 +1,19 @@
+.venv/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+sources/cache/
+sources/work/
+sources/downloads/
+sources/extracted/
+evidence/fragments.jsonl
+evidence/fragments.sqlite
+evidence/.fragments.sqlite.*.tmp
+# Reproducible build and audit outputs
+release/
+release.zip
+reports/COVERAGE.md
+reports/SOURCE_LOCK.md
+reports/coverage.json
+reports/evidence-audit.json
+dist/

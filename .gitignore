@@ -9,14 +9,25 @@ node_modules/
 dist/
 build/
 
+# Local scratch space and downloaded working files
+/tmp/
+
 # Local benchmark datasets and downloaded archives
 datasets/
 
 # TypeScript incremental build metadata
 *.tsbuildinfo
 
-# Python/uv local environments
+# Python/uv local environments and caches
 .venv/
+.uv-cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+.coverage
+htmlcov/
 apps/ontology-validation/var/
 
 # Logs
