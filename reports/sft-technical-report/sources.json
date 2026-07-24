@@ -1,0 +1,149 @@
+{
+  "report": {
+    "title": "监督微调（SFT）技术报告：从指令对齐到电信 Agent 轨迹训练",
+    "version": "1.0",
+    "generated_at": "2026-07-24",
+    "language": "zh-CN",
+    "provenance_policy": "论文原图均保留论文标题、图号、PDF 页码、原文链接与本地资源路径；自绘图在 HTML 中显式标注。"
+  },
+  "paper_figures": [
+    {
+      "id": "fig-instructgpt-2",
+      "paper": "Training Language Models to Follow Instructions with Human Feedback",
+      "authors": "Ouyang et al.",
+      "year": 2022,
+      "arxiv_id": "2203.02155",
+      "source_url": "https://arxiv.org/abs/2203.02155",
+      "pdf_url": "https://arxiv.org/pdf/2203.02155",
+      "figure": "Figure 2",
+      "pdf_page": 3,
+      "local_asset": "assets/papers/instructgpt-fig2.png",
+      "extraction": "从作者 PDF 第 3 页裁取；未修改图中数据、图例或文字。"
+    },
+    {
+      "id": "fig-self-instruct-2",
+      "paper": "Self-Instruct: Aligning Language Models with Self-Generated Instructions",
+      "authors": "Wang et al.",
+      "year": 2023,
+      "arxiv_id": "2212.10560",
+      "source_url": "https://arxiv.org/abs/2212.10560",
+      "pdf_url": "https://arxiv.org/pdf/2212.10560",
+      "figure": "Figure 2",
+      "pdf_page": 2,
+      "local_asset": "assets/papers/self-instruct-fig2.png",
+      "extraction": "从作者 PDF 第 2 页裁取；未修改图中数据、图例或文字。"
+    },
+    {
+      "id": "fig-lima-5-6",
+      "paper": "LIMA: Less Is More for Alignment",
+      "authors": "Zhou et al.",
+      "year": 2023,
+      "arxiv_id": "2305.11206",
+      "source_url": "https://arxiv.org/abs/2305.11206",
+      "pdf_url": "https://arxiv.org/pdf/2305.11206",
+      "figure": "Figures 5 and 6",
+      "pdf_page": 8,
+      "local_asset": "assets/papers/lima-fig5-6.png",
+      "extraction": "从作者 PDF 第 8 页裁取；保留原始坐标轴、误差条和图注。"
+    },
+    {
+      "id": "fig-qlora-1",
+      "paper": "QLoRA: Efficient Finetuning of Quantized LLMs",
+      "authors": "Dettmers et al.",
+      "year": 2023,
+      "arxiv_id": "2305.14314",
+      "source_url": "https://arxiv.org/abs/2305.14314",
+      "pdf_url": "https://arxiv.org/pdf/2305.14314",
+      "figure": "Figure 1",
+      "pdf_page": 3,
+      "local_asset": "assets/papers/qlora-fig1.png",
+      "extraction": "从作者 PDF 第 3 页裁取；未修改图中结构和说明。"
+    },
+    {
+      "id": "fig-tulu3-2",
+      "paper": "Tülu 3: Pushing Frontiers in Open Language Model Post-Training",
+      "authors": "Lambert et al.",
+      "year": 2024,
+      "arxiv_id": "2411.15124",
+      "source_url": "https://arxiv.org/abs/2411.15124",
+      "pdf_url": "https://arxiv.org/pdf/2411.15124",
+      "figure": "Figure 2",
+      "pdf_page": 15,
+      "local_asset": "assets/papers/tulu3-fig2.png",
+      "extraction": "从作者 PDF 第 15 页裁取；保留原始数据源、长度分布和图注。"
+    },
+    {
+      "id": "fig-tulu3-4",
+      "paper": "Tülu 3: Pushing Frontiers in Open Language Model Post-Training",
+      "authors": "Lambert et al.",
+      "year": 2024,
+      "arxiv_id": "2411.15124",
+      "source_url": "https://arxiv.org/abs/2411.15124",
+      "pdf_url": "https://arxiv.org/pdf/2411.15124",
+      "figure": "Figure 4",
+      "pdf_page": 19,
+      "local_asset": "assets/papers/tulu3-fig4.png",
+      "extraction": "从作者 PDF 第 19 页裁取；未修改柱形图、图例和图注。"
+    },
+    {
+      "id": "fig-kimi-k2-8",
+      "paper": "Kimi K2: Open Agentic Intelligence",
+      "authors": "Moonshot AI",
+      "year": 2025,
+      "arxiv_id": "2507.20534",
+      "source_url": "https://arxiv.org/html/2507.20534v2#S3.F8",
+      "pdf_url": "https://arxiv.org/pdf/2507.20534",
+      "figure": "Figure 8, panels a and b",
+      "pdf_page": 10,
+      "local_assets": [
+        "assets/papers/kimi-k2-fig8a.png",
+        "assets/papers/kimi-k2-fig8b.png"
+      ],
+      "extraction": "下载自 arXiv HTML 的作者原图面板；在 HTML 中并排呈现。"
+    },
+    {
+      "id": "fig-qwen3-coder-next-3",
+      "paper": "Qwen3-Coder-Next Technical Report",
+      "authors": "Qwen Team",
+      "year": 2026,
+      "arxiv_id": "2603.00729",
+      "source_url": "https://arxiv.org/html/2603.00729v1#S3.F3",
+      "pdf_url": "https://arxiv.org/pdf/2603.00729",
+      "figure": "Figure 3",
+      "pdf_page": 5,
+      "local_asset": "assets/papers/qwen3-coder-next-fig3.png",
+      "extraction": "从作者 PDF 第 5 页裁取；未修改曲线、图例和图注。"
+    },
+    {
+      "id": "fig-deepseek-v32-5",
+      "paper": "DeepSeek-V3.2 Technical Report",
+      "authors": "DeepSeek-AI",
+      "year": 2025,
+      "arxiv_id": "2512.02556",
+      "source_url": "https://arxiv.org/html/2512.02556v1#S4.F5",
+      "pdf_url": "https://arxiv.org/pdf/2512.02556",
+      "figure": "Figure 5",
+      "pdf_page": 16,
+      "local_asset": "assets/papers/deepseek-v32-fig5.png",
+      "extraction": "下载自 arXiv HTML 的作者原图。"
+    },
+    {
+      "id": "fig-glm5-5",
+      "paper": "GLM-5: from Vibe Coding to Agentic Engineering",
+      "authors": "GLM Team",
+      "year": 2026,
+      "arxiv_id": "2602.15763",
+      "source_url": "https://arxiv.org/html/2602.15763v2#S1.F5",
+      "pdf_url": "https://arxiv.org/pdf/2602.15763",
+      "figure": "Figure 5",
+      "pdf_page": 4,
+      "local_asset": "assets/papers/glm5-fig5.png",
+      "extraction": "下载自 arXiv HTML 的作者原图。"
+    }
+  ],
+  "notes": [
+    "报告中的论文原图仅用于研究评论和方法说明，版权归原作者或出版方。",
+    "若将报告公开发布或用于商业分发，应逐篇复核论文许可证和出版方复用条款。",
+    "自绘流程图不复刻论文图形布局，均标注为根据多篇公开方法归纳绘制。"
+  ]
+}
