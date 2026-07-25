@@ -30,6 +30,9 @@ __pycache__/
 htmlcov/
 apps/ontology-validation/var/
 
+# Internal deployment documentation
+/docs/ontology-rag-test-environment-deployment.md
+
 # Logs
 *.log
 npm-debug.log*
