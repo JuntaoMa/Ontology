@@ -1,0 +1,42 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "{env:ONTOLOGY_MODEL_ID}",
+  "default_agent": "ontology-rag",
+  "share": "disabled",
+  "autoupdate": false,
+  "skills": {
+    "paths": [
+      "{env:ONTOLOGY_PROFILE_DIR}/skills"
+    ]
+  },
+  "permission": {
+    "bash": "allow",
+    "skill": "allow"
+  },
+  "agent": {
+    "ontology-rag": {
+      "description": "Ontology-grounded RAG test agent",
+      "mode": "primary",
+      "model": "{env:ONTOLOGY_MODEL_ID}",
+      "permission": {
+        "bash": "allow",
+        "skill": "allow"
+      }
+    }
+  },
+  "provider": {
+    "qwen-compatible": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Qwen compatible endpoint",
+      "options": {
+        "baseURL": "{env:ONTOLOGY_MODEL_BASE_URL}",
+        "apiKey": "{env:ONTOLOGY_MODEL_API_KEY}"
+      },
+      "models": {
+        "qwen-model": {
+          "name": "Qwen compatible model"
+        }
+      }
+    }
+  }
+}

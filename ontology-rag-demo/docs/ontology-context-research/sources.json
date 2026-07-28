@@ -1,0 +1,642 @@
+{
+  "report": {
+    "title": "本体层上下文与精准召回：研究与实现全景",
+    "generated_at": "2026-07-27",
+    "scope": "TBox/ontology context management, schema linking, graph retrieval, agentic retrieval, formal validation, open-source implementations",
+    "method": {
+      "downloaded_pdfs": 23,
+      "extracted_text_lines": 28603,
+      "repositories_inspected_at_fixed_commit": 6,
+      "notes": [
+        "Key papers were downloaded and their method, experiments, ablations, limitations, and terminology were checked against full text.",
+        "Repository observations use official source repositories and fixed commits.",
+        "Product entries use official documentation and are not treated as peer-reviewed evidence.",
+        "OWL/TBox, taxonomy, property-graph schema, and ABox/document graphs are classified separately."
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "progressive-ontology-reveal",
+      "title": "Progressive Ontology Reveal",
+      "year": 2024,
+      "kind": "paper",
+      "status": "preprint",
+      "ontology_layer": "OWL/TBox",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2410.09244"
+    },
+    {
+      "id": "ontology-query-check",
+      "title": "Increasing the LLM Accuracy for Question Answering: Ontologies to the Rescue!",
+      "year": 2024,
+      "kind": "paper",
+      "status": "preprint",
+      "ontology_layer": "RDFS/OWL validation",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2405.11706"
+    },
+    {
+      "id": "ontoscprompt",
+      "title": "OntoSCPrompt",
+      "year": 2025,
+      "kind": "paper",
+      "status": "preprint",
+      "ontology_layer": "KG schema",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2502.03992"
+    },
+    {
+      "id": "ort",
+      "title": "Ontology-Guided Reverse Thinking for Knowledge Graph Question Answering",
+      "year": 2025,
+      "kind": "paper",
+      "status": "ACL 2025",
+      "ontology_layer": "type/relation graph",
+      "full_text_reviewed": true,
+      "url": "https://aclanthology.org/2025.acl-long.741/"
+    },
+    {
+      "id": "g-retriever",
+      "title": "G-Retriever: Retrieval-Augmented Generation for Textual Graph Understanding and Question Answering",
+      "year": 2024,
+      "kind": "paper",
+      "status": "NeurIPS 2024",
+      "ontology_layer": "general graph",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2402.07630"
+    },
+    {
+      "id": "og-rag",
+      "title": "OG-RAG: Ontology-Grounded Retrieval-Augmented Generation for Large Language Models",
+      "year": 2025,
+      "kind": "paper",
+      "status": "EMNLP 2025",
+      "ontology_layer": "document factual schema",
+      "full_text_reviewed": true,
+      "url": "https://aclanthology.org/2025.emnlp-main.1674/"
+    },
+    {
+      "id": "kag",
+      "title": "KAG: Boosting LLMs in Professional Domains via Knowledge Augmented Generation",
+      "year": 2024,
+      "kind": "paper",
+      "status": "technical report",
+      "ontology_layer": "schema + fact graph + text",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2409.13731",
+      "code_url": "https://github.com/OpenSPG/KAG"
+    },
+    {
+      "id": "hipporag2",
+      "title": "HippoRAG 2: From RAG to Memory",
+      "year": 2025,
+      "kind": "paper",
+      "status": "ICML 2025",
+      "ontology_layer": "OpenIE document graph",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2502.14802",
+      "code_url": "https://github.com/OSU-NLP-Group/HippoRAG"
+    },
+    {
+      "id": "stark",
+      "title": "STaRK: Benchmarking LLM Retrieval on Textual and Relational Knowledge Bases",
+      "year": 2024,
+      "kind": "paper",
+      "status": "NeurIPS 2024",
+      "ontology_layer": "semi-structured KB",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2404.13207",
+      "code_url": "https://github.com/snap-stanford/stark"
+    },
+    {
+      "id": "graphrag-r1",
+      "title": "GraphRAG-R1",
+      "year": 2025,
+      "kind": "paper",
+      "status": "The Web Conference 2026",
+      "ontology_layer": "graph + text",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2507.23581",
+      "code_url": "https://github.com/ycygit/GraphRAG-R1"
+    },
+    {
+      "id": "kg-rag4sm",
+      "title": "KG-RAG4SM: Knowledge Graph RAG for Schema Matching",
+      "year": 2025,
+      "kind": "paper",
+      "status": "preprint",
+      "ontology_layer": "Wikidata ABox",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2501.08686",
+      "code_url": "https://github.com/machuangtao/KG-RAG4SM"
+    },
+    {
+      "id": "gdelt-ontology-kg",
+      "title": "Ontology-Guided Dynamic Knowledge Graph Construction for GDELT",
+      "year": 2025,
+      "kind": "paper",
+      "status": "preprint",
+      "ontology_layer": "typed event graph",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2503.07584"
+    },
+    {
+      "id": "kag-thinker",
+      "title": "KAG-Thinker",
+      "year": 2025,
+      "kind": "paper",
+      "status": "preprint",
+      "ontology_layer": "schema + text agent",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2506.17728"
+    },
+    {
+      "id": "tog2",
+      "title": "Think-on-Graph 2.0",
+      "year": 2025,
+      "kind": "paper",
+      "status": "ICLR 2025",
+      "ontology_layer": "ABox + entity documents",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2407.10805"
+    },
+    {
+      "id": "chatkbqa",
+      "title": "ChatKBQA: A Generate-then-Retrieve Framework for Knowledge Base Question Answering",
+      "year": 2024,
+      "kind": "paper",
+      "status": "Findings ACL 2024",
+      "ontology_layer": "KB schema + ABox",
+      "full_text_reviewed": true,
+      "url": "https://aclanthology.org/2024.findings-acl.122/"
+    },
+    {
+      "id": "rigor",
+      "title": "RIGOR: Retrieval-Augmented Iterative Generation of RDB Ontologies",
+      "year": 2025,
+      "kind": "paper",
+      "status": "preprint",
+      "ontology_layer": "OWL generation",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2506.01232"
+    },
+    {
+      "id": "gril",
+      "title": "GRIL: Graph Retrieval with Integrated Learning",
+      "year": 2025,
+      "kind": "paper",
+      "status": "preprint",
+      "ontology_layer": "ABox graph",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2509.16502"
+    },
+    {
+      "id": "hypergraphpro",
+      "title": "HyperGraphPro / ProGraph-R1",
+      "year": 2026,
+      "kind": "paper",
+      "status": "preprint",
+      "ontology_layer": "document hypergraph",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2601.17755"
+    },
+    {
+      "id": "anchor",
+      "title": "ANCHOR",
+      "year": 2026,
+      "kind": "paper",
+      "status": "preprint",
+      "ontology_layer": "OWL + SHACL",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2606.01208"
+    },
+    {
+      "id": "sg-kbqa",
+      "title": "SG-KBQA: Schema-Guided Knowledge Base Question Answering",
+      "year": 2025,
+      "kind": "paper",
+      "status": "EMNLP 2025",
+      "ontology_layer": "KB schema + ABox",
+      "full_text_reviewed": true,
+      "url": "https://aclanthology.org/2025.emnlp-main.442/",
+      "code_url": "https://github.com/gaosx2000/SG_KBQA"
+    },
+    {
+      "id": "schema-generation",
+      "title": "Schema Generation with Large Language Models",
+      "year": 2025,
+      "kind": "paper",
+      "status": "Findings EMNLP 2025",
+      "ontology_layer": "ShEx schema",
+      "full_text_reviewed": true,
+      "url": "https://aclanthology.org/2025.findings-emnlp.671/"
+    },
+    {
+      "id": "ontokg",
+      "title": "OntoKG",
+      "year": 2026,
+      "kind": "paper",
+      "status": "preprint",
+      "ontology_layer": "ontology-oriented property graph",
+      "full_text_reviewed": true,
+      "url": "https://arxiv.org/abs/2604.02618"
+    },
+    {
+      "id": "dl-lite-understanding",
+      "title": "Can LLMs Understand DL-Lite Ontologies?",
+      "year": 2024,
+      "kind": "paper",
+      "status": "Findings EMNLP 2024",
+      "ontology_layer": "DL-Lite TBox/ABox",
+      "full_text_reviewed": true,
+      "url": "https://aclanthology.org/2024.findings-emnlp.141/",
+      "code_url": "https://github.com/keyu-wang-2002/Can-LLMs-Understand-DL-Lite-Ontologies"
+    },
+    {
+      "id": "subgraphrag",
+      "title": "SubgraphRAG",
+      "year": 2025,
+      "kind": "paper",
+      "status": "ICLR 2025",
+      "ontology_layer": "ABox graph",
+      "full_text_reviewed": false,
+      "url": "https://openreview.net/forum?id=JvkuZZ04O7",
+      "code_url": "https://github.com/Graph-COM/SubgraphRAG"
+    },
+    {
+      "id": "byokg-rag",
+      "title": "BYOKG-RAG",
+      "year": 2025,
+      "kind": "paper",
+      "status": "EMNLP 2025",
+      "ontology_layer": "property-graph schema + ABox",
+      "full_text_reviewed": false,
+      "url": "https://aclanthology.org/2025.emnlp-main.1417/",
+      "code_url": "https://github.com/awslabs/graphrag-toolkit/tree/main/byokg-rag"
+    },
+    {
+      "id": "hyem",
+      "title": "HyEm: Query-Adaptive Hyperbolic Retrieval for Biomedical Ontologies via Euclidean Vector Indexing",
+      "year": 2026,
+      "kind": "paper",
+      "status": "preprint",
+      "ontology_layer": "biomedical is-a hierarchy",
+      "full_text_reviewed": false,
+      "url": "https://arxiv.org/abs/2604.09550"
+    },
+    {
+      "id": "maintenance-assistant",
+      "title": "An ontology-based RAG procedure for a voice-controlled maintenance assistant",
+      "year": 2025,
+      "kind": "paper",
+      "status": "Computers in Industry",
+      "ontology_layer": "OWL",
+      "full_text_reviewed": false,
+      "url": "https://doi.org/10.1016/j.compind.2025.104289"
+    },
+    {
+      "id": "orag",
+      "title": "ORAG: Ontology-Guided RAG for Theme-Specific Entity Typing",
+      "year": 2024,
+      "kind": "paper",
+      "status": "COLM 2024",
+      "ontology_layer": "taxonomy",
+      "full_text_reviewed": false,
+      "url": "https://openreview.net/forum?id=cKBmZ2PZ6c",
+      "code_url": "https://github.com/JinfengXiao/ORAG"
+    },
+    {
+      "id": "ontotune",
+      "title": "OntoTune: Ontology-Driven Self-training for Aligning Large Language Models",
+      "year": 2025,
+      "kind": "paper",
+      "status": "WWW 2025",
+      "ontology_layer": "SNOMED CT taxonomy",
+      "full_text_reviewed": false,
+      "url": "https://arxiv.org/abs/2502.05478",
+      "code_url": "https://github.com/zjukg/OntoTune"
+    },
+    {
+      "id": "taxollama",
+      "title": "TaxoLLaMA",
+      "year": 2024,
+      "kind": "paper",
+      "status": "ACL 2024",
+      "ontology_layer": "taxonomy",
+      "full_text_reviewed": false,
+      "url": "https://aclanthology.org/2024.acl-long.127/",
+      "code_url": "https://github.com/VityaVitalich/TaxoLLaMA"
+    },
+    {
+      "id": "genom",
+      "title": "GenOM",
+      "year": 2026,
+      "kind": "paper",
+      "status": "journal / preprint",
+      "ontology_layer": "ontology matching",
+      "full_text_reviewed": false,
+      "url": "https://arxiv.org/abs/2508.10703",
+      "code_url": "https://github.com/AlanS87/genom-pipeline"
+    },
+    {
+      "id": "ontoaligner",
+      "title": "OntoAligner",
+      "year": 2025,
+      "kind": "paper",
+      "status": "ESWC 2025",
+      "ontology_layer": "ontology alignment",
+      "full_text_reviewed": false,
+      "url": "https://arxiv.org/abs/2503.21902",
+      "code_url": "https://ontoaligner.readthedocs.io/"
+    },
+    {
+      "id": "dragon-ai",
+      "title": "DRAGON-AI / CurateGPT",
+      "year": 2024,
+      "kind": "paper",
+      "status": "Journal of Biomedical Semantics",
+      "ontology_layer": "OBO ontology curation",
+      "full_text_reviewed": false,
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11484368/",
+      "code_url": "https://github.com/monarch-initiative/curate-gpt"
+    },
+    {
+      "id": "ontologyrag-code-mapping",
+      "title": "OntologyRAG: Better and Faster Biomedical Code Mapping",
+      "year": 2025,
+      "kind": "paper",
+      "status": "KEIR@ECIR workshop",
+      "ontology_layer": "RDF mappings",
+      "full_text_reviewed": false,
+      "url": "https://arxiv.org/abs/2502.18992",
+      "code_url": "https://github.com/iqvianlp/ontologyRAG"
+    },
+    {
+      "id": "simgrag",
+      "title": "SimGRAG",
+      "year": 2025,
+      "kind": "paper",
+      "status": "Findings ACL 2025",
+      "ontology_layer": "graph pattern",
+      "full_text_reviewed": false,
+      "url": "https://aclanthology.org/2025.findings-acl.163/",
+      "code_url": "https://github.com/YZ-Cai/SimGRAG"
+    },
+    {
+      "id": "gnn-rag",
+      "title": "GNN-RAG",
+      "year": 2025,
+      "kind": "paper",
+      "status": "Findings ACL 2025",
+      "ontology_layer": "ABox graph",
+      "full_text_reviewed": false,
+      "url": "https://aclanthology.org/2025.findings-acl.856/"
+    },
+    {
+      "id": "gfm-rag",
+      "title": "GFM-RAG",
+      "year": 2025,
+      "kind": "paper",
+      "status": "NeurIPS 2025",
+      "ontology_layer": "graph retriever foundation model",
+      "full_text_reviewed": false,
+      "url": "https://arxiv.org/abs/2502.01113"
+    },
+    {
+      "id": "grag",
+      "title": "GRAG",
+      "year": 2025,
+      "kind": "paper",
+      "status": "Findings NAACL 2025",
+      "ontology_layer": "textual graph",
+      "full_text_reviewed": false,
+      "url": "https://aclanthology.org/2025.findings-naacl.232/",
+      "code_url": "https://github.com/HuieL/GRAG"
+    },
+    {
+      "id": "pathrag",
+      "title": "PathRAG",
+      "year": 2025,
+      "kind": "paper",
+      "status": "preprint",
+      "ontology_layer": "document-derived graph",
+      "full_text_reviewed": false,
+      "url": "https://arxiv.org/abs/2502.14902",
+      "code_url": "https://github.com/BUPT-GAMMA/PathRAG"
+    },
+    {
+      "id": "kerag",
+      "title": "KERAG",
+      "year": 2025,
+      "kind": "paper",
+      "status": "Findings EMNLP 2025",
+      "ontology_layer": "ABox graph",
+      "full_text_reviewed": false,
+      "url": "https://aclanthology.org/2025.findings-emnlp.329/"
+    },
+    {
+      "id": "kg-retriever",
+      "title": "KG-Retriever",
+      "year": 2024,
+      "kind": "paper",
+      "status": "preprint",
+      "ontology_layer": "KG + collaborative document layer",
+      "full_text_reviewed": false,
+      "url": "https://arxiv.org/abs/2412.05547"
+    },
+    {
+      "id": "hyperrag",
+      "title": "HyperRAG",
+      "year": 2026,
+      "kind": "paper",
+      "status": "preprint",
+      "ontology_layer": "document hypergraph",
+      "full_text_reviewed": false,
+      "url": "https://arxiv.org/abs/2602.14470"
+    },
+    {
+      "id": "ontology-guided-agent-memory",
+      "title": "Ontology-Guided Long-Term Agent Memory",
+      "year": 2026,
+      "kind": "paper",
+      "status": "MLSys 2026",
+      "ontology_layer": "lightweight memory ontology",
+      "full_text_reviewed": false,
+      "url": "https://proceedings.mlsys.org/paper_files/paper/2026/hash/2fb4be70fc9668e9ec2c71b34fb127d4-Abstract-Conference.html"
+    },
+    {
+      "id": "microsoft-graphrag",
+      "title": "Microsoft GraphRAG",
+      "year": 2026,
+      "kind": "repository",
+      "status": "commit 14a00ad8",
+      "ontology_layer": "document-derived graph",
+      "full_text_reviewed": false,
+      "source_code_reviewed": true,
+      "url": "https://github.com/microsoft/graphrag/commit/14a00ad88fc33cf2b52f4f113f25807556f8e25e"
+    },
+    {
+      "id": "lightrag",
+      "title": "LightRAG",
+      "year": 2026,
+      "kind": "repository",
+      "status": "commit bbebdd64",
+      "ontology_layer": "document-derived graph",
+      "full_text_reviewed": false,
+      "source_code_reviewed": true,
+      "url": "https://github.com/HKUDS/LightRAG/commit/bbebdd64272d9c9cd71cf93c7446b1054a00388c"
+    },
+    {
+      "id": "hipporag-code",
+      "title": "HippoRAG repository",
+      "year": 2026,
+      "kind": "repository",
+      "status": "commit e37fba2a",
+      "ontology_layer": "OpenIE graph",
+      "full_text_reviewed": false,
+      "source_code_reviewed": true,
+      "url": "https://github.com/OSU-NLP-Group/HippoRAG/commit/e37fba2af1a951ac340d837a7c02efb9d8c9544a"
+    },
+    {
+      "id": "kag-code",
+      "title": "KAG repository",
+      "year": 2026,
+      "kind": "repository",
+      "status": "commit fdab15b3",
+      "ontology_layer": "SPG schema + graph + text",
+      "full_text_reviewed": false,
+      "source_code_reviewed": true,
+      "url": "https://github.com/OpenSPG/KAG/commit/fdab15b3929d2ee40dfcdd388f90233096a6afc9"
+    },
+    {
+      "id": "neo4j-graphrag",
+      "title": "Neo4j GraphRAG Python",
+      "year": 2026,
+      "kind": "repository",
+      "status": "commit 5a78f7e1",
+      "ontology_layer": "property graph",
+      "full_text_reviewed": false,
+      "source_code_reviewed": true,
+      "url": "https://github.com/neo4j/neo4j-graphrag-python/commit/5a78f7e130ac303b7c709e5e98053d63fdb27804"
+    },
+    {
+      "id": "cognee",
+      "title": "Cognee",
+      "year": 2026,
+      "kind": "repository",
+      "status": "commit 325acf35",
+      "ontology_layer": "limited RDF/OWL projection",
+      "full_text_reviewed": false,
+      "source_code_reviewed": true,
+      "url": "https://github.com/topoteretes/cognee/commit/325acf356a81545b9892f19ab1ea7b61c51a776b"
+    },
+    {
+      "id": "apache-jena",
+      "title": "Apache Jena",
+      "kind": "standard-tool",
+      "ontology_layer": "RDF/SPARQL/SHACL",
+      "url": "https://jena.apache.org/documentation/"
+    },
+    {
+      "id": "owlapi",
+      "title": "OWLAPI",
+      "kind": "standard-tool",
+      "ontology_layer": "OWL 2",
+      "url": "https://github.com/owlcs/owlapi"
+    },
+    {
+      "id": "robot",
+      "title": "ROBOT",
+      "kind": "standard-tool",
+      "ontology_layer": "OWL/SPARQL",
+      "url": "https://github.com/ontodev/robot"
+    },
+    {
+      "id": "owl2-profiles",
+      "title": "OWL 2 Web Ontology Language Profiles",
+      "kind": "standard",
+      "ontology_layer": "OWL 2",
+      "url": "https://www.w3.org/TR/owl2-profiles/"
+    },
+    {
+      "id": "sparql11",
+      "title": "SPARQL 1.1 Query Language",
+      "kind": "standard",
+      "ontology_layer": "RDF query",
+      "url": "https://www.w3.org/TR/sparql11-query/"
+    },
+    {
+      "id": "shacl",
+      "title": "Shapes Constraint Language",
+      "kind": "standard",
+      "ontology_layer": "RDF validation",
+      "url": "https://www.w3.org/TR/shacl/"
+    },
+    {
+      "id": "skos",
+      "title": "SKOS Simple Knowledge Organization System Reference",
+      "kind": "standard",
+      "ontology_layer": "taxonomy/terminology",
+      "url": "https://www.w3.org/TR/skos-reference/"
+    },
+    {
+      "id": "locality-modules",
+      "title": "Syntactic Locality-Based Module Extraction",
+      "year": 2008,
+      "kind": "paper",
+      "ontology_layer": "OWL module extraction",
+      "full_text_reviewed": false,
+      "url": "https://www.cs.ox.ac.uk/people/yevgeny.kazakov/publications/journ/CueHorKazSat08Modularity_JAIR.pdf"
+    },
+    {
+      "id": "bge-m3",
+      "title": "BAAI BGE-M3",
+      "kind": "model",
+      "ontology_layer": "candidate retrieval",
+      "url": "https://huggingface.co/BAAI/bge-m3"
+    },
+    {
+      "id": "lancedb",
+      "title": "LanceDB",
+      "kind": "infrastructure",
+      "ontology_layer": "vector storage",
+      "url": "https://docs.lancedb.com/quickstart"
+    },
+    {
+      "id": "nebulagraph",
+      "title": "NebulaGraph GraphRAG",
+      "kind": "infrastructure",
+      "ontology_layer": "property graph",
+      "url": "https://nebula-graph.io/solutions-fusion-graphrag"
+    },
+    {
+      "id": "stardog-voicebox",
+      "title": "Stardog Voicebox",
+      "kind": "product",
+      "ontology_layer": "enterprise semantic model",
+      "url": "https://docs.stardog.com/voicebox/"
+    },
+    {
+      "id": "graphdb-talk",
+      "title": "GraphDB Talk to Your Graph",
+      "kind": "product",
+      "ontology_layer": "RDF/SPARQL + vector",
+      "url": "https://graphdb.ontotext.com/documentation/11.2/talk-to-graph.html"
+    },
+    {
+      "id": "topbraid-copilot",
+      "title": "TopBraid Copilot",
+      "kind": "product",
+      "ontology_layer": "ontology and shape search",
+      "url": "https://www.topquadrant.com/doc/latest/user_guide/copilot/index.html"
+    },
+    {
+      "id": "fabric-iq-ontology",
+      "title": "Microsoft Fabric IQ Ontology",
+      "kind": "product",
+      "ontology_layer": "business semantic layer",
+      "url": "https://learn.microsoft.com/en-us/fabric/iq/ontology/overview"
+    }
+  ]
+}

@@ -10,7 +10,10 @@
     "serve:validation": "uv run --project apps/ontology-validation/backend uvicorn app.main:app --app-dir apps/ontology-validation/backend --port 8000",
     "build:validation": "pnpm --filter ontology-validation-app build",
     "typecheck:validation": "pnpm --filter ontology-validation-app typecheck",
-    "test:validation": "uv run --project apps/ontology-validation/backend pytest"
+    "test:validation": "uv run --project apps/ontology-validation/backend pytest",
+    "dev:agent-console": "pnpm --filter ontology-agent-console dev",
+    "build:agent-console": "pnpm --filter ontology-agent-console build",
+    "test:agent-console": "pnpm --filter ontology-agent-console test"
   },
   "dependencies": {
     "n3": "^2.1.0"

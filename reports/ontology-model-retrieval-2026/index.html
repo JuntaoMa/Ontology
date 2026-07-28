@@ -1,0 +1,2419 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="领域意图理解、本体检索与模型训练技术调研报告（2026）" />
+  <title>领域意图理解与本体检索模型体系｜技术调研与落地报告</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f1;
+      --paper: #fbfcf9;
+      --paper-2: #f0f4ee;
+      --ink: #17211f;
+      --ink-2: #45524e;
+      --ink-3: #6d7874;
+      --line: #d9e0da;
+      --teal: #0b746b;
+      --teal-2: #d8eee9;
+      --teal-3: #094e49;
+      --amber: #b46b12;
+      --amber-2: #f8e8ce;
+      --red: #a8463b;
+      --red-2: #f8ded9;
+      --blue: #315e86;
+      --blue-2: #dceaf5;
+      --violet: #685184;
+      --violet-2: #e9e1f2;
+      --shadow: 0 18px 50px rgba(28, 50, 44, 0.08);
+      --radius: 18px;
+      --radius-sm: 10px;
+      --nav-w: 270px;
+      --content-w: 1120px;
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0f1514;
+      --paper: #151d1b;
+      --paper-2: #1b2522;
+      --ink: #eef4f1;
+      --ink-2: #bdc9c4;
+      --ink-3: #87958f;
+      --line: #2a3733;
+      --teal: #65d6c7;
+      --teal-2: #173c37;
+      --teal-3: #9ce5db;
+      --amber: #f0b35f;
+      --amber-2: #3c2c18;
+      --red: #ef8f82;
+      --red-2: #40231f;
+      --blue: #8cc1ef;
+      --blue-2: #1d3041;
+      --violet: #c6a9e5;
+      --violet-2: #30283a;
+      --shadow: 0 22px 60px rgba(0, 0, 0, 0.24);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 82% 4%, rgba(11, 116, 107, 0.09), transparent 26rem),
+        radial-gradient(circle at 12% 28%, rgba(180, 107, 18, 0.06), transparent 24rem),
+        var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.68;
+      text-rendering: optimizeLegibility;
+    }
+
+    a { color: var(--teal); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    a:hover { color: var(--teal-3); }
+    button, input { font: inherit; }
+    code, .mono {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    .layout { min-height: 100vh; }
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: var(--nav-w);
+      padding: 26px 22px;
+      border-right: 1px solid var(--line);
+      background: color-mix(in srgb, var(--paper) 88%, transparent);
+      backdrop-filter: blur(16px);
+      z-index: 20;
+      overflow-y: auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink);
+      text-decoration: none;
+      margin-bottom: 28px;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(145deg, #0b746b, #114d48);
+      box-shadow: 0 8px 20px rgba(11, 116, 107, 0.24);
+      font-weight: 800;
+      letter-spacing: -0.06em;
+    }
+
+    .brand strong { display: block; font-size: 0.83rem; letter-spacing: 0.08em; }
+    .brand span { display: block; color: var(--ink-3); font-size: 0.67rem; letter-spacing: 0.12em; }
+
+    .nav-label {
+      margin: 18px 8px 7px;
+      color: var(--ink-3);
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 36px;
+      padding: 7px 9px;
+      border-radius: 9px;
+      color: var(--ink-2);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: 160ms ease;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      background: var(--teal-2);
+      color: var(--teal-3);
+    }
+
+    .nav-num { width: 22px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+    .sidebar-foot {
+      margin-top: 24px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--ink-3);
+      font-size: 0.72rem;
+    }
+
+    .theme-toggle {
+      width: 100%;
+      margin-top: 12px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--paper-2);
+      color: var(--ink-2);
+      cursor: pointer;
+    }
+
+    .main {
+      margin-left: var(--nav-w);
+      padding: 38px 40px 90px;
+    }
+
+    .content { width: min(100%, var(--content-w)); margin: 0 auto; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      min-height: 540px;
+      padding: 56px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background:
+        linear-gradient(125deg, color-mix(in srgb, var(--paper) 96%, transparent), color-mix(in srgb, var(--teal-2) 58%, var(--paper))),
+        var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      right: -130px;
+      top: -110px;
+      border: 1px solid color-mix(in srgb, var(--teal) 24%, transparent);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 58px color-mix(in srgb, var(--teal) 5%, transparent),
+        0 0 0 116px color-mix(in srgb, var(--teal) 3%, transparent);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border: 1px solid color-mix(in srgb, var(--teal) 32%, transparent);
+      border-radius: 999px;
+      color: var(--teal-3);
+      background: color-mix(in srgb, var(--teal-2) 70%, transparent);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); }
+    h1 {
+      position: relative;
+      z-index: 1;
+      max-width: 850px;
+      margin: 24px 0 18px;
+      font-size: clamp(2.45rem, 5vw, 4.75rem);
+      line-height: 1.06;
+      letter-spacing: -0.055em;
+    }
+
+    .hero-lead {
+      position: relative;
+      z-index: 1;
+      max-width: 810px;
+      margin: 0 0 34px;
+      color: var(--ink-2);
+      font-size: 1.08rem;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 36px;
+    }
+
+    .meta-pill {
+      padding: 7px 11px;
+      border-radius: 9px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      color: var(--ink-2);
+      font-size: 0.78rem;
+    }
+
+    .verdict {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 14px;
+      max-width: 860px;
+      padding: 20px;
+      border: 1px solid color-mix(in srgb, var(--teal) 28%, var(--line));
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--paper) 90%, transparent);
+    }
+
+    .verdict-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: var(--teal);
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .verdict strong { display: block; margin-bottom: 3px; }
+    .verdict p { margin: 0; color: var(--ink-2); font-size: 0.92rem; }
+
+    section {
+      scroll-margin-top: 28px;
+      margin-top: 74px;
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 18px;
+      align-items: start;
+      margin-bottom: 28px;
+    }
+
+    .section-no {
+      padding-top: 5px;
+      color: var(--teal);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-size: clamp(1.8rem, 3.4vw, 2.85rem);
+      line-height: 1.16;
+      letter-spacing: -0.04em;
+    }
+
+    .section-kicker { margin: 0; color: var(--ink-3); max-width: 820px; }
+    h3 {
+      margin: 32px 0 12px;
+      font-size: 1.25rem;
+      line-height: 1.35;
+      letter-spacing: -0.02em;
+    }
+
+    h4 { margin: 0 0 7px; font-size: 0.98rem; }
+    p { margin: 0 0 14px; }
+    ul, ol { margin-top: 8px; padding-left: 1.28rem; }
+    li + li { margin-top: 7px; }
+
+    .grid { display: grid; gap: 16px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    .card {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: 0 8px 26px rgba(21, 47, 40, 0.035);
+    }
+
+    .card p:last-child, .card ul:last-child { margin-bottom: 0; }
+    .card-label {
+      display: inline-block;
+      margin-bottom: 12px;
+      color: var(--ink-3);
+      font-size: 0.7rem;
+      font-weight: 900;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .stat strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 1.8rem;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .stat p { color: var(--ink-3); font-size: 0.82rem; }
+    .accent-teal { border-top: 4px solid var(--teal); }
+    .accent-amber { border-top: 4px solid var(--amber); }
+    .accent-blue { border-top: 4px solid var(--blue); }
+    .accent-violet { border-top: 4px solid var(--violet); }
+
+    .callout {
+      display: grid;
+      grid-template-columns: 5px 1fr;
+      gap: 16px;
+      margin: 20px 0;
+      padding: 18px 20px 18px 0;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--paper);
+      overflow: hidden;
+    }
+
+    .callout::before { content: ""; background: var(--teal); }
+    .callout.warn::before { background: var(--amber); }
+    .callout.risk::before { background: var(--red); }
+    .callout h4 { margin-bottom: 3px; }
+    .callout p { margin: 0; color: var(--ink-2); font-size: 0.9rem; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .tag.good { color: var(--teal-3); background: var(--teal-2); }
+    .tag.watch { color: var(--amber); background: var(--amber-2); }
+    .tag.risk { color: var(--red); background: var(--red-2); }
+    .tag.info { color: var(--blue); background: var(--blue-2); }
+    .tag.lab { color: var(--violet); background: var(--violet-2); }
+
+    .evidence {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 6px;
+      margin: 0 1px;
+      border: 1px solid color-mix(in srgb, var(--teal) 30%, var(--line));
+      border-radius: 5px;
+      color: var(--teal-3);
+      background: var(--teal-2);
+      font-size: 0.66rem;
+      font-weight: 900;
+      text-decoration: none;
+      vertical-align: 0.08em;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--paper);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+      font-size: 0.84rem;
+    }
+
+    th, td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--paper-2);
+      color: var(--ink-2);
+      font-size: 0.72rem;
+      letter-spacing: 0.045em;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: color-mix(in srgb, var(--teal-2) 28%, transparent); }
+    .muted { color: var(--ink-3); }
+    .small { font-size: 0.8rem; }
+    .nowrap { white-space: nowrap; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(110px, 1fr));
+      gap: 10px;
+      align-items: stretch;
+      overflow-x: auto;
+      padding: 4px 2px 14px;
+    }
+
+    .flow-step {
+      position: relative;
+      min-width: 118px;
+      padding: 17px 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--paper);
+    }
+
+    .flow-step:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: -10px;
+      top: 50%;
+      transform: translate(50%, -50%);
+      color: var(--teal);
+      font-weight: 900;
+      z-index: 2;
+    }
+
+    .flow-step b { display: block; margin-bottom: 4px; font-size: 0.86rem; }
+    .flow-step span { color: var(--ink-3); font-size: 0.72rem; line-height: 1.45; }
+    .flow-step.hot { border-color: color-mix(in srgb, var(--teal) 44%, var(--line)); background: var(--teal-2); }
+
+    .decision {
+      display: grid;
+      grid-template-columns: 160px 1fr 1fr;
+      gap: 1px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--line);
+    }
+
+    .decision > div { padding: 15px; background: var(--paper); }
+    .decision .head { background: var(--paper-2); font-weight: 800; }
+
+    .source-list { counter-reset: source; display: grid; gap: 9px; }
+    .source-row {
+      display: grid;
+      grid-template-columns: 46px 1fr 100px;
+      gap: 12px;
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--paper);
+      align-items: start;
+    }
+
+    .source-id { color: var(--teal); font-weight: 900; font-size: 0.78rem; }
+    .source-row a { word-break: break-all; font-size: 0.76rem; }
+    .source-type { text-align: right; }
+
+    .checklist {
+      list-style: none;
+      padding-left: 0;
+      margin-bottom: 0;
+    }
+
+    .checklist li { position: relative; padding-left: 27px; }
+    .checklist li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      top: 0.02em;
+      width: 19px;
+      height: 19px;
+      display: grid;
+      place-items: center;
+      border-radius: 6px;
+      color: #fff;
+      background: var(--teal);
+      font-size: 0.7rem;
+      font-weight: 900;
+    }
+
+    .timeline { position: relative; display: grid; gap: 14px; }
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 22px;
+      top: 14px;
+      bottom: 14px;
+      width: 2px;
+      background: var(--line);
+    }
+
+    .timeline-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 46px 110px 1fr;
+      gap: 13px;
+      align-items: start;
+    }
+
+    .timeline-dot {
+      width: 15px;
+      height: 15px;
+      margin: 8px 0 0 15px;
+      border: 4px solid var(--paper);
+      border-radius: 50%;
+      background: var(--teal);
+      box-shadow: 0 0 0 2px var(--teal);
+      z-index: 1;
+    }
+
+    .timeline-time { padding-top: 4px; color: var(--teal-3); font-weight: 900; }
+    .timeline-body {
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--paper);
+    }
+
+    .timeline-body p { margin: 3px 0 0; color: var(--ink-2); font-size: 0.84rem; }
+
+    .footer {
+      margin-top: 72px;
+      padding: 26px 0 0;
+      border-top: 1px solid var(--line);
+      color: var(--ink-3);
+      font-size: 0.78rem;
+    }
+
+    .mobile-bar { display: none; }
+
+    @media (max-width: 1040px) {
+      .sidebar { display: none; }
+      .mobile-bar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--line);
+        background: color-mix(in srgb, var(--paper) 90%, transparent);
+        backdrop-filter: blur(14px);
+      }
+      .mobile-bar button {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--paper-2);
+        color: var(--ink);
+        padding: 6px 10px;
+      }
+      .main { margin-left: 0; padding: 24px 22px 70px; }
+      .hero { padding: 42px; }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 720px) {
+      .main { padding: 16px 14px 56px; }
+      .hero { min-height: auto; padding: 30px 22px; border-radius: 20px; }
+      h1 { font-size: 2.5rem; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .section-head { grid-template-columns: 1fr; gap: 3px; }
+      .section-no { padding: 0; }
+      .decision { grid-template-columns: 1fr; }
+      .source-row { grid-template-columns: 42px 1fr; }
+      .source-type { grid-column: 2; text-align: left; }
+      .timeline-item { grid-template-columns: 42px 1fr; }
+      .timeline-time { grid-column: 2; }
+      .timeline-body { grid-column: 2; }
+    }
+
+    @media print {
+      :root { --bg: #fff; --paper: #fff; --paper-2: #f6f7f5; --ink: #111; --ink-2: #333; --ink-3: #666; }
+      body { background: #fff; font-size: 10pt; }
+      .sidebar, .mobile-bar, .theme-toggle { display: none !important; }
+      .main { margin: 0; padding: 0; }
+      .content { width: 100%; }
+      .hero { min-height: auto; box-shadow: none; padding: 32px; }
+      section { margin-top: 42px; break-inside: avoid-page; }
+      .card, .table-wrap, .callout, .source-row { box-shadow: none; break-inside: avoid; }
+      a { color: #065f59; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" aria-label="报告目录">
+      <a class="brand" href="#top">
+        <span class="brand-mark">O</span>
+        <span><strong>ONTOLOGY / MODEL SYSTEMS</strong><span>RESEARCH BRIEF · 2026</span></span>
+      </a>
+
+      <div class="nav-label">核心判断</div>
+      <a class="nav-link" href="#summary"><span class="nav-num">01</span>执行摘要</a>
+      <a class="nav-link" href="#architecture"><span class="nav-num">02</span>推荐总体架构</a>
+      <a class="nav-link" href="#feasibility"><span class="nav-num">03</span>约束与可行性</a>
+      <a class="nav-link" href="#landscape"><span class="nav-num">04</span>最新技术版图</a>
+
+      <div class="nav-label">实施设计</div>
+      <a class="nav-link" href="#llm"><span class="nav-num">05</span>LLM 训练方案</a>
+      <a class="nav-link" href="#retrieval"><span class="nav-num">06</span>Embedding / Rerank</a>
+      <a class="nav-link" href="#corpus"><span class="nav-num">07</span>企业语料工程</a>
+      <a class="nav-link" href="#quality"><span class="nav-num">08</span>质量门槛</a>
+      <a class="nav-link" href="#toolchain"><span class="nav-num">09</span>全流程工具链</a>
+
+      <div class="nav-label">验收与计划</div>
+      <a class="nav-link" href="#budget"><span class="nav-num">10</span>显存与时延预算</a>
+      <a class="nav-link" href="#evaluation"><span class="nav-num">11</span>评测与上线门禁</a>
+      <a class="nav-link" href="#roadmap"><span class="nav-num">12</span>分阶段路线图</a>
+      <a class="nav-link" href="#sources"><span class="nav-num">13</span>来源索引</a>
+
+      <div class="sidebar-foot">
+        资料检索截止：2026-07-27<br />
+        来源优先级：标准 / 官方文档 / 模型卡 / 原始论文。
+        <button class="theme-toggle" id="themeToggle" type="button">切换深色模式</button>
+      </div>
+    </aside>
+
+    <div class="mobile-bar">
+      <strong>本体检索模型报告</strong>
+      <button id="mobileThemeToggle" type="button">深色</button>
+    </div>
+
+    <main class="main" id="top">
+      <div class="content">
+        <header class="hero">
+          <span class="eyebrow"><span class="dot"></span> Research &amp; Architecture Report</span>
+          <h1>领域意图理解与<br />本体检索模型体系</h1>
+          <p class="hero-lead">
+            面向 3–6B 领域理解 LLM、轻量意图模型、低时延 Embedding 与 Reranker，
+            给出企业语料治理、训练路线、检索架构、工具链和上线验收门槛。
+          </p>
+          <div class="hero-meta">
+            <span class="meta-pill">调研日期 · 2026-07-27</span>
+            <span class="meta-pill">重点语言 · 中文 / 中英混合</span>
+            <span class="meta-pill">部署假设 · 企业内网 / 单卡优先</span>
+            <span class="meta-pill">交付形态 · 单文件 HTML</span>
+          </div>
+          <div class="verdict">
+            <div class="verdict-icon">结论</div>
+            <div>
+              <strong>不要把“领域知识、意图路由、召回、精排”塞进同一个模型。</strong>
+              <p>
+                最稳妥的方案是四层解耦：24–150M 意图编码器 → 稠密+稀疏+本体别名的混合召回
+                → 100–300M 线上精排学生模型 → 4B 领域 LLM 做解释与约束推理。0.6B/4B 强模型主要承担教师、离线标注和质量上限。
+              </p>
+            </div>
+          </div>
+        </header>
+
+        <section id="summary">
+          <div class="section-head">
+            <div class="section-no">01 / 13</div>
+            <div>
+              <h2>执行摘要</h2>
+              <p class="section-kicker">先给决策，再给技术细节。以下数字是建议的项目门禁，不是任何模型在未知硬件上的无条件承诺。</p>
+            </div>
+          </div>
+
+          <div class="grid grid-4">
+            <div class="card stat accent-teal">
+              <span class="card-label">领域主模型</span>
+              <strong>Qwen3‑4B</strong>
+              <p>中文、多语言与工具调用基础较合适；优先 RAG + QLoRA/RAFT，不从零预训练。</p>
+            </div>
+            <div class="card stat accent-blue">
+              <span class="card-label">轻量意图</span>
+              <strong>24–150M</strong>
+              <p>分类/OOD 用编码器；自由文本改写若要求可靠，参数预算应放宽到 0.5–0.6B。</p>
+            </div>
+            <div class="card stat accent-amber">
+              <span class="card-label">粗排目标</span>
+              <strong>≤ 50 ms</strong>
+              <p>300–600M Embedding + 并行混合检索；验收同时看 Recall@50，不只看均值延迟。</p>
+            </div>
+            <div class="card stat accent-violet">
+              <span class="card-label">精排目标</span>
+              <strong>≤ 30 ms</strong>
+              <p>Top‑10/20、短序列、100–300M 交叉编码器或 late interaction；0.6B 生成式精排只做上限。</p>
+            </div>
+          </div>
+
+          <h3>建议的模型组合</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>职责</th>
+                  <th>推荐基线</th>
+                  <th>训练方式</th>
+                  <th>线上定位</th>
+                  <th>关键判断</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>领域理解 / 解释</strong></td>
+                  <td>Qwen3‑4B Base / Instruct <a class="evidence" href="https://huggingface.co/Qwen/Qwen3-4B" target="_blank" rel="noopener">S02</a></td>
+                  <td>领域继续预训练（可选）→ SFT → RAFT；QLoRA 起步</td>
+                  <td>RAG 后的结构化回答、工具调用、SPARQL 生成与解释</td>
+                  <td><span class="tag good">推荐</span> 4B BF16 权重约 8GB；15–30GB 显存适合 QLoRA，不适合单卡全参训练。</td>
+                </tr>
+                <tr>
+                  <td><strong>意图分类 / OOD</strong></td>
+                  <td>中文：BGE‑small‑zh‑v1.5 24M；英文/代码：ModernBERT‑base 149M <a class="evidence" href="https://huggingface.co/BAAI/bge-small-zh-v1.5" target="_blank" rel="noopener">S10</a><a class="evidence" href="https://huggingface.co/blog/modernbert" target="_blank" rel="noopener">S09</a></td>
+                  <td>分类头 + 对比学习；教师蒸馏；温度校准</td>
+                  <td>路由、实体类型、查询难度、拒答与澄清</td>
+                  <td><span class="tag good">满足 0.1B</span> 先做层级多标签分类，不用生成式模型代替确定性路由。</td>
+                </tr>
+                <tr>
+                  <td><strong>查询改写</strong></td>
+                  <td>规则/本体词典优先；Qwen3‑0.6B 作为复杂改写备选 <a class="evidence" href="https://huggingface.co/Qwen/Qwen3-0.6B" target="_blank" rel="noopener">S03</a></td>
+                  <td>教师合成 → 专家复核 → SFT/蒸馏；输出 JSON Schema</td>
+                  <td>别名展开、槽位补全、检索指令生成</td>
+                  <td><span class="tag watch">需调整参数预期</span> 0.1B 中文自由改写质量与稳定性风险高；0.5–0.6B INT4 更现实。</td>
+                </tr>
+                <tr>
+                  <td><strong>粗选 Embedding</strong></td>
+                  <td>速度优先：EmbeddingGemma 300M；质量优先：Qwen3‑Embedding‑0.6B <a class="evidence" href="https://ai.google.dev/gemma/docs/embeddinggemma" target="_blank" rel="noopener">S07</a><a class="evidence" href="https://huggingface.co/Qwen/Qwen3-Embedding-0.6B" target="_blank" rel="noopener">S05</a></td>
+                  <td>对比学习 + in‑batch negatives + 正例感知 hard negatives + MRL</td>
+                  <td>Top‑50/100 高召回候选</td>
+                  <td><span class="tag good">双基线 A/B</span> 必须与 BM25/SPLADE、IRI/别名精确匹配并行，不能只做向量召回。</td>
+                </tr>
+                <tr>
+                  <td><strong>领域 Rerank</strong></td>
+                  <td>线上：gte‑multilingual‑reranker‑base 306M 或蒸馏学生；教师：Qwen3‑Reranker‑0.6B <a class="evidence" href="https://huggingface.co/Alibaba-NLP/gte-multilingual-reranker-base" target="_blank" rel="noopener">S11</a><a class="evidence" href="https://huggingface.co/Qwen/Qwen3-Reranker-0.6B" target="_blank" rel="noopener">S06</a></td>
+                  <td>分级相关性 + pairwise/listwise 蒸馏 + hard negatives</td>
+                  <td>Top‑10/20 精排，输出可校准相关性分数</td>
+                  <td><span class="tag watch">30ms 有条件</span> 短文本、Top‑K 限制、FP16/INT8、unpadding、L4/A10 级 GPU 并实测 p95。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout warn">
+            <div>
+              <h4>最需要避免的投入误区</h4>
+              <p>把频繁变化的本体实例和规则“背进”4B 权重，会带来更新慢、来源不可追溯和遗忘问题。权重应学习领域语言、任务格式与推理习惯；事实、层级、约束和版本应保留在本体库与检索层。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="architecture">
+          <div class="section-head">
+            <div class="section-no">02 / 13</div>
+            <div>
+              <h2>推荐总体架构</h2>
+              <p class="section-kicker">检索链路追求确定性、可解释和低时延；LLM 放在后段处理需要语言生成与组合推理的部分。</p>
+            </div>
+          </div>
+
+          <div class="flow" aria-label="在线检索流程">
+            <div class="flow-step">
+              <b>请求与权限</b>
+              <span>tenant / ACL / 安全级别 / trace_id</span>
+            </div>
+            <div class="flow-step">
+              <b>意图路由</b>
+              <span>层级多标签、OOD、槽位、是否澄清</span>
+            </div>
+            <div class="flow-step">
+              <b>受控改写</b>
+              <span>别名、缩写、实体类型、检索指令</span>
+            </div>
+            <div class="flow-step hot">
+              <b>三路并行召回</b>
+              <span>Dense + BM25/SPLADE + IRI/别名精确匹配</span>
+            </div>
+            <div class="flow-step">
+              <b>本体扩展</b>
+              <span>种子实体，受约束 1–2 hop，路径打分</span>
+            </div>
+            <div class="flow-step hot">
+              <b>领域精排</b>
+              <span>Top‑10/20，交叉编码器或 late interaction</span>
+            </div>
+            <div class="flow-step">
+              <b>回答 / 工具</b>
+              <span>4B LLM、SPARQL、证据引用、拒答</span>
+            </div>
+          </div>
+
+          <div class="grid grid-3">
+            <div class="card">
+              <span class="card-label">为什么混合召回</span>
+              <h4>语义、术语、标识符各有盲区</h4>
+              <p class="small muted">Dense 擅长释义，BM25/SPLADE 保留精确词项，IRI/别名通道保护编号、缩写和已知实体。RRF 用名次融合，避免直接混合不可比的原始分数。Qdrant 与 Milvus 均已原生支持混合检索与 RRF。<a class="evidence" href="https://qdrant.tech/documentation/search/hybrid-queries/" target="_blank" rel="noopener">S41</a></p>
+            </div>
+            <div class="card">
+              <span class="card-label">为什么保留图检索</span>
+              <h4>关系不是向量相似度</h4>
+              <p class="small muted">父子类、等价、限制、前置条件、版本替代关系应通过 SPARQL/图遍历确定性获得。KG²RAG 的做法也是先语义找种子，再由知识图谱扩展并组织结果。<a class="evidence" href="https://arxiv.org/abs/2502.06864" target="_blank" rel="noopener">S18</a></p>
+            </div>
+            <div class="card">
+              <span class="card-label">为什么 LLM 后置</span>
+              <h4>把可验证步骤留在系统里</h4>
+              <p class="small muted">本体更新只重建图与索引，不重训模型；OntologyRAG 的实证动机同样是避免本体每次更新都重新训练，并保留可解释的映射证据。<a class="evidence" href="https://arxiv.org/abs/2502.18992" target="_blank" rel="noopener">S17</a></p>
+            </div>
+          </div>
+
+          <h3>索引中的四种对象</h3>
+          <div class="decision">
+            <div class="head">对象</div>
+            <div class="head">索引内容</div>
+            <div class="head">用途</div>
+            <div><strong>概念卡 Entity Card</strong></div>
+            <div>IRI、首选名、别名、定义、父子类、限制、正反例、废弃映射、来源</div>
+            <div>实体对齐、意图槽位、精确解释；一条概念卡是一个原子检索单元。</div>
+            <div><strong>关系卡 Relation Card</strong></div>
+            <div>主谓宾、关系方向、domain/range、约束、自然语言 verbalization</div>
+            <div>关系查询和路径召回；避免把三元组拆成失去方向的词袋。</div>
+            <div><strong>证据块 Evidence Chunk</strong></div>
+            <div>标题路径、原文、页码/段落锚点、表头、版本、ACL、关联 IRI</div>
+            <div>为模型回答提供可引用原文；与图事实分开存储。</div>
+            <div><strong>路径卡 Path Card</strong></div>
+            <div>高频 1–2 hop 路径、业务含义、适用条件、来源事实列表</div>
+            <div>降低在线图遍历成本；只缓存高频、稳定、可失效的派生结果。</div>
+          </div>
+        </section>
+
+        <section id="feasibility">
+          <div class="section-head">
+            <div class="section-no">03 / 13</div>
+            <div>
+              <h2>需求约束与可行性修正</h2>
+              <p class="section-kicker">“内存”以下按 GPU 显存理解；若仅指 CPU RAM，3–6B 训练将严重依赖卸载并失去效率优势。</p>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>原始需求</th>
+                  <th>可行性</th>
+                  <th>需要增加的条件</th>
+                  <th>修正后验收口径</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>3–6B 学习本体结构与知识；15–30G</td>
+                  <td><span class="tag good">可做</span> 但只适合 PEFT/QLoRA 或分布式继续预训练</td>
+                  <td>4B 起步；事实放 RAG/图库；序列长 2K–4K；gradient checkpointing；训练/推理显存分开预算</td>
+                  <td>领域问答提升、结构化输出正确率、SPARQL 可执行率、证据忠实度；不以“模型背住多少三元组”为核心指标。</td>
+                </tr>
+                <tr>
+                  <td>0.1B 学习意图，分类或重写；2.5G</td>
+                  <td><span class="tag good">分类可做</span> <span class="tag watch">自由改写风险高</span></td>
+                  <td>分类与改写拆开；0.1B 内做意图/OOD/槽位；复杂改写用规则或 0.5–0.6B INT4</td>
+                  <td>分类 Macro‑F1、长尾意图 Recall、OOD FPR95、校准误差；改写看检索 Recall 提升与语义不漂移率。</td>
+                </tr>
+                <tr>
+                  <td>Embedding 粗选保证召回；约 50ms</td>
+                  <td><span class="tag good">可做</span> 不能承诺绝对召回</td>
+                  <td>混合检索、Top‑50/100、向量预热、短 query、并发/批量场景分开测、p95 而非平均值</td>
+                  <td>Recall@50 ≥ 95%（建议门禁）、最差意图切片 ≥ 90%、p95 ≤ 50ms；同时报告索引规模和硬件。</td>
+                </tr>
+                <tr>
+                  <td>领域 Rerank 精排；30ms 内</td>
+                  <td><span class="tag watch">有条件可做</span></td>
+                  <td>100–300M encoder 学生模型；Top‑10/20；query+doc ≤ 192–256 tokens；unpadding；FP16/INT8；GPU 常驻</td>
+                  <td>p95 ≤ 30ms、nDCG@10/Top‑1 提升、分数校准；0.6B 生成式 reranker 作为教师和离线质量上限。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout risk">
+            <div>
+              <h4>“保证召回”只能被定义为测试集上的可审计门禁</h4>
+              <p>开放世界检索不存在无条件 100% 召回。必须限定本体版本、查询分布、ACL、索引规模、Top‑K、硬件和统计分位数；并为 OOD、歧义、无答案请求设计澄清/拒答路径。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="landscape">
+          <div class="section-head">
+            <div class="section-no">04 / 13</div>
+            <div>
+              <h2>2025–2026 技术版图</h2>
+              <p class="section-kicker">最新趋势不是单纯“模型更大”，而是更强的指令化表征、可裁剪维度、多路检索、教师蒸馏与面向文档的多模态检索。</p>
+            </div>
+          </div>
+
+          <div class="grid grid-2">
+            <div class="card accent-teal">
+              <span class="card-label">Instruction-aware embeddings</span>
+              <h4>同一个模型按任务指令改变表征空间</h4>
+              <p class="small muted">Qwen3 Embedding 提供 0.6B/4B/8B 系列、100+ 语言、32K 上下文、可自定义指令和 MRL 维度；模型卡报告多数下游任务使用指令可提升 1%–5%。<a class="evidence" href="https://huggingface.co/Qwen/Qwen3-Embedding-0.6B" target="_blank" rel="noopener">S05</a><a class="evidence" href="https://arxiv.org/abs/2506.05176" target="_blank" rel="noopener">S13</a></p>
+            </div>
+            <div class="card accent-blue">
+              <span class="card-label">Small on-device encoders</span>
+              <h4>300M 级模型重新成为低时延主力</h4>
+              <p class="small muted">EmbeddingGemma 308M 支持 100+ 语言和 128–768 维 MRL；Google 公布 EdgeTPU 单次嵌入低于 22ms、量化后 RAM 低于 200MB。该数字仅证明端侧可行性，不能直接外推到企业服务器。<a class="evidence" href="https://ai.google.dev/gemma/docs/embeddinggemma" target="_blank" rel="noopener">S07</a></p>
+            </div>
+            <div class="card accent-amber">
+              <span class="card-label">Teacher → student ranking</span>
+              <h4>强生成式教师，快编码器学生</h4>
+              <p class="small muted">Qwen3‑Reranker‑0.6B 在其模型卡的多项检索基准上明显领先旧 0.3–0.6B reranker；但线上 30ms 更适合 306M mGTE encoder 或进一步蒸馏。<a class="evidence" href="https://huggingface.co/Qwen/Qwen3-Reranker-0.6B" target="_blank" rel="noopener">S06</a><a class="evidence" href="https://arxiv.org/abs/2407.19669" target="_blank" rel="noopener">S12</a></p>
+            </div>
+            <div class="card accent-violet">
+              <span class="card-label">Late interaction</span>
+              <h4>单向量与全交叉编码器之间的中间层</h4>
+              <p class="small muted">ColBERTv2 保留 token 级向量并用 MaxSim 计算相关性，PLAID 通过质心剪枝把大规模检索压到几十毫秒；代价是更大的多向量索引和复杂工程。<a class="evidence" href="https://arxiv.org/abs/2112.01488" target="_blank" rel="noopener">S49</a><a class="evidence" href="https://arxiv.org/abs/2205.09707" target="_blank" rel="noopener">S50</a></p>
+            </div>
+            <div class="card accent-teal">
+              <span class="card-label">Learned sparse retrieval</span>
+              <h4>神经词项扩展补足 Dense 的精确匹配盲区</h4>
+              <p class="small muted">SPLADE‑v3 延续可解释稀疏表示，在 40+ 查询集的元分析中优于 BM25/SPLADE++；对英文更成熟。中文企业场景应先用 BM25 + 领域词典，再验证 BGE‑M3 sparse 或自训 SPLADE。<a class="evidence" href="https://arxiv.org/abs/2403.06789" target="_blank" rel="noopener">S51</a></p>
+            </div>
+            <div class="card accent-blue">
+              <span class="card-label">Ontology / KG guided RAG</span>
+              <h4>语义召回提供种子，图关系提供连续上下文</h4>
+              <p class="small muted">OntologyRAG 与 KG²RAG 都强调利用本体/知识图谱的结构偏置；后者明确采用“语义种子 → KG 扩展 → 图组织”流程，适合本项目。<a class="evidence" href="https://arxiv.org/abs/2502.18992" target="_blank" rel="noopener">S17</a><a class="evidence" href="https://arxiv.org/abs/2502.06864" target="_blank" rel="noopener">S18</a></p>
+            </div>
+          </div>
+
+          <h3>前沿观察，不建议直接作为首版生产基线</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>方向</th>
+                  <th>2026 状态</th>
+                  <th>价值</th>
+                  <th>为何暂缓</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Qwen3‑VL‑Embedding / Reranker</td>
+                  <td><span class="tag lab">2026‑01 技术报告</span></td>
+                  <td>统一检索文本、图片、扫描文档与视频；2B/8B，32K，MRL。</td>
+                  <td>超出 50/30ms 与现有显存预算；适合作为复杂 PDF/图表的离线教师或二期多模态通道。<a class="evidence" href="https://arxiv.org/abs/2601.04720" target="_blank" rel="noopener">S52</a></td>
+                </tr>
+                <tr>
+                  <td>Label-free compact reranker adaptation</td>
+                  <td><span class="tag lab">2026‑06 预印本</span></td>
+                  <td>Querit‑Reranker 探索无人工标签的多语种紧凑精排适配。</td>
+                  <td>预印本且需等待代码、许可与独立复现；可借鉴“教师自动标注 + 少量专家校准”思想。<a class="evidence" href="https://arxiv.org/abs/2606.19037" target="_blank" rel="noopener">S53</a></td>
+                </tr>
+                <tr>
+                  <td>GraphRAG / LazyGraphRAG</td>
+                  <td><span class="tag info">成熟研究工具</span></td>
+                  <td>面向全局主题、社区摘要和跨文档 sensemaking。</td>
+                  <td>你们已有显式本体，不应重新用 LLM 生成一套平行图；只在非结构化语料缺少图谱时使用。<a class="evidence" href="https://www.microsoft.com/en-us/research/project/graphrag/publications/" target="_blank" rel="noopener">S19</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="llm">
+          <div class="section-head">
+            <div class="section-no">05 / 13</div>
+            <div>
+              <h2>LLM 训练方案</h2>
+              <p class="section-kicker">4B 主模型学习领域语言与工作方式，轻量模型学习确定性路由；把“知识更新”留给本体和索引。</p>
+            </div>
+          </div>
+
+          <h3>5.1 领域理解 LLM：推荐 Qwen3‑4B 起步</h3>
+          <p>
+            Qwen3‑4B 是 4.0B 参数、原生 32,768 上下文、支持 100+ 语言并提供 thinking / non‑thinking
+            切换的 Apache‑2.0 模型，符合中文企业场景、3–6B 规模和单卡部署的交集。
+            <a class="evidence" href="https://arxiv.org/abs/2505.09388" target="_blank" rel="noopener">S01</a>
+            <a class="evidence" href="https://huggingface.co/Qwen/Qwen3-4B" target="_blank" rel="noopener">S02</a>
+            Gemma 3‑4B 可作为跨语言/多模态候选，但中文领域首轮不建议同时维护两条主模型训练线。
+          </p>
+
+          <div class="grid grid-2">
+            <div class="card">
+              <span class="card-label">模型应该学什么</span>
+              <ul class="checklist small">
+                <li>领域术语、缩写、同义词与表达风格</li>
+                <li>任务协议：JSON、SPARQL、工具调用、引用格式</li>
+                <li>如何使用本体上下文、处理干扰文档与证据冲突</li>
+                <li>澄清、拒答、置信度与升级人工的行为边界</li>
+                <li>稳定的领域推理范式和少量长期基础知识</li>
+              </ul>
+            </div>
+            <div class="card">
+              <span class="card-label">模型不应该独自承担什么</span>
+              <ul class="checklist small">
+                <li>频繁变动的本体实例、产品编码和业务状态</li>
+                <li>必须逐条审计的法规、规则与资格条件</li>
+                <li>租户 ACL 和文档权限判断</li>
+                <li>可由 OWL / SHACL / SPARQL 确定性完成的逻辑</li>
+                <li>没有来源的“补全式”事实生成</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>5.2 四阶段训练，而不是一次性 SFT</h3>
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-time">Stage 0</div>
+              <div class="timeline-body">
+                <strong>无训练基线：RAG + 结构化提示 + 工具</strong>
+                <p>先得到零样本/少样本性能、错误类型与检索瓶颈。没有这个基线，无法证明训练的边际价值。</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-time">Stage 1</div>
+              <div class="timeline-body">
+                <strong>领域继续预训练 DAPT（有条件）</strong>
+                <p>只在术语切分、领域句法、长文风格明显失配且有至少数亿高质量 token 时做。按文档/时间切分，混入通用回放数据，监控通用能力遗忘；不要对很小语料机械重复多轮。</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-time">Stage 2</div>
+              <div class="timeline-body">
+                <strong>SFT：让模型学任务协议</strong>
+                <p>以真实任务为单位构造 1–5 万条高质量样本：意图解释、实体对齐、查询分解、SPARQL、证据引用、无答案与冲突处理。先追格式有效率和行为一致性。</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-time">Stage 3</div>
+              <div class="timeline-body">
+                <strong>RAFT：让模型在噪声检索中找对证据</strong>
+                <p>每个问题同时提供正确证据和相似干扰文档，训练模型忽略 distractors、引用证据并回答。RAFT 原论文正是面向 in-domain open-book 场景。<a class="evidence" href="https://arxiv.org/abs/2403.10131" target="_blank" rel="noopener">S16</a></p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-time">Stage 4</div>
+              <div class="timeline-body">
+                <strong>偏好优化（仅在有明确偏好数据时）</strong>
+                <p>对“更忠实、更简洁、更会澄清”等偏好做 DPO；不建议为了追赶技术潮流直接做 RL。TRL 已提供 SFT、DPO、GRPO 等标准实现。<a class="evidence" href="https://huggingface.co/docs/trl/quickstart" target="_blank" rel="noopener">S34</a></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout">
+            <div>
+              <h4>15–30GB 显存的训练策略</h4>
+              <p>首版采用 4‑bit QLoRA、LoRA 覆盖 all‑linear、BF16 计算、gradient checkpointing、2K–4K 序列。QLoRA 的核心是冻结 4‑bit 基座并只训练低秩适配器；其论文展示了 65B/48GB 的内存效率，因此 4B 在 24GB 单卡上有充足工程空间，但实际峰值仍取决于序列、batch 和优化器。<a class="evidence" href="https://arxiv.org/abs/2305.14314" target="_blank" rel="noopener">S31</a><a class="evidence" href="https://huggingface.co/docs/peft/main/package_reference/lora" target="_blank" rel="noopener">S32</a></p>
+            </div>
+          </div>
+
+          <h3>5.3 轻量意图模型：分类与改写拆成两条通道</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>通道</th>
+                  <th>模型规模</th>
+                  <th>输出</th>
+                  <th>训练数据</th>
+                  <th>线上策略</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>意图 / OOD 分类</strong></td>
+                  <td>24M BGE‑small‑zh 或约 100M 中文 BERT；英文/代码可测 149M ModernBERT</td>
+                  <td>层级意图、多标签、实体类型、查询难度、是否澄清、OOD 分数</td>
+                  <td>真实日志 + 专家标签 + 混淆意图对 + 无关请求；每类至少 200–500 条，长尾可用教师增强</td>
+                  <td>温度校准；低置信度不强行分类；规则与模型集成；2.5GB 内存绰绰有余。</td>
+                </tr>
+                <tr>
+                  <td><strong>受控改写</strong></td>
+                  <td>规则/词典为主；复杂场景 0.5–0.6B decoder INT4</td>
+                  <td><span class="mono">{canonical_query, entities, aliases, filters, clarification}</span></td>
+                  <td>教师生成 + 真实 query‑doc 对 + 专家复核；必须包含“不改写”和“需要澄清”样本</td>
+                  <td>先比较改写前后 Recall；若下降则回退原查询并做双查询融合。禁止无约束自由改写直接覆盖用户输入。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>5.4 训练样本配比建议</h3>
+          <div class="grid grid-4">
+            <div class="card stat">
+              <span class="card-label">真实任务</span>
+              <strong>40–60%</strong>
+              <p>日志、工单、搜索失败、专家问法；价值最高。</p>
+            </div>
+            <div class="card stat">
+              <span class="card-label">专家构造</span>
+              <strong>15–25%</strong>
+              <p>边界案例、反例、冲突、否定与复杂约束。</p>
+            </div>
+            <div class="card stat">
+              <span class="card-label">合成增强</span>
+              <strong>20–40%</strong>
+              <p>改写、难负例、长尾意图；必须抽检与去模板化。</p>
+            </div>
+            <div class="card stat">
+              <span class="card-label">通用回放</span>
+              <strong>10–30%</strong>
+              <p>用于继续预训练/SFT 的抗遗忘，比例需实验确定。</p>
+            </div>
+          </div>
+
+          <p class="small muted" style="margin-top:12px">
+            上述比例是工程起点而非学术定律。每次训练固定一份 sealed test set，并把数据版本、模板版本、教师模型、提示词和过滤规则写入 MLflow/DVC。
+          </p>
+        </section>
+
+        <section id="retrieval">
+          <div class="section-head">
+            <div class="section-no">06 / 13</div>
+            <div>
+              <h2>Embedding 与 Rerank 方案</h2>
+              <p class="section-kicker">先建立通用强基线，再用领域正例、难负例和教师蒸馏做增量；不要从零训练 embedding。</p>
+            </div>
+          </div>
+
+          <h3>6.1 模型候选与角色分工</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>模型</th>
+                  <th>规模 / 能力</th>
+                  <th>推荐角色</th>
+                  <th>优点</th>
+                  <th>限制</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>EmbeddingGemma</strong></td>
+                  <td>308M；100+ 语言；2K；128–768d MRL</td>
+                  <td><span class="tag good">速度基线</span></td>
+                  <td>小、可量化、适合 50ms；官方提供端侧低时延证据。</td>
+                  <td>Gemma 许可需法务确认；2K 上下文；中文领域效果必须本地实测。<a class="evidence" href="https://arxiv.org/abs/2509.20354" target="_blank" rel="noopener">S08</a></td>
+                </tr>
+                <tr>
+                  <td><strong>Qwen3‑Embedding‑0.6B</strong></td>
+                  <td>0.6B；100+ 语言；32K；32–1024d MRL；instruction‑aware</td>
+                  <td><span class="tag good">质量基线 / 教师</span></td>
+                  <td>中文、多语、代码和长文本强；Apache‑2.0；同族 reranker 配套。</td>
+                  <td>decoder‑backbone 比 300M encoder 更贵；50ms 要短 query、常驻 GPU 与优化服务。<a class="evidence" href="https://qwenlm.github.io/blog/qwen3-embedding/" target="_blank" rel="noopener">S04</a></td>
+                </tr>
+                <tr>
+                  <td><strong>BGE‑M3</strong></td>
+                  <td>约 0.6B；dense + sparse + multi‑vector；8K；100+ 语言</td>
+                  <td><span class="tag info">多路检索实验</span></td>
+                  <td>一个模型可产生三种表征，适合研究 dense/sparse/ColBERT 融合。</td>
+                  <td>部署与索引复杂；新项目不应仅因“一体化”就接受更高计算成本。<a class="evidence" href="https://github.com/FlagOpen/FlagEmbedding" target="_blank" rel="noopener">S36</a></td>
+                </tr>
+                <tr>
+                  <td><strong>gte‑multilingual‑reranker‑base</strong></td>
+                  <td>306M encoder；70+ 语言；8K</td>
+                  <td><span class="tag good">线上精排基线</span></td>
+                  <td>模型卡称相对旧 decoder reranker 有约 10× 推理速度；支持 unpadding/xFormers。</td>
+                  <td>30ms 仍需限制 Top‑K 和长度；中文本体领域必须微调。<a class="evidence" href="https://huggingface.co/Alibaba-NLP/gte-multilingual-reranker-base" target="_blank" rel="noopener">S11</a></td>
+                </tr>
+                <tr>
+                  <td><strong>Qwen3‑Reranker‑0.6B</strong></td>
+                  <td>0.6B；100+ 语言；32K；instruction‑aware</td>
+                  <td><span class="tag lab">教师 / 离线精排</span></td>
+                  <td>同规模公开基准质量强，适合产出软标签和难负例排序。</td>
+                  <td>生成式 yes/no 打分的计算路径更重；不把它当 30ms 默认承诺。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>6.2 Embedding 领域微调配方</h3>
+          <div class="flow" style="grid-template-columns:repeat(6,minmax(125px,1fr))">
+            <div class="flow-step"><b>正例构造</b><span>query → 概念卡 / 证据块 / 路径卡</span></div>
+            <div class="flow-step"><b>候选挖掘</b><span>BM25 + 旧 embedding 各取 Top‑100</span></div>
+            <div class="flow-step"><b>教师打分</b><span>0.6B/4B reranker 过滤假负例</span></div>
+            <div class="flow-step hot"><b>难负例采样</b><span>同父类、近邻、同名异义、旧版本</span></div>
+            <div class="flow-step"><b>对比训练</b><span>InfoNCE / MultipleNegativesRankingLoss</span></div>
+            <div class="flow-step"><b>切片评测</b><span>Recall、nDCG、校准、p95</span></div>
+          </div>
+
+          <div class="grid grid-2">
+            <div class="card">
+              <span class="card-label">建议样本格式</span>
+              <pre class="small mono" style="white-space:pre-wrap;margin:0;color:var(--ink-2)">{
+  "query": "停机超过30分钟的高温告警设备",
+  "positive_id": "concept:CriticalHeatStop",
+  "positive_text": "严重高温停机：…",
+  "hard_negatives": [
+    "concept:HighTemperatureWarning",
+    "concept:PlannedMaintenanceStop",
+    "concept:LegacyHeatAlarm"
+  ],
+  "intent": "ontology_entity_lookup",
+  "ontology_version": "2026.07",
+  "provenance": ["log:...", "expert:..."]
+}</pre>
+            </div>
+            <div class="card">
+              <span class="card-label">难负例优先级</span>
+              <ol class="small">
+                <li><strong>结构难负例：</strong>同父类、兄弟类、逆关系、相邻但不满足约束的概念。</li>
+                <li><strong>词法难负例：</strong>术语高度重合但语义不同，特别是否定、单位、阈值和版本。</li>
+                <li><strong>语义难负例：</strong>旧 embedding Top‑K 中被专家判为 0/1 级相关的项。</li>
+                <li><strong>权限难负例：</strong>内容相关但当前租户无权访问；用于系统测试，不直接当语义负例。</li>
+              </ol>
+            </div>
+          </div>
+
+          <p>
+            Hard negative 是领域微调成败的核心。NV‑Retriever 提出的 positive‑aware mining 用正例分数作锚点，
+            可过滤“其实也相关”的假负例；Sentence Transformers 已提供结合 bi‑encoder、CrossEncoder 和 FAISS 的挖掘接口。
+            <a class="evidence" href="https://arxiv.org/abs/2407.15831" target="_blank" rel="noopener">S14</a>
+            <a class="evidence" href="https://www.sbert.net/docs/package_reference/util/hard_negatives.html" target="_blank" rel="noopener">S15</a>
+          </p>
+
+          <h3>6.3 Reranker：教师蒸馏到线上学生</h3>
+          <div class="decision">
+            <div class="head">阶段</div>
+            <div class="head">做法</div>
+            <div class="head">质量控制</div>
+            <div><strong>教师标注</strong></div>
+            <div>Qwen3‑Reranker‑0.6B/4B 对每个 query 的 Top‑50 候选给软分数；用 0/1/2/3 四级相关性提示。</div>
+            <div>每类/每意图抽样专家复核；监控教师对否定、数值、方向和版本的错误。</div>
+            <div><strong>学生训练</strong></div>
+            <div>306M mGTE 或 24–110M 中文 encoder；pointwise BCE 起步，再比较 pairwise margin / listwise loss。</div>
+            <div>保留教师软标签分布；不要只学硬 0/1，避免丢失排序间隔。</div>
+            <div><strong>线上裁剪</strong></div>
+            <div>Top‑10/20、max_length 192–256、动态 padding、unpadding、FP16/INT8、GPU 常驻。</div>
+            <div>按文本长度与并发切片测 p50/p95/p99；量化前后 nDCG/Top‑1 回归。</div>
+            <div><strong>持续学习</strong></div>
+            <div>收集点击、改选、零结果、低置信度、人工纠错；主动学习优先标注分歧最大样本。</div>
+            <div>点击不是天然正例；需位置偏差校正与专家 adjudication。</div>
+          </div>
+
+          <h3>6.4 三条可部署路线</h3>
+          <div class="grid grid-3">
+            <div class="card accent-teal">
+              <span class="card-label">Route A · 首选</span>
+              <h4>Dense + BM25 + 小 Cross‑Encoder</h4>
+              <p class="small muted">工程最稳、可解释、易控制 Top‑K；最适合先验证 50/30ms。向量库使用 Qdrant/OpenSearch/Milvus 任一成熟平台。</p>
+            </div>
+            <div class="card accent-blue">
+              <span class="card-label">Route B · 准确率增强</span>
+              <h4>Dense + Sparse + Late Interaction</h4>
+              <p class="small muted">用 ColBERT/BGE‑M3 multi‑vector 代替或补充 cross‑encoder，延迟可控但索引体积与部署复杂度上升。</p>
+            </div>
+            <div class="card accent-amber">
+              <span class="card-label">Route C · 质量上限</span>
+              <h4>Dense + 0.6B 生成式 Reranker</h4>
+              <p class="small muted">适合低 QPS、离线批处理或高价值请求；不与 30ms 硬门禁同时作为首版目标。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="corpus">
+          <div class="section-head">
+            <div class="section-no">07 / 13</div>
+            <div>
+              <h2>企业语料如何高效整理</h2>
+              <p class="section-kicker">把语料工程视为有版本、有血缘、有权限的数据产品，而不是一次性“清洗后丢进向量库”。</p>
+            </div>
+          </div>
+
+          <h3>7.1 四层数据产品</h3>
+          <div class="grid grid-4">
+            <div class="card accent-blue">
+              <span class="card-label">Bronze · 原始层</span>
+              <h4>不可变原件</h4>
+              <p class="small muted">PDF、Office、网页、数据库快照、RDF/OWL、日志；保存 checksum、来源、owner、许可、ACL、抓取时间。</p>
+            </div>
+            <div class="card accent-teal">
+              <span class="card-label">Silver · 规范层</span>
+              <h4>结构化解析</h4>
+              <p class="small muted">统一成 Docling JSON/Markdown/Parquet；保留标题层级、页码、表头、坐标、语言和解析置信度。</p>
+            </div>
+            <div class="card accent-amber">
+              <span class="card-label">Gold · 语义层</span>
+              <h4>本体对齐</h4>
+              <p class="small muted">实体/关系/证据/路径卡；IRI、别名、断言与推断分离；SHACL 校验；细粒度 ACL。</p>
+            </div>
+            <div class="card accent-violet">
+              <span class="card-label">Platinum · 任务层</span>
+              <h4>可训练与可评测</h4>
+              <p class="small muted">意图标签、query‑doc、hard negatives、rerank 列表、SFT/RAFT、sealed test；完整记录生成配方。</p>
+            </div>
+          </div>
+
+          <h3>7.2 标准流水线</h3>
+          <div class="flow" style="grid-template-columns:repeat(7,minmax(120px,1fr))">
+            <div class="flow-step"><b>盘点</b><span>数据源、owner、权利、敏感级别、更新频率</span></div>
+            <div class="flow-step"><b>解析</b><span>版面、OCR、表格、公式、标题、锚点</span></div>
+            <div class="flow-step"><b>清洗</b><span>编码、噪声、页眉页脚、语言、PII、密钥</span></div>
+            <div class="flow-step"><b>去重</b><span>exact → MinHash/LSH → semantic</span></div>
+            <div class="flow-step hot"><b>语义化</b><span>本体对齐、实体卡、关系卡、证据卡</span></div>
+            <div class="flow-step"><b>标注</b><span>真实问题、正例、难负例、四级相关性</span></div>
+            <div class="flow-step"><b>发布</b><span>版本、数据卡、门禁、索引、回滚指针</span></div>
+          </div>
+
+          <div class="grid grid-2">
+            <div class="card">
+              <span class="card-label">文档解析策略</span>
+              <h4>按文档类型路由，不用单一解析器吃所有格式</h4>
+              <ul class="small">
+                <li>Born‑digital PDF / Office：Docling 标准 pipeline，保留 reading order、表格结构、公式与页锚点。<a class="evidence" href="https://docling-project.github.io/docling/examples/agent_skill/docling-document-intelligence/pipelines/" target="_blank" rel="noopener">S24</a></li>
+                <li>扫描、复杂双栏、公式密集：Docling VLM 或 MinerU；关键文档做页级可视化抽检。MinerU 支持 PDF/Office、OCR、表格 HTML 和公式 LaTeX。<a class="evidence" href="https://github.com/opendatalab/MinerU" target="_blank" rel="noopener">S25</a></li>
+                <li>结构化源优先走原生 API/数据库导出，避免“先打印成 PDF 再 OCR”。</li>
+              </ul>
+            </div>
+            <div class="card">
+              <span class="card-label">去重策略</span>
+              <h4>三级去重，且保留“同源版本”关系</h4>
+              <ul class="small">
+                <li>Exact hash：去除字节/规范文本完全重复。</li>
+                <li>MinHash + LSH：发现轻微格式或编辑差异。</li>
+                <li>Embedding + clustering：识别转述、翻译和模板化重复；阈值必须抽样标定。</li>
+                <li>法规/手册不同版本不是简单重复，应保留 <span class="mono">isRevisionOf</span> 与有效期。NeMo Curator 原生支持 exact、fuzzy 和 semantic 三类去重。<a class="evidence" href="https://docs.nvidia.com/nemo/curator/curate-text/process-data/deduplication" target="_blank" rel="noopener">S26</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>7.3 必须随每个 chunk 保存的元数据</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>维度</th>
+                  <th>字段示例</th>
+                  <th>为什么必须</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>身份与版本</td>
+                  <td class="mono">document_id, version_id, chunk_id, checksum, valid_from, valid_to</td>
+                  <td>增量重建、去重、回滚、时间点查询。</td>
+                </tr>
+                <tr>
+                  <td>来源与血缘</td>
+                  <td class="mono">source_uri, owner, primary_source, derived_from, parser_version, generated_by</td>
+                  <td>引用、审计和重现；可用 W3C PROV‑O 的 Entity / Activity / Agent 表达。<a class="evidence" href="https://www.w3.org/TR/prov-o/" target="_blank" rel="noopener">S23</a></td>
+                </tr>
+                <tr>
+                  <td>定位</td>
+                  <td class="mono">title_path, page, paragraph, bbox, table_id, row_id</td>
+                  <td>回答可回到原文；表格和扫描件可做视觉复核。</td>
+                </tr>
+                <tr>
+                  <td>权限</td>
+                  <td class="mono">tenant_id, acl, classification, pii_flags, retention_policy</td>
+                  <td>权限必须在召回前过滤，不能先召回再让 LLM 隐藏。</td>
+                </tr>
+                <tr>
+                  <td>语义</td>
+                  <td class="mono">ontology_iris, entity_types, relation_types, asserted_or_inferred, language</td>
+                  <td>本体约束检索、图扩展、切片评测与难负例构造。</td>
+                </tr>
+                <tr>
+                  <td>质量</td>
+                  <td class="mono">parse_confidence, ocr_cer, table_score, dedup_cluster, reviewer, review_status</td>
+                  <td>低质量内容可降权或隔离；支持后续重解析。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>7.4 本体感知切分规则</h3>
+          <div class="grid grid-3">
+            <div class="card">
+              <span class="card-label">原子优先</span>
+              <h4>定义和约束不跨块</h4>
+              <p class="small muted">一个类定义、一个关系说明、一个业务规则、一个表格行组尽量保持完整。固定 512 token 滑窗只能做兜底。</p>
+            </div>
+            <div class="card">
+              <span class="card-label">多粒度</span>
+              <h4>实体 / 段落 / 文档三级索引</h4>
+              <p class="small muted">短 query 先命中实体卡，再向父文档扩展证据；全局问题走章节/社区摘要，不让超长块挤占 reranker。</p>
+            </div>
+            <div class="card">
+              <span class="card-label">表格语义</span>
+              <h4>行必须携带表头和章节路径</h4>
+              <p class="small muted">将“阈值 30”重写为“严重高温停机阈值：30 分钟”，同时保留原表格坐标，避免脱离表头后失义。</p>
+            </div>
+          </div>
+
+          <div class="callout warn">
+            <div>
+              <h4>合成数据不是廉价真值</h4>
+              <p>LLM 可以生成改写、问题和候选负例，但不能直接决定事实正确性。本体断言用规则/推理器验证，检索相关性用专家抽检与分歧仲裁；合成样本必须记录教师模型、提示、温度和生成时间。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="quality">
+          <div class="section-head">
+            <div class="section-no">08 / 13</div>
+            <div>
+              <h2>语料与标注质量要求</h2>
+              <p class="section-kicker">质量门槛分为“不可妥协的合规/血缘门禁”和“需要在项目中校准的统计门禁”。</p>
+            </div>
+          </div>
+
+          <h3>8.1 建议验收门禁</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>层级</th>
+                  <th>指标</th>
+                  <th>建议门槛</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>来源 / 权利</strong></td>
+                  <td>可追溯率、owner/许可/ACL 完整率</td>
+                  <td><span class="tag good">100%</span></td>
+                  <td>任何缺来源或不明权利内容不得进入 Gold/Platinum；每个数据集配 Datasheet/Data Card。<a class="evidence" href="https://arxiv.org/abs/1803.09010" target="_blank" rel="noopener">S47</a><a class="evidence" href="https://arxiv.org/abs/2204.01075" target="_blank" rel="noopener">S48</a></td>
+                </tr>
+                <tr>
+                  <td><strong>解析</strong></td>
+                  <td>关键文档页级通过率</td>
+                  <td>≥ 98%</td>
+                  <td>抽检标题层级、阅读顺序、页码和表格；扫描文档单独报告字符错误率 CER，不能与原生 PDF 混算。</td>
+                </tr>
+                <tr>
+                  <td><strong>本体</strong></td>
+                  <td>严重 SHACL violation / 不可满足类</td>
+                  <td><span class="tag good">0</span></td>
+                  <td>SHACL 用形状图验证 RDF 数据图；发布前阻断 severity=Violation。<a class="evidence" href="https://www.w3.org/TR/shacl/" target="_blank" rel="noopener">S20</a></td>
+                </tr>
+                <tr>
+                  <td><strong>去重</strong></td>
+                  <td>精确重复；近重复误删率</td>
+                  <td>精确重复 0；误删 &lt; 1%</td>
+                  <td>语义去重阈值通过成对抽检标定；版本文档保留而非删除。</td>
+                </tr>
+                <tr>
+                  <td><strong>意图标注</strong></td>
+                  <td>双标一致性 Krippendorff α / Cohen κ</td>
+                  <td>≥ 0.80（建议）</td>
+                  <td>低于门槛先修标签定义和边界案例，不急于训练；所有分歧由第三位专家裁决。</td>
+                </tr>
+                <tr>
+                  <td><strong>检索标注</strong></td>
+                  <td>每 query 正例、难负例、相关性等级</td>
+                  <td>≥ 1 正例；4–15 难负例；0/1/2/3 四级</td>
+                  <td>必须包含 sibling、旧版本、否定、数值阈值、关系方向和词法高度相似项。</td>
+                </tr>
+                <tr>
+                  <td><strong>测试集</strong></td>
+                  <td>query 数与泄漏</td>
+                  <td>首版 1,500–3,000；家族级零泄漏</td>
+                  <td>同一原问题的改写、同一文档版本、模板生成簇不能跨 train/test；建议增加时间外推集。</td>
+                </tr>
+                <tr>
+                  <td><strong>安全</strong></td>
+                  <td>密钥/PII/越权检索</td>
+                  <td>严重泄漏 0</td>
+                  <td>权限过滤在检索前执行；数据治理对齐组织风险框架并保留人工审查。NIST AI RMF GenAI Profile 可作过程参考。<a class="evidence" href="https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-generative-artificial-intelligence" target="_blank" rel="noopener">S46</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="small muted" style="margin-top:12px">
+            98%、0.80、1,500–3,000 等是本报告给出的工程建议门槛，不是外部标准的强制值；应根据业务风险、标注成本和置信区间校准。
+          </p>
+
+          <h3>8.2 一份合格的检索金标要覆盖什么</h3>
+          <div class="grid grid-3">
+            <div class="card">
+              <span class="card-label">表达变化</span>
+              <ul class="small">
+                <li>缩写、别名、口语、错别字、混合中英文</li>
+                <li>同义改写、长问句、关键词式查询</li>
+                <li>否定、反事实、比较、数值和单位</li>
+              </ul>
+            </div>
+            <div class="card">
+              <span class="card-label">本体结构</span>
+              <ul class="small">
+                <li>父子类、兄弟类、等价类、逆关系</li>
+                <li>1–2 hop、多约束交集、domain/range</li>
+                <li>废弃概念、版本迁移、断言与推断</li>
+              </ul>
+            </div>
+            <div class="card">
+              <span class="card-label">系统边界</span>
+              <ul class="small">
+                <li>无答案、信息不足、必须澄清</li>
+                <li>有内容但无权限、租户隔离</li>
+                <li>多个同等正确答案与冲突来源</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>8.3 防止数据泄漏</h3>
+          <ol>
+            <li><strong>先封测试集，再做教师合成。</strong>任何用于提示、few-shot、hard-negative 挖掘或超参选择的 query 都不再是测试集。</li>
+            <li><strong>按 query family / source family / version group 切分。</strong>不能随机拆分同一个问题的十个改写。</li>
+            <li><strong>设时间外推集。</strong>训练只见旧本体版本，用最新版本检验系统能否通过检索更新而非依靠权重记忆。</li>
+            <li><strong>评测集只存稳定 ID。</strong>答案指向 ontology IRI、document version 与 span；避免只存可漂移的自由文本答案。</li>
+          </ol>
+        </section>
+
+        <section id="toolchain">
+          <div class="section-head">
+            <div class="section-no">09 / 13</div>
+            <div>
+              <h2>全流程工具链</h2>
+              <p class="section-kicker">首版选择少而稳的“参考栈”；候选工具用于替换，不建议同一职责并行引入三套平台。</p>
+            </div>
+          </div>
+
+          <h3>9.1 推荐参考栈</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>阶段</th>
+                  <th>首选</th>
+                  <th>可替代</th>
+                  <th>关键用途</th>
+                  <th>注意点</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>采集 / 湖仓</strong></td>
+                  <td>S3/MinIO + Parquet + Iceberg/Delta</td>
+                  <td>企业现有对象存储与数仓</td>
+                  <td>Bronze/Silver/Gold 分层、增量快照、可回滚</td>
+                  <td>原件不可覆盖；checksum 与版本 ID 先于解析。</td>
+                </tr>
+                <tr>
+                  <td><strong>文档解析</strong></td>
+                  <td>Docling</td>
+                  <td>MinerU / Unstructured / Apache Tika</td>
+                  <td>PDF/Office、OCR、版面、表格、公式、统一文档对象</td>
+                  <td>按文档类型路由；关键页必须可视化 QA。</td>
+                </tr>
+                <tr>
+                  <td><strong>清洗 / 去重</strong></td>
+                  <td>DataTrove（CPU/Slurm）</td>
+                  <td>NeMo Curator（GPU）、Data‑Juicer</td>
+                  <td>过滤、统计、exact/MinHash/semantic 去重、分片</td>
+                  <td>DataTrove 面向大规模文本处理和低内存分步管线；NeMo 更适合 GPU 加速。<a class="evidence" href="https://github.com/huggingface/datatrove" target="_blank" rel="noopener">S27</a><a class="evidence" href="https://github.com/datajuicer/data-juicer" target="_blank" rel="noopener">S28</a></td>
+                </tr>
+                <tr>
+                  <td><strong>本体处理</strong></td>
+                  <td>RDFLib / OWLAPI + pySHACL</td>
+                  <td>Apache Jena / ROBOT / ELK / HermiT</td>
+                  <td>RDF/OWL 解析、SHACL、推理、实体卡生成、SPARQL</td>
+                  <td>在线推理优先 OWL 2 EL/RL 可控子集；完整 DL 推理放离线。OWL 2 profiles 本就针对不同表达力/效率权衡。<a class="evidence" href="https://www.w3.org/TR/owl2-profiles/" target="_blank" rel="noopener">S22</a></td>
+                </tr>
+                <tr>
+                  <td><strong>标注</strong></td>
+                  <td>Argilla</td>
+                  <td>Label Studio</td>
+                  <td>意图、相关性、偏好、RAG 人工反馈、任务分发</td>
+                  <td>Argilla 更贴近 NLP/LLM 数据闭环；Label Studio 生态广并支持 ML 预标注。<a class="evidence" href="https://docs.argilla.io/" target="_blank" rel="noopener">S30</a><a class="evidence" href="https://labelstud.io/guide/ml.html" target="_blank" rel="noopener">S29</a></td>
+                </tr>
+                <tr>
+                  <td><strong>LLM 训练</strong></td>
+                  <td>LlamaFactory + PEFT + TRL</td>
+                  <td>Axolotl / NeMo / 原生 Transformers</td>
+                  <td>CPT、SFT、QLoRA、DPO、Qwen/Gemma 支持</td>
+                  <td>统一用 <span class="mono">uv</span> 管理项目环境；LlamaFactory 已迁移到 uv 并支持 Qwen3、CPT、SFT 与多种 QLoRA。<a class="evidence" href="https://github.com/hiyouga/LlamaFactory" target="_blank" rel="noopener">S33</a></td>
+                </tr>
+                <tr>
+                  <td><strong>Embedding / Rerank 训练</strong></td>
+                  <td>Sentence Transformers</td>
+                  <td>FlagEmbedding / Tevatron</td>
+                  <td>对比学习、多任务 loss、hard negatives、CrossEncoder</td>
+                  <td>Sentence Transformers 文档覆盖 embedding 与 cross‑encoder 训练；FlagEmbedding 适合 BGE‑M3 和中文模型。<a class="evidence" href="https://sbert.net/docs/sentence_transformer/training_overview.html" target="_blank" rel="noopener">S35</a></td>
+                </tr>
+                <tr>
+                  <td><strong>实验与版本</strong></td>
+                  <td>MLflow + DVC</td>
+                  <td>Weights &amp; Biases / lakeFS</td>
+                  <td>参数、代码版本、数据集、指标、模型注册、回滚</td>
+                  <td>MLflow 记录 runs/models/datasets；DVC 把数据与流水线版本化。<a class="evidence" href="https://mlflow.org/docs/latest/tracking" target="_blank" rel="noopener">S44</a><a class="evidence" href="https://dvc.org/blog/ml-experiment-versioning/" target="_blank" rel="noopener">S45</a></td>
+                </tr>
+                <tr>
+                  <td><strong>LLM 推理</strong></td>
+                  <td>vLLM 或 SGLang</td>
+                  <td>TensorRT‑LLM / llama.cpp</td>
+                  <td>连续批处理、OpenAI 兼容 API、量化、LoRA</td>
+                  <td>thinking 模式默认关闭用于低时延任务；生成长度设硬上限。</td>
+                </tr>
+                <tr>
+                  <td><strong>Embedding 服务</strong></td>
+                  <td>Hugging Face TEI</td>
+                  <td>vLLM pooling / Triton / Infinity</td>
+                  <td>Embedding、reranker、批处理、CPU/GPU、内网部署</td>
+                  <td>TEI 已有 Qwen3‑Embedding 部署示例并支持 reranker；vLLM 支持 embed/score pooling API。<a class="evidence" href="https://huggingface.co/docs/text-embeddings-inference/quick_tour" target="_blank" rel="noopener">S37</a><a class="evidence" href="https://docs.vllm.ai/en/latest/models/pooling_models/embed/" target="_blank" rel="noopener">S38</a></td>
+                </tr>
+                <tr>
+                  <td><strong>向量 / 混合检索</strong></td>
+                  <td>Qdrant（轻量）或 OpenSearch（既有搜索栈）</td>
+                  <td>Milvus（大规模向量）</td>
+                  <td>Dense、sparse、过滤、RRF、多阶段查询</td>
+                  <td>选一个；不要为 PoC 同时维护三套。Milvus 也原生支持 BM25、SPLADE、BGE‑M3 与 hybrid rerank。<a class="evidence" href="https://milvus.io/docs/overview.md" target="_blank" rel="noopener">S42</a></td>
+                </tr>
+                <tr>
+                  <td><strong>RDF / 图服务</strong></td>
+                  <td>Jena Fuseki</td>
+                  <td>GraphDB / Stardog / Neo4j n10s</td>
+                  <td>SPARQL 1.1、图查询、推理结果、版本图</td>
+                  <td>SPARQL 是事实与关系的权威查询面；Fuseki 提供 SPARQL server。<a class="evidence" href="https://jena.apache.org/documentation/fuseki2/" target="_blank" rel="noopener">S43</a><a class="evidence" href="https://www.w3.org/TR/sparql11-query/" target="_blank" rel="noopener">S21</a></td>
+                </tr>
+                <tr>
+                  <td><strong>可观测性</strong></td>
+                  <td>OpenTelemetry + Prometheus + Grafana</td>
+                  <td>Langfuse / Phoenix</td>
+                  <td>端到端 trace、阶段耗时、候选集、版本、反馈</td>
+                  <td>每次请求记录 model/index/ontology 版本和每阶段 p95；文本内容按安全策略脱敏。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>9.2 建议的项目目录</h3>
+          <div class="card">
+            <pre class="mono small" style="margin:0;white-space:pre;overflow:auto;color:var(--ink-2)">ontology-model-system/
+├── pyproject.toml              # uv 管理
+├── uv.lock
+├── configs/                    # 数据/训练/服务版本化配置
+├── data/
+│   ├── bronze/                 # 只读指针或 DVC
+│   ├── silver/
+│   ├── gold/
+│   └── sealed-eval/            # 独立权限
+├── ontology/
+│   ├── source/
+│   ├── shapes/                 # SHACL
+│   ├── cards/                  # entity/relation/path cards
+│   └── tests/
+├── pipelines/
+│   ├── ingest/
+│   ├── curate/
+│   ├── align/
+│   └── publish/
+├── training/
+│   ├── intent/
+│   ├── embedding/
+│   ├── reranker/
+│   └── llm/
+├── evaluation/
+│   ├── retrieval/
+│   ├── generation/
+│   ├── latency/
+│   └── security/
+├── serving/
+└── data_cards/                 # 每个发布数据集一份</pre>
+          </div>
+        </section>
+
+        <section id="budget">
+          <div class="section-head">
+            <div class="section-no">10 / 13</div>
+            <div>
+              <h2>显存与时延预算</h2>
+              <p class="section-kicker">权重大小可计算，真实峰值取决于框架、上下文、batch、KV cache 和量化内核；以下用于容量规划与压测起点。</p>
+            </div>
+          </div>
+
+          <h3>10.1 模型内存估算</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>模型 / 模式</th>
+                  <th>仅权重理论值</th>
+                  <th>建议规划值</th>
+                  <th>15–30GB 可行性</th>
+                  <th>备注</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>4B BF16 推理</td>
+                  <td>约 8GB</td>
+                  <td>10–16GB</td>
+                  <td><span class="tag good">可行</span></td>
+                  <td>规划值含运行时、短上下文 KV 与碎片；长上下文/并发会继续增加。</td>
+                </tr>
+                <tr>
+                  <td>4B INT4 推理</td>
+                  <td>约 2GB</td>
+                  <td>4–8GB</td>
+                  <td><span class="tag good">宽裕</span></td>
+                  <td>量化质量与实际加速依赖硬件内核；必须回归领域任务。</td>
+                </tr>
+                <tr>
+                  <td>4B QLoRA 训练</td>
+                  <td>基座约 2–3GB</td>
+                  <td>14–24GB @ 2K–4K</td>
+                  <td><span class="tag good">首选</span></td>
+                  <td>含适配器、梯度、激活与优化器的经验规划；gradient checkpointing 必开。</td>
+                </tr>
+                <tr>
+                  <td>4B 全参 AdamW</td>
+                  <td>仅 BF16 权重约 8GB</td>
+                  <td>&gt; 64GB，未含全部激活</td>
+                  <td><span class="tag risk">单卡不合适</span></td>
+                  <td>参数、梯度、FP32 master、两个 moment 带来约 16 bytes/param 量级；需 FSDP/ZeRO。</td>
+                </tr>
+                <tr>
+                  <td>6B BF16 推理</td>
+                  <td>约 12GB</td>
+                  <td>15–22GB</td>
+                  <td><span class="tag watch">可行但余量小</span></td>
+                  <td>30GB 内可用；15GB 边界紧，不利于长上下文和并发。</td>
+                </tr>
+                <tr>
+                  <td>24–150M encoder FP32</td>
+                  <td>0.1–0.6GB</td>
+                  <td>0.4–1.5GB</td>
+                  <td><span class="tag good">满足 2.5GB</span></td>
+                  <td>INT8 后更低；CPU 也可部署，GPU 可把延迟压至数毫秒级。</td>
+                </tr>
+                <tr>
+                  <td>0.6B decoder INT4</td>
+                  <td>约 0.3GB</td>
+                  <td>1–2.5GB（短上下文）</td>
+                  <td><span class="tag good">可满足改写备选</span></td>
+                  <td>输出必须短，限制最大 token；不同量化格式实际内存不同。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>10.2 在线延迟预算</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>阶段</th>
+                  <th>目标 p95</th>
+                  <th>执行方式</th>
+                  <th>关键控制变量</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>权限与规范化</td>
+                  <td>1–3ms</td>
+                  <td>CPU</td>
+                  <td>ACL bitmap / filter cache；不访问慢外部系统。</td>
+                </tr>
+                <tr>
+                  <td>意图 / OOD</td>
+                  <td>3–8ms</td>
+                  <td>24–150M encoder，CPU INT8 或 GPU</td>
+                  <td>query ≤ 128 tokens；与检索准备并行。</td>
+                </tr>
+                <tr>
+                  <td>Query Embedding</td>
+                  <td>10–30ms</td>
+                  <td>300–600M，FP16/INT8，GPU 常驻</td>
+                  <td>短 query、无冷启动、动态 padding；MRL 主要省索引/搜索，不必然大幅减少 encoder 前向。</td>
+                </tr>
+                <tr>
+                  <td>ANN + BM25/Sparse + Exact</td>
+                  <td>8–18ms</td>
+                  <td>三路并行</td>
+                  <td>索引规模、HNSW ef、过滤选择性、shard、Top‑K；RRF 只融名次。</td>
+                </tr>
+                <tr>
+                  <td>图扩展与融合</td>
+                  <td>3–10ms</td>
+                  <td>本地缓存 + 受限 SPARQL</td>
+                  <td>只做 1–2 hop、关系白名单、路径上限、预计算高频路径。</td>
+                </tr>
+                <tr>
+                  <td>Rerank Top‑10/20</td>
+                  <td>15–30ms</td>
+                  <td>100–300M encoder，FP16/INT8</td>
+                  <td>总长 ≤ 192–256、unpadding、GPU 常驻；Top‑K 是最大杠杆。</td>
+                </tr>
+                <tr>
+                  <td><strong>检索端到端（不含生成）</strong></td>
+                  <td><strong>45–80ms</strong></td>
+                  <td>意图与多路召回并行</td>
+                  <td>若 50ms 是全链路硬 SLA，需要进一步缩小模型、Top‑K 或将 rerank 变成 late interaction。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout warn">
+            <div>
+              <h4>动态 batching 的目标是吞吐，不等同于低时延</h4>
+              <p>Triton 支持将请求合并成动态 batch，并允许设置最大排队等待；应从 0 延迟开始调，只有 p95 仍在预算内才增加 queue delay。<a class="evidence" href="https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/batcher.html" target="_blank" rel="noopener">S39</a> ONNX Runtime 的 INT8/INT4、图优化和 Transformer optimizer 可用于 CPU/边缘学生模型，但量化可能在旧硬件上反而变慢，必须实测。<a class="evidence" href="https://onnxruntime.ai/docs/performance/model-optimizations/quantization.html" target="_blank" rel="noopener">S40</a></p>
+            </div>
+          </div>
+
+          <h3>10.3 压测矩阵必须固定</h3>
+          <div class="grid grid-4">
+            <div class="card">
+              <span class="card-label">硬件</span>
+              <p class="small muted">CPU 型号 / 核数、GPU 型号、显存、CUDA/驱动、NUMA、磁盘与网络。</p>
+            </div>
+            <div class="card">
+              <span class="card-label">负载</span>
+              <p class="small muted">并发 1/8/32/64；冷/热；短/中/长 query；Top‑K 10/20/50。</p>
+            </div>
+            <div class="card">
+              <span class="card-label">数据</span>
+              <p class="small muted">索引 10万/100万/1000万；向量维度；过滤选择性；分片与副本。</p>
+            </div>
+            <div class="card">
+              <span class="card-label">报告</span>
+              <p class="small muted">p50/p95/p99、QPS、GPU 利用率、队列时间、tokenize/forward/search 分解。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="evaluation">
+          <div class="section-head">
+            <div class="section-no">11 / 13</div>
+            <div>
+              <h2>评测体系与上线门禁</h2>
+              <p class="section-kicker">模型指标、系统指标和业务指标分层；任何单一排行榜分数都不足以决定上线。</p>
+            </div>
+          </div>
+
+          <h3>11.1 指标树</h3>
+          <div class="grid grid-3">
+            <div class="card accent-blue">
+              <span class="card-label">意图层</span>
+              <ul class="small">
+                <li>Macro‑F1 / 每类 Recall</li>
+                <li>层级一致性、槽位 F1</li>
+                <li>OOD AUROC、FPR95</li>
+                <li>ECE / Brier 校准</li>
+                <li>澄清触发准确率</li>
+              </ul>
+            </div>
+            <div class="card accent-teal">
+              <span class="card-label">检索层</span>
+              <ul class="small">
+                <li>粗排 Recall@20/50/100</li>
+                <li>nDCG@10、MRR@10、MAP</li>
+                <li>Top‑1 entity accuracy</li>
+                <li>无答案误报率</li>
+                <li>最差切片与置信区间</li>
+              </ul>
+            </div>
+            <div class="card accent-amber">
+              <span class="card-label">生成 / 系统层</span>
+              <ul class="small">
+                <li>引用正确率、证据覆盖率</li>
+                <li>事实忠实度、拒答正确率</li>
+                <li>SPARQL 语法/执行/答案正确率</li>
+                <li>p50/p95/p99、QPS、成本</li>
+                <li>越权、提示注入、回滚成功率</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>11.2 建议上线门禁</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>门禁</th>
+                  <th>建议目标</th>
+                  <th>阻断条件</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>意图路由</td>
+                  <td>Macro‑F1 ≥ 0.90；关键意图 Recall ≥ 0.95；ECE ≤ 0.05</td>
+                  <td>任何高风险意图 Recall 明显低于基线或 OOD 被强制路由。</td>
+                </tr>
+                <tr>
+                  <td>粗排召回</td>
+                  <td>Recall@50 ≥ 0.95；最差意图切片 ≥ 0.90</td>
+                  <td>总体提升但某个关键业务切片显著退化。</td>
+                </tr>
+                <tr>
+                  <td>精排质量</td>
+                  <td>相对无 rerank 的 nDCG@10 提升 ≥ 8%；Top‑1 不退化</td>
+                  <td>只在平均分提升，但否定/数值/版本集退化。</td>
+                </tr>
+                <tr>
+                  <td>延迟</td>
+                  <td>Embedding 路径 p95 ≤ 50ms；Rerank p95 ≤ 30ms</td>
+                  <td>只报告单请求均值，未覆盖目标并发、索引规模或冷启动。</td>
+                </tr>
+                <tr>
+                  <td>本体正确性</td>
+                  <td>严重 SHACL violation = 0；不可满足类 = 0</td>
+                  <td>图发布后无法回滚，或断言/推断/版本来源混淆。</td>
+                </tr>
+                <tr>
+                  <td>安全</td>
+                  <td>越权内容召回 = 0；严重敏感信息泄漏 = 0</td>
+                  <td>ACL 只在 LLM 输出层过滤；任何跨租户候选进入 reranker。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="small muted" style="margin-top:12px">
+            具体阈值应在首轮基线后由业务风险委员会确认。通用检索基准可参考 BEIR/MTEB，但生产门禁必须来自企业自建金标；Qwen、EmbeddingGemma 等模型卡的排行榜只用于候选筛选。
+          </p>
+
+          <h3>11.3 线上闭环</h3>
+          <div class="flow" style="grid-template-columns:repeat(6,minmax(125px,1fr))">
+            <div class="flow-step"><b>记录</b><span>query、候选 ID、分数、版本、耗时</span></div>
+            <div class="flow-step"><b>反馈</b><span>点击、改选、复制、人工纠错、零结果</span></div>
+            <div class="flow-step"><b>采样</b><span>低置信度、模型分歧、长尾、高价值</span></div>
+            <div class="flow-step hot"><b>专家标注</b><span>双标、仲裁、来源检查</span></div>
+            <div class="flow-step"><b>回归</b><span>sealed test + 最新时间集 + 安全集</span></div>
+            <div class="flow-step"><b>灰度</b><span>shadow → 5% → 25% → 100% + 回滚</span></div>
+          </div>
+        </section>
+
+        <section id="roadmap">
+          <div class="section-head">
+            <div class="section-no">12 / 13</div>
+            <div>
+              <h2>16 周分阶段路线图</h2>
+              <p class="section-kicker">先证明检索价值，再训练模型；每阶段都有可停、可回退的验收点。</p>
+            </div>
+          </div>
+
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-time">第 1–2 周</div>
+              <div class="timeline-body">
+                <strong>定义任务、数据合同与基线</strong>
+                <p>冻结意图 taxonomy、本体版本、Top‑K、硬件与 SLA；盘点数据权利/ACL；构建 300–500 条 pilot 金标；跑 BM25、通用 embedding 和无训练 LLM‑RAG。</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-time">第 3–5 周</div>
+              <div class="timeline-body">
+                <strong>语料与本体索引 MVP</strong>
+                <p>建立 Bronze/Silver/Gold；Docling/MinerU 路由；实体/关系/证据卡；SHACL 门禁；Qdrant/OpenSearch + Fuseki；完成 Dense+BM25+IRI 三路召回。</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-time">第 6–8 周</div>
+              <div class="timeline-body">
+                <strong>Embedding A/B 与金标扩充</strong>
+                <p>比较 EmbeddingGemma、Qwen3‑Embedding‑0.6B、现有模型；构造 1,500–3,000 query 金标；正例感知 hard negatives；完成领域 embedding 微调和 p95 压测。</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-time">第 9–11 周</div>
+              <div class="timeline-body">
+                <strong>意图模型与 Reranker 蒸馏</strong>
+                <p>24–150M 意图模型、OOD 与校准；Qwen3 reranker 教师标注；306M/更小学生训练；Top‑K/长度/量化消融；达成 50/30ms 的条件化结论。</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-time">第 12–14 周</div>
+              <div class="timeline-body">
+                <strong>4B LLM SFT / RAFT</strong>
+                <p>先 SFT 任务协议，再用真实召回候选做 RAFT；只有 Stage 0 显示明显领域语言失配时才加入 DAPT；验证证据忠实度、SPARQL 和拒答。</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-time">第 15–16 周</div>
+              <div class="timeline-body">
+                <strong>安全、灰度与运行手册</strong>
+                <p>越权/注入/回滚演练；shadow 流量；5% 灰度；建立每日质量看板、月度数据刷新、季度模型评估与本体变更触发器。</p>
+              </div>
+            </div>
+          </div>
+
+          <h3>阶段决策闸门</h3>
+          <div class="grid grid-3">
+            <div class="card accent-teal">
+              <span class="card-label">Gate A · 第 5 周</span>
+              <h4>先确认问题是不是检索</h4>
+              <p class="small muted">如果混合检索已解决大部分错误，延后 4B 训练；资源转向语料、本体和难负例。</p>
+            </div>
+            <div class="card accent-amber">
+              <span class="card-label">Gate B · 第 11 周</span>
+              <h4>30ms 与质量能否同时成立</h4>
+              <p class="small muted">若 306M reranker 不达标，选择更小蒸馏、Top‑K 降低或 late interaction；不要默默放宽 SLA。</p>
+            </div>
+            <div class="card accent-blue">
+              <span class="card-label">Gate C · 第 14 周</span>
+              <h4>训练是否有可证边际收益</h4>
+              <p class="small muted">只有 SFT/RAFT 在 sealed test 上显著优于提示基线且不破坏安全/通用能力，才进入灰度。</p>
+            </div>
+          </div>
+
+          <h3>最小团队配置</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>角色</th>
+                  <th>建议投入</th>
+                  <th>主要责任</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>本体 / 领域专家</td>
+                  <td>1–2 FTE</td>
+                  <td>taxonomy、SHACL、金标、难负例、冲突仲裁、业务验收。</td>
+                </tr>
+                <tr>
+                  <td>数据工程</td>
+                  <td>1–2 FTE</td>
+                  <td>采集、解析、血缘、版本、权限、数据卡、增量发布。</td>
+                </tr>
+                <tr>
+                  <td>检索 / NLP 工程</td>
+                  <td>2 FTE</td>
+                  <td>混合检索、embedding/reranker 训练、索引与评测。</td>
+                </tr>
+                <tr>
+                  <td>LLM / 平台工程</td>
+                  <td>1–2 FTE</td>
+                  <td>QLoRA/SFT/RAFT、推理服务、压测、可观测与回滚。</td>
+                </tr>
+                <tr>
+                  <td>安全 / 法务 / SRE</td>
+                  <td>兼职评审</td>
+                  <td>权利、PII、ACL、内网部署、SLA 与事故预案。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout">
+            <div>
+              <h4>最终推荐的一句话版本</h4>
+              <p>用 Qwen3‑4B + QLoRA/RAFT 做后段领域理解，用 24–150M encoder 做意图/OOD，用 EmbeddingGemma 300M 与 Qwen3‑Embedding‑0.6B 做速度/质量双基线，用 Qwen3 Reranker 当教师蒸馏到 100–300M 线上学生，并以 Dense + BM25/Sparse + IRI/别名 + 受限图扩展作为本体检索主干。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="sources">
+          <div class="section-head">
+            <div class="section-no">13 / 13</div>
+            <div>
+              <h2>关键来源 URL</h2>
+              <p class="section-kicker">优先列出标准、官方模型卡/文档和原始论文。模型卡中的自报 benchmark 只作候选筛选，未当作你们场景的效果承诺。</p>
+            </div>
+          </div>
+
+          <div class="source-list">
+            <div class="source-row">
+              <div class="source-id">S01</div>
+              <div><strong>Qwen3 Technical Report</strong><br><a href="https://arxiv.org/abs/2505.09388" target="_blank" rel="noopener">https://arxiv.org/abs/2505.09388</a></div>
+              <div class="source-type"><span class="tag info">论文</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S02</div>
+              <div><strong>Qwen3‑4B Model Card</strong><br><a href="https://huggingface.co/Qwen/Qwen3-4B" target="_blank" rel="noopener">https://huggingface.co/Qwen/Qwen3-4B</a></div>
+              <div class="source-type"><span class="tag good">官方模型卡</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S03</div>
+              <div><strong>Qwen3‑0.6B Model Card</strong><br><a href="https://huggingface.co/Qwen/Qwen3-0.6B" target="_blank" rel="noopener">https://huggingface.co/Qwen/Qwen3-0.6B</a></div>
+              <div class="source-type"><span class="tag good">官方模型卡</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S04</div>
+              <div><strong>Qwen3 Embedding 官方发布</strong><br><a href="https://qwenlm.github.io/blog/qwen3-embedding/" target="_blank" rel="noopener">https://qwenlm.github.io/blog/qwen3-embedding/</a></div>
+              <div class="source-type"><span class="tag good">官方博客</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S05</div>
+              <div><strong>Qwen3‑Embedding‑0.6B Model Card</strong><br><a href="https://huggingface.co/Qwen/Qwen3-Embedding-0.6B" target="_blank" rel="noopener">https://huggingface.co/Qwen/Qwen3-Embedding-0.6B</a></div>
+              <div class="source-type"><span class="tag good">官方模型卡</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S06</div>
+              <div><strong>Qwen3‑Reranker‑0.6B Model Card</strong><br><a href="https://huggingface.co/Qwen/Qwen3-Reranker-0.6B" target="_blank" rel="noopener">https://huggingface.co/Qwen/Qwen3-Reranker-0.6B</a></div>
+              <div class="source-type"><span class="tag good">官方模型卡</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S07</div>
+              <div><strong>EmbeddingGemma Overview</strong><br><a href="https://ai.google.dev/gemma/docs/embeddinggemma" target="_blank" rel="noopener">https://ai.google.dev/gemma/docs/embeddinggemma</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S08</div>
+              <div><strong>EmbeddingGemma: Powerful and Lightweight Text Representations</strong><br><a href="https://arxiv.org/abs/2509.20354" target="_blank" rel="noopener">https://arxiv.org/abs/2509.20354</a></div>
+              <div class="source-type"><span class="tag info">论文</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S09</div>
+              <div><strong>ModernBERT 官方介绍</strong><br><a href="https://huggingface.co/blog/modernbert" target="_blank" rel="noopener">https://huggingface.co/blog/modernbert</a></div>
+              <div class="source-type"><span class="tag good">官方博客</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S10</div>
+              <div><strong>BGE‑small‑zh‑v1.5 Model Card</strong><br><a href="https://huggingface.co/BAAI/bge-small-zh-v1.5" target="_blank" rel="noopener">https://huggingface.co/BAAI/bge-small-zh-v1.5</a></div>
+              <div class="source-type"><span class="tag good">官方模型卡</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S11</div>
+              <div><strong>gte‑multilingual‑reranker‑base Model Card</strong><br><a href="https://huggingface.co/Alibaba-NLP/gte-multilingual-reranker-base" target="_blank" rel="noopener">https://huggingface.co/Alibaba-NLP/gte-multilingual-reranker-base</a></div>
+              <div class="source-type"><span class="tag good">官方模型卡</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S12</div>
+              <div><strong>mGTE: Generalized Long‑Context Text Representation and Reranking</strong><br><a href="https://arxiv.org/abs/2407.19669" target="_blank" rel="noopener">https://arxiv.org/abs/2407.19669</a></div>
+              <div class="source-type"><span class="tag info">论文</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S13</div>
+              <div><strong>Qwen3 Embedding Technical Report</strong><br><a href="https://arxiv.org/abs/2506.05176" target="_blank" rel="noopener">https://arxiv.org/abs/2506.05176</a></div>
+              <div class="source-type"><span class="tag info">论文</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S14</div>
+              <div><strong>NV‑Retriever: Effective Hard‑Negative Mining</strong><br><a href="https://arxiv.org/abs/2407.15831" target="_blank" rel="noopener">https://arxiv.org/abs/2407.15831</a></div>
+              <div class="source-type"><span class="tag info">论文</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S15</div>
+              <div><strong>Sentence Transformers Hard Negative Mining</strong><br><a href="https://www.sbert.net/docs/package_reference/util/hard_negatives.html" target="_blank" rel="noopener">https://www.sbert.net/docs/package_reference/util/hard_negatives.html</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S16</div>
+              <div><strong>RAFT: Adapting Language Model to Domain Specific RAG</strong><br><a href="https://arxiv.org/abs/2403.10131" target="_blank" rel="noopener">https://arxiv.org/abs/2403.10131</a></div>
+              <div class="source-type"><span class="tag info">论文</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S17</div>
+              <div><strong>OntologyRAG</strong><br><a href="https://arxiv.org/abs/2502.18992" target="_blank" rel="noopener">https://arxiv.org/abs/2502.18992</a></div>
+              <div class="source-type"><span class="tag lab">预印本</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S18</div>
+              <div><strong>Knowledge Graph‑Guided Retrieval Augmented Generation (KG²RAG)</strong><br><a href="https://arxiv.org/abs/2502.06864" target="_blank" rel="noopener">https://arxiv.org/abs/2502.06864</a></div>
+              <div class="source-type"><span class="tag lab">预印本</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S19</div>
+              <div><strong>Microsoft Research GraphRAG Publications</strong><br><a href="https://www.microsoft.com/en-us/research/project/graphrag/publications/" target="_blank" rel="noopener">https://www.microsoft.com/en-us/research/project/graphrag/publications/</a></div>
+              <div class="source-type"><span class="tag good">官方研究</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S20</div>
+              <div><strong>W3C Shapes Constraint Language (SHACL)</strong><br><a href="https://www.w3.org/TR/shacl/" target="_blank" rel="noopener">https://www.w3.org/TR/shacl/</a></div>
+              <div class="source-type"><span class="tag good">W3C 标准</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S21</div>
+              <div><strong>W3C SPARQL 1.1 Query Language</strong><br><a href="https://www.w3.org/TR/sparql11-query/" target="_blank" rel="noopener">https://www.w3.org/TR/sparql11-query/</a></div>
+              <div class="source-type"><span class="tag good">W3C 标准</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S22</div>
+              <div><strong>W3C OWL 2 Profiles</strong><br><a href="https://www.w3.org/TR/owl2-profiles/" target="_blank" rel="noopener">https://www.w3.org/TR/owl2-profiles/</a></div>
+              <div class="source-type"><span class="tag good">W3C 标准</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S23</div>
+              <div><strong>W3C PROV‑O</strong><br><a href="https://www.w3.org/TR/prov-o/" target="_blank" rel="noopener">https://www.w3.org/TR/prov-o/</a></div>
+              <div class="source-type"><span class="tag good">W3C 标准</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S24</div>
+              <div><strong>Docling Pipelines</strong><br><a href="https://docling-project.github.io/docling/examples/agent_skill/docling-document-intelligence/pipelines/" target="_blank" rel="noopener">https://docling-project.github.io/docling/examples/agent_skill/docling-document-intelligence/pipelines/</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S25</div>
+              <div><strong>MinerU</strong><br><a href="https://github.com/opendatalab/MinerU" target="_blank" rel="noopener">https://github.com/opendatalab/MinerU</a></div>
+              <div class="source-type"><span class="tag good">官方仓库</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S26</div>
+              <div><strong>NeMo Curator Deduplication</strong><br><a href="https://docs.nvidia.com/nemo/curator/curate-text/process-data/deduplication" target="_blank" rel="noopener">https://docs.nvidia.com/nemo/curator/curate-text/process-data/deduplication</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S27</div>
+              <div><strong>DataTrove</strong><br><a href="https://github.com/huggingface/datatrove" target="_blank" rel="noopener">https://github.com/huggingface/datatrove</a></div>
+              <div class="source-type"><span class="tag good">官方仓库</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S28</div>
+              <div><strong>Data‑Juicer</strong><br><a href="https://github.com/datajuicer/data-juicer" target="_blank" rel="noopener">https://github.com/datajuicer/data-juicer</a></div>
+              <div class="source-type"><span class="tag good">官方仓库</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S29</div>
+              <div><strong>Label Studio ML Integration</strong><br><a href="https://labelstud.io/guide/ml.html" target="_blank" rel="noopener">https://labelstud.io/guide/ml.html</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S30</div>
+              <div><strong>Argilla Documentation</strong><br><a href="https://docs.argilla.io/" target="_blank" rel="noopener">https://docs.argilla.io/</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S31</div>
+              <div><strong>QLoRA</strong><br><a href="https://arxiv.org/abs/2305.14314" target="_blank" rel="noopener">https://arxiv.org/abs/2305.14314</a></div>
+              <div class="source-type"><span class="tag info">论文</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S32</div>
+              <div><strong>Hugging Face PEFT LoRA / QLoRA</strong><br><a href="https://huggingface.co/docs/peft/main/package_reference/lora" target="_blank" rel="noopener">https://huggingface.co/docs/peft/main/package_reference/lora</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S33</div>
+              <div><strong>LlamaFactory</strong><br><a href="https://github.com/hiyouga/LlamaFactory" target="_blank" rel="noopener">https://github.com/hiyouga/LlamaFactory</a></div>
+              <div class="source-type"><span class="tag good">官方仓库</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S34</div>
+              <div><strong>Hugging Face TRL</strong><br><a href="https://huggingface.co/docs/trl/quickstart" target="_blank" rel="noopener">https://huggingface.co/docs/trl/quickstart</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S35</div>
+              <div><strong>Sentence Transformers Training</strong><br><a href="https://sbert.net/docs/sentence_transformer/training_overview.html" target="_blank" rel="noopener">https://sbert.net/docs/sentence_transformer/training_overview.html</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S36</div>
+              <div><strong>FlagEmbedding</strong><br><a href="https://github.com/FlagOpen/FlagEmbedding" target="_blank" rel="noopener">https://github.com/FlagOpen/FlagEmbedding</a></div>
+              <div class="source-type"><span class="tag good">官方仓库</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S37</div>
+              <div><strong>Text Embeddings Inference</strong><br><a href="https://huggingface.co/docs/text-embeddings-inference/quick_tour" target="_blank" rel="noopener">https://huggingface.co/docs/text-embeddings-inference/quick_tour</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S38</div>
+              <div><strong>vLLM Embedding / Pooling Models</strong><br><a href="https://docs.vllm.ai/en/latest/models/pooling_models/embed/" target="_blank" rel="noopener">https://docs.vllm.ai/en/latest/models/pooling_models/embed/</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S39</div>
+              <div><strong>NVIDIA Triton Dynamic Batcher</strong><br><a href="https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/batcher.html" target="_blank" rel="noopener">https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/batcher.html</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S40</div>
+              <div><strong>ONNX Runtime Quantization</strong><br><a href="https://onnxruntime.ai/docs/performance/model-optimizations/quantization.html" target="_blank" rel="noopener">https://onnxruntime.ai/docs/performance/model-optimizations/quantization.html</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S41</div>
+              <div><strong>Qdrant Hybrid Queries</strong><br><a href="https://qdrant.tech/documentation/search/hybrid-queries/" target="_blank" rel="noopener">https://qdrant.tech/documentation/search/hybrid-queries/</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S42</div>
+              <div><strong>Milvus Overview / Hybrid Search</strong><br><a href="https://milvus.io/docs/overview.md" target="_blank" rel="noopener">https://milvus.io/docs/overview.md</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S43</div>
+              <div><strong>Apache Jena Fuseki</strong><br><a href="https://jena.apache.org/documentation/fuseki2/" target="_blank" rel="noopener">https://jena.apache.org/documentation/fuseki2/</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S44</div>
+              <div><strong>MLflow Tracking</strong><br><a href="https://mlflow.org/docs/latest/tracking" target="_blank" rel="noopener">https://mlflow.org/docs/latest/tracking</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S45</div>
+              <div><strong>DVC Experiment Versioning</strong><br><a href="https://dvc.org/blog/ml-experiment-versioning/" target="_blank" rel="noopener">https://dvc.org/blog/ml-experiment-versioning/</a></div>
+              <div class="source-type"><span class="tag good">官方文档</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S46</div>
+              <div><strong>NIST AI RMF Generative AI Profile</strong><br><a href="https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-generative-artificial-intelligence" target="_blank" rel="noopener">https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-generative-artificial-intelligence</a></div>
+              <div class="source-type"><span class="tag good">官方框架</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S47</div>
+              <div><strong>Datasheets for Datasets</strong><br><a href="https://arxiv.org/abs/1803.09010" target="_blank" rel="noopener">https://arxiv.org/abs/1803.09010</a></div>
+              <div class="source-type"><span class="tag info">论文</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S48</div>
+              <div><strong>Data Cards</strong><br><a href="https://arxiv.org/abs/2204.01075" target="_blank" rel="noopener">https://arxiv.org/abs/2204.01075</a></div>
+              <div class="source-type"><span class="tag info">论文</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S49</div>
+              <div><strong>ColBERTv2</strong><br><a href="https://arxiv.org/abs/2112.01488" target="_blank" rel="noopener">https://arxiv.org/abs/2112.01488</a></div>
+              <div class="source-type"><span class="tag info">论文</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S50</div>
+              <div><strong>PLAID: Efficient Late Interaction Retrieval</strong><br><a href="https://arxiv.org/abs/2205.09707" target="_blank" rel="noopener">https://arxiv.org/abs/2205.09707</a></div>
+              <div class="source-type"><span class="tag info">论文</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S51</div>
+              <div><strong>SPLADE‑v3</strong><br><a href="https://arxiv.org/abs/2403.06789" target="_blank" rel="noopener">https://arxiv.org/abs/2403.06789</a></div>
+              <div class="source-type"><span class="tag info">论文</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S52</div>
+              <div><strong>Qwen3‑VL‑Embedding and Reranker</strong><br><a href="https://arxiv.org/abs/2601.04720" target="_blank" rel="noopener">https://arxiv.org/abs/2601.04720</a></div>
+              <div class="source-type"><span class="tag lab">2026 预印本</span></div>
+            </div>
+            <div class="source-row">
+              <div class="source-id">S53</div>
+              <div><strong>Querit‑Reranker</strong><br><a href="https://arxiv.org/abs/2606.19037" target="_blank" rel="noopener">https://arxiv.org/abs/2606.19037</a></div>
+              <div class="source-type"><span class="tag lab">2026 预印本</span></div>
+            </div>
+          </div>
+        </section>
+
+        <footer class="footer">
+          本报告是技术架构建议，不替代企业法务、信息安全和采购评审。模型效果与时延必须在目标硬件、真实索引规模和冻结测试集上复测。
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const saved = localStorage.getItem("ontology-report-theme");
+      if (saved) root.dataset.theme = saved;
+      const applyLabel = () => {
+        const isDark = root.dataset.theme === "dark";
+        const desktop = document.getElementById("themeToggle");
+        const mobile = document.getElementById("mobileThemeToggle");
+        if (desktop) desktop.textContent = isDark ? "切换浅色模式" : "切换深色模式";
+        if (mobile) mobile.textContent = isDark ? "浅色" : "深色";
+      };
+      const toggle = () => {
+        root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+        localStorage.setItem("ontology-report-theme", root.dataset.theme);
+        applyLabel();
+      };
+      document.getElementById("themeToggle")?.addEventListener("click", toggle);
+      document.getElementById("mobileThemeToggle")?.addEventListener("click", toggle);
+      applyLabel();
+
+      const links = [...document.querySelectorAll(".nav-link")];
+      const sections = links
+        .map(link => document.querySelector(link.getAttribute("href")))
+        .filter(Boolean);
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          links.forEach(link => link.classList.toggle(
+            "active",
+            link.getAttribute("href") === "#" + entry.target.id
+          ));
+        });
+      }, { rootMargin: "-22% 0px -68% 0px" });
+      sections.forEach(section => observer.observe(section));
+    })();
+  </script>
+</body>
+</html>

@@ -5,6 +5,11 @@
 node_modules/
 .pnpm-store/
 
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+
 # Build outputs
 dist/
 build/

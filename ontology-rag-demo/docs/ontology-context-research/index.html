@@ -1,0 +1,1649 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="本体层上下文管理、Agent 本体理解与精准召回：2024—2026 研究、开源实现、产品与标准的技术调研。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2313383b'/%3E%3Ccircle cx='18' cy='20' r='6' fill='%236fe3c1'/%3E%3Ccircle cx='45' cy='17' r='5' fill='%23ffd166'/%3E%3Ccircle cx='46' cy='45' r='7' fill='%237fc7ff'/%3E%3Ccircle cx='18' cy='46' r='4' fill='%23ff8b8b'/%3E%3Cpath d='M23 20l17-2M21 25l21 16M22 44l17 1M18 26v15' stroke='white' stroke-width='3' opacity='.9'/%3E%3C/svg%3E">
+  <title>本体层上下文与精准召回｜研究与实现全景</title>
+  <style>
+    :root {
+      --bg: #f3f6f3;
+      --surface: #ffffff;
+      --surface-2: #edf3ef;
+      --surface-3: #e4ede8;
+      --ink: #142522;
+      --muted: #5d6e69;
+      --line: #d4dfda;
+      --deep: #12383b;
+      --green: #087c68;
+      --green-2: #31ad91;
+      --mint: #dff7ed;
+      --blue: #286f9e;
+      --blue-bg: #e8f3fa;
+      --amber: #9b6513;
+      --amber-bg: #fff5df;
+      --red: #a63e45;
+      --red-bg: #fff0f1;
+      --violet: #6550a7;
+      --violet-bg: #f0edfb;
+      --code-bg: #0d2022;
+      --code-ink: #d9f1ec;
+      --shadow: 0 14px 36px rgba(18, 56, 59, .09);
+      --radius: 17px;
+      --content: 1180px;
+    }
+
+    html[data-theme="dark"] {
+      --bg: #0d1514;
+      --surface: #14211f;
+      --surface-2: #1a2b27;
+      --surface-3: #203630;
+      --ink: #eef7f3;
+      --muted: #afc0ba;
+      --line: #304640;
+      --deep: #d7f4ef;
+      --green: #65d9bd;
+      --green-2: #72e2c5;
+      --mint: #17362e;
+      --blue: #80c6f1;
+      --blue-bg: #182f3d;
+      --amber: #ffd079;
+      --amber-bg: #392d19;
+      --red: #ff989e;
+      --red-bg: #3a2023;
+      --violet: #c0b0f4;
+      --violet-bg: #2b2641;
+      --code-bg: #081311;
+      --code-ink: #dcf3ed;
+      --shadow: 0 14px 36px rgba(0, 0, 0, .26);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 4% 0%, rgba(49,173,145,.11), transparent 27rem),
+        radial-gradient(circle at 96% 8%, rgba(40,111,158,.10), transparent 30rem),
+        var(--bg);
+      color: var(--ink);
+      font: 16px/1.72 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      text-rendering: optimizeLegibility;
+    }
+
+    a { color: var(--green); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    a:hover { color: var(--green-2); }
+    h1, h2, h3, h4 { color: var(--deep); line-height: 1.26; letter-spacing: -.015em; }
+    h1 { margin: 0; font-size: clamp(2.5rem, 6vw, 5.3rem); line-height: 1.06; }
+    h2 { margin: 0 0 1rem; font-size: clamp(1.7rem, 3.2vw, 2.55rem); }
+    h3 { margin: 1.8rem 0 .65rem; font-size: 1.32rem; }
+    h4 { margin: 1.25rem 0 .45rem; font-size: 1.03rem; }
+    p { margin: .65rem 0 1rem; }
+    ul, ol { padding-left: 1.3rem; }
+    li + li { margin-top: .35rem; }
+    button, input { font: inherit; }
+    code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    code {
+      padding: .12rem .34rem;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface-2);
+      font-size: .9em;
+    }
+    pre {
+      overflow: auto;
+      margin: 1rem 0;
+      padding: 1.05rem 1.15rem;
+      border-radius: 13px;
+      color: var(--code-ink);
+      background: var(--code-bg);
+      line-height: 1.58;
+      font-size: .84rem;
+    }
+
+    .skip { position: absolute; left: -10000px; top: 0; z-index: 100; padding: .7rem 1rem; background: var(--surface); }
+    .skip:focus { left: 1rem; top: 1rem; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      min-height: 88vh;
+      display: grid;
+      align-items: center;
+      padding: 5.4rem max(1.4rem, calc((100vw - var(--content)) / 2));
+      color: #eaf8f4;
+      background:
+        linear-gradient(122deg, rgba(8,36,38,.98), rgba(15,70,66,.95) 58%, rgba(20,87,82,.91)),
+        radial-gradient(circle at 74% 22%, #26aa91, transparent 42%);
+    }
+    .hero::before, .hero::after {
+      content: "";
+      position: absolute;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 999px;
+      pointer-events: none;
+    }
+    .hero::before { width: 48rem; height: 48rem; right: -16rem; top: -22rem; }
+    .hero::after { width: 29rem; height: 29rem; right: 9rem; bottom: -23rem; }
+    .hero-inner { position: relative; z-index: 1; max-width: 1050px; }
+    .hero h1 { max-width: 1000px; color: #fff; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: .55rem;
+      margin-bottom: 1.25rem;
+      padding: .35rem .7rem;
+      border: 1px solid rgba(255,255,255,.23);
+      border-radius: 999px;
+      color: #d9f6ee;
+      font-size: .79rem;
+      font-weight: 760;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before { content: ""; width: .5rem; height: .5rem; border-radius: 50%; background: #71e5c6; box-shadow: 0 0 0 5px rgba(113,229,198,.12); }
+    .hero .lead {
+      max-width: 900px;
+      margin-top: 1.4rem;
+      color: #cde8e1;
+      font-size: clamp(1.03rem, 2vw, 1.32rem);
+      line-height: 1.75;
+    }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.8rem; }
+    .hero-meta span {
+      padding: .43rem .7rem;
+      border: 1px solid rgba(255,255,255,.17);
+      border-radius: 9px;
+      color: #d9ece7;
+      background: rgba(255,255,255,.055);
+      font-size: .87rem;
+    }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.9rem; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      min-height: 42px;
+      padding: .56rem .88rem;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--ink);
+      background: var(--surface);
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 4px 13px rgba(0,0,0,.07);
+    }
+    .hero .btn { border-color: rgba(255,255,255,.22); color: #fff; background: rgba(255,255,255,.09); }
+    .hero .btn.primary { color: #07322d; border-color: #71e5c6; background: #71e5c6; font-weight: 760; }
+    .btn:hover { transform: translateY(-1px); }
+
+    .layout {
+      width: min(calc(100% - 2rem), 1450px);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 258px minmax(0, 1fr);
+      gap: 2.2rem;
+      align-items: start;
+    }
+    .toc {
+      position: sticky;
+      top: 1rem;
+      max-height: calc(100vh - 2rem);
+      overflow: auto;
+      margin-top: 2.2rem;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--surface) 93%, transparent);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin: 0 0 .65rem .5rem; color: var(--deep); }
+    .toc a {
+      display: block;
+      padding: .34rem .5rem;
+      border-radius: 7px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .88rem;
+    }
+    .toc a:hover, .toc a.active { color: var(--deep); background: var(--surface-2); }
+    .toc .sub { padding-left: 1.05rem; font-size: .82rem; }
+    main { min-width: 0; padding: 2.2rem 0 6rem; }
+    section { scroll-margin-top: 1.2rem; margin: 0 0 4.7rem; }
+    .section-head { max-width: 900px; margin-bottom: 1.4rem; }
+    .kicker { color: var(--green); font-size: .78rem; font-weight: 780; letter-spacing: .095em; text-transform: uppercase; }
+    .lede { max-width: 900px; color: var(--muted); font-size: 1.08rem; }
+    .small { color: var(--muted); font-size: .88rem; }
+    .muted { color: var(--muted); }
+
+    .grid { display: grid; gap: 1rem; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card {
+      min-width: 0;
+      padding: 1.2rem 1.25rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: 0 5px 18px rgba(18,56,59,.045);
+    }
+    .card h3, .card h4 { margin-top: 0; }
+    .card p:last-child { margin-bottom: 0; }
+    .metric b { display: block; color: var(--green); font-size: 2rem; line-height: 1.15; }
+    .metric span { color: var(--muted); font-size: .86rem; }
+    .callout {
+      margin: 1.25rem 0;
+      padding: 1rem 1.15rem;
+      border-left: 5px solid var(--green-2);
+      border-radius: 0 12px 12px 0;
+      background: var(--mint);
+    }
+    .callout.warn { border-left-color: var(--amber); background: var(--amber-bg); }
+    .callout.critical { border-left-color: var(--red); background: var(--red-bg); }
+    .callout.info { border-left-color: var(--blue); background: var(--blue-bg); }
+    .callout p:last-child { margin-bottom: 0; }
+    .badge {
+      display: inline-block;
+      margin: .12rem .18rem .12rem 0;
+      padding: .17rem .5rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: var(--surface-2);
+      font-size: .74rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+      white-space: nowrap;
+    }
+    .badge.peer { color: var(--green); border-color: color-mix(in srgb, var(--green) 28%, var(--line)); background: var(--mint); }
+    .badge.pre { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 28%, var(--line)); background: var(--amber-bg); }
+    .badge.owl { color: var(--violet); border-color: color-mix(in srgb, var(--violet) 28%, var(--line)); background: var(--violet-bg); }
+    .badge.code { color: var(--blue); border-color: color-mix(in srgb, var(--blue) 28%, var(--line)); background: var(--blue-bg); }
+    .badge.deep { color: var(--red); border-color: color-mix(in srgb, var(--red) 25%, var(--line)); background: var(--red-bg); }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin: 1rem 0 1.5rem;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--surface);
+      box-shadow: 0 4px 16px rgba(18,56,59,.035);
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 820px; }
+    th, td { padding: .74rem .78rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { position: sticky; top: 0; z-index: 1; color: var(--deep); background: var(--surface-2); font-size: .82rem; letter-spacing: .015em; }
+    td { font-size: .89rem; }
+    tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: color-mix(in srgb, var(--surface-2) 55%, transparent); }
+    .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .check { color: var(--green); font-weight: 750; }
+    .partial { color: var(--amber); font-weight: 750; }
+    .no { color: var(--red); font-weight: 750; }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: .55rem;
+      margin: 1.1rem 0 1.6rem;
+    }
+    .pipeline > div {
+      position: relative;
+      min-height: 112px;
+      padding: .85rem .75rem;
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--green);
+      border-radius: 11px;
+      background: var(--surface);
+      font-size: .83rem;
+    }
+    .pipeline b { display: block; margin-bottom: .28rem; color: var(--deep); }
+    .pipeline > div:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: -.52rem;
+      top: 41%;
+      z-index: 2;
+      color: var(--green);
+      font-weight: 800;
+    }
+    .paper {
+      margin: 1.4rem 0;
+      padding: 1.35rem 1.45rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .paper-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+    .paper-head h3 { margin: 0 0 .25rem; }
+    .paper .source { color: var(--muted); font-size: .84rem; }
+    .paper-grid { display: grid; grid-template-columns: 1.08fr .92fr; gap: 1.1rem; margin-top: .9rem; }
+    .paper-grid > div { min-width: 0; }
+    .mechanism { padding: .9rem 1rem; border-radius: 11px; background: var(--surface-2); }
+    .mechanism strong { color: var(--deep); }
+    .equation {
+      overflow-x: auto;
+      padding: .9rem 1rem;
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      color: var(--deep);
+      background: var(--surface-2);
+      font: .91rem/1.6 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .result-list { margin: .55rem 0; padding-left: 1.1rem; }
+    .result-list li { margin: .25rem 0; }
+    .limits { padding: .85rem 1rem; border-left: 3px solid var(--amber); background: var(--amber-bg); }
+    .timeline { position: relative; margin: 1.2rem 0; padding-left: 1.4rem; border-left: 2px solid var(--line); }
+    .timeline article { position: relative; margin: 0 0 1.3rem; padding: .15rem 0 .2rem .8rem; }
+    .timeline article::before { content: ""; position: absolute; left: -1.72rem; top: .48rem; width: .58rem; height: .58rem; border: 3px solid var(--bg); border-radius: 50%; background: var(--green); }
+    .timeline time { color: var(--green); font-size: .78rem; font-weight: 780; letter-spacing: .05em; }
+    .timeline h4 { margin: .1rem 0 .2rem; }
+    .timeline p { margin: .25rem 0; color: var(--muted); }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .55rem;
+      align-items: center;
+      margin: 1rem 0;
+    }
+    .controls button {
+      padding: .38rem .68rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: var(--surface);
+      cursor: pointer;
+    }
+    .controls button.active { color: #fff; border-color: var(--green); background: var(--green); }
+    .controls input {
+      min-width: 240px;
+      flex: 1;
+      padding: .5rem .68rem;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      color: var(--ink);
+      background: var(--surface);
+    }
+    .hidden { display: none !important; }
+    details {
+      margin: .8rem 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+    summary { padding: .82rem 1rem; color: var(--deep); font-weight: 720; cursor: pointer; }
+    details > div { padding: 0 1rem 1rem; }
+    .reference-list { columns: 2; column-gap: 2rem; }
+    .reference-list li { break-inside: avoid; margin-bottom: .65rem; }
+    footer { padding: 2rem max(1.2rem, calc((100vw - var(--content)) / 2)); border-top: 1px solid var(--line); color: var(--muted); background: var(--surface); }
+
+    @media (max-width: 1120px) {
+      .layout { display: block; width: min(calc(100% - 2rem), var(--content)); }
+      .toc { position: relative; top: auto; max-height: none; columns: 2; }
+      .toc strong { column-span: all; }
+      .pipeline { grid-template-columns: repeat(4, 1fr); }
+      .pipeline > div:not(:last-child)::after { display: none; }
+      .grid.four { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 780px) {
+      .hero { min-height: auto; padding-top: 4.3rem; padding-bottom: 4.3rem; }
+      .grid.two, .grid.three, .grid.four, .paper-grid { grid-template-columns: 1fr; }
+      .pipeline { grid-template-columns: 1fr 1fr; }
+      .reference-list { columns: 1; }
+      .toc { columns: 1; }
+      .paper-head { display: block; }
+    }
+    @media (max-width: 480px) {
+      .pipeline { grid-template-columns: 1fr; }
+      .card, .paper { padding: 1rem; }
+    }
+    @media print {
+      :root { --bg: #fff; --surface: #fff; --ink: #111; --muted: #444; --line: #bbb; --deep: #111; }
+      body { background: #fff; font-size: 10.5pt; }
+      .hero { min-height: auto; padding: 2.2cm 1.8cm; background: #153f3d !important; print-color-adjust: exact; }
+      .layout { display: block; width: auto; }
+      .toc, .hero-actions, .controls, #themeToggle { display: none !important; }
+      main { padding: 1cm 1.4cm; }
+      section { break-before: page; margin-bottom: 1cm; }
+      .paper, .card, .table-wrap { box-shadow: none; break-inside: avoid; }
+      a { color: inherit; }
+      a::after { content: " (" attr(href) ")"; font-size: .72em; overflow-wrap: anywhere; }
+    }
+  </style>
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Ontology context · schema linking · graph retrieval</div>
+    <h1>本体层上下文<br>与精准召回</h1>
+    <p class="lead">围绕“Agent 如何理解大型本体、如何从问题精确召回相关 schema/公理、实例查询尚未就绪或长期黑盒时研究如何推进”，对 2024—2026 年论文、经典本体技术、开源源码和商业产品进行分层梳理。</p>
+    <div class="hero-meta">
+      <span>更新：2026-07-27</span>
+      <span>23 篇 PDF 全文下载与文本核查</span>
+      <span>6 个仓库固定提交源码检查</span>
+      <span>论文 / 标准 / 产品分级标注</span>
+      <span>当前项目：TBox 优先，ABox 可黑盒</span>
+    </div>
+    <div class="hero-actions">
+      <a class="btn primary" href="#bottom-line">阅读技术全景</a>
+      <a class="btn" href="#deep-dives">重点论文深读</a>
+      <a class="btn" href="#open-source">开源实现</a>
+      <button class="btn" id="themeToggle" type="button" aria-label="切换明暗主题">切换主题</button>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="toc" aria-label="目录">
+    <strong>报告目录</strong>
+    <a href="#methodology">00 · 调研方法</a>
+    <a href="#bottom-line">01 · 技术全景</a>
+    <a href="#terms">02 · “本体”四种含义</a>
+    <a href="#pipeline">03 · 研究问题分层</a>
+    <a href="#timeline">04 · 技术演进</a>
+    <a href="#research-radar">04B · 近期研究雷达</a>
+    <a href="#deep-dives">05 · TBox / 真本体深读</a>
+    <a class="sub" href="#dl-lite">DL-Lite 理解能力</a>
+    <a class="sub" href="#progressive">渐进本体披露</a>
+    <a class="sub" href="#anchor">ANCHOR</a>
+    <a class="sub" href="#obqc">OBQC</a>
+    <a class="sub" href="#hyem">HyEm</a>
+    <a href="#schema-linking">06 · Schema linking</a>
+    <a href="#subgraph">07 · 子图召回算法</a>
+    <a href="#agentic">08 · Agent / RL 系统</a>
+    <a href="#benchmarks">09 · 评测与证据</a>
+    <a href="#open-source">10 · 开源实现</a>
+    <a href="#products">11 · 产品与工程栈</a>
+    <a href="#standards">12 · 标准与形式工具</a>
+    <a href="#scope-fit">13 · 对当前阶段的含义</a>
+    <a href="#sources">14 · 来源与全文清单</a>
+  </aside>
+
+  <main id="main">
+    <section id="methodology">
+      <div class="section-head">
+        <span class="kicker">Method &amp; provenance</span>
+        <h2>00 · 这份报告如何形成</h2>
+        <p class="lede">本版不以二手综述为主。重点论文下载 PDF 后提取正文，逐项核对方法、数据集、主结果、消融与作者局限；开源项目则在固定提交上查看核心检索代码。产品只依据官方文档，产品能力与论文证据不混写。</p>
+      </div>
+      <div class="grid four">
+        <article class="card metric">
+          <b>23</b>
+          <span>篇论文 PDF 下载并解析，共约 28,603 行提取文本</span>
+        </article>
+        <article class="card metric">
+          <b>20+</b>
+          <span>篇工作进入方法、实验和边界的逐项技术表</span>
+        </article>
+        <article class="card metric">
+          <b>6</b>
+          <span>个活跃仓库做固定 commit 的源码级静态检查</span>
+        </article>
+        <article class="card metric">
+          <b>4 层</b>
+          <span>严格区分 OWL/TBox、taxonomy、property-graph schema、ABox 图</span>
+        </article>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>证据标签</th><th>含义</th><th>报告中的使用方式</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge peer">同行评审</span></td><td>ACL / EMNLP / NAACL / ICLR / WWW / 期刊或正式 proceedings</td><td>可以陈述论文已发表，但仍分别检查数据与外推边界。</td></tr>
+            <tr><td><span class="badge pre">预印本</span></td><td>arXiv 或作者标注 under review；方法和结果可能继续变化</td><td>用于呈现前沿方向，不与成熟共识等价。</td></tr>
+            <tr><td><span class="badge code">源码核查</span></td><td>查看官方仓库中实际索引、检索、图扩展和工具路由代码</td><td>用于判断“文档声称”与“当前实现覆盖”之间的差异。</td></tr>
+            <tr><td><span class="badge owl">形式本体</span></td><td>方法真实处理 OWL/RDF TBox、公理、SHACL 或 DL 语义</td><td>与只处理实体—关系属性图的工作分栏比较。</td></tr>
+            <tr><td><span class="badge deep">全文深读</span></td><td>正文、表格、消融与限制均已核对</td><td>关键数值均尽量保留任务、模型和数据集上下文。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout warn">
+        <strong>边界说明：</strong>“论文报告提升”不等于在本项目上已被复现；“支持 schema”也不等于支持 OWL 2 语义。报告将作者结果、源码观察和本文归纳分开陈述。PDF 只用于分析，没有复制进仓库；仓库内保留 HTML 与来源清单。
+      </div>
+    </section>
+
+    <section id="bottom-line">
+      <div class="section-head">
+        <span class="kicker">Landscape</span>
+        <h2>01 · 研究全景：问题不是一个“更好的 Top‑K”</h2>
+        <p class="lede">相关工作已经形成六条相互独立但可组合的技术线：锚点识别、层次/图结构扩展、形式本体模块抽取、上下文编译、查询计划生成与形式验证、Agent 自适应检索。它们的训练信号与评测对象明显不同。</p>
+      </div>
+      <div class="grid three">
+        <article class="card">
+          <h3>自然语言 → 本体锚点</h3>
+          <p>精确/模糊词法、dense embedding、relation-first reranker、domain/range 与类层次导航共同完成 class/property linking。近期证据显示：类名通常较容易向量链接，关系/属性更依赖结构约束。</p>
+          <p><span class="badge">ANCHOR</span><span class="badge">SG-KBQA</span><span class="badge">GenOM</span></p>
+        </article>
+        <article class="card">
+          <h3>锚点 → 相关结构</h3>
+          <p>候选扩展包括 k-hop、最短路径、PCST、PPR、独立 triple scoring、hyperedge set cover、双曲层次重排，以及 OWL locality module。不同算法优化的目标并不相同。</p>
+          <p><span class="badge">G-Retriever</span><span class="badge">SubgraphRAG</span><span class="badge">OWL module</span></p>
+        </article>
+        <article class="card">
+          <h3>结构 → Agent 上下文</h3>
+          <p>召回结构需要被编译为 schema card、路径、Manchester Syntax、公理解释、可调用工具与预算化文本。完整 schema 直接入 prompt 仍常见，但大型本体下缺少系统 benchmark。</p>
+          <p><span class="badge">Progressive reveal</span><span class="badge">OntoSCPrompt</span><span class="badge">KAG</span></p>
+        </article>
+        <article class="card">
+          <h3>上下文 → 查询计划</h3>
+          <p>主流路线包括 logical-form sketch、S-expression、SPARQL/Cypher、受约束 DSL 和工具计划。把结构先确定、内容后绑定，通常比一次性生成完整查询更可控。</p>
+          <p><span class="badge">ChatKBQA</span><span class="badge">TIARA</span><span class="badge">Pangu</span></p>
+        </article>
+        <article class="card">
+          <h3>计划 → 形式验证</h3>
+          <p>本体不仅是生成上下文，也可以作为静态检查器：domain/range、属性存在性、类型兼容、SHACL cardinality/datatype，以及 reasoner consistency 均可给出确定性反馈。</p>
+          <p><span class="badge">OBQC</span><span class="badge">SHACL</span><span class="badge">ROBOT/Jena</span></p>
+        </article>
+        <article class="card">
+          <h3>固定流水线 → 自适应 Agent</h3>
+          <p>新的系统用 reader feedback、RL、调用成本和检索进度奖励学习“何时检索、检索几次、保留多少证据”。但多数训练和评测仍发生在 ABox QA，而非大型 OWL TBox。</p>
+          <p><span class="badge">GraphRAG-R1</span><span class="badge">GRIL</span><span class="badge">HyperGraphPro</span></p>
+        </article>
+      </div>
+      <div class="callout info">
+        <strong>当前领域最明显的断层：</strong>经典本体工程可以围绕 signature 抽取保持特定蕴含的 locality module；现代 GraphRAG 可以从自然语言学习 relevance。二者如何结合、如何在大型 TBox 上同时评测“语义保持、相关性、token 成本和最终答案”，仍缺少被广泛采用的公开基准。
+      </div>
+    </section>
+
+    <section id="terms">
+      <div class="section-head">
+        <span class="kicker">Terminology audit</span>
+        <h2>02 · 论文中的“Ontology / Graph”至少有四种含义</h2>
+        <p class="lede">这是理解文献结论能否迁移到本项目的首要条件。同样写着 ontology-guided 或 GraphRAG，实际处理的语义对象可能完全不同。</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>类型</th><th>典型内容</th><th>代表工作</th><th>能否表达形式语义</th><th>与本项目 TBox 的关系</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>标准逻辑本体</strong><br><span class="badge owl">OWL / DL / SHACL</span></td>
+              <td>class、object/data property、subsumption、domain/range、restriction、disjointness、公理和蕴含</td>
+              <td>DL-Lite 研究、Progressive Reveal、ANCHOR、OBQC、RIGOR、OWLAPI</td>
+              <td><span class="check">是</span>，可由 reasoner/validator 解释</td>
+              <td><strong>直接相关</strong>；可以研究公理级上下文、模块与合法性。</td>
+            </tr>
+            <tr>
+              <td><strong>轻量 taxonomy / type schema</strong></td>
+              <td><code>is-a</code> 层次、实体类型、关系 domain/range，有时带描述和同义词</td>
+              <td>HyEm、ORT、OntoTune、TaxoLLaMA、KAG concept graph</td>
+              <td><span class="partial">部分</span>；通常无复杂 restriction/逻辑闭包</td>
+              <td>适合研究术语链接和层次扩展，但不能替代 OWL 推理。</td>
+            </tr>
+            <tr>
+              <td><strong>文档抽取模板 / 事实 schema</strong></td>
+              <td>LLM 从文档抽出的实体、关系、subject–attribute–value 或 hyperedge</td>
+              <td>OG-RAG、Microsoft GraphRAG、LightRAG、HippoRAG</td>
+              <td><span class="no">通常否</span></td>
+              <td>可借鉴检索算法和上下文预算；不能直接证明 TBox 召回能力。</td>
+            </tr>
+            <tr>
+              <td><strong>ABox / 属性图</strong></td>
+              <td>具体实体及事实边；schema 多为 node/edge label 约束</td>
+              <td>G-Retriever、SubgraphRAG、ToG-2、BYOKG-RAG、Neo4j GraphRAG</td>
+              <td><span class="partial">依系统而定</span>，常为 LPG schema</td>
+              <td>更接近未来实例查询；当前黑盒阶段主要作为算法对照。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout critical">
+        <strong>最常见的误读：</strong>WebQSP / ComplexWebQuestions 上“答案实体命中提高”，不能直接推出 OWL class/property/axiom 的召回更完整；文档图的社区摘要也不能保证保留 <code>someValuesFrom</code>、property chain 或 disjointness 等形式语义。
+      </div>
+    </section>
+
+    <section id="pipeline">
+      <div class="section-head">
+        <span class="kicker">Problem decomposition</span>
+        <h2>03 · 从问题到答案：可被独立研究的七个阶段</h2>
+      </div>
+      <div class="pipeline" aria-label="本体 RAG 研究流水线">
+        <div><b>1 · 问题解析</b>意图、实体 mention、关系短语、约束、输出目标</div>
+        <div><b>2 · 锚点链接</b>class/property/individual 候选与方向消歧</div>
+        <div><b>3 · 结构召回</b>路径、扩散、Steiner、模块、公理与说明文档</div>
+        <div><b>4 · 上下文编译</b>schema card、可用关系、约束、来源和 token budget</div>
+        <div><b>5 · 计划生成</b>logical form、SPARQL/nGQL/Cypher 或工具参数</div>
+        <div><b>6 · 查询执行</b>实例引擎可内置，也可以完全黑盒</div>
+        <div><b>7 · 答案生成</b>证据绑定、解释、缺失信息与不确定性</div>
+      </div>
+      <div class="grid two">
+        <article class="card">
+          <h3>现有研究最密集处</h3>
+          <ul>
+            <li>ABox 实体链接、relation/path retrieval 与 answer entity recall。</li>
+            <li>文档抽图后的 PPR、社区、图路径和混合 passage retrieval。</li>
+            <li>schema-aware logical form / SPARQL / Cypher 生成。</li>
+            <li>检索—阅读联合训练和 Agent 多轮工具调用。</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>公开证据仍稀疏处</h3>
+          <ul>
+            <li>大型 OWL TBox 的 query-specific axiom/module retrieval。</li>
+            <li>class、object property、data property 分角色的 Recall@K。</li>
+            <li>模块是否保持 competency question 所需蕴含。</li>
+            <li>本体层召回与黑盒 ABox 查询的端到端归因评测。</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="timeline">
+      <div class="section-head">
+        <span class="kicker">Evolution</span>
+        <h2>04 · 技术演进：形式模块、语义解析与 Agent GraphRAG 正在汇合</h2>
+      </div>
+      <div class="timeline">
+        <article><time>2008—2021 · 形式本体基础</time><h4>Locality module、verbalization 与 ontology embedding</h4><p>OWL module extraction 以 seed signature 为起点保存特定蕴含；NaturalOWL 研究可读 verbalization；OPA2Vec、OWL2Vec* 把标签、公理与图 walk 编码为向量。它们分别解决语义保证、可读表达和候选相似性。</p></article>
+        <article><time>2022—2023 · Schema-aware KBQA</time><h4>TIARA、Pangu：先约束结构，再让模型生成</h4><p>检索实体邻域、关系和 schema，生成可执行 logical form；“模型不是独自记住整个 KG schema”成为主流设计。</p></article>
+        <article><time>2024 · GraphRAG 算法与本体校验分化</time><h4>G-Retriever、ToG-2、ChatKBQA、OBQC、Progressive Reveal</h4><p>一边用 PCST、图文混合和结构化 logical form 提高 ABox QA；另一边开始把企业 OWL ontology 作为渐进上下文服务或查询校验器。</p></article>
+        <article><time>2025 · Schema-first、联合训练与 Agent 检索</time><h4>SG-KBQA、SubgraphRAG、OG-RAG、KAG、GRIL、GraphRAG-R1</h4><p>relation-first schema linking、独立 triple scoring、hyperedge cover、逻辑形式规划、reader-aware graph retriever 和 RL 检索控制同时出现。</p></article>
+        <article><time>2026 · 大型层次检索与闭环 mapping</time><h4>ANCHOR、HyEm、HyperGraphPro、Ontology-Guided Agent Memory</h4><p>前沿预印本开始把任意大 schema 的层次导航、双曲结构、SHACL 闭环和 step-wise retrieval reward 纳入统一流水线；但大多仍待更多公开数据和独立复现。</p></article>
+      </div>
+    </section>
+
+    <section id="research-radar">
+      <div class="section-head">
+        <span class="kicker">Research radar · 2024—2026</span>
+        <h2>04B · 近期研究雷达：主线之外正在发生什么</h2>
+        <p class="lede">下表覆盖没有进入逐篇长文拆解、但能补全技术版图的近期工作。它们分别代表本体层次建模、参数化知识、ontology alignment、图模式匹配、retriever foundation model、超图与长期记忆等分支。</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>工作</th><th>技术路线</th><th>公开结果/规模</th><th>与本体层的关系</th><th>证据状态</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><a href="https://openreview.net/forum?id=cKBmZ2PZ6c">ORAG</a><br><span class="small">COLM 2024</span></td>
+              <td>DPR 先检索实体节点，再沿 ontology parent/child/neighbor 扩展；外部 expert knowledge 丰富 type label。</td>
+              <td>电池电极材料与 Genshin 两个 theme-specific entity typing 场景。</td>
+              <td>展示 taxonomy 指导邻域扩展，但任务是 entity typing，不是 QA。</td>
+              <td><span class="badge peer">同行评审</span><span class="badge code">仓库仅 README</span></td>
+            </tr>
+            <tr>
+              <td><a href="https://arxiv.org/abs/2502.05478">OntoTune</a><br><span class="small">WWW 2025</span></td>
+              <td>从 SNOMED CT definition/hypernym/synonym 生成 ontology-informed responses，筛选模型尚未掌握或不一致的概念，再做 SFT/DPO self-training。</td>
+              <td>同时测 in-ontology hypernym discovery、out-of-ontology medical QA、遗忘与安全。</td>
+              <td>代表“把 taxonomy 部分写入参数”路线；不是在线 schema retrieval。</td>
+              <td><span class="badge peer">同行评审</span><span class="badge code">开源</span></td>
+            </tr>
+            <tr>
+              <td><a href="https://aclanthology.org/2024.acl-long.127/">TaxoLLaMA</a><br><span class="small">ACL 2024</span></td>
+              <td>Llama‑2‑7B 4-bit + LoRA，以 WordNet taxonomy instructions 学 enrichment、hypernym discovery/construction 与 lexical entailment。</td>
+              <td>论文报告 16 项任务中 11 项 SOTA、4 项 top‑2。</td>
+              <td>证明 taxonomy instruction tuning 可迁移；不覆盖 OWL complex axioms。</td>
+              <td><span class="badge peer">同行评审</span><span class="badge code">开源</span></td>
+            </tr>
+            <tr>
+              <td><a href="https://arxiv.org/abs/2508.10703">GenOM</a><br><span class="small">2025/2026</span></td>
+              <td>label/synonym/parent/<code>EquivalentClass</code> verbalization → LLM enriched definition → embedding top‑k → LLM equivalence decision → lexical/cosine fusion。</td>
+              <td>在 OAEI Bio‑ML 五项任务评测；2026 journal 版本与代码已公开。</td>
+              <td>直接研究 ontology entity linking，强调索引内容不应只有 label。</td>
+              <td><span class="badge peer">期刊</span><span class="badge code">开源</span></td>
+            </tr>
+            <tr>
+              <td><a href="https://arxiv.org/abs/2503.21902">OntoAligner</a><br><span class="small">ESWC 2025</span></td>
+              <td>模块化 alignment toolkit，包含 lightweight、retrieval、LLM、RAG、few-shot/in-context-vector RAG 五类 pipeline。</td>
+              <td>ESWC 2025 Best Resource；提供统一文档和可替换组件。</td>
+              <td>可作为 class/property candidate generation 的现成研究框架。</td>
+              <td><span class="badge peer">同行评审</span><span class="badge code">工具包</span></td>
+            </tr>
+            <tr>
+              <td><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11484368/">DRAGON‑AI / CurateGPT</a><br><span class="small">JBS 2024</span></td>
+              <td>给定 ontology term 的部分字段，从多个 ontology 与 GitHub issues 动态检索，生成 definition/relations。</td>
+              <td>覆盖 10 个 OBO ontologies；面向 term completion 与 curator workflow。</td>
+              <td>展示 ontology card 的检索/生成单元，而非端到端 QA。</td>
+              <td><span class="badge peer">期刊</span><span class="badge code">开源</span></td>
+            </tr>
+            <tr>
+              <td><a href="https://arxiv.org/abs/2502.18992">OntologyRAG</a><br><span class="small">KEIR@ECIR 2025</span></td>
+              <td>RDF mapping graph → NL2SPARQL → 候选 code mapping → LLM A/B/C 语义接近度与解释。</td>
+              <td>闭卷 ICD 映射均低于 10%；给定 label pair 后 GPT‑4 三分类最高约 87.47%。</td>
+              <td>结构限定候选后做局部语义判断；不做公理推理或向量 Top‑K。</td>
+              <td><span class="badge pre">Workshop</span><span class="badge code">开源原型</span></td>
+            </tr>
+            <tr>
+              <td><a href="https://aclanthology.org/2025.findings-acl.163/">SimGRAG</a><br><span class="small">Findings ACL 2025</span></td>
+              <td>LLM 将 query 变成 graph pattern，以 Graph Semantic Distance 做 pattern-to-subgraph matching。</td>
+              <td>论文报告 10M-scale KG 上 top‑k retrieval 小于 1 秒。</td>
+              <td>提供显式“问题图模式→数据子图”路线；仍是 ABox KG。</td>
+              <td><span class="badge peer">同行评审</span><span class="badge code">开源</span></td>
+            </tr>
+            <tr>
+              <td><a href="https://aclanthology.org/2025.findings-acl.856/">GNN‑RAG</a><br><span class="small">Findings ACL 2025</span></td>
+              <td>GNN 检索 KG reasoning paths，再让 LLM 基于路径生成答案。</td>
+              <td>重点比较 GNN path retriever 与 LLM-only / graph prompting。</td>
+              <td>代表 learned structural retriever；训练信号来自实例路径。</td>
+              <td><span class="badge peer">同行评审</span></td>
+            </tr>
+            <tr>
+              <td><a href="https://arxiv.org/abs/2502.01113">GFM‑RAG</a><br><span class="small">NeurIPS 2025</span></td>
+              <td>约 8M 参数 GNN retriever，在多 KG 上两阶段预训练，对未见图做 zero-shot retrieval。</td>
+              <td>训练语料约 60 KGs、14M triples、700k documents。</td>
+              <td>代表 graph retriever foundation model；尚非 ontology axiom retriever。</td>
+              <td><span class="badge peer">同行评审</span></td>
+            </tr>
+            <tr>
+              <td><a href="https://aclanthology.org/2025.findings-emnlp.329/">KERAG</a><br><span class="small">Findings EMNLP 2025</span></td>
+              <td>宽召回 → 过滤 → 摘要，fine-tuned LLM 在子图上 chain-of-thought。</td>
+              <td>论文报告相对当时 SOTA 约 +7%，相对 GPT‑4o tool baseline +10–21%。</td>
+              <td>体现 retrieval breadth 与 reader reasoning 联合优化；对象为 ABox KG。</td>
+              <td><span class="badge peer">同行评审</span></td>
+            </tr>
+            <tr>
+              <td><a href="https://aclanthology.org/2025.findings-naacl.232/">GRAG</a><br><span class="small">Findings NAACL 2025</span></td>
+              <td>对 textual subgraph 做 divide-and-conquer linear-time retrieval，并同时注入 graph/text 双视图。</td>
+              <td>论文将 retrieval objective 形式化为可在线性时间求解的最优划分。</td>
+              <td>可借鉴大子图分块与双表示；不是 TBox module。</td>
+              <td><span class="badge peer">同行评审</span><span class="badge code">开源</span></td>
+            </tr>
+            <tr>
+              <td><a href="https://arxiv.org/abs/2502.14902">PathRAG</a><br><span class="small">2025 preprint</span></td>
+              <td>flow-based pruning 去掉弱路径，再用 path-based prompting 组织证据。</td>
+              <td>面向从文档抽取的 graph，强调减少冗余 relation chains。</td>
+              <td>提供路径序列化与剪枝思路；没有 OWL entailment 保证。</td>
+              <td><span class="badge pre">预印本</span><span class="badge code">开源</span></td>
+            </tr>
+            <tr>
+              <td><a href="https://arxiv.org/abs/2412.05547">KG‑Retriever</a><br><span class="small">2024 preprint</span></td>
+              <td>hierarchical index graph：KG layer + collaborative document layer；先粗取 neighbor documents，再补 concise graph information。</td>
+              <td>面向图文联合索引，减少直接展开全图的成本。</td>
+              <td>与 ontology definition/docs 双索引相邻，但对象不是形式公理。</td>
+              <td><span class="badge pre">预印本</span></td>
+            </tr>
+            <tr>
+              <td><a href="https://arxiv.org/abs/2602.14470">HyperRAG</a><br><span class="small">2026 preprint</span></td>
+              <td>n-ary hypergraph；HyperRetriever 学 relational chains，HyperMemory 用 LLM memory 引导 beam search。</td>
+              <td>论文报告相对最强基线平均 +2.95 MRR、+1.23 Hits@10。</td>
+              <td>适合 n-ary 事实与事件；“hypergraph”仍不等于 OWL。</td>
+              <td><span class="badge pre">2026 预印本</span></td>
+            </tr>
+            <tr>
+              <td><a href="https://proceedings.mlsys.org/paper_files/paper/2026/hash/2fb4be70fc9668e9ec2c71b34fb127d4-Abstract-Conference.html">Ontology‑Guided Long‑Term Agent Memory</a><br><span class="small">MLSys 2026</span></td>
+              <td>轻量 memory ontology + query enrichment + graph/dense hybrid retrieval + budget router。</td>
+              <td>Implicit Preference Recall@10 .70 vs dense .58，nDCG .51 vs .41；相对 long-context 成本 −81%。</td>
+              <td>说明“ontology 组织长期记忆”的系统价值；这里 ontology 是用户事实类别/关系。</td>
+              <td><span class="badge peer">同行评审</span></td>
+            </tr>
+            <tr>
+              <td><a href="https://arxiv.org/abs/2604.02618">OntoKG</a><br><span class="small">2026 preprint</span></td>
+              <td>按 intrinsic/relational properties 将 Wikidata 内容路由到 94 个 modules / 8 个 categories，构造 ontology-oriented property graph。</td>
+              <td>约 34M nodes、61.2M edges、38 relation types；论文报告 coverage 93.3%、classified assignment 98%。</td>
+              <td>研究 ontology-oriented graph construction，不直接解决 query-time TBox retrieval。</td>
+              <td><span class="badge pre">2026 预印本</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout warn">
+        <strong>阅读方式：</strong>表中的论文数字均是各自作者在不同任务、模型和数据上的报告，不能横向排名。其价值在于标出技术分支与成熟度，而不是为本项目提前选型。
+      </div>
+    </section>
+
+    <section id="deep-dives">
+      <div class="section-head">
+        <span class="kicker">Deep dives · OWL / TBox</span>
+        <h2>05 · 与本体层上下文最直接相关的重点论文</h2>
+        <p class="lede">本节优先讨论真正操作 TBox、类层次或 schema 约束的工作。每篇均区分“作者做了什么”“实验能证明什么”和“还不能证明什么”。</p>
+      </div>
+
+      <article class="paper" id="dl-lite">
+        <div class="paper-head">
+          <div>
+            <h3><a href="https://aclanthology.org/2024.findings-emnlp.141/">Can LLMs Understand DL‑Lite Ontologies?</a></h3>
+            <div class="source">Findings of EMNLP 2024 · <a href="https://github.com/keyu-wang-2002/Can-LLMs-Understand-DL-Lite-Ontologies">代码与数据</a></div>
+          </div>
+          <div><span class="badge peer">同行评审</span><span class="badge owl">真本体</span><span class="badge deep">全文深读</span></div>
+        </div>
+        <div class="paper-grid">
+          <div>
+            <h4>研究设计</h4>
+            <p>作者没有把普通 KGQA 当作“理解本体”的替代指标，而是直接构造 DL‑Lite TBox/ABox 任务：语法识别、概念 subsumption、instance checking、逆关系/函数性质、查询回答与 satisfiability，并用 Protégé/HermiT 产生或核验 gold。</p>
+            <div class="mechanism"><strong>关键实验：</strong>在 LUBM 上把 ontology 拆成 10 个 chunk，依次给 GPT‑4o，再要求回答 14 个查询；同时扩大 UOBM ABox，从 466 assertions 增长到 2,338，观察规模阈值。</div>
+          </div>
+          <div>
+            <h4>结果与含义</h4>
+            <ul class="result-list">
+              <li>局部语法任务中 GPT‑4o 常达到 <span class="num">88–100%</span>。</li>
+              <li>超过规模阈值后，一些任务接近 <span class="num">0%</span>；性能并非平滑下降。</li>
+              <li>LUBM 的 14 个集合查询中，顺序读完 10 个 ontology chunk 后仍没有一个完全正确。</li>
+              <li>对 negative inclusion 的传递性存在系统性错误；MaasMatch satisfiability 上 GPT‑4o F1 约 <span class="num">69</span>。</li>
+            </ul>
+            <div class="limits"><strong>证据边界：</strong>它证明 LLM 能处理小而局部的本体片段，却不支持“把完整本体逐段塞入上下文即可替代 reasoner”。这是本报告中反对 full-schema prompting 外推最直接的实验。</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="paper" id="progressive">
+        <div class="paper-head">
+          <div>
+            <h3><a href="https://arxiv.org/abs/2410.09244">Progressive Ontology Reveal：逐步披露企业本体</a></h3>
+            <div class="source">arXiv 2024 · 工业 telecom 案例 · 5 页短文</div>
+          </div>
+          <div><span class="badge pre">预印本</span><span class="badge owl">真本体</span><span class="badge deep">全文深读</span></div>
+        </div>
+        <div class="paper-grid">
+          <div>
+            <h4>系统机制</h4>
+            <ol>
+              <li><strong>Approximation：</strong>只给非正式自然语言 schema，让 LLM 尝试形成查询。</li>
+              <li><strong>Refinement：</strong>LLM 若缺少类或连接关系，显式返回 missing concepts/links。</li>
+              <li><strong>Ontology service：</strong>围绕这些项扩展 ontology slice，再交回 LLM。</li>
+              <li><strong>Termination：</strong>missing 为空，或两轮切片无变化时停止。</li>
+              <li><strong>Translation：</strong>最终生成 SPARQL 并执行。</li>
+            </ol>
+            <p>工业图约含 <span class="num">500</span> concepts、<span class="num">1,000</span> relations、<span class="num">&gt;7,000</span> OWL axioms，实例数据为数十 TB。它没有使用向量数据库，核心是“LLM 声明缺口 + 确定性 ontology service 缩小上下文”。</p>
+          </div>
+          <div>
+            <h4>这篇工作的重要性与不足</h4>
+            <p>它直接回答了“本体太大不能全塞 prompt”时的交互协议问题：Agent 不需要掌握全部 ontology，只需知道如何表达缺失的 schema 信息，并让外部服务控制披露范围。</p>
+            <div class="limits"><strong>证据很弱：</strong>作者仅称“绝大多数”查询取得良好结果，没有公开问题数、execution accuracy、token、延迟、slice size 或对照组；系统与数据也未公开。因此它是很有价值的工业设计模式，不是已充分验证的算法结论。</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="paper" id="anchor">
+        <div class="paper-head">
+          <div>
+            <h3><a href="https://arxiv.org/abs/2606.01208">ANCHOR：Embedding 候选 + 层次导航 + SHACL 闭环</a></h3>
+            <div class="source">arXiv 2026 · Cyber Threat Intelligence ontology mapping</div>
+          </div>
+          <div><span class="badge pre">2026 预印本</span><span class="badge owl">OWL / SHACL</span><span class="badge deep">全文深读</span></div>
+        </div>
+        <div class="pipeline" aria-label="ANCHOR 映射流程">
+          <div><b>Schema 初始化</b>解析 class/property、description、hierarchy 与 SHACL</div>
+          <div><b>Schema-free 抽取</b>mention、type hint、属性和三元组</div>
+          <div><b>Class embedding</b>name + description 候选，阈值接受</div>
+          <div><b>Hierarchy recurse</b>低置信时由 LLM 从 root 向 child 导航</div>
+          <div><b>Property routing</b>区分 data/object，使用 domain/range/direction</div>
+          <div><b>Scoped rerank</b>只在选中分支内再次 embedding</div>
+          <div><b>SHACL repair</b>验证并反馈，最多 3 轮</div>
+        </div>
+        <div class="paper-grid">
+          <div>
+            <h4>精确技术细节</h4>
+            <div class="equation">entity_score = 0.5 · sim(type_hint, name)
+             + 0.5 · sim(type_hint, description)
+             + keyword_bonus(0.3)
+
+accept if score ≥ τ_entity = 0.45
+predicate mapping uses τ_pred = 0.30
+direction bonus: +0.10 forward / −0.05 inverse</div>
+            <p>系统暴露六个 search/navigation 工具，不把完整 schema 放进 prompt。predicate 先按 data/object property 分流，再把继承的 domain/range 与 SHACL shape 用作结构约束。</p>
+          </div>
+          <div>
+            <h4>数据与结果</h4>
+            <p>149 篇 CTI 报告；UCO 有 419 classes / 177 relations / 578 properties，STIX 为 109 / 92 / 311，MALOnt 为 75 / 10 / 12。</p>
+            <ul class="result-list">
+              <li>entity F1：ANCHOR 平均 <span class="num">.7371</span>；对比 LLM4CTI 平均约 <span class="num">.6433</span>。</li>
+              <li>predicate F1：平均 <span class="num">.5484</span>。</li>
+              <li>给定 gold typing 后，hybrid class/property F1 为 <span class="num">.9364 / .7843</span>。</li>
+              <li>search-only 对 property 仅 <span class="num">.3142</span>；recurse-only 为 <span class="num">.6416</span>。</li>
+              <li>UCO schema noncompliance 为 <span class="num">5.2%</span>，对照方法为 <span class="num">43.9–75.8%</span>。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout warn">
+          <strong>最有价值的观察：</strong>91% 的 entity mapping 可由 search 路由完成；object property mapping 则 72.1% 走层次递归。中位 top‑1 similarity 从 class 的 .837 降到 object property 的 .244。类通常是词法问题，关系更像结构问题。局限是预印本、CTI extraction 而非 QA、gold 部分由 LLM 辅助、代码尚未公开。
+        </div>
+      </article>
+
+      <article class="paper" id="obqc">
+        <div class="paper-head">
+          <div>
+            <h3><a href="https://arxiv.org/abs/2405.11706">Ontology‑Based Query Check：把 ontology 当静态检查器</a></h3>
+            <div class="source">2024 · 企业保险 ontology · Text-to-SPARQL repair</div>
+          </div>
+          <div><span class="badge pre">预印本</span><span class="badge owl">RDFS / OWL rules</span><span class="badge deep">全文深读</span></div>
+        </div>
+        <div class="paper-grid">
+          <div>
+            <h4>实现方式</h4>
+            <p>系统解析 SPARQL basic graph pattern，把 query variables 替换成 reserved IRI nodes，分别放入 <code>:query</code> 与 <code>:ontology</code> named graph，再执行一组 SPARQL 规则。检查项包括 property 存在性、domain、range、double-domain、double-range 与 domain-range compatibility。</p>
+            <p>repair prompt 只包含错误查询和检查器返回的问题说明，最多修复 3 次；不是把全部 ontology 再送回 LLM。</p>
+          </div>
+          <div>
+            <h4>执行准确率</h4>
+            <ul class="result-list">
+              <li>首次生成：<span class="num">42.88%</span></li>
+              <li>OBQC + repair：<span class="num">72.55%</span></li>
+              <li>正确返回 unknown：<span class="num">8%</span></li>
+              <li>最终错误：<span class="num">19.44%</span></li>
+            </ul>
+            <p>在“低问题复杂度 / 高 schema 复杂度”象限中从 <span class="num">17.20%</span> 提升到 <span class="num">76.33%</span>，显示校验在复杂 schema 下作用最大。</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>错误规则</th><th>占检测问题比例</th><th>能发现什么</th></tr></thead>
+            <tbody>
+              <tr><td>Double domain</td><td class="num">37.47%</td><td>同一变量被要求属于不兼容 domain。</td></tr>
+              <tr><td>Domain–range compatibility</td><td class="num">22.78%</td><td>相邻 triple pattern 的类型无法接续。</td></tr>
+              <tr><td>IRI / property existence</td><td class="num">18.40%</td><td>模型编造或误用 schema 项。</td></tr>
+              <tr><td>Invalid subject</td><td class="num">11.91%</td><td>把不允许作为主语的项放入图模式。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="limits"><strong>限制：</strong>规则尚未完整覆盖 subquery、FILTER、UNION、OPTIONAL；并以“不存在 subclass 关系的类往往不相交”作为近似，带有 closed-world 色彩，复杂 union range 也可能误报。它证明的是 ontology-guided repair，而不是 ontology retrieval。</div>
+      </article>
+
+      <article class="paper" id="hyem">
+        <div class="paper-head">
+          <div>
+            <h3><a href="https://arxiv.org/abs/2604.09550">HyEm：普通向量索引上的双曲本体层次召回</a></h3>
+            <div class="source">arXiv 2026 · HPO / DO / MeSH · is-a hierarchy retrieval</div>
+          </div>
+          <div><span class="badge pre">2026 预印本</span><span class="badge owl">真实 biomedical ontology</span></div>
+        </div>
+        <div class="paper-grid">
+          <div>
+            <h4>方法</h4>
+            <p>在 Lorentz 双曲空间学习带 radius constraint 的 node embedding，通过 origin log-map 投影到普通 Euclidean ANN 索引；候选集上再计算精确双曲距离。轻量 gate <code>α(q)</code> 依据 entity-centric、taxonomy-navigation、mixed intent 混合 cosine semantic score 与 hierarchy score。</p>
+          </div>
+          <div>
+            <h4>结果</h4>
+            <ul class="result-list">
+              <li>20k-node 子集，Euclidean MRR retention：<span class="num">.959 / .964</span>。</li>
+              <li>Parent Hits@10：<span class="num">.226 / .310</span>；mixed Hits@10：<span class="num">.449 / .361</span>。</li>
+              <li>ANN oversampling <span class="num">L=50</span> 时，hyperbolic top‑10 recall 为 <span class="num">.988 / .989</span>。</li>
+              <li>CPU 查询延迟约 <span class="num">.596 / .544 ms</span>。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="limits"><strong>边界：</strong>查询由合成模板构造，主实验只到 5k/20k 子集，仅处理 <code>is-a</code>，没有下游 LLM QA，也不表达复杂 OWL restrictions。它提供“层次感知候选层”的前沿证据，不是 reasoning layer。</div>
+      </article>
+
+      <h3>同一技术线上的其他工作</h3>
+      <div class="grid two">
+        <article class="card">
+          <h4><a href="https://arxiv.org/abs/2506.01232">RIGOR</a>：检索增强的 OWL ontology 迭代生成</h4>
+          <p>按 foreign-key 连通顺序逐表生成 Manchester Syntax delta；同时检索 DB schema/docs、外部 BioPortal ontology 与持续增长的 core ontology，Judge LLM 检查后合并并记录 provenance。两个医疗数据库上，多模型 competency-question 分数大致从 <span class="num">1.4–1.6</span> 提升到 <span class="num">4.5–4.6 / 5</span>，所有 RIGOR 结果 syntactically valid 且 consistent；但评价大量依赖 Judge LLM，OOPS 仍发现多个 domain/range 问题。</p>
+        </article>
+        <article class="card">
+          <h4><a href="https://arxiv.org/abs/2508.10703">GenOM</a>：结构 verbalization 后再做 ontology matching</h4>
+          <p>从 label、synonym、immediate parent 和 <code>EquivalentClass</code> 提取上下文，用 DeepOnto verbalize，LLM 生成 richer definition；embedding top‑k 后让 LLM 判等价，再融合 cosine 与 exact lexical match。它把“只嵌标签”扩展为“标签 + 同义词 + 层次 + 公理 verbalization”。</p>
+        </article>
+        <article class="card">
+          <h4><a href="https://arxiv.org/abs/2502.05478">OntoTune</a> / <a href="https://aclanthology.org/2024.acl-long.127/">TaxoLLaMA</a>：把 taxonomy 部分参数化</h4>
+          <p>OntoTune 从 SNOMED CT definition/hypernym/synonym 生成 ontology-informed response，再用 SFT/DPO 自训练；TaxoLLaMA 用 WordNet instruction tuning 学 taxonomy enrichment 和 hypernym discovery。它们探索“让模型先学会部分本体结构”，但尚无证据能替代动态检索或 reasoner。</p>
+        </article>
+        <article class="card">
+          <h4><a href="https://doi.org/10.1016/j.compind.2025.104289">Ontology-based RAG for Maintenance</a></h4>
+          <p>在 OWL 维护本体上比较 label matching、vector semantic matching 与 graph traversal neighbor expansion，并用多 LLM、多上下文大小和 pairwise arena/Elo 评价回答。论文支持“向量 + 经典匹配 + ontology 邻域”的组合，但公开摘要不足以证明大型 module extraction 的规模表现。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="schema-linking">
+      <div class="section-head">
+        <span class="kicker">Schema linking &amp; semantic parsing</span>
+        <h2>06 · Agent 如何从语言进入 schema：先关系、后实体、再生成结构</h2>
+        <p class="lede">KBQA 文献的主要进展并不是让 LLM“记住 ontology”，而是让 schema linking 与 logical-form generation 相互约束。对 TBox 优先阶段，这一支最能回答 class/property 如何被精确召回。</p>
+      </div>
+
+      <article class="paper">
+        <div class="paper-head">
+          <div>
+            <h3><a href="https://aclanthology.org/2025.emnlp-main.442/">SG‑KBQA：Schema‑Guided Knowledge Base Question Answering</a></h3>
+            <div class="source">EMNLP 2025 Main · <a href="https://github.com/gaosx2000/SG_KBQA">官方代码</a></div>
+          </div>
+          <div><span class="badge peer">同行评审</span><span class="badge deep">全文深读</span></div>
+        </div>
+        <div class="pipeline" aria-label="SG-KBQA 流程">
+          <div><b>Relation retrieval</b>BERT cross-encoder 先取 top‑20 relations</div>
+          <div><b>Sketch parser</b>T5 保留实体名，mask relation/class/literal</div>
+          <div><b>Entity candidates</b>popularity + 与关系连通的实体</div>
+          <div><b>Entity rerank</b>每个 mention 保留 top‑2，延迟消歧</div>
+          <div><b>Schema context</b>relation 的 domain/range + entity class 交集</div>
+          <div><b>LF generation</b>Llama‑3.1‑8B 生成 S-expression，beam=10</div>
+          <div><b>Execute filter</b>执行可行性过滤；必要时 2-hop fallback</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>GrailQA 结果</th><th>EM</th><th>F1</th><th>关键观察</th></tr></thead>
+            <tbody>
+              <tr><td>Hidden test · overall</td><td class="num">79.1</td><td class="num"><strong>84.4</strong></td><td>优于论文最强对照 overall F1 81.7。</td></tr>
+              <tr><td>Hidden test · compositional</td><td class="num">77.9</td><td class="num">85.1</td><td>组合泛化不只依赖 seen logical form。</td></tr>
+              <tr><td>Hidden test · zero-shot</td><td class="num">75.4</td><td class="num">80.8</td><td>重点检验未见 schema 组合。</td></tr>
+              <tr><td>Validation · full system</td><td class="num">85.1</td><td class="num">88.5</td><td>用于与消融在同一 validation split 上比较。</td></tr>
+              <tr><td>Validation · 去掉 schema contexts</td><td class="num">76.6</td><td class="num">79.2</td><td>zero-shot F1 从 87.9 降到 73.9，下降 14 点。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout info"><strong>直接证据：</strong>把 relation 表达为 <code>[D] domain [N] relation [R] range</code>，把 entity 表达为 ID、name 和“实体 classes ∩ relation classes”，对 unseen composition 的收益最大。它证明 schema 结构不是装饰性 prompt；但训练重、依赖 Freebase ABox 邻域，不是 OWL 公理级检索。</div>
+      </article>
+
+      <article class="paper">
+        <div class="paper-head">
+          <div>
+            <h3><a href="https://arxiv.org/abs/2502.03992">OntoSCPrompt：先生成结构 sketch，再填 schema content</a></h3>
+            <div class="source">2025 · LongT5-base · discrete + continuous prompt</div>
+          </div>
+          <div><span class="badge pre">预印本</span><span class="badge deep">全文深读</span></div>
+        </div>
+        <div class="paper-grid">
+          <div>
+            <p><strong>Stage S</strong> 生成 KG-independent SPARQL sketch，只保留结构和 placeholders；<strong>Stage C</strong> 再用 verbalized concepts、relations、entities 绑定内容。模型同时接收离散 instruction 与 4 个 learnable continuous prompt vectors。</p>
+            <p>解码时用 grammar、structure consistency 和 top‑20 subgraph 进行约束，不允许任意 token 序列。</p>
+          </div>
+          <div>
+            <ul class="result-list">
+              <li>WebQSP Hits@1：<span class="num">73.8</span>；LC‑QuAD F1：<span class="num">79.1</span>。</li>
+              <li>去掉 constraints：<span class="num">65.5 / 70.2</span>。</li>
+              <li>WebQSP→CWQ zero-target transfer：<span class="num">48.8</span>，target-trained 为 <span class="num">70.4</span>。</li>
+              <li>只有 prompt tuning：<span class="num">62.1 / 70.3</span>；prompt + fine-tune：<span class="num">73.8 / 79.1</span>。</li>
+            </ul>
+            <div class="limits">方向关系和 verbose Freebase schema 仍是主要难点；需要训练，不能直接视为通用 Agent 工具调用方案。</div>
+          </div>
+        </div>
+      </article>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>方法</th><th>结构中间表示</th><th>Schema 如何进入</th><th>关键结果/消融</th><th>对 TBox 的可迁移部分</th></tr></thead>
+          <tbody>
+            <tr><td><a href="https://aclanthology.org/2024.findings-acl.122/">ChatKBQA</a></td><td>先生成 logical-form labels，再做实体/关系 phrase retrieval</td><td>关系候选限制在候选实体邻域；执行第一个合法查询</td><td>WebQSP F1 79.8，CWQ 77.8；error 中 skeleton 40.10%、entity 27.17%、relation 19.48%</td><td>先固定 query skeleton，候选绑定与执行校验分离。</td></tr>
+            <tr><td><a href="https://aclanthology.org/2025.acl-long.741/">ORT</a></td><td>aim→condition 的 relation-type reverse tree</td><td>从 ABox relation triple 归纳 label/type graph，DFS 深度≤5，LLM semantic prune</td><td>DeepSeek-v3 WebQSP Hit@1/F1 89.4/71.8；CWQ 72.9/62.6</td><td>类型路径可在具体实例图之前缩小候选；但这里的“ontology”不是 OWL。</td></tr>
+            <tr><td><a href="https://aclanthology.org/2022.emnlp-main.555/">TIARA</a></td><td>S-expression</td><td>实体链接后检索 2-hop logical forms、schema items 和 exemplary logical forms</td><td>建立“检索 schema + constrained generation”的经典基线</td><td>可把 schema cards 和 query examples 分成不同检索通道。</td></tr>
+            <tr><td><a href="https://aclanthology.org/2023.acl-long.270/">Pangu</a></td><td>语言模型逐步评分的 symbolic query plans</td><td>从实体出发，按 KG operators 扩展可执行计划</td><td>把 LLM 作为计划 scorer，而非自由字符串生成器</td><td>适合黑盒查询前的结构化计划搜索。</td></tr>
+            <tr><td><a href="https://aclanthology.org/2025.emnlp-main.1417/">BYOKG-RAG</a></td><td>relation paths + OpenCypher + tool calls</td><td>完整 property-graph schema 入 prompt；fuzzy + BGE-M3 实体 top‑3</td><td>CWQ 中 only-EL→full linker：scoring 63.0→71.6，agentic 69.3→73.6</td><td>schema-aware linker 明显优于只做实体链接；大型 full-schema prompt 仍未解决。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="subgraph">
+      <div class="section-head">
+        <span class="kicker">Graph / subgraph retrieval</span>
+        <h2>07 · 子图召回：连通、扩散、独立打分与超图覆盖并无统一胜者</h2>
+        <p class="lede">这些算法大多在 ABox 或文档图上提出，但它们明确展示了可供 TBox 候选层借鉴的不同目标函数。尤其需要避免把“最小连通”视为天然语义最优。</p>
+      </div>
+
+      <article class="paper">
+        <div class="paper-head">
+          <div>
+            <h3><a href="https://arxiv.org/abs/2402.07630">G‑Retriever：Prize‑Collecting Steiner Tree</a></h3>
+            <div class="source">NeurIPS 2024 · graph QA · Llama‑2‑7B + graph token</div>
+          </div>
+          <div><span class="badge peer">同行评审</span><span class="badge deep">全文深读</span></div>
+        </div>
+        <div class="paper-grid">
+          <div>
+            <p>SBERT 分别编码 query 与 node/edge text，将相似度转为 prize；PCST 在连接成本和证据相关性之间求解小子图。edge prize 通过 virtual node 转换，使 node/edge 可以统一优化。</p>
+            <div class="equation">S* = argmax_S [
+  Σ(v ∈ V_S) prize(v)
+  + Σ(e ∈ E_S) prize(e)
+  − Σ(e ∈ E_S) cost(e)
+]</div>
+            <p>检索子图既序列化为文本，也经 GNN 编码成 graph token 注入 LLM。</p>
+          </div>
+          <div>
+            <ul class="result-list">
+              <li>WebQSP prompt-tune：<span class="num">48.34</span>；GraphToken：<span class="num">57.05</span>；G‑Retriever：<span class="num">70.49</span>；LoRA：<span class="num">73.79</span>。</li>
+              <li>平均 nodes：<span class="num">1,371 → 18</span>；tokens：<span class="num">100,627 → 610</span>。</li>
+              <li>每 epoch：<span class="num">18.7 → 6.2</span> 分钟。</li>
+              <li>k=3/5/10/20：<span class="num">.6977/.7063/.7248/.7039</span>，更大上下文并不单调更好。</li>
+            </ul>
+            <div class="limits">PCST 保证结构连通和预算平衡，不保证 OWL 语义闭包；其图是一般 QA graph。</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="paper">
+        <div class="paper-head">
+          <div>
+            <h3><a href="https://openreview.net/forum?id=JvkuZZ04O7">SubgraphRAG：独立 triple scoring，不强制连通</a></h3>
+            <div class="source">ICLR 2025 · shortest-path weak supervision · directional distance encoding · <a href="https://github.com/Graph-COM/SubgraphRAG">代码</a></div>
+          </div>
+          <div><span class="badge peer">同行评审</span><span class="badge code">开源</span></div>
+        </div>
+        <div class="paper-grid">
+          <div>
+            <p>方法用 shortest path 产生弱监督标签，对每个 triple 独立预测 Bernoulli relevance；Directional Distance Encoding 分别沿正向/反向传播 query/topic entity 距离。最终直接取 top‑100 triples，不要求输出连通子图。</p>
+            <p>它对 G‑Retriever 的核心反驳是：答案所需的相关 triples 可以分散，强制一棵连通树可能为连接而引入大量无关边。</p>
+          </div>
+          <div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>WebQSP / CWQ</th><th>SubgraphRAG</th><th>论文重现 G-Retriever</th></tr></thead>
+                <tbody>
+                  <tr><td>Shortest-path triple recall</td><td class="num">.883 / .811</td><td class="num">.294 / .183</td></tr>
+                  <tr><td>Relevant triple recall</td><td class="num">.865 / .840</td><td class="num">.325 / .217</td></tr>
+                  <tr><td>Answer entity recall</td><td class="num">.944 / .914</td><td class="num">.545 / .375</td></tr>
+                  <tr><td>时间</td><td class="num">6 / 12 s</td><td class="num">672 / 1,530 s</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="limits">需要约 27.6k labeled ABox examples 和 topic entity；它不能证明不连通策略在 TBox axiom retrieval 上也最优。</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="paper">
+        <div class="paper-head">
+          <div>
+            <h3><a href="https://arxiv.org/abs/2502.14802">HippoRAG 2：事实筛选种子 + Personalized PageRank</a></h3>
+            <div class="source">ICML 2025 · OpenIE graph + passage nodes · <a href="https://github.com/OSU-NLP-Group/HippoRAG">代码</a></div>
+          </div>
+          <div><span class="badge peer">同行评审</span><span class="badge code">源码核查</span><span class="badge deep">全文深读</span></div>
+        </div>
+        <div class="paper-grid">
+          <div>
+            <p>schema-free OpenIE 构建 phrase/relation graph；实体 cosine &gt; .8 加 synonym edge，passage 节点连接其中出现的实体。查询先取相似 facts，由 70B 模型最多筛 5 个 phrase seed；再加入 passage dense seed，PPR damping 为 .5，passage seed weight 为 .05。</p>
+            <p>18% 查询的 LLM filter 没选出任何 triple，此时退回 dense retrieval。</p>
+          </div>
+          <div>
+            <ul class="result-list">
+              <li>平均 QA F1：HippoRAG 2 <span class="num">59.8</span>，NV‑Embed <span class="num">57.0</span>，GraphRAG <span class="num">49.6</span>。</li>
+              <li>平均 retrieval Recall@5：<span class="num">78.2</span>，NV‑Embed <span class="num">73.4</span>。</li>
+              <li>MuSiQue 11,656 passages：index <span class="num">99.5 min</span>、query <span class="num">1.2 s</span>、memory <span class="num">9.9 GB</span>；dense 为 12.1 min / .3 s / 1.7 GB。</li>
+            </ul>
+            <div class="limits">predicate 不作为传播节点，图来自 OpenIE，不是 ontology TBox；但“多锚点加权扩散 + dense fallback”是成熟的图检索对照。</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="paper">
+        <div class="paper-head">
+          <div>
+            <h3><a href="https://aclanthology.org/2025.emnlp-main.1674/">OG‑RAG：Ontology‑Grounded Hyperedge Cover</a></h3>
+            <div class="source">EMNLP 2025 Main · subject–attribute–value template</div>
+          </div>
+          <div><span class="badge peer">同行评审</span><span class="badge deep">全文深读</span></div>
+        </div>
+        <div class="paper-grid">
+          <div>
+            <p>GPT‑4o 把文档转为 JSON‑LD factual blocks，并映射到 <code>S × A × (S ∪ φ)</code> 的轻量 ontology；检索分别对 subject+attribute 与 values 做 embedding top‑k，再用 greedy set cover 选择覆盖问题概念的少量 factual hyperedges。</p>
+            <p>这里“ontology”是文档事实模板，不是 OWL。论文伪代码的 OR 停止条件与正文“直到两类条件同时满足”的叙述也存在不一致，matroid optimality 声称需要谨慎解读。</p>
+          </div>
+          <div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>GPT‑4o</th><th>RAG</th><th>RAPTOR</th><th>GraphRAG</th><th>OG‑RAG</th></tr></thead>
+                <tbody>
+                  <tr><td>Soy context recall</td><td>.22</td><td>.54</td><td>.41</td><td><strong>.84</strong></td></tr>
+                  <tr><td>Wheat context recall</td><td>.14</td><td>.85</td><td>.78</td><td><strong>.95</strong></td></tr>
+                  <tr><td>Wheat answer correctness</td><td>.29</td><td>.59</td><td>.35</td><td><strong>.62</strong></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="limits">只有 85 篇农业文档、149 篇长新闻与约百道 RAGAS 问题；抽取和评价都高度依赖 LLM，数据不公开。结果支持 hyperedge context packing，不足以证明 ontology reasoning。</div>
+          </div>
+        </div>
+      </article>
+
+      <h3>算法横向对照</h3>
+      <div class="controls" aria-label="算法表筛选">
+        <button class="active" type="button" data-filter="all">全部</button>
+        <button type="button" data-filter="connected">强制连通</button>
+        <button type="button" data-filter="diffusion">扩散</button>
+        <button type="button" data-filter="learned">学习式</button>
+        <button type="button" data-filter="agent">Agent</button>
+        <button type="button" data-filter="ontology">本体层</button>
+        <input id="matrixSearch" type="search" placeholder="搜索算法、训练信号或关键词" aria-label="搜索算法表">
+      </div>
+      <div class="table-wrap">
+        <table id="algorithmTable">
+          <thead><tr><th>方法</th><th>Seed / 候选</th><th>结构目标</th><th>监督/训练</th><th>“Ontology”实际含义</th><th>主要边界</th></tr></thead>
+          <tbody>
+            <tr data-tags="connected learned"><td>G-Retriever</td><td>node/edge SBERT prize</td><td>PCST：相关 + 连通 − 成本</td><td>GNN + LLM tuning</td><td>普通图</td><td>连通不等于语义完整。</td></tr>
+            <tr data-tags="learned"><td>SubgraphRAG</td><td>topic entity + triple score</td><td>独立 top‑K，不要求连通</td><td>shortest-path weak labels</td><td>ABox KG</td><td>依赖训练集和 topic entity。</td></tr>
+            <tr data-tags="diffusion"><td>HippoRAG 2</td><td>LLM-filtered facts + dense passages</td><td>PPR 扩散</td><td>主要 zero-shot，需大模型 filter</td><td>OpenIE 文档图</td><td>predicate 未进入传播节点。</td></tr>
+            <tr data-tags="connected agent"><td>ToG‑2</td><td>topic entity + relation pruning</td><td>有界路径搜索 + 文档补充</td><td>LLM iterative search</td><td>ABox KG + entity docs</td><td>多调用、依赖实例实体。</td></tr>
+            <tr data-tags="ontology"><td>OG‑RAG</td><td>subject/attribute/value embeddings</td><td>greedy hyperedge set cover</td><td>LLM 抽取与评价</td><td>轻量事实模板</td><td>不是 OWL，数据很小。</td></tr>
+            <tr data-tags="connected ontology"><td>OWL locality module</td><td>seed signature</td><td>保存指定 signature 的相关蕴含</td><td>确定性算法</td><td>OWL TBox</td><td>不自带自然语言相关性排序。</td></tr>
+            <tr data-tags="ontology learned"><td>HyEm</td><td>query embedding + intent gate</td><td>Euclidean ANN 候选 + hyperbolic rerank</td><td>双曲 embedding + gate</td><td>真实 is-a taxonomy</td><td>不处理复杂公理。</td></tr>
+            <tr data-tags="learned agent"><td>GRIL</td><td>query-aware neighbor attention</td><td>迭代 grow/prune + budget</td><td>shortest path / reader feedback</td><td>ABox KG</td><td>联合训练成本高。</td></tr>
+            <tr data-tags="agent learned"><td>GraphRAG-R1</td><td>hybrid graph/text retrieval</td><td>多轮 retrieval action</td><td>GRPO + progress/cost rewards</td><td>GraphRAG corpus</td><td>过程奖励不保证 schema 合法。</td></tr>
+            <tr data-tags="agent learned"><td>HyperGraphPro</td><td>hyperedge entity relevance</td><td>结构 distinctiveness + beam</td><td>step-wise GRPO</td><td>文档超图</td><td>2026 预印本，需答案标签。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>客观结论：</strong>“必须连通”没有被普遍证明。PCST 在压缩大图时非常有效；SubgraphRAG 在 WebQSP/CWQ 的相同复现实验中又显示独立 triple ranking 更高效。两者任务、监督和候选定义不同，现有证据不足以断言哪一种对 TBox 更优。
+      </div>
+    </section>
+
+    <section id="agentic">
+      <div class="section-head">
+        <span class="kicker">Systems &amp; agentic retrieval</span>
+        <h2>08 · 从固定检索器到会规划、反思和控制成本的 Agent</h2>
+      </div>
+
+      <article class="paper">
+        <div class="paper-head">
+          <div>
+            <h3><a href="https://arxiv.org/abs/2409.13731">KAG：Schema-constrained KG + OpenIE graph + chunk 的复合系统</a></h3>
+            <div class="source">2024 · <a href="https://github.com/OpenSPG/KAG">OpenSPG/KAG 官方代码</a></div>
+          </div>
+          <div><span class="badge pre">技术报告</span><span class="badge code">开源/源码核查</span><span class="badge deep">全文深读</span></div>
+        </div>
+        <div class="paper-grid">
+          <div>
+            <h4>知识表示与检索</h4>
+            <p><code>LLMFriSPG M={T,ρ,C,L}</code> 同时维护强 schema 图 <code>KG_cs</code>、OpenIE fact graph <code>KG_fr</code> 与 raw chunks <code>RC</code>，并建立 graph↔chunk mutual index。实体标准化和 concept alignment 把自由抽取结果对齐到 schema。</p>
+            <p>Solver 把问题规划为 Retrieval / Sort / Math / Deduce / Output 等 logical-form operators；graph-first、chunk fallback 和 hybrid 可以按优先级执行，memory/judge/reflection 最多 3 轮。</p>
+          </div>
+          <div>
+            <h4>公开实验</h4>
+            <p>在 HotpotQA、2WikiMultiHopQA、MuSiQue 各抽 1k 问题，DeepSeek‑V2 下 KAG 的 EM/F1 分别为：</p>
+            <ul class="result-list">
+              <li>Hotpot：<span class="num">62.5 / 76.2</span></li>
+              <li>2Wiki：<span class="num">67.8 / 76.2</span></li>
+              <li>MuSiQue：<span class="num">36.7 / 48.7</span></li>
+            </ul>
+            <p>对照 IRCoT+HippoRAG 为 <span class="num">51.0/63.7、48.0/57.1、26.2/36.5</span>。从 mutual index 到 alignment、LFS graph、hybrid，F1 逐层上升。</p>
+          </div>
+        </div>
+        <div class="limits"><strong>边界：</strong>KAG 是公开系统中 schema-aware planning 最完整的一类，但 SPG-Schema、KGDSL 和 OpenSPG property graph semantics 不等于 W3C OWL 2；论文 benchmark 仍是文档多跳 QA。</div>
+      </article>
+
+      <div class="grid two">
+        <article class="card">
+          <h4><a href="https://arxiv.org/abs/2507.23581">GraphRAG‑R1</a>（WWW 2026）：用 GRPO 学何时继续检索</h4>
+          <p>检索 token 不计入 LM loss；PRA 对连续正确检索给予递减增量奖励，CAF 用 <code>F1 · a · exp(−bN)</code> 惩罚过多调用。LoRA r=16、α=32，最多 8 次检索。</p>
+          <p>Hotpot/MuSiQue/2Wiki/PopQA F1 为 <span class="num">38.00/20.06/32.24/35.04</span>；平均调用约 <span class="num">1.94/2.36/2.05/1.49</span>。去掉 PRA 或 CAF 均降低 F1，说明 process reward 与成本 reward 分别控制搜索深度和效率。</p>
+        </article>
+        <article class="card">
+          <h4><a href="https://arxiv.org/abs/2509.16502">GRIL</a>：Retriever 与 Reader 联合适配</h4>
+          <p>query-aware attention 对 head/neighbor/relation 打分，Gumbel-sigmoid 生成可微 mask；Complexity Assessment 预测 hop 数并分配 <code>5 × complexity</code> triples。subgraph 同时以 SAG soft graph token 和 verbalized triples 进入 LLM。</p>
+          <p>WebQSP/CWQ Hit/F1 为 <span class="num">86.8/73.0、68.3/60.5</span>；MedQA 为 <span class="num">70.4</span>。去掉 soft token 降至 66.1，去掉文本降至 64.8，显示结构 token 和可读证据互补。</p>
+        </article>
+        <article class="card">
+          <h4><a href="https://arxiv.org/abs/2601.17755">HyperGraphPro / ProGraph‑R1</a>：step-wise progress reward</h4>
+          <p>结构分数将 semantic relevance 与 query-connected hyperedge 中的 entity distinctiveness 结合；progress reward 用加入当前证据前后 gold answer 概率差估计，另加 connectivity/answer overlap 结构奖励并做 step-wise GRPO。</p>
+          <p>Qwen2.5‑3B 平均 F1 54.56，对照 Graph‑R1 49.89；7B 为 59.38 vs 55.94。它代表“每一步检索是否推进答案”的前沿，但仍是 2026 预印本，结构奖励使用 answer label。</p>
+        </article>
+        <article class="card">
+          <h4><a href="https://aclanthology.org/2025.emnlp-main.1417/">BYOKG‑RAG</a>：Schema-aware tool routing</h4>
+          <p>KG-Linker 生成 entity、candidate answer、relation paths 与 OpenCypher；实体用 fuzzy + BGE‑M3 top‑3 链接。Agent 可选择 relation BFS、Dijkstra path、OpenCypher 和 triplet retrieval 四类工具，最多迭代 2 次。</p>
+          <p>CWQ retrieval Recall@10：agentic <span class="num">70.5</span>、396 tokens；scoring <span class="num">60.6</span>、1,483 tokens。直接证明工具化 schema linker 可以在更少上下文下工作，但完整 schema 入 prompt 的规模假设较强。</p>
+        </article>
+      </div>
+      <div class="callout warn">
+        <strong>Agentic 不等于 ontology-aware：</strong>奖励函数可以学到“多查一次是否提高答案概率”，却未必知道查询是否违反 domain/range、是否遗漏逻辑必需公理。过程控制和形式语义检查是两条正交技术线。
+      </div>
+    </section>
+
+    <section id="benchmarks">
+      <div class="section-head">
+        <span class="kicker">Evaluation</span>
+        <h2>09 · 评测全景：多数数字测的是答案，不是本体召回</h2>
+        <p class="lede">当前研究的主要困难之一是指标错位。ABox QA 的 F1/Hit@1 很重要，但不能定位错误发生在 class linking、property linking、公理召回、查询计划还是实例执行。</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>评测族</th><th>代表工作/数据</th><th>主要指标</th><th>真正覆盖</th><th>没有覆盖</th></tr></thead>
+          <tbody>
+            <tr><td>形式本体理解</td><td>DL-Lite、LUBM、UOBM、MaasMatch</td><td>task accuracy、F1、集合答案正确性</td><td>subsumption、instance、satisfiability、query answering</td><td>自然语言锚点与 query-specific retrieval。</td></tr>
+            <tr><td>Ontology mapping</td><td>ANCHOR、GenOM、OntoAligner、OAEI</td><td>entity/predicate F1、mapping precision/recall</td><td>class/property linking 与 schema compliance</td><td>用户 QA 与实例答案。</td></tr>
+            <tr><td>Schema-guided KBQA</td><td>GrailQA、WebQSP、CWQ</td><td>EM、F1、Hit@1、execution accuracy</td><td>logical form、实体/关系绑定、ABox 答案</td><td>OWL restriction 和模块语义保持。</td></tr>
+            <tr><td>Graph retrieval</td><td>SubgraphRAG、G-Retriever、HippoRAG</td><td>triple/path/answer recall、QA F1、时间</td><td>结构候选质量与下游回答</td><td>TBox axiom 类型与 competency questions。</td></tr>
+            <tr><td>文档 GraphRAG</td><td>HotpotQA、2Wiki、MuSiQue、RAGAS</td><td>answer F1、context recall、faithfulness</td><td>多文档事实聚合</td><td>本体合法性与逻辑闭包。</td></tr>
+            <tr><td>企业原型</td><td>Progressive Reveal、OBQC、maintenance assistant</td><td>execution accuracy、arena/Elo 或定性结果</td><td>真实 schema/流程可行性</td><td>常缺公开数据、成本和可复现对照。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid three">
+        <article class="card">
+          <h3>需要被分别观察的召回</h3>
+          <p>class Recall@K、object-property Recall@K、data-property Recall@K、restriction/axiom recall、definition/source recall。ANCHOR 已显示这些角色的难度差异巨大。</p>
+        </article>
+        <article class="card">
+          <h3>结构充分性</h3>
+          <p>最短路径是否覆盖 gold relation chain、locality module 是否保留目标 entailment、schema card 是否覆盖 query plan 所需 domain/range。单看 node overlap 不足。</p>
+        </article>
+        <article class="card">
+          <h3>端到端但可归因</h3>
+          <p>最终 answer correctness 仍是目标，但应保留 linker 候选、子图、编译上下文、查询计划、validation issue 与黑盒返回，才能确定瓶颈。</p>
+        </article>
+      </div>
+      <div class="callout critical">
+        <strong>公开 benchmark 缺口：</strong>这批 2024—2026 工作中，尚未出现一个被广泛采用的数据集，同时包含自然语言问题、gold TBox signature、gold axiom/module、可执行 query plan、实例答案，并对 token/latency 做统一报告。
+      </div>
+    </section>
+
+    <section id="open-source">
+      <div class="section-head">
+        <span class="kicker">Open-source landscape</span>
+        <h2>10 · 开源实现：四类组件各自覆盖一段，没有一站式答案</h2>
+        <p class="lede">下表依据官方仓库与文档。GraphRAG 框架、schema-aware property graph、RDF/OWL 工具和 Agent memory 不应因“都有图”而被视为同类产品。</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>项目</th><th>核心索引 / 召回</th><th>RDF/OWL/SPARQL</th><th>Agent / tool</th><th>对本体层的真实适配性</th></tr></thead>
+          <tbody>
+            <tr><td><a href="https://github.com/microsoft/graphrag">Microsoft GraphRAG</a></td><td>实体/关系抽取、社区报告；Local / Global / DRIFT</td><td><span class="no">无原生支持</span></td><td>CLI / Python API</td><td>适合 ontology 说明文档与全局主题；OWL 公理会被文本化、扁平化。</td></tr>
+            <tr><td><a href="https://github.com/HKUDS/LightRAG">LightRAG</a></td><td>entity / relation / chunk 三类向量与一跳邻域混合</td><td><span class="no">无</span></td><td>REST / WebUI</td><td>快速图文混合基线，不理解 restriction、equivalence、SHACL。</td></tr>
+            <tr><td><a href="https://github.com/OSU-NLP-Group/HippoRAG">HippoRAG</a></td><td>OpenIE fact、LLM filter、entity seed、PPR</td><td><span class="no">无</span></td><td>Python API</td><td>适合多锚点扩散；predicate 与复杂关系语义保留有限。</td></tr>
+            <tr><td><a href="https://github.com/OpenSPG/KAG">KAG</a> / <a href="https://github.com/OpenSPG/openspg">OpenSPG</a></td><td>schema-constrained extraction、logical form、SPO/PPR/chunk hybrid</td><td><span class="partial">SPG semantics ≠ OWL 2</span></td><td>Planner/executor、MCP client</td><td>schema-aware 与逻辑规划很完整，但完整栈偏重。</td></tr>
+            <tr><td><a href="https://github.com/neo4j/neo4j-graphrag-python">Neo4j GraphRAG</a></td><td>Vector/Hybrid/VectorCypher/Text2Cypher/ToolsRetriever</td><td><span class="no">无原生 OWL</span></td><td>多个 retriever 可包装为 tools</td><td>适合属性图遍历与工具壳；OWL projection 需自建。</td></tr>
+            <tr><td><a href="https://github.com/topoteretes/cognee">Cognee</a></td><td>RDF/OWL 投影、triplet vector、邻域扩展、AgenticRetriever</td><td><span class="partial">解析有限子集，无 DL 推理</span></td><td>ReAct、skills、ACL、MCP</td><td>最接近 RDF 输入—混合召回—Agent；不能完整 round-trip OWL。</td></tr>
+            <tr><td><a href="https://developers.llamaindex.ai/python/framework/module_guides/indexing/lpg_index_guide/">LlamaIndex Property Graph</a></td><td>synonym/vector/TextToCypher/CypherTemplate，自定义 retriever</td><td><span class="no">LPG 抽象</span></td><td>QueryEngine / Tool / Agent / MCP</td><td>适合作为 NebulaGraph + 外部向量库编排层。</td></tr>
+            <tr><td><a href="https://github.com/langchain-ai/langchain-neo4j">LangChain Neo4j</a></td><td>GraphCypherQA、vector/full-text hybrid</td><td><span class="no">无</span></td><td>通用 tools/agents</td><td>查询链包装，不是 ontology retriever。</td></tr>
+            <tr><td><a href="https://jena.apache.org/documentation/">Apache Jena</a></td><td>SPARQL、TDB2/Fuseki、RDFS/OWL inference、SHACL、text index</td><td><span class="check">原生 RDF/SPARQL/SHACL</span></td><td>HTTP SPARQL 工具化</td><td>权威语义存储与验证，不负责 NL linking / dense rank。</td></tr>
+            <tr><td><a href="https://github.com/owlcs/owlapi">OWLAPI</a></td><td>OWL 2 axiom API、reasoner、locality module、atomic decomposition</td><td><span class="check">原生 OWL 2</span></td><td>Java API</td><td>公理解析和模块抽取最直接，不是在线向量检索。</td></tr>
+            <tr><td><a href="https://github.com/ontodev/robot">ROBOT</a></td><td>module extract、reason、query、verify、report</td><td><span class="check">OWL/SPARQL</span></td><td>CLI / Docker，可封装 job/tool</td><td>离线裁剪、物化和验证；不做自然语言排序。</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>固定提交的源码级核查</h3>
+      <div class="grid two">
+        <article class="card">
+          <h4>Microsoft GraphRAG · <a href="https://github.com/microsoft/graphrag/commit/14a00ad88fc33cf2b52f4f113f25807556f8e25e">14a00ad8</a></h4>
+          <p><code>mixed_context.py</code> 用 entity embedding + oversampling 找实体，再在 token budget 中拼 community reports、entities、relationships、covariates 与 text units。Global Search 是 community reports 的 map/reduce；DRIFT 先用社区报告产生 primer 与 follow-up questions。图和摘要均来自文档抽取，不是可逆 OWL 索引。</p>
+        </article>
+        <article class="card">
+          <h4>LightRAG · <a href="https://github.com/HKUDS/LightRAG/commit/bbebdd64272d9c9cd71cf93c7446b1054a00388c">bbebdd64</a></h4>
+          <p><code>operate.py</code> 先让 LLM 抽 high-/low-level keywords；低层检索 entity VDB，高层检索 relationship VDB，mix 再加入 chunk vector。一旦 entity 命中，会读取 node degree、一跳 edges 和关联 chunks。比单一 Top‑K 丰富，但结构扩展仍是一跳与权重启发式。</p>
+        </article>
+        <article class="card">
+          <h4>HippoRAG · <a href="https://github.com/OSU-NLP-Group/HippoRAG/commit/e37fba2af1a951ac340d837a7c02efb9d8c9544a">e37fba2a</a></h4>
+          <p><code>HippoRAG.py</code> 中 fact embedding 决定候选，LLM filter 后 subject/object 形成 PPR seed；passage dense score 同时注入。<code>add_fact_edges</code> 主要建立 subject↔object 无向边，predicate 不作为传播节点，因此关系语义可能在扩散中丢失。</p>
+        </article>
+        <article class="card">
+          <h4>KAG · <a href="https://github.com/OpenSPG/KAG/commit/fdab15b3929d2ee40dfcdd388f90233096a6afc9">fdab15b3</a></h4>
+          <p>Builder 同时支持 schema-free / schema-constrained extraction、实体标准化与 graph/chunk 双向索引。Hybrid executor 同优先级并发调用 retriever，合并后可在首个非空 graph/chunk/docs 停止。OpenSPG compose 含 Java、MySQL、Neo4j/APOC、MinIO，Java 最高 8GB heap，完整部署明显重于 demo。</p>
+        </article>
+        <article class="card">
+          <h4>Neo4j GraphRAG · <a href="https://github.com/neo4j/neo4j-graphrag-python/commit/5a78f7e130ac303b7c709e5e98053d63fdb27804">5a78f7e1</a></h4>
+          <p><code>VectorCypherRetriever</code> 在向量命中后执行开发者指定 traversal Cypher；Hybrid 合并向量与 full-text。Text2Cypher 可读取 schema/APOC 样例，生成后先 <code>EXPLAIN</code> 并检查只读；ToolsRetriever 允许 LLM 选择多个 retriever 后合并有来源结果。</p>
+        </article>
+        <article class="card">
+          <h4>Cognee · <a href="https://github.com/topoteretes/cognee/commit/325acf356a81545b9892f19ab1ea7b61c51a776b">325acf35</a></h4>
+          <p>RDFLib resolver 能读 RDF/XML/Turtle/JSON-LD 等，索引 class 与 typed individual，并对 <code>rdf:type</code>、<code>subClassOf</code> 和 object-property assertion BFS。ingest 投影为 <code>is_a</code>，但未覆盖 blank node、reasoning、完整 literal/data-property round-trip。AgenticRetriever 采用渐进 skill loading，是上下文披露上的有用实现。</p>
+        </article>
+      </div>
+      <div class="callout info">
+        <strong>实现覆盖结论：</strong>目前没有一个开源项目同时完整覆盖“OWL 语义保持、自然语言锚点识别、向量召回、语义模块抽取、Agent 渐进式上下文、黑盒实例查询”。现有组件分别解决不同层。
+      </div>
+    </section>
+
+    <section id="products">
+      <div class="section-head">
+        <span class="kicker">Products &amp; engineering</span>
+        <h2>11 · 产品侧：从“让模型看 schema”转向“让模型调用受控语义工具”</h2>
+        <p class="lede">商业产品文档反映了工程方向，但通常不公开候选召回算法和 benchmark，不能与论文实验同等对待。</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>产品/平台</th><th>公开工作方式</th><th>本体/schema 角色</th><th>公开证据边界</th></tr></thead>
+          <tbody>
+            <tr><td><a href="https://docs.stardog.com/voicebox/">Stardog Voicebox</a></td><td>embedding 将问题概念映射到 semantic model，结合 SME few-shot 生成 SPARQL；mapping 可下推到 SQL/federated source，再总结并保留 provenance/query。</td><td>企业 semantic layer 是查询编译中间层。</td><td>文档展示能力，未公开 schema-linking benchmark。</td></tr>
+            <tr><td><a href="https://graphdb.ontotext.com/documentation/11.2/talk-to-graph.html">GraphDB Talk to Your Graph</a></td><td>将指定 named graph / CONSTRUCT ontology 放入上下文，结合 SPARQL、FTS、vector 与 retrieval connector。</td><td>ontology 直接约束 NL2SPARQL。</td><td>官方标注实验性；大型 schema context 仍是问题。</td></tr>
+            <tr><td><a href="https://www.topquadrant.com/doc/latest/user_guide/copilot/index.html">TopBraid Copilot</a></td><td>ontology/business 分开建 vector index；class、property、property shape 的 label/name/comment/description 可参与 exact/BM25/cosine/hybrid search。</td><td>schema 项与 shape 成为可搜索候选。</td><td>候选生成不是逻辑推理；完整排序细节未公开。</td></tr>
+            <tr><td><a href="https://metaphacts.com/solutions/products/metis">metaphacts metis</a></td><td>semantic model 约束 Agent 工具和企业知识访问。</td><td>本体作为工具与业务语义边界。</td><td>公开算法细节有限。</td></tr>
+            <tr><td><a href="https://www.poolparty.biz/graph-retrieval-augmented-generation">PoolParty GraphRAG</a></td><td>taxonomy/SKOS concept linking 与语义搜索。</td><td>controlled vocabulary、同义词与 hierarchy。</td><td>更偏 SKOS/taxonomy，不等于 OWL module retrieval。</td></tr>
+            <tr><td><a href="https://aws.amazon.com/blogs/database/introducing-the-graphrag-toolkit/">AWS GraphRAG Toolkit</a></td><td>从文档建立 entity、fact、summary 与 source lineage，支持 traversal/path rerank。</td><td>图结构与来源追踪。</td><td>文档派生图，不是既有 ontology。</td></tr>
+            <tr><td><a href="https://learn.microsoft.com/en-us/fabric/iq/ontology/overview">Microsoft Fabric IQ Ontology</a></td><td>NL → ontology/semantic query → GQL/KQL/MCP。</td><td>业务 ontology 作为统一语义访问层。</td><td>preview；不是 W3C OWL 工具链。</td></tr>
+            <tr><td><a href="https://docs.cloud.google.com/spanner/docs/graph/overview">Google Spanner Graph</a></td><td>property graph、GQL、vector/full-text 与 graph algorithms 结合。</td><td>数据库 schema 与图查询。</td><td>无 OWL 语义。</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>与当前 demo 基础设施的定位</h3>
+      <div class="grid three">
+        <article class="card">
+          <h4><a href="https://huggingface.co/BAAI/bge-m3">BGE‑M3</a></h4>
+          <p>多语言、长文本，统一 dense、lexical/sparse 和 multi-vector retrieval。它适合做 class/property/definition/query-example 的候选层；形式合法性仍需 graph/schema/rules 负责。</p>
+        </article>
+        <article class="card">
+          <h4><a href="https://docs.lancedb.com/quickstart">LanceDB</a></h4>
+          <p>嵌入式/本地优先的向量数据层，适合可迁移 demo 保存向量、metadata 与过滤字段。它决定候选检索的存取方式，不决定该嵌入对象是否应是 label、schema card、axiom 还是路径。</p>
+        </article>
+        <article class="card">
+          <h4><a href="https://nebula-graph.io/solutions-fusion-graphrag">NebulaGraph</a></h4>
+          <p>分布式属性图和图查询/遍历层，适合保存投影后的 type graph 或未来 ABox。若源本体为 OWL，应额外保留公理级权威表示，避免只投影成 node/edge 后丢失 restriction。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="standards">
+      <div class="section-head">
+        <span class="kicker">Standards &amp; formal semantics</span>
+        <h2>12 · 不能由 GraphRAG 替代的标准与经典算法</h2>
+      </div>
+      <div class="grid two">
+        <article class="card">
+          <h3><a href="https://www.w3.org/TR/owl2-profiles/">OWL 2 Profiles</a></h3>
+          <p>OWL 2 EL、QL、RL 在表达能力和推理复杂度之间选择不同边界。一个系统只有在明确保留哪些 axiom、采用何种 entailment regime 后，才能讨论“子图是否语义充分”。</p>
+        </article>
+        <article class="card">
+          <h3><a href="https://www.w3.org/TR/sparql11-query/">SPARQL 1.1</a></h3>
+          <p>提供可执行、可审计的 RDF 图查询中间表示。LLM 生成可被 parser、query planner 和 ontology validator 分阶段检查，而不必把最终答案完全交给自由文本推理。</p>
+        </article>
+        <article class="card">
+          <h3><a href="https://www.w3.org/TR/shacl/">SHACL</a></h3>
+          <p>面向 graph shape 的 cardinality、datatype、class、path 等约束。ANCHOR 展示了“映射→验证报告→修复”的闭环；它不是开放世界 OWL reasoning 的替代品，但非常适合工具边界校验。</p>
+        </article>
+        <article class="card">
+          <h3><a href="https://www.w3.org/TR/skos-reference/">SKOS</a></h3>
+          <p>preferred/alternative label、broader/narrower/related 等词汇语义为 terminology retrieval 提供标准表达。很多商业 taxonomy RAG 实际主要处理这一层。</p>
+        </article>
+      </div>
+
+      <h3>最小连通子图与 OWL Locality Module 的根本差异</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>维度</th><th>最短路径 / 最小连通子图 / PCST</th><th>OWL syntactic locality module</th></tr></thead>
+          <tbody>
+            <tr><td>输入</td><td>图节点/边、锚点、相关性 prize、边成本</td><td>OWL ontology 与 seed signature</td></tr>
+            <tr><td>优化目标</td><td>连通、路径长度、相关性和子图大小</td><td>围绕 signature 保留特定逻辑蕴含</td></tr>
+            <tr><td>能否看懂 restriction</td><td>只有先人为投影成边才可见，语义可能丢失</td><td>以 OWL axiom 语法和 locality 判定处理</td></tr>
+            <tr><td>输出解释</td><td>“这些节点较近/较相关”</td><td>“该模块对目标 signature 保持所需保守扩展性质”</td></tr>
+            <tr><td>自然语言相关性</td><td>可直接融合 embedding / reranker</td><td>本身不提供，需要外部 linker 产生 seed</td></tr>
+            <tr><td>典型工具</td><td>NetworkX、图数据库、PCST solver</td><td><a href="https://www.cs.ox.ac.uk/isg/tools/ModuleExtractor/">Oxford Module Extractor</a>、OWLAPI、ROBOT</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="equation">Graph relevance layer:
+natural-language query → ranked seed signature
+
+Formal semantics layer:
+M = LocalityModule(Ontology O, Signature Σ, type ∈ {BOT, TOP, STAR})
+
+Context layer:
+serialize(rank/prune(M), schema cards, definitions, provenance, token budget)</div>
+
+      <h3>RDF/OWL 原生工具的实际职责</h3>
+      <div class="grid three">
+        <article class="card">
+          <h4><a href="https://jena.apache.org/documentation/fuseki2/fuseki-quick-start.html">Apache Jena / Fuseki</a></h4>
+          <p>本体/RDF 数据的 SPARQL HTTP 服务、RDFS/OWL 推理、SHACL 验证和精确图模式查询；解决语义正确性与可查询性，不解决自然语言 seed ranking。</p>
+        </article>
+        <article class="card">
+          <h4><a href="https://owlcs.github.io/owlapi/apidocs_5/org/semanticweb/owlapi/modularity/ModuleExtractor.html">OWLAPI ModuleExtractor</a></h4>
+          <p>公理 API、Manchester rendering、syntactic/semantic locality module 和 atomic decomposition；适合从 query anchors 产生语义模块。</p>
+        </article>
+        <article class="card">
+          <h4><a href="https://robot.obolibrary.org/extract.html">ROBOT</a></h4>
+          <p><code>extract</code> 支持 STAR/TOP/BOT；<code>reason</code> 可用 ELK/HermiT/JFact；<code>query</code>、<code>verify</code>、<code>report</code> 适合可复现构建和 CI 检查。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="scope-fit">
+      <div class="section-head">
+        <span class="kicker">Current research scope</span>
+        <h2>13 · 当 ABox 尚未就绪或长期黑盒时，文献能说明什么</h2>
+        <p class="lede">这一节只做研究边界归纳，不展开实施建议。</p>
+      </div>
+      <div class="grid two">
+        <article class="card">
+          <h3>已经有较强证据的问题</h3>
+          <ul>
+            <li>完整 ontology/chunk 顺序输入不能可靠替代 reasoner（DL‑Lite）。</li>
+            <li>schema domain/range 对 zero-shot relation composition 有显著作用（SG‑KBQA）。</li>
+            <li>类链接与属性链接的难度和最佳路由不同（ANCHOR）。</li>
+            <li>ontology 可在生成后作为确定性查询检查器，而不只是 prompt（OBQC）。</li>
+            <li>结构压缩与更大上下文之间并非单调关系（G‑Retriever 等）。</li>
+            <li>图检索和文本/定义检索通常互补（KAG、ToG‑2、GRIL）。</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>仍未被现有研究回答的问题</h3>
+          <ul>
+            <li>3GPP/电信规模 OWL 本体上，embedding seed + locality module 是否优于 k-hop/Steiner。</li>
+            <li>对 class、relation、restriction 分别采用何种索引单位与 top‑k 才最稳定。</li>
+            <li>最小充分 TBox context 是否能在黑盒查询协议变化时保持迁移性。</li>
+            <li>没有可观测实例层时，怎样以 gold query plan/competency question 预测最终 QA 表现。</li>
+            <li>Agentic retrieval 的成本收益能否迁移到形式本体，而不破坏语义约束。</li>
+          </ul>
+        </article>
+      </div>
+      <div class="callout">
+        <strong>当前技术状态的最短描述：</strong>Embedding 仍是语言到本体候选的必要入口，但不是语义裁决器；图算法负责结构相关性，但不自动提供逻辑保证；OWL/SHACL 工具提供语义和验证，却不理解用户语言；Agent 的价值在于按需组合这些能力，而不是在参数中“掌握整个本体”。
+      </div>
+    </section>
+
+    <section id="sources">
+      <div class="section-head">
+        <span class="kicker">Sources &amp; full-text audit</span>
+        <h2>14 · 重点全文清单与扩展资料</h2>
+        <p class="lede">下列 23 篇为本轮本地下载/解析的重点全文。扩展文献、源码、产品和标准另列；机器可读清单见同目录 <a href="sources.json">sources.json</a>。</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>重点全文</th><th>年份/状态</th><th>本报告核查重点</th><th>对象类型</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><a href="https://arxiv.org/abs/2410.09244">Progressive Ontology Reveal</a></td><td>2024 preprint</td><td>迭代协议、停止条件、工业图规模、证据缺口</td><td>OWL/TBox</td></tr>
+            <tr><td>2</td><td><a href="https://arxiv.org/abs/2405.11706">Ontology-Based Query Check</a></td><td>2024 preprint</td><td>SPARQL rules、repair、复杂度象限、错误分布</td><td>OWL/RDFS</td></tr>
+            <tr><td>3</td><td><a href="https://arxiv.org/abs/2502.03992">OntoSCPrompt</a></td><td>2025 preprint</td><td>structure/content 两阶段、约束解码、迁移与消融</td><td>KG schema</td></tr>
+            <tr><td>4</td><td><a href="https://aclanthology.org/2025.acl-long.741/">ORT</a></td><td>ACL 2025</td><td>reverse ontology tree、路径 pruning、forward/reverse 消融</td><td>type graph</td></tr>
+            <tr><td>5</td><td><a href="https://arxiv.org/abs/2402.07630">G-Retriever</a></td><td>NeurIPS 2024</td><td>PCST、graph token、tokens/nodes/time、k 消融</td><td>ABox graph</td></tr>
+            <tr><td>6</td><td><a href="https://aclanthology.org/2025.emnlp-main.1674/">OG-RAG</a></td><td>EMNLP 2025</td><td>hyperedge cover、数据规模、RAGAS、算法表述不一致</td><td>document schema</td></tr>
+            <tr><td>7</td><td><a href="https://arxiv.org/abs/2409.13731">KAG</a></td><td>2024 tech report</td><td>SPG model、logical form solver、hybrid retrieval、消融</td><td>schema + ABox + text</td></tr>
+            <tr><td>8</td><td><a href="https://arxiv.org/abs/2502.14802">HippoRAG 2</a></td><td>ICML 2025</td><td>PPR seeds、fallback、QA/retrieval、index/query cost</td><td>OpenIE graph</td></tr>
+            <tr><td>9</td><td><a href="https://arxiv.org/abs/2404.13207">STaRK</a></td><td>NeurIPS 2024</td><td>三套大规模 semi-structured KB、human queries、延迟</td><td>graph + text</td></tr>
+            <tr><td>10</td><td><a href="https://arxiv.org/abs/2507.23581">GraphRAG-R1</a></td><td>WWW 2026</td><td>GRPO、PRA/CAF reward、调用次数与消融</td><td>graph + text Agent</td></tr>
+            <tr><td>11</td><td><a href="https://arxiv.org/abs/2501.08686">KG-RAG4SM</a></td><td>2025 preprint</td><td>entity/BFS/triple retrieval、schema matching、稀疏 gold</td><td>Wikidata ABox</td></tr>
+            <tr><td>12</td><td><a href="https://arxiv.org/abs/2503.07584">GDELT Ontology KG</a></td><td>2025 preprint</td><td>DKG vs vector/GraphRAG、7-question case study</td><td>typed event graph</td></tr>
+            <tr><td>13</td><td><a href="https://arxiv.org/abs/2506.17728">KAG-Thinker</a></td><td>2025 preprint</td><td>reasoning/retrieval control 与 KAG 系统演进</td><td>schema + text Agent</td></tr>
+            <tr><td>14</td><td><a href="https://arxiv.org/abs/2407.10805">Think-on-Graph 2.0</a></td><td>ICLR 2025</td><td>relation pruning、graph/document coupling、六数据集结果</td><td>ABox + docs</td></tr>
+            <tr><td>15</td><td><a href="https://aclanthology.org/2024.findings-acl.122/">ChatKBQA</a></td><td>Findings ACL 2024</td><td>logical form first、entity/relation retrieval、error attribution</td><td>KB schema/ABox</td></tr>
+            <tr><td>16</td><td><a href="https://arxiv.org/abs/2506.01232">RIGOR</a></td><td>2025 preprint</td><td>三源 RAG、Manchester delta、CQ/OOPS/consistency</td><td>OWL generation</td></tr>
+            <tr><td>17</td><td><a href="https://arxiv.org/abs/2509.16502">GRIL</a></td><td>2025 preprint</td><td>attention grow/prune、soft token、joint training、消融</td><td>ABox graph</td></tr>
+            <tr><td>18</td><td><a href="https://arxiv.org/abs/2601.17755">HyperGraphPro / ProGraph-R1</a></td><td>2026 preprint</td><td>hyperedge distinctiveness、progress reward、model scale</td><td>document hypergraph</td></tr>
+            <tr><td>19</td><td><a href="https://arxiv.org/abs/2606.01208">ANCHOR</a></td><td>2026 preprint</td><td>embedding/recurse routing、domain/range、SHACL、三本体结果</td><td>OWL/SHACL</td></tr>
+            <tr><td>20</td><td><a href="https://aclanthology.org/2025.emnlp-main.442/">SG-KBQA</a></td><td>EMNLP 2025</td><td>relation-first、schema context、zero-shot 14-point ablation</td><td>KB schema/ABox</td></tr>
+            <tr><td>21</td><td><a href="https://aclanthology.org/2025.findings-emnlp.671/">LLM Schema Generation</a></td><td>Findings EMNLP 2025</td><td>86 ShEx schema、2,552 constraints、local/global context</td><td>ShEx schema</td></tr>
+            <tr><td>22</td><td><a href="https://arxiv.org/abs/2604.02618">OntoKG</a></td><td>2026 preprint</td><td>ontology-oriented property graph construction 与 module routing</td><td>Wikidata property graph</td></tr>
+            <tr><td>23</td><td><a href="https://aclanthology.org/2024.findings-emnlp.141/">Can LLMs Understand DL-Lite Ontologies?</a></td><td>Findings EMNLP 2024</td><td>六类形式任务、规模效应、LUBM chunk query、失败模式</td><td>DL-Lite TBox/ABox</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <details open>
+        <summary>近期扩展研究（2024—2026）</summary>
+        <div>
+          <ol class="reference-list">
+            <li><a href="https://arxiv.org/abs/2604.09550">HyEm — Query-Adaptive Hyperbolic Retrieval for Biomedical Ontologies</a></li>
+            <li><a href="https://openreview.net/forum?id=cKBmZ2PZ6c">ORAG — Ontology-Guided RAG for Theme-Specific Entity Typing</a></li>
+            <li><a href="https://arxiv.org/abs/2502.05478">OntoTune — Ontology-Driven Self-training</a></li>
+            <li><a href="https://aclanthology.org/2024.acl-long.127/">TaxoLLaMA</a></li>
+            <li><a href="https://arxiv.org/abs/2508.10703">GenOM — Ontology Matching</a></li>
+            <li><a href="https://arxiv.org/abs/2503.21902">OntoAligner</a> · <a href="https://ontoaligner.readthedocs.io/">文档</a></li>
+            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11484368/">DRAGON-AI / CurateGPT</a></li>
+            <li><a href="https://arxiv.org/abs/2502.18992">OntologyRAG — Biomedical Code Mapping</a></li>
+            <li><a href="https://doi.org/10.1177/15705838241296446">Integrating Ontologies and LLMs to Implement RAG</a></li>
+            <li><a href="https://aclanthology.org/2025.findings-acl.163/">SimGRAG</a></li>
+            <li><a href="https://aclanthology.org/2025.findings-acl.856/">GNN-RAG</a></li>
+            <li><a href="https://arxiv.org/abs/2502.01113">GFM-RAG</a></li>
+            <li><a href="https://aclanthology.org/2025.findings-emnlp.329/">KERAG</a></li>
+            <li><a href="https://aclanthology.org/2025.findings-naacl.232/">GRAG</a></li>
+            <li><a href="https://arxiv.org/abs/2502.14902">PathRAG</a></li>
+            <li><a href="https://arxiv.org/abs/2412.05547">KG-Retriever</a></li>
+            <li><a href="https://arxiv.org/abs/2602.14470">HyperRAG</a></li>
+            <li><a href="https://proceedings.mlsys.org/paper_files/paper/2026/hash/2fb4be70fc9668e9ec2c71b34fb127d4-Abstract-Conference.html">Ontology-Guided Long-Term Agent Memory</a></li>
+          </ol>
+        </div>
+      </details>
+
+      <details>
+        <summary>经典技术、标准与工程来源</summary>
+        <div>
+          <ol class="reference-list">
+            <li><a href="https://www.cs.ox.ac.uk/people/yevgeny.kazakov/publications/journ/CueHorKazSat08Modularity_JAIR.pdf">Syntactic Locality-Based Module Extraction</a></li>
+            <li><a href="https://www.cs.ox.ac.uk/isg/tools/ModuleExtractor/">Oxford OWL Module Extractor</a></li>
+            <li><a href="https://aclanthology.org/W07-2322/">NaturalOWL</a></li>
+            <li><a href="https://academic.oup.com/bioinformatics/article/35/12/2133/5165380">OPA2Vec</a></li>
+            <li><a href="https://link.springer.com/article/10.1007/s10994-021-05997-6">OWL2Vec*</a></li>
+            <li><a href="https://www.w3.org/TR/owl2-profiles/">OWL 2 Profiles</a></li>
+            <li><a href="https://www.w3.org/TR/sparql11-query/">SPARQL 1.1 Query</a></li>
+            <li><a href="https://www.w3.org/TR/shacl/">SHACL</a></li>
+            <li><a href="https://www.w3.org/TR/skos-reference/">SKOS</a></li>
+            <li><a href="https://jena.apache.org/documentation/">Apache Jena Documentation</a></li>
+            <li><a href="https://github.com/owlcs/owlapi">OWLAPI</a></li>
+            <li><a href="https://github.com/ontodev/robot">ROBOT</a></li>
+          </ol>
+        </div>
+      </details>
+
+      <p class="small">注：报告中的数值按论文表格/正文原口径保留，跨论文不能直接横向排名；“ontology 类型”是本报告为避免术语混淆所做的分类。产品能力随版本变化，应以链接中的当前官方文档为准。</p>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <p><strong>本体层上下文与精准召回</strong> · 技术调研版 2026-07-27</p>
+  <p>面向 Ontology RAG Demo；研究重点为 TBox/schema 召回，实例数据层允许尚未就绪或通过黑盒接口接入。</p>
+</footer>
+
+<script>
+  (() => {
+    const root = document.documentElement;
+    const toggle = document.getElementById("themeToggle");
+    let saved = null;
+    try { saved = localStorage.getItem("ontology-report-theme"); } catch (_) { /* file:// may disable storage */ }
+    if (saved) root.dataset.theme = saved;
+    else if (window.matchMedia("(prefers-color-scheme: dark)").matches) root.dataset.theme = "dark";
+
+    toggle.addEventListener("click", () => {
+      root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+      try { localStorage.setItem("ontology-report-theme", root.dataset.theme); } catch (_) { /* keep session theme only */ }
+    });
+
+    const buttons = [...document.querySelectorAll("[data-filter]")];
+    const rows = [...document.querySelectorAll("#algorithmTable tbody tr")];
+    const search = document.getElementById("matrixSearch");
+    let activeFilter = "all";
+
+    function applyFilter() {
+      const query = search.value.trim().toLowerCase();
+      rows.forEach(row => {
+        const tags = row.dataset.tags || "";
+        const tagMatch = activeFilter === "all" || tags.includes(activeFilter);
+        const textMatch = !query || row.textContent.toLowerCase().includes(query);
+        row.classList.toggle("hidden", !(tagMatch && textMatch));
+      });
+    }
+
+    buttons.forEach(button => {
+      button.addEventListener("click", () => {
+        buttons.forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+        activeFilter = button.dataset.filter;
+        applyFilter();
+      });
+    });
+    search.addEventListener("input", applyFilter);
+
+    const links = [...document.querySelectorAll(".toc a")];
+    const targets = links.map(link => document.querySelector(link.getAttribute("href"))).filter(Boolean);
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        links.forEach(link => link.classList.toggle("active", link.getAttribute("href") === "#" + entry.target.id));
+      });
+    }, { rootMargin: "-20% 0px -70% 0px" });
+    targets.forEach(target => observer.observe(target));
+  })();
+</script>
+</body>
+</html>

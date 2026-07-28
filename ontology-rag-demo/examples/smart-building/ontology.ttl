@@ -1,0 +1,65 @@
+@prefix ex: <https://example.org/smart-building#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+ex:Building a owl:Class ;
+    rdfs:label "建筑"@zh ;
+    skos:altLabel "Building"@en ;
+    rdfs:comment "容纳房间和设备的建筑物。"@zh .
+
+ex:Room a owl:Class ;
+    rdfs:label "房间"@zh ;
+    skos:altLabel "Room"@en ;
+    rdfs:comment "建筑内可部署设备的空间。"@zh .
+
+ex:Device a owl:Class ;
+    rdfs:label "设备"@zh ;
+    skos:altLabel "Device"@en ;
+    rdfs:comment "部署在房间中的通用设备。"@zh .
+
+ex:Sensor a owl:Class ;
+    rdfs:subClassOf ex:Device ;
+    rdfs:label "传感器"@zh ;
+    skos:altLabel "Sensor"@en ;
+    rdfs:comment "采集环境或设备状态的设备。"@zh .
+
+ex:TemperatureSensor a owl:Class ;
+    rdfs:subClassOf ex:Sensor ;
+    rdfs:label "温度传感器"@zh ;
+    skos:altLabel "Temperature Sensor"@en ;
+    rdfs:comment "用于采集房间温度的传感器。"@zh .
+
+ex:Alert a owl:Class ;
+    rdfs:label "告警"@zh ;
+    skos:altLabel "Alert"@en ;
+    rdfs:comment "传感器检测到异常后产生的事件。"@zh .
+
+ex:WorkOrder a owl:Class ;
+    rdfs:label "工单"@zh ;
+    skos:altLabel "Work Order"@en ;
+    rdfs:comment "记录告警处理任务及状态的业务对象。"@zh .
+
+ex:locatedIn a owl:ObjectProperty ;
+    rdfs:label "位于"@zh ;
+    skos:altLabel "located in"@en ;
+    rdfs:domain ex:Device ;
+    rdfs:range ex:Room .
+
+ex:partOfBuilding a owl:ObjectProperty ;
+    rdfs:label "属于建筑"@zh ;
+    skos:altLabel "part of building"@en ;
+    rdfs:domain ex:Room ;
+    rdfs:range ex:Building .
+
+ex:raisesAlert a owl:ObjectProperty ;
+    rdfs:label "产生告警"@zh ;
+    skos:altLabel "raises alert"@en ;
+    rdfs:domain ex:Sensor ;
+    rdfs:range ex:Alert .
+
+ex:handledBy a owl:ObjectProperty ;
+    rdfs:label "由工单处理"@zh ;
+    skos:altLabel "handled by"@en ;
+    rdfs:domain ex:Alert ;
+    rdfs:range ex:WorkOrder .
