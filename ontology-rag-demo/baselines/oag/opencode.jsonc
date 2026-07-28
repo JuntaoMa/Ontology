@@ -1,0 +1,44 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "deepseek/deepseek-v4-flash",
+  "default_agent": "oag-query-planner",
+  "share": "disabled",
+  "autoupdate": false,
+  "skills": {
+    "paths": [
+      "{env:ONTOLOGY_PROFILE_DIR}/skills"
+    ]
+  },
+  "permission": {
+    "*": "deny",
+    "bash": {
+      "*": "deny",
+      "uv run *retrieve.py*": "allow"
+    },
+    "skill": {
+      "*": "deny",
+      "ontology-retrieval": "allow"
+    }
+  },
+  "agent": {
+    "oag-query-planner": {
+      "description": "Extract ontology keywords, retrieve OAG context, and plan data queries",
+      "mode": "primary",
+      "model": "deepseek/deepseek-v4-flash",
+      "prompt": "{file:./prompt.md}",
+      "temperature": 0,
+      "steps": 4,
+      "permission": {
+        "*": "deny",
+        "bash": {
+          "*": "deny",
+          "uv run *retrieve.py*": "allow"
+        },
+        "skill": {
+          "*": "deny",
+          "ontology-retrieval": "allow"
+        }
+      }
+    }
+  }
+}

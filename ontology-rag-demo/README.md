@@ -19,6 +19,7 @@ Agent 测试控制台采用 OpenCode + ACP 的 Agent-centric 架构，设计和�
 - [开发与验证](docs/agent-console/development.md)
 - [OpenCode ACP 能力矩阵](docs/agent-console/acp-capability-matrix.md)
 - [实现决策记录](docs/agent-console/decisions.md)
+- [两条查询规划基线](baselines/README.md)
 
 ## 目录
 
@@ -84,12 +85,20 @@ uv run --locked --env-file .env ontology-rag prepare
 `SOURCE_DOCUMENT_PATHS`、`ONTOLOGY_PATH`、`DOCUMENTS_DIR` 和 `LANCEDB_URI`，
 为不同数据集使用独立运行目录；不要提交这些运行时副本。
 
-## 4. 构建 LanceDB 索引
+## 4. 构建 LanceDB 本体实体索引
 
 默认 `deterministic` embedding 只用于快速打通流程，不下载模型权重：
 
 ```bash
 uv run --locked --env-file .env ontology-rag build-index
+```
+
+每个本体实体使用以下三行文本构建向量，不混入文档块或边文本：
+
+```text
+{name}
+{label}
+{comment}
 ```
 
 进行检索质量评估时，在 `.env` 中切换到 BGE-M3；首次运行会从 Hugging Face 下载
@@ -129,6 +138,7 @@ uv run --locked --env-file .env ontology-rag serve
 GET  /health
 POST /v1/retrieval/vector
 POST /v1/retrieval/graph
+POST /v1/retrieval/oag
 POST /v1/answer
 ```
 

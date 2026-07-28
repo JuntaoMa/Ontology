@@ -222,3 +222,52 @@ Catalog 会返回 Profile 的 cwd。该信息只允许出现在已经限定为 l
 - Bridge 不改写 JSON-RPC ID、method、params 或 result。
 - WebSocket 关闭时终止对应 ACP 进程树；重新连接后通过 `session/list` 和
   `session/load` 恢复，而不是复用旧 JSON-RPC 连接。
+
+## 5. 数据查询任务协议
+
+两条本体上下文基线都只输出 `data-query-plan.v1`，便于确认结构一致并保留原始结果。
+首轮不对内容作自动评分或对齐。
+
+```json
+{
+  "schema_version": "data-query-plan.v1",
+  "baseline": "oag",
+  "question": "原始问题",
+  "keywords": ["温度传感器", "房间", "建筑"],
+  "query_tasks": [
+    {
+      "targets": ["TemperatureSensor"],
+      "filters": [],
+      "projections": ["Building"],
+      "joins": [
+        {
+          "from": "TemperatureSensor",
+          "relation": "locatedIn",
+          "to": "Room"
+        },
+        {
+          "from": "Room",
+          "relation": "partOfBuilding",
+          "to": "Building"
+        }
+      ],
+      "ontology_evidence": [
+        {
+          "subject": "TemperatureSensor",
+          "predicate": "subClassOf",
+          "object": "Sensor"
+        }
+      ]
+    }
+  ],
+  "assumptions": []
+}
+```
+
+- `baseline` 当前取 `oag` 或 `direct-context`。
+- 所有数组字段必须保留；无内容时使用空数组。
+- `targets` 使用本体类名，`joins.relation` 使用本体对象属性名。
+- `filters` 和 `projections` 描述未来黑盒数据查询引擎所需的实例字段，不代表已经得到
+  数据。
+- `ontology_evidence` 只说明查询任务的本体依据，不保存完整本体或 OAG 原始响应。
+- OpenCode 原始事件和 OAG 响应保存在独立 trace 中，最终 JSON 不承担无损审计职责。

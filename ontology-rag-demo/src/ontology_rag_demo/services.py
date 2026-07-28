@@ -46,6 +46,27 @@ class RagServices:
             max_nodes=self.settings.graph_max_nodes,
         )
 
+    def oag_retrieve(
+        self,
+        keywords: list[str],
+        top_k: int | None = None,
+    ) -> tuple[list[dict], GraphRetrievalResult]:
+        embedding_query = "\n".join(keyword.strip() for keyword in keywords if keyword.strip())
+        if not embedding_query:
+            raise ValueError("At least one non-empty keyword is required")
+
+        vector_hits = self.vector_retrieve(embedding_query, top_k)
+        anchor_ids = [
+            hit["id"]
+            for hit in vector_hits
+            if hit.get("content_type") == "ontology_entity" and isinstance(hit.get("id"), str)
+        ]
+        graph_result = self.ontology.retrieve_by_anchor_ids(
+            anchor_ids,
+            max_nodes=self.settings.graph_max_nodes,
+        )
+        return vector_hits, graph_result
+
     async def answer(self, question: str) -> tuple[str, list[dict], GraphRetrievalResult]:
         vector_hits = self.vector_retrieve(question)
         graph_result = self.graph_retrieve(question)

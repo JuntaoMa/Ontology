@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     ontology_path: Path = Path("data/source/smart-building/ontology.ttl")
     documents_dir: Path = Path("data/source/smart-building/documents")
     lancedb_uri: Path = Path("state/smart-building/lancedb")
-    lancedb_table: str = "ontology_chunks_v1"
+    lancedb_table: str = "ontology_entities_v1"
 
     embedding_backend: Literal["bge-m3", "deterministic"] = "deterministic"
     embedding_model: str = "BAAI/bge-m3"

@@ -152,7 +152,32 @@ license: MIT
 衍生版必须使用 DOMPurify 或等价方案处理结果。Bridge 端点由服务端 Catalog 提供，
 浏览器 localStorage 不保存 Agent Token、内网地址或环境变量。
 
-## 8. 首版不做
+## 8. 本地双基线验证
+
+在 Profile 发布前，项目保留一个最小 OpenCode CLI 验证层：
+
+```text
+同一问题 + deepseek/deepseek-v4-flash
+  ├─ oag
+  │    Agent 关键词
+  │      → BGE-M3 Top 5 本体实体
+  │      → 命中实体作为锚点
+  │      → Steiner 最小连通子图
+  │      → data-query-plan.v1
+  └─ direct-context
+       Prompt 内嵌完整精简 YAML 本体
+         → 禁止全部 Tool
+         → data-query-plan.v1
+```
+
+两条路径都由 OpenCode Agent 生成查询任务。实例数据查询引擎当前仍是未接入的黑盒，
+因此禁止把查询计划伪装成答案。运行器只显式选择模型 ID，并复用 OpenCode 用户级认证；
+模型不可用就停止，不提供 fallback。
+
+事件流、Tool Call、最终 JSON 和耗时写入 ignored artifacts。该层用于先固定实验语义，
+不改变 OpenCode 仍是未来 ACP 会话事实源的设计，也不在第一轮实现多轮结果自动对比。
+
+## 9. 首版不做
 
 - Agent 同步广播和自动结果对比；
 - 跨 Profile 共享或迁移 Session；
@@ -162,7 +187,7 @@ license: MIT
 - Agent Runtime 容器化；
 - 强行展示模型未通过 ACP 输出的隐藏思维过程。
 
-## 9. 实现原则
+## 10. 实现原则
 
 1. 文档和 Schema 先于代码。
 2. 优先复用 ACP SDK、acp-ui 和 OpenCode 原生能力。
@@ -171,7 +196,7 @@ license: MIT
 4. 发现上游能力与设计不符时，先更新本文和决策记录，再修改实现。
 5. Python 代码始终通过当前项目的 uv 环境执行。
 
-## 10. 主要资料
+## 11. 主要资料
 
 - [Agent Client Protocol](https://agentclientprotocol.com/)
 - [ACP transport](https://agentclientprotocol.com/protocol/v1/transports)

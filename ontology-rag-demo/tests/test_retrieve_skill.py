@@ -58,6 +58,40 @@ def test_retrieval_endpoint_uses_the_canonical_runtime_variable(
     assert retrieve_skill.service_url("graph") == "http://127.0.0.1:8010/v1/retrieval/graph"
 
 
+def test_oag_mode_requires_and_preserves_agent_keywords(
+    retrieve_skill: ModuleType,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "retrieve.py",
+            "--mode",
+            "oag",
+            "--question",
+            "温度传感器在哪个建筑？",
+            "--keyword",
+            " 温度传感器 ",
+            "--keyword",
+            "建筑",
+        ],
+    )
+
+    arguments = retrieve_skill.parse_args()
+
+    assert arguments.top_k == 5
+    assert arguments.keyword == ["温度传感器", "建筑"]
+
+
+def test_oag_response_exposes_nested_graph_for_artifact(
+    retrieve_skill: ModuleType,
+) -> None:
+    graph = {"anchors": [], "nodes": [], "edges": [], "disconnected": False}
+
+    assert retrieve_skill.graph_from_response("oag", {"graph": graph}) is graph
+
+
 def test_artifact_records_the_profile_graph_algorithm(
     retrieve_skill: ModuleType,
 ) -> None:

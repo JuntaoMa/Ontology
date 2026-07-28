@@ -5,7 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from .services import RagServices
 from .settings import Settings
@@ -17,6 +17,20 @@ class QuestionRequest(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
     top_k: int | None = Field(default=None, ge=1, le=20)
     trace: bool = False
+
+
+class OagRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=4000)
+    keywords: list[str] = Field(min_length=1, max_length=10)
+    top_k: int | None = Field(default=None, ge=1, le=20)
+
+    @field_validator("keywords")
+    @classmethod
+    def normalize_keywords(cls, keywords: list[str]) -> list[str]:
+        normalized = [keyword.strip() for keyword in keywords]
+        if any(not keyword or len(keyword) > 200 for keyword in normalized):
+            raise ValueError("keywords must contain between 1 and 200 characters")
+        return normalized
 
 
 @lru_cache(maxsize=1)
@@ -70,6 +84,23 @@ def graph_retrieval(request: QuestionRequest) -> dict[str, object]:
         raise HTTPException(
             status_code=503,
             detail="Graph retrieval is unavailable; check the prepared ontology",
+        ) from exc
+
+
+@app.post("/v1/retrieval/oag")
+def oag_retrieval(request: OagRequest) -> dict[str, object]:
+    try:
+        hits, graph = get_services().oag_retrieve(request.keywords, request.top_k)
+        return {
+            "question": request.question,
+            "keywords": request.keywords,
+            "hits": hits,
+            "graph": graph.as_dict(),
+        }
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="OAG retrieval is unavailable; check the local index and ontology",
         ) from exc
 
 

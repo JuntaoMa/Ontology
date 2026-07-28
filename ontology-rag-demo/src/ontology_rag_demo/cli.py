@@ -5,7 +5,6 @@ import shutil
 from pathlib import Path
 
 from .embedding import build_embedder
-from .ingestion import load_document_chunks
 from .ontology import OntologyGraph
 from .settings import Settings
 from .vector_store import LanceDBVectorStore
@@ -40,17 +39,7 @@ def prepare(settings: Settings) -> None:
 
 def build_index(settings: Settings) -> None:
     ontology = OntologyGraph.from_file(settings.resolved_ontology_path)
-    document_chunks = load_document_chunks(
-        settings.resolved_documents_dir,
-        size=settings.chunk_size,
-        overlap=settings.chunk_overlap,
-    )
-    chunks = [*ontology.entity_chunks(), *document_chunks]
-    if not document_chunks:
-        raise RuntimeError(
-            f"No .txt documents found in {settings.resolved_documents_dir}; "
-            "run `ontology-rag prepare` first"
-        )
+    chunks = ontology.entity_chunks()
 
     embedder = build_embedder(settings)
     vectors = embedder.encode([chunk.text for chunk in chunks])
@@ -59,11 +48,7 @@ def build_index(settings: Settings) -> None:
         settings.lancedb_table,
     )
     count = store.rebuild(chunks, vectors)
-    print(
-        f"Built {count} vectors ({embedder.dimension} dimensions): "
-        f"{len(ontology.entity_chunks())} ontology entities + "
-        f"{len(document_chunks)} document chunks"
-    )
+    print(f"Built {count} ontology entity vectors ({embedder.dimension} dimensions)")
 
 
 def smoke(settings: Settings) -> None:

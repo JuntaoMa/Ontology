@@ -31,3 +31,36 @@ def test_returns_empty_result_without_anchor() -> None:
 
     assert result.nodes == []
     assert result.edges == []
+
+
+def test_entity_embedding_text_is_name_label_comment_only() -> None:
+    ontology = OntologyGraph.from_file(FIXTURE)
+
+    temperature_sensor = next(
+        chunk for chunk in ontology.entity_chunks() if chunk.id.endswith("#TemperatureSensor")
+    )
+
+    assert temperature_sensor.text == ("TemperatureSensor\n温度传感器\n用于采集房间温度的传感器。")
+    assert len(temperature_sensor.text.splitlines()) == 3
+
+
+def test_connects_explicit_vector_hit_anchors() -> None:
+    ontology = OntologyGraph.from_file(FIXTURE)
+    namespace = "https://example.org/smart-building#"
+
+    result = ontology.retrieve_by_anchor_ids(
+        [
+            f"{namespace}TemperatureSensor",
+            f"{namespace}Building",
+            f"{namespace}TemperatureSensor",
+            "https://example.org/unknown",
+        ],
+        max_nodes=20,
+    )
+
+    assert [anchor["id"] for anchor in result.anchors] == [
+        f"{namespace}TemperatureSensor",
+        f"{namespace}Building",
+    ]
+    relations = {relation for edge in result.edges for relation in edge["relations"]}
+    assert {"subClassOf", "locatedIn", "partOfBuilding"} <= relations

@@ -16,6 +16,7 @@ MAX_RESPONSE_BYTES = 4 * 1024 * 1024
 ENDPOINTS = {
     "vector": "/v1/retrieval/vector",
     "graph": "/v1/retrieval/graph",
+    "oag": "/v1/retrieval/oag",
     "answer": "/v1/answer",
 }
 SHA256_HEX_LENGTH = 64
@@ -25,6 +26,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Call the configured ontology RAG service.")
     parser.add_argument("--mode", choices=sorted(ENDPOINTS), required=True)
     parser.add_argument("--question", required=True)
+    parser.add_argument("--keyword", action="append", default=[])
     parser.add_argument("--top-k", type=int)
     parser.add_argument("--timeout-seconds", type=float, default=60.0)
     args = parser.parse_args()
@@ -41,7 +43,13 @@ def parse_args() -> argparse.Namespace:
         parser.error("--top-k must be between 1 and 20")
     if not 0 < args.timeout_seconds <= 300:
         parser.error("--timeout-seconds must be greater than 0 and at most 300")
+    keywords = [keyword.strip() for keyword in args.keyword]
+    if args.mode == "oag" and not keywords:
+        parser.error("--mode oag requires at least one --keyword")
+    if any(not keyword or len(keyword) > 200 for keyword in keywords):
+        parser.error("--keyword must contain between 1 and 200 characters")
     args.question = question
+    args.keyword = keywords
     return args
 
 
@@ -125,6 +133,9 @@ def is_sha256(value: str) -> bool:
 def graph_from_response(mode: str, response: dict[str, Any]) -> dict[str, Any] | None:
     if mode == "graph":
         return response
+    if mode == "oag":
+        graph = response.get("graph")
+        return graph if isinstance(graph, dict) else None
     if mode != "answer":
         return None
     trace = response.get("trace")
@@ -211,8 +222,11 @@ def main() -> int:
     payload: dict[str, Any] = {
         "question": args.question,
         "top_k": args.top_k,
-        "trace": args.mode == "answer",
     }
+    if args.mode == "answer":
+        payload["trace"] = True
+    if args.mode == "oag":
+        payload["keywords"] = args.keyword
     started = time.monotonic()
     response = request_json(
         service_url(args.mode),

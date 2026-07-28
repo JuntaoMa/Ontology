@@ -237,3 +237,23 @@
   缺失或不一致时拒绝执行。可变 `dev` Profile 不做此门控。
 - 边界：该摘要验证本体源文件，不证明 LanceDB 索引、外部实例数据或黑盒查询引擎与
   本体来自同一次构建；这些输入以后需要独立 manifest。
+
+## ADR-029：先用 OpenCode CLI 固定双基线语义，再发布为 ACP Profile
+
+- 状态：本地基线实施中采纳
+- 目标：用同一问题和同一模型验证两种本体上下文路径，一条由 Agent 提取关键词后调用
+  OAG，另一条把完整的小型本体直接放入 Agent prompt。当前输出都是数据查询任务，不
+  查询实例数据，也不生成业务答案。
+- 决策：第一轮使用两个受版本控制的 OpenCode Agent 配置和一个 uv 运行器。模型固定为
+  `deepseek/deepseek-v4-flash`，只复用当前系统用户的 OpenCode 认证；项目不复制
+  provider、API 地址或密钥。运行前模型不可用时立即失败，禁止静默换模型。
+- OAG 语义：LanceDB 只索引本体实体，每条向量文本严格为
+  `name\nlabel\ncomment`，不混入文档块或边文本。Agent 给出的关键词用 BGE-M3
+  召回 Top 5，命中实体直接作为 Steiner 最小连通子图的锚点。
+- Direct-context 语义：Prompt 直接包含完整的精简 YAML 示例本体，并在配置层禁止全部
+  工具。本体文件读取、Skill 和 OAG 调用都不属于这条路径。
+- 记录：原始 OpenCode JSON 事件流、最终 `data-query-plan.v1`、耗时和 OAG 日志写入
+  Git ignored artifacts。首轮不做自动优劣比较。
+- 边界：CLI 运行器是语义与接线验证工具，不替代 ACP Bridge 或 Web UI。两条路径稳定
+  后再把同样的 Agent 配置发布成可由 Console 选择的 Profile，避免现在同时修改
+  Profile credential schema 和基线语义。

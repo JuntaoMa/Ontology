@@ -97,6 +97,22 @@ class OntologyGraph:
         max_nodes: int,
     ) -> GraphRetrievalResult:
         anchor_ids = self.extract_anchors(question, max_anchors=max_anchors)
+        return self.retrieve_by_anchor_ids(anchor_ids, max_nodes=max_nodes)
+
+    def retrieve_by_anchor_ids(
+        self,
+        anchor_ids: list[str],
+        *,
+        max_nodes: int,
+    ) -> GraphRetrievalResult:
+        """Return the minimum connecting subgraph for explicit ontology anchors."""
+
+        validated_anchor_ids: list[str] = []
+        for node_id in anchor_ids:
+            if node_id in self.graph and node_id not in validated_anchor_ids:
+                validated_anchor_ids.append(node_id)
+
+        anchor_ids = validated_anchor_ids
         if not anchor_ids:
             return GraphRetrievalResult([], [], [], False)
 
@@ -114,7 +130,7 @@ class OntologyGraph:
         for component_id, terminals in grouped.items():
             component_graph = self.graph.subgraph(components[component_id])
             if len(terminals) == 1:
-                partial = nx.ego_graph(component_graph, terminals[0], radius=1)
+                partial = component_graph.subgraph(terminals)
             else:
                 partial = steiner_tree(component_graph, terminals, weight="weight")
             result_graph = nx.compose(result_graph, partial)
@@ -172,18 +188,14 @@ class OntologyGraph:
 
     def entity_chunks(self) -> list[Chunk]:
         chunks = []
-        for index, node_id in enumerate(sorted(self._aliases_by_node)):
-            aliases = sorted(self._aliases_by_node[node_id])
+        for index, node_id in enumerate(sorted(self._labels_by_node)):
+            name = _local_name(node_id)
+            label = self._labels_by_node[node_id]
             comment = self._comments_by_node.get(node_id, "")
-            text = (
-                f"本体实体：{self._labels_by_node[node_id]}\n"
-                f"IRI：{node_id}\n"
-                f"别名：{', '.join(aliases)}\n"
-                f"说明：{comment}"
-            )
+            text = f"{name}\n{label}\n{comment}"
             chunks.append(
                 Chunk(
-                    id=f"ontology:{node_id}",
+                    id=node_id,
                     text=text,
                     source="ontology.ttl",
                     chunk_index=index,

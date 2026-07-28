@@ -73,7 +73,7 @@ class BgeM3Embedder:
             device=self.settings.embedding_device,
         )
         model.max_seq_length = self.settings.embedding_max_length
-        dimension = model.get_sentence_embedding_dimension()
+        dimension = model.get_embedding_dimension()
         if dimension is not None:
             self._dimension = int(dimension)
         self._model = model

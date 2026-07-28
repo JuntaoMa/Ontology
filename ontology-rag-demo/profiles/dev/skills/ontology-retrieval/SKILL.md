@@ -21,9 +21,24 @@ uv run --project . --locked --no-sync python "$ONTOLOGY_PROFILE_DIR/skills/ontol
 
 Available modes:
 
+- `oag`: pass the original question plus one or more Agent-selected
+  `--keyword` values; return BGE-M3 Top-K entity hits and the minimum
+  connecting ontology subgraph in one response.
 - `vector`: return semantic hits; optionally pass `--top-k 5`.
 - `graph`: return the anchor-based minimum connected subgraph.
 - `answer`: return the current service's end-to-end answer and trace.
+
+For the OAG planning baseline, first extract a small set of ontology terms and
+make one combined call:
+
+```bash
+uv run --project . --locked --no-sync python "$ONTOLOGY_PROFILE_DIR/skills/ontology-retrieval/scripts/retrieve.py" \
+  --mode oag \
+  --question "<original user question>" \
+  --keyword "<term 1>" \
+  --keyword "<term 2>" \
+  --top-k 5
+```
 
 The wrapper prints the service JSON. When a graph is present, it additionally
 prints one `ONTOLOGY_ARTIFACT:` line for the Web UI. Treat tool errors or empty
