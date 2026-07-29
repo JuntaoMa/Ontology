@@ -27,7 +27,12 @@ export async function createPublishFixture(): Promise<PublishFixture> {
   await mkdir(path.join(skillDirectory, "scripts"), { recursive: true });
   await writeFile(
     path.join(configDirectory, "opencode.jsonc"),
-    '{ "$schema": "https://opencode.ai/config.json" }\n',
+    '{ "$schema": "https://opencode.ai/config.json", "agent": { "test": { "prompt": "{file:./prompt.md}" } } }\n',
+    "utf8",
+  );
+  await writeFile(
+    path.join(configDirectory, "prompt.md"),
+    "# Test Agent\n\nUse the declared ontology retrieval capability.\n",
     "utf8",
   );
   await writeFile(
@@ -57,11 +62,16 @@ export async function createPublishFixture(): Promise<PublishFixture> {
     },
     opencode: {
       config: "opencode/opencode.jsonc",
+      assets: ["opencode/prompt.md"],
     },
     model: {
       id: "qwen-compatible",
+      source: "profile",
       api_base: { env: "QWEN_BASE_URL" },
-      api_key: { env: "QWEN_API_KEY" },
+      auth: {
+        source: "environment",
+        api_key: { env: "QWEN_API_KEY" },
+      },
     },
     skills: [
       {

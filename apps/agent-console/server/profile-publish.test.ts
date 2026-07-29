@@ -56,6 +56,7 @@ describe("Agent Profile publication", () => {
       });
       expect(published.lock.files.map((entry) => entry.path)).toEqual([
         "opencode/opencode.jsonc",
+        "opencode/prompt.md",
         "profile.yaml",
         "skills/ontology-retrieval/scripts/retrieve.py",
         "skills/ontology-retrieval/SKILL.md",
@@ -164,6 +165,27 @@ describe("Agent Profile publication", () => {
           sourceProfilePath: fixture.profilePath,
           profilesRoot: fixture.profilesRoot,
           releaseId: "unsafe-v1",
+          ontologySha256: ONTOLOGY_SHA256,
+        }),
+      ).rejects.toThrow(/credential value|environment reference/i);
+    } finally {
+      await removePublishFixture(fixture);
+    }
+  });
+
+  it("rejects secret values in declared OpenCode assets", async () => {
+    const fixture = await createPublishFixture();
+    try {
+      await writeFile(
+        path.join(fixture.profileDirectory, "opencode", "prompt.md"),
+        "Use api_key: plain-text-credential\n",
+        "utf8",
+      );
+      await expect(
+        publishProfile({
+          sourceProfilePath: fixture.profilePath,
+          profilesRoot: fixture.profilesRoot,
+          releaseId: "unsafe-asset-v1",
           ontologySha256: ONTOLOGY_SHA256,
         }),
       ).rejects.toThrow(/credential value|environment reference/i);

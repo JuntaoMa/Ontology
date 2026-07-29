@@ -152,9 +152,9 @@ license: MIT
 衍生版必须使用 DOMPurify 或等价方案处理结果。Bridge 端点由服务端 Catalog 提供，
 浏览器 localStorage 不保存 Agent Token、内网地址或环境变量。
 
-## 8. 本地双基线验证
+## 8. 双基线验证与验收
 
-在 Profile 发布前，项目保留一个最小 OpenCode CLI 验证层：
+项目保留一个最小 OpenCode CLI 预检层：
 
 ```text
 同一问题 + deepseek/deepseek-v4-flash
@@ -174,8 +174,39 @@ license: MIT
 因此禁止把查询计划伪装成答案。运行器只显式选择模型 ID，并复用 OpenCode 用户级认证；
 模型不可用就停止，不提供 fallback。
 
-事件流、Tool Call、最终 JSON 和耗时写入 ignored artifacts。该层用于先固定实验语义，
-不改变 OpenCode 仍是未来 ACP 会话事实源的设计，也不在第一轮实现多轮结果自动对比。
+事件流、Tool Call、最终 JSON 和耗时写入 ignored artifacts。该层用于检查索引、模型
+认证和 Agent 语义，不作为最终验收。
+
+最终合格标准是同样两条配置通过 Agent Console 的 WebUI 实际运行：
+
+```text
+Browser
+  → Profile Catalog
+    ├─ baseline-oag
+    │    → WebSocket Bridge → OpenCode ACP
+    │      → Skill → Bash wrapper → 8010 OAG
+    │      → Tool Call 卡 + data-query-plan.v1
+    └─ baseline-direct-context
+         → WebSocket Bridge → OpenCode ACP
+         → Prompt sidecar 中的完整 YAML 本体
+         → 无 Tool Call + data-query-plan.v1
+```
+
+两个 Profile 固定同一模型 ID，但使用各自的 OpenCode Session 数据库。UI 分别调用，
+不做同步广播；用户必须能从页面看到实际消息和工具事件，并在断开后从 OpenCode
+`session/list`/`session/load` 恢复历史。只有该链路通过，双基线才标记为合格。
+
+该合格标准验证的是端到端接线：必需 Tool 路径、检索载荷、子图和查询计划均在 WebUI
+可观察。OAG Profile 不设置固定 `steps`，本机 Demo 中 Bash 保持开放，让 Agent 能在
+观察后反思并继续调用；模型自主产生的额外 Tool 尝试也按真实状态展示，但非关键调用
+不掩盖已经成功的必需路径。在线 Tool 耗时由 UI 观测；历史通过 `session/load` 重放
+时，OpenCode `1.17.16` 不投影原生 Tool 时间戳，卡片显示 `Timing unavailable` 属于
+已知预期。
+
+开放任意 Bash 与“OAG 是唯一Ontology来源”之间存在不可消除的软边界：在同一用户、
+无文件系统沙箱的进程里，Agent 可以绕过 wrapper 读取仓库中的示例 TTL。UI 必须完整
+显示这种行为。出现绕行的 Session 仍可证明 ACP/WebUI 接线，但不能视为语义隔离有效的
+OAG 基线，也不能用于路径效果结论。
 
 ## 9. 首版不做
 

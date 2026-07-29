@@ -4,6 +4,7 @@ import {
   readFile,
   realpath,
   rm,
+  symlink,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -66,6 +67,18 @@ describe("Agent Profile v1", () => {
           "opencode",
         ),
       );
+      expect(loaded.configAssets).toEqual([
+        {
+          path: path.join(
+            canonicalProjectRoot,
+            "profiles",
+            "dev",
+            "opencode",
+            "prompt.md",
+          ),
+          relativePath: "prompt.md",
+        },
+      ]);
       expect(loaded.skills[0].path).toBe(
         path.join(
           canonicalProjectRoot,
@@ -75,6 +88,23 @@ describe("Agent Profile v1", () => {
           "ontology-retrieval",
         ),
       );
+      expect(loaded.skillsRoot).toBe(
+        path.join(
+          canonicalProjectRoot,
+          "profiles",
+          "dev",
+          "skills",
+        ),
+      );
+      expect(loaded.model).toEqual({
+        id: "qwen-compatible",
+        source: "profile",
+        apiBaseEnv: "QWEN_BASE_URL",
+        auth: {
+          source: "environment",
+          apiKeyEnv: "QWEN_API_KEY",
+        },
+      });
       expect(getMissingRequiredEnvironment(loaded, {})).toEqual([
         "OAG_BASE_URL",
         "QWEN_API_KEY",
@@ -123,6 +153,128 @@ describe("Agent Profile v1", () => {
       await expect(
         loadProfile(fixture.profilePath, fixture.profilesRoot),
       ).rejects.toThrow(/QWEN_API_KEY/);
+    } finally {
+      await rm(fixture.projectRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("loads an OpenCode-managed model without model environment variables", async () => {
+    const fixture = await createProfileFixture((profile) => {
+      profile.model = {
+        id: "deepseek/deepseek-v4-flash",
+        source: "opencode",
+        auth: { source: "opencode" },
+      };
+      profile.skills = [];
+      delete profile.retrieval;
+      profile.environment.required = [];
+    });
+    try {
+      const loaded = await loadProfile(
+        fixture.profilePath,
+        fixture.profilesRoot,
+      );
+      expect(loaded.model).toEqual({
+        id: "deepseek/deepseek-v4-flash",
+        source: "opencode",
+        auth: { source: "opencode" },
+      });
+      expect(loaded.skills).toEqual([]);
+      expect(loaded.skillsRoot).toBeUndefined();
+      expect(loaded.retrieval).toBeUndefined();
+      expect(getMissingRequiredEnvironment(loaded, {})).toEqual([]);
+    } finally {
+      await rm(fixture.projectRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("requires profile-hosted model endpoints to declare api_base", async () => {
+    const fixture = await createProfileFixture((profile) => {
+      profile.model = {
+        id: "qwen-compatible/model",
+        source: "profile",
+        auth: { source: "opencode" },
+      } as ProfileV1["model"];
+    });
+    try {
+      await expect(
+        loadProfile(fixture.profilePath, fixture.profilesRoot),
+      ).rejects.toThrow(/api_base|schema validation/i);
+    } finally {
+      await rm(fixture.projectRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects OpenCode assets outside the declared config directory", async () => {
+    const fixture = await createProfileFixture((profile) => {
+      profile.opencode.assets = [
+        "skills/ontology-retrieval/SKILL.md",
+      ];
+    });
+    try {
+      await expect(
+        loadProfile(fixture.profilePath, fixture.profilesRoot),
+      ).rejects.toThrow(/assets.*config directory/i);
+    } finally {
+      await rm(fixture.projectRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects symbolic-link OpenCode assets", async () => {
+    const fixture = await createProfileFixture();
+    const linkPath = path.join(
+      fixture.profileDirectory,
+      "opencode",
+      "linked-prompt.md",
+    );
+    try {
+      await symlink(
+        path.join(fixture.profileDirectory, "opencode", "prompt.md"),
+        linkPath,
+        "file",
+      );
+      fixture.profile.opencode.assets = [
+        "opencode/linked-prompt.md",
+      ];
+      await writeFile(
+        fixture.profilePath,
+        await profileYaml(fixture.profile),
+        "utf8",
+      );
+      await expect(
+        loadProfile(fixture.profilePath, fixture.profilesRoot),
+      ).rejects.toThrow(/non-symlink|must be a regular/i);
+    } finally {
+      await rm(fixture.projectRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("requires all declared Skill directories to share one parent", async () => {
+    const fixture = await createProfileFixture();
+    const secondSkillDirectory = path.join(
+      fixture.profileDirectory,
+      "other-skills",
+      "second-skill",
+    );
+    try {
+      await mkdir(secondSkillDirectory, { recursive: true });
+      await writeFile(
+        path.join(secondSkillDirectory, "SKILL.md"),
+        "---\nname: second-skill\ndescription: Test\n---\n",
+        "utf8",
+      );
+      fixture.profile.skills.push({
+        id: "second-skill",
+        path: "other-skills/second-skill",
+      });
+      await writeFile(
+        fixture.profilePath,
+        await profileYaml(fixture.profile),
+        "utf8",
+      );
+      await expect(
+        loadProfile(fixture.profilePath, fixture.profilesRoot),
+      ).rejects.toThrow(/same parent directory/i);
     } finally {
       await rm(fixture.projectRoot, { recursive: true, force: true });
     }
@@ -225,7 +377,12 @@ async function createProfileFixture(
   await mkdir(skillDirectory, { recursive: true });
   await writeFile(
     path.join(configDirectory, "opencode.jsonc"),
-    '{ "$schema": "https://opencode.ai/config.json" }\n',
+    '{ "$schema": "https://opencode.ai/config.json", "agent": { "test": { "prompt": "{file:./prompt.md}" } } }\n',
+    "utf8",
+  );
+  await writeFile(
+    path.join(configDirectory, "prompt.md"),
+    "# Test Agent\n",
     "utf8",
   );
   await writeFile(
@@ -250,11 +407,16 @@ async function createProfileFixture(
     },
     opencode: {
       config: "opencode/opencode.jsonc",
+      assets: ["opencode/prompt.md"],
     },
     model: {
       id: "qwen-compatible",
+      source: "profile",
       api_base: { env: "QWEN_BASE_URL" },
-      api_key: { env: "QWEN_API_KEY" },
+      auth: {
+        source: "environment",
+        api_key: { env: "QWEN_API_KEY" },
+      },
     },
     skills: [
       {

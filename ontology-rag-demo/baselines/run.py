@@ -24,19 +24,23 @@ OAG_BASE_URL = "http://127.0.0.1:8010"
 class Baseline:
     id: str
     agent: str
-    config: Path
+    profile: Path
+
+    @property
+    def config(self) -> Path:
+        return self.profile / "opencode" / "opencode.jsonc"
 
 
 BASELINES = {
     "oag": Baseline(
         id="oag",
         agent="oag-query-planner",
-        config=PROJECT_ROOT / "baselines" / "oag" / "opencode.jsonc",
+        profile=PROJECT_ROOT / "profiles" / "baseline-oag",
     ),
     "direct-context": Baseline(
         id="direct-context",
         agent="ontology-direct-context",
-        config=PROJECT_ROOT / "baselines" / "context" / "opencode.jsonc",
+        profile=PROJECT_ROOT / "profiles" / "baseline-direct-context",
     ),
 }
 
@@ -302,7 +306,8 @@ def run_baseline(
     environment.update(
         {
             "OPENCODE_CONFIG": str(baseline.config),
-            "ONTOLOGY_PROFILE_DIR": str(PROJECT_ROOT / "profiles" / "dev"),
+            "ONTOLOGY_PROFILE_DIR": str(baseline.profile),
+            "ONTOLOGY_MODEL_ID": MODEL_ID,
             "ONTOLOGY_RETRIEVAL_ENDPOINT": OAG_BASE_URL,
             "ONTOLOGY_VECTOR_TOP_K": "5",
             "ONTOLOGY_GRAPH_ALGORITHM": "minimum_connected_subgraph",

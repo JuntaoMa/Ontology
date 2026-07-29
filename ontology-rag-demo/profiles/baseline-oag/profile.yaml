@@ -1,8 +1,8 @@
 schema_version: 1
-id: dev
+id: baseline-oag
 revision: dev
-title: Ontology RAG Development
-description: 可变的本地 Agent Profile，用于验证本体层检索与端到端问答流程。
+title: OAG Retrieval Baseline
+description: 使用 BGE-M3 Top 5 与最小连通子图上下文生成数据查询任务。
 mutable: true
 
 runtime:
@@ -10,23 +10,21 @@ runtime:
   args:
     - acp
     - --print-logs
+    - --pure
   cwd: ../..
-  state_dir: ../../.runtime/opencode/dev
+  state_dir: ../../.runtime/opencode/baseline-oag
   startup_timeout_ms: 15000
 
 opencode:
   config: opencode/opencode.jsonc
+  assets:
+    - opencode/prompt.md
 
 model:
-  # Public placeholder. Use a deployment-specific Profile for the real model id.
-  id: qwen-compatible/qwen-model
-  source: profile
-  api_base:
-    env: QWEN_BASE_URL
+  id: deepseek/deepseek-v4-flash
+  source: opencode
   auth:
-    source: environment
-    api_key:
-      env: QWEN_API_KEY
+    source: opencode
 
 skills:
   - id: ontology-retrieval
@@ -43,6 +41,4 @@ ontology:
 
 environment:
   required:
-    - QWEN_BASE_URL
-    - QWEN_API_KEY
     - OAG_BASE_URL

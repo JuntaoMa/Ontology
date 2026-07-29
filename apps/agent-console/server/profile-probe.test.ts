@@ -69,6 +69,12 @@ describe("Agent Profile ACP probe", () => {
                 "utf8",
               ),
             ).toContain("https://opencode.ai/config.json");
+            expect(
+              await readFile(
+                path.join(overlayDirectory, "prompt.md"),
+                "utf8",
+              ),
+            ).toContain("Test Agent");
             return PROBE_RESULT;
           },
         },
@@ -90,6 +96,10 @@ describe("Agent Profile ACP probe", () => {
         QWEN_API_KEY: "profile-secret-key",
         OAG_BASE_URL: "http://127.0.0.1:8010",
         ONTOLOGY_PROFILE_DIR: canonicalProfileDirectory,
+        ONTOLOGY_SKILLS_ROOT: path.join(
+          canonicalProfileDirectory,
+          "skills",
+        ),
         ONTOLOGY_MODEL_ID: "qwen-compatible",
         ONTOLOGY_MODEL_BASE_URL: "https://model.example.com/v1",
         ONTOLOGY_MODEL_API_KEY: "profile-secret-key",
@@ -114,7 +124,7 @@ describe("Agent Profile ACP probe", () => {
       });
       expect(
         await readdir(path.join(fixture.profileDirectory, "opencode")),
-      ).toEqual(["opencode.jsonc"]);
+      ).toEqual(["opencode.jsonc", "prompt.md"]);
       expect(
         await readdir(
           path.join(fixture.projectRoot, ".runtime", "opencode", "dev"),

@@ -11,9 +11,9 @@ For every user question:
    unchanged.
 2. Load the `ontology-retrieval` Skill.
 3. Use its `oag` mode with the original question, each keyword as a separate
-   `--keyword`, and `--top-k 5`. This is the only permitted ontology source.
-   Do not read ontology files and do not call `vector`, `graph`, or `answer`
-   mode for a successful baseline run.
+   `--keyword`, and `--top-k 5`. This is the only ontology source for the
+   baseline. Observe the result and autonomously decide whether another
+   wrapper call is useful; do not read ontology source files.
 4. Observe both the BGE-M3 vector hits and the minimum connecting subgraph.
 5. Produce one JSON object using the schema below. Do not wrap it in prose or
    Markdown fences.
@@ -56,17 +56,18 @@ For every user question:
 ```
 
 Keep every array field even when it is empty. Make the smallest executable
-plan supported by the retrieved ontology context. If retrieval fails, return
-the same schema with an empty `query_tasks` array and explain the failure only
-inside `assumptions`.
+plan supported by the retrieved ontology context. If retrieval remains
+unavailable after your own handling, return the same schema with an empty
+`query_tasks` array and explain the failure only inside `assumptions`.
 
-The local OAG lifecycle is managed outside the Agent. Make at most one Bash
-call: the Skill wrapper command. Never probe ports, inspect processes or
-environment variables, start or stop services, invoke subagents, manage a todo
-list, or inspect project files. If the one retrieval call fails, do not debug
-or retry it. A successful wrapper response already contains both `hits` and
-`graph`; read that response directly and never make another tool call to
-extract, filter, or reformat it.
+The local OAG lifecycle is managed outside the Agent. Bash is available so you
+can act on observations; there is no fixed step count. Keep all ontology
+retrieval behind the Skill wrapper, never print environment values, and do not
+start or stop the service. A successful `oag` response already contains both
+`hits` and `graph`, so use it directly unless your reasoning identifies a
+specific need for another call. Do not use shell commands merely to announce
+completion.
 
-Your final response must begin with `{` and end with `}`. Do not write a
-transition sentence before it and do not add a Markdown fence around it.
+After tool use, return the plan immediately. Your final response must begin
+with `{` and end with `}`. Any transition sentence, analysis paragraph,
+completion announcement, or Markdown fence makes the response invalid.

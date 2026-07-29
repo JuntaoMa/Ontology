@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "deepseek/deepseek-v4-flash",
+  "model": "{env:ONTOLOGY_MODEL_ID}",
   "default_agent": "ontology-direct-context",
   "share": "disabled",
   "autoupdate": false,
@@ -12,7 +12,7 @@
     "ontology-direct-context": {
       "description": "Plan data queries from an ontology embedded directly in the prompt",
       "mode": "primary",
-      "model": "deepseek/deepseek-v4-flash",
+      "model": "{env:ONTOLOGY_MODEL_ID}",
       "prompt": "{file:./prompt.md}",
       "temperature": 0,
       "permission": {

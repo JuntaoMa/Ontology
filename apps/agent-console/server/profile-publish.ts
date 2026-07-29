@@ -151,11 +151,18 @@ export async function publishProfile(
     source.runtime.configDir,
     "opencode.config must live in a dedicated directory below the source profile",
   );
+  for (const asset of source.configAssets) {
+    assertStrictChild(
+      source.runtime.configDir,
+      asset.path,
+      `OpenCode asset "${asset.relativePath}" must live below the config directory`,
+    );
+  }
   for (const skill of source.skills) {
     assertStrictChild(
-      sourceBundleRoot,
+      profilesRoot,
       skill.path,
-      `Skill "${skill.id}" must live below the source profile directory`,
+      `Skill "${skill.id}" must live below the Profile catalog`,
     );
   }
 
@@ -171,6 +178,22 @@ export async function publishProfile(
       "OpenCode configuration",
       budget,
     );
+    for (const asset of source.configAssets) {
+      const destination = path.join(
+        destinationConfigDir,
+        ...asset.relativePath.split("/"),
+      );
+      await mkdir(path.dirname(destination), {
+        recursive: true,
+        mode: 0o755,
+      });
+      await copyPublishableFile(
+        asset.path,
+        destination,
+        `OpenCode asset "${asset.relativePath}"`,
+        budget,
+      );
+    }
 
     for (const skill of source.skills) {
       await copyPublishableTree(
@@ -207,6 +230,13 @@ export async function publishProfile(
       immutableStateDirectory,
     );
     immutableProfile.opencode.config = configRelativePath;
+    if (source.configAssets.length > 0) {
+      immutableProfile.opencode.assets = source.configAssets.map((asset) =>
+        toPortablePath(path.join("opencode", asset.relativePath)),
+      );
+    } else {
+      delete immutableProfile.opencode.assets;
+    }
     immutableProfile.skills = source.skills.map((skill) => ({
       id: skill.id,
       path: toPortablePath(path.join("skills", skill.id)),

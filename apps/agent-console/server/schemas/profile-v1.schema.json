@@ -15,7 +15,6 @@
     "opencode",
     "model",
     "skills",
-    "retrieval",
     "ontology",
     "environment"
   ],
@@ -56,27 +55,44 @@
       "additionalProperties": false,
       "required": ["config"],
       "properties": {
-        "config": { "$ref": "#/$defs/relativePath" }
+        "config": { "$ref": "#/$defs/relativePath" },
+        "assets": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/relativePath" }
+        }
       }
     },
     "model": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "api_base", "api_key"],
-      "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 160,
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "source", "auth"],
+          "properties": {
+            "id": { "$ref": "#/$defs/modelId" },
+            "source": { "const": "opencode" },
+            "auth": { "$ref": "#/$defs/modelAuth" }
+          }
         },
-        "api_base": { "$ref": "#/$defs/envRef" },
-        "api_key": { "$ref": "#/$defs/envRef" }
-      }
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "source", "api_base", "auth"],
+          "properties": {
+            "id": { "$ref": "#/$defs/modelId" },
+            "source": { "const": "profile" },
+            "api_base": { "$ref": "#/$defs/envRef" },
+            "auth": { "$ref": "#/$defs/modelAuth" }
+          }
+        }
+      ]
     },
     "skills": {
       "type": "array",
-      "minItems": 1,
+      "minItems": 0,
       "maxItems": 64,
       "items": {
         "type": "object",
@@ -124,7 +140,7 @@
       "properties": {
         "required": {
           "type": "array",
-          "minItems": 1,
+          "minItems": 0,
           "maxItems": 128,
           "uniqueItems": true,
           "items": { "$ref": "#/$defs/envName" }
@@ -152,6 +168,33 @@
       "properties": {
         "env": { "$ref": "#/$defs/envName" }
       }
+    },
+    "modelId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    },
+    "modelAuth": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source"],
+          "properties": {
+            "source": { "const": "opencode" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source", "api_key"],
+          "properties": {
+            "source": { "const": "environment" },
+            "api_key": { "$ref": "#/$defs/envRef" }
+          }
+        }
+      ]
     },
     "singleLine": {
       "type": "string",

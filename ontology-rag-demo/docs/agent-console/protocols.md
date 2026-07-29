@@ -18,39 +18,29 @@ mutable: true
 
 runtime:
   command: opencode
-  args: [acp, --print-logs]
+  args: [acp, --print-logs, --pure]
   cwd: ../..
   state_dir: ../../.runtime/opencode/dev
   startup_timeout_ms: 15000
 
 opencode:
   config: opencode/opencode.jsonc
+  assets:
+    - opencode/prompt.md
 
 model:
-  id: qwen-compatible/qwen-model
-  api_base:
-    env: QWEN_BASE_URL
-  api_key:
-    env: QWEN_API_KEY
+  id: deepseek/deepseek-v4-flash
+  source: opencode
+  auth:
+    source: opencode
 
-skills:
-  - id: ontology-retrieval
-    path: skills/ontology-retrieval
-
-retrieval:
-  endpoint:
-    env: OAG_BASE_URL
-  vector_top_k: 5
-  graph_algorithm: minimum_connected_subgraph
+skills: []
 
 ontology:
   id: smart-building-sample
 
 environment:
-  required:
-    - QWEN_BASE_URL
-    - QWEN_API_KEY
-    - OAG_BASE_URL
+  required: []
 ```
 
 ### 1.1 规则
@@ -61,10 +51,37 @@ environment:
 - `state_dir` 必须位于允许的运行状态根目录内。
 - `env` 对象只能保存环境变量名，不保存值。
 - `environment.required` 中的变量才会从宿主传给 OpenCode；本体文件位置只注入 8010。
+- 当声明的 Retrieval endpoint 是 loopback HTTP(S) 地址时，Bridge 只为 Agent 子进程
+  设置固定的 `NO_PROXY/no_proxy=localhost,127.0.0.1,::1`，避免 macOS 系统代理截获
+  本机 OAG 请求；不继承宿主更广泛、可能含内网信息的代理绕行列表。
+- `model.source: opencode` 固定模型 ID，但复用同一系统用户的 OpenCode provider
+  catalog；`model.auth.source: opencode` 复用其凭证，不继承“上次选择的模型”。
+- 自定义兼容 API 使用 `model.source: profile`、`model.api_base.env` 和
+  `model.auth: {source: environment, api_key: {env: ...}}`；所引用变量必须列入
+  `environment.required`。
+- `skills` 可以为空；只在 Agent 实际具备 Retriever 时声明 `retrieval`。
 - `mutable: false` 的正式 Profile 必须有发布锁文件。
 - Profile 文件变化只在下次进程启动时生效。
-- `opencode.config` 是只读配置源；Bridge 会把它复制到 `state_dir/config/` 后再启动
-  OpenCode，禁止 OpenCode 把 bootstrap 文件写回 Profile Bundle。
+- `opencode.config` 和显式列出的 `opencode.assets` 是只读配置源；Bridge 会保持相对
+  路径复制到 `state_dir/config/` 后再启动 OpenCode。资产必须是配置目录内的普通文件，
+  不能是目录、符号链接或路径穿越。
+
+OAG Profile 在上例基础上增加：
+
+```yaml
+skills:
+  - id: ontology-retrieval
+    path: skills/ontology-retrieval
+
+retrieval:
+  endpoint:
+    env: OAG_BASE_URL
+  vector_top_k: 5
+  graph_algorithm: minimum_connected_subgraph
+
+environment:
+  required: [OAG_BASE_URL]
+```
 
 ## 2. 正式 Profile Bundle
 
@@ -73,8 +90,11 @@ profiles/
 ├── dev/
 │   ├── profile.yaml
 │   ├── opencode/
-│   │   └── opencode.jsonc
+│   │   ├── opencode.jsonc
+│   │   └── prompt.md
 │   └── skills/
+├── baseline-oag/
+├── baseline-direct-context/
 └── releases/
     └── baseline-v1/
         ├── profile.yaml

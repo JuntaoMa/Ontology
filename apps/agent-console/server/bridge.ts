@@ -4,6 +4,7 @@ import path from "node:path";
 import type { IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
 import { WebSocket, WebSocketServer } from "ws";
+import type { LoadedProfile } from "./profile.js";
 
 const MAX_STDOUT_BUFFER_BYTES = 16 * 1024 * 1024;
 const MAX_STDERR_BUFFER_BYTES = 64 * 1024;
@@ -26,16 +27,10 @@ export interface BridgeProfile {
     startupTimeoutMs: number;
   };
   requiredEnv: string[];
-  model: {
-    id: string;
-    apiBaseEnv: string;
-    apiKeyEnv: string;
-  };
-  retrieval: {
-    endpointEnv: string;
-    vectorTopK: number;
-    graphAlgorithm: string;
-  };
+  configAssets: LoadedProfile["configAssets"];
+  skillsRoot?: string;
+  model: LoadedProfile["model"];
+  retrieval?: LoadedProfile["retrieval"];
   ontology: {
     id: string;
     sha256?: string;
@@ -135,11 +130,7 @@ export class AcpBridge {
       // frame or close event can arrive during an awaited filesystem call.
       mkdirSync(profile.runtime.stateDir, { recursive: true, mode: 0o700 });
       runtimeConfigDir = path.join(profile.runtime.stateDir, "config");
-      mkdirSync(runtimeConfigDir, { recursive: true, mode: 0o700 });
-      copyFileSync(
-        profile.configPath,
-        path.join(runtimeConfigDir, "opencode.jsonc"),
-      );
+      prepareRuntimeConfigOverlay(profile, runtimeConfigDir);
     } catch (error) {
       this.reserved.delete(profile.id);
       console.error(`[${profile.id}] failed to prepare runtime state directory`, safeError(error));
@@ -356,20 +347,97 @@ export function buildChildEnvironment(
   );
   environment.OPENCODE_CONFIG_DIR = runtimeConfigDir;
   environment.ONTOLOGY_PROFILE_DIR = path.dirname(profile.profilePath);
+  if (profile.skillsRoot) {
+    environment.ONTOLOGY_SKILLS_ROOT = profile.skillsRoot;
+  }
   environment.ONTOLOGY_MODEL_ID = profile.model.id;
-  environment.ONTOLOGY_MODEL_BASE_URL =
-    source[profile.model.apiBaseEnv] ?? "";
-  environment.ONTOLOGY_MODEL_API_KEY =
-    source[profile.model.apiKeyEnv] ?? "";
-  environment.ONTOLOGY_RETRIEVAL_ENDPOINT =
-    source[profile.retrieval.endpointEnv] ?? "";
-  environment.ONTOLOGY_VECTOR_TOP_K = String(profile.retrieval.vectorTopK);
-  environment.ONTOLOGY_GRAPH_ALGORITHM = profile.retrieval.graphAlgorithm;
+  if (profile.model.source === "profile") {
+    environment.ONTOLOGY_MODEL_BASE_URL =
+      source[profile.model.apiBaseEnv] ?? "";
+  }
+  if (profile.model.auth.source === "environment") {
+    environment.ONTOLOGY_MODEL_API_KEY =
+      source[profile.model.auth.apiKeyEnv] ?? "";
+  }
+  if (profile.retrieval) {
+    const retrievalEndpoint =
+      source[profile.retrieval.endpointEnv] ?? "";
+    environment.ONTOLOGY_RETRIEVAL_ENDPOINT = retrievalEndpoint;
+    environment.ONTOLOGY_VECTOR_TOP_K = String(
+      profile.retrieval.vectorTopK,
+    );
+    environment.ONTOLOGY_GRAPH_ALGORITHM =
+      profile.retrieval.graphAlgorithm;
+    if (isLoopbackHttpUrl(retrievalEndpoint)) {
+      // urllib on macOS can consult system proxy settings even when proxy
+      // variables are absent. Keep the fixed local OAG path off that proxy
+      // without exposing the host's broader NO_PROXY configuration.
+      environment.NO_PROXY = "localhost,127.0.0.1,::1";
+      environment.no_proxy = "localhost,127.0.0.1,::1";
+    }
+  }
   environment.ONTOLOGY_ID = profile.ontology.id;
   if (profile.ontology.sha256) {
     environment.ONTOLOGY_EXPECTED_SHA256 = profile.ontology.sha256;
   }
   return environment;
+}
+
+function isLoopbackHttpUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    const hostname = parsed.hostname.replace(/^\[|\]$/g, "").toLowerCase();
+    return (
+      (parsed.protocol === "http:" || parsed.protocol === "https:") &&
+      (hostname === "localhost" ||
+        hostname === "127.0.0.1" ||
+        hostname === "::1")
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function prepareRuntimeConfigOverlay(
+  profile: Pick<BridgeProfile, "configPath" | "configAssets">,
+  runtimeConfigDir: string,
+): void {
+  mkdirSync(runtimeConfigDir, { recursive: true, mode: 0o700 });
+  copyFileSync(
+    profile.configPath,
+    path.join(runtimeConfigDir, "opencode.jsonc"),
+  );
+  for (const asset of profile.configAssets) {
+    const destination = resolveRuntimeAssetDestination(
+      runtimeConfigDir,
+      asset.relativePath,
+    );
+    mkdirSync(path.dirname(destination), { recursive: true, mode: 0o700 });
+    copyFileSync(asset.path, destination);
+  }
+}
+
+function resolveRuntimeAssetDestination(
+  runtimeConfigDir: string,
+  relativePath: string,
+): string {
+  const root = path.resolve(runtimeConfigDir);
+  const destination = path.resolve(root, relativePath);
+  const relative = path.relative(root, destination);
+  if (
+    !relative ||
+    relative === ".." ||
+    relative.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relative) ||
+    normalizedPathKey(relative) === normalizedPathKey("opencode.jsonc")
+  ) {
+    throw new Error("Invalid OpenCode runtime asset destination");
+  }
+  return destination;
+}
+
+function normalizedPathKey(value: string): string {
+  return process.platform === "win32" ? value.toLocaleLowerCase() : value;
 }
 
 export function splitNdjson(buffer: string): { lines: string[]; remainder: string } {

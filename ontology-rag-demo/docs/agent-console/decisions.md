@@ -240,7 +240,7 @@
 
 ## ADR-029：先用 OpenCode CLI 固定双基线语义，再发布为 ACP Profile
 
-- 状态：本地基线实施中采纳
+- 状态：已完成，作为 WebUI 验收前置检查保留
 - 目标：用同一问题和同一模型验证两种本体上下文路径，一条由 Agent 提取关键词后调用
   OAG，另一条把完整的小型本体直接放入 Agent prompt。当前输出都是数据查询任务，不
   查询实例数据，也不生成业务答案。
@@ -257,3 +257,57 @@
 - 边界：CLI 运行器是语义与接线验证工具，不替代 ACP Bridge 或 Web UI。两条路径稳定
   后再把同样的 Agent 配置发布成可由 Console 选择的 Profile，避免现在同时修改
   Profile credential schema 和基线语义。
+
+## ADR-030：双基线以 WebUI 实际运行作为合格标准
+
+- 状态：已验证采纳
+- 事实：CLI 已证明模型、BGE-M3、LanceDB、OAG 和 Prompt 语义可运行，但没有覆盖
+  Profile Catalog、WebSocket Bridge、OpenCode ACP Session、Tool Call 投影和页面渲染，
+  因此不能再把 CLI 成功称为完整基线验收。
+- 决策：新增 `baseline-oag` 与 `baseline-direct-context` 两个独立 Profile，固定同一个
+  `deepseek/deepseek-v4-flash` 模型并复用当前系统用户的 OpenCode 认证。两者使用独立
+  `state_dir` 和 Session 数据库；UI 分别创建会话、发送同一个问题，不做同步广播。
+- Profile 语义：模型声明区分由 Profile 定义的自有 endpoint 与 OpenCode 已知模型；
+  认证区分环境变量密钥与 OpenCode 用户认证。Direct-context 允许空 Skill、无
+  Retrieval、空必需环境变量；OAG Profile 只要求 8010 endpoint。
+- 配置资产：OpenCode Prompt 继续保留为独立、人类可读的 Markdown 文件。Profile 显式
+  声明 sidecar 资产，Bridge、ACP 探针和发布器把它们与 `opencode.jsonc` 一起复制到可写
+  overlay；不得退回到把长 Prompt 内联进程序或 JSONC。
+- 合格条件：浏览器必须能选择两个 Profile；两边都成功完成 `session/new` 和
+  `session/prompt`；OAG 页面出现完成的 Skill/Bash Tool 历史与最终
+  `data-query-plan.v1`；direct-context 页面没有 Tool 卡且输出同一协议；断开后
+  OpenCode Session 仍可被列出和加载。CLI 运行器只保留为索引和模型预检。
+- Agent 自主性：OAG Profile 不设置固定 `steps`，也不使用 wrapper-only Bash 白名单。
+  本机 Demo 按既有安全边界开放 Bash，由 Skill 和 Agent Prompt 描述推荐路径；Agent
+  可根据观察反思和继续调用，实际事件完整投影到页面。
+- 边界：首版仍不增加并排比较、自动评分、自有历史数据库或总轮次计时器；页面展示
+  和历史事实继续来自 OpenCode ACP。当前合格标准验证流程连通性，不把查询计划业务
+  正确性、模型附带过渡语或非关键 Tool 权限拒绝混入接线判定；这些事实仍必须在 UI
+  中完整可见。
+
+## ADR-031：loopback OAG 请求显式绕过系统代理
+
+- 状态：已验证采纳
+- 事实：macOS 上的 Python `urllib` 即使没有继承 `HTTP_PROXY`，仍可能读取系统代理
+  设置。Bridge 的安全环境白名单原先同时移除了 `NO_PROXY/no_proxy`，导致 Agent
+  wrapper 把 `127.0.0.1:8010` 请求发送到系统代理并收到 HTTP 502；同一命令在保留
+  loopback 绕行时能返回真实 Top-5 和子图。
+- 决策：当 Profile 的 Retrieval endpoint 是 loopback HTTP(S) 地址时，Bridge 在子
+  进程环境中设置固定的 `NO_PROXY/no_proxy=localhost,127.0.0.1,::1`。不直接继承
+  宿主完整绕行列表，避免把可能包含内网主机名的环境信息扩大到 Agent。
+- 验证：回归测试覆盖固定映射；最终 WebUI OAG Session 的 wrapper 返回 HTTP 200、
+  5 条 BGE-M3 命中、5 节点/4 边子图和 `data-query-plan.v1`。
+
+## ADR-032：区分 WebUI 接线合格与基线语义隔离
+
+- 状态：真实 WebUI 运行后采纳
+- 事实：开放 Bash 的 OAG Session 在成功完成多次 wrapper 检索后，自主使用 `grep`
+  读取了示例 TTL。页面完整记录了这些调用，但它绕过了“OAG 是唯一Ontology来源”的
+  Prompt 约束。只要 Agent 与 OAG、示例本体处于同一用户可读文件系统，Prompt 不能
+  提供强隔离。
+- 决策：WebUI 接线合格表示 Profile、ACP Session、Skill、Bash、8010、artifact、最终
+  消息和历史恢复均可观察地工作。若轨迹出现直接本体读取，则额外标记“基线语义污染”；
+  该 Session 不用于 OAG 与 direct-context 的效果比较。
+- 边界：首版保留用户已选择的开放 Bash 和 Agent 自主控制，不新增 wrapper-only
+  Tool、容器或文件系统沙箱。未来需要严格实验隔离时，应把它作为独立门控能力，而
+  不是隐藏或改写已发生的 Agent 轨迹。

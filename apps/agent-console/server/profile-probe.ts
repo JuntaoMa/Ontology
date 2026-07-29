@@ -1,5 +1,4 @@
 import {
-  copyFile,
   mkdir,
   mkdtemp,
   realpath,
@@ -11,7 +10,10 @@ import {
   type AcpProbeOptions,
   type AcpProbeResult,
 } from "./acp-probe.js";
-import { buildChildEnvironment } from "./bridge.js";
+import {
+  buildChildEnvironment,
+  prepareRuntimeConfigOverlay,
+} from "./bridge.js";
 import {
   assertRequiredEnvironment,
   loadProfile,
@@ -56,11 +58,7 @@ export async function probeAcpProfile(
 
   try {
     const runtimeConfigDir = path.join(probeRuntimeDir, "config");
-    await mkdir(runtimeConfigDir, { recursive: true, mode: 0o700 });
-    await copyFile(
-      profile.configPath,
-      path.join(runtimeConfigDir, "opencode.jsonc"),
-    );
+    prepareRuntimeConfigOverlay(profile, runtimeConfigDir);
 
     const runtimeEnvironment = buildChildEnvironment(
       profile,

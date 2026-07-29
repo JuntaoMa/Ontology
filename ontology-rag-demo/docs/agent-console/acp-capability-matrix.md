@@ -52,7 +52,7 @@ OpenCode 原生历史比 ACP 投影更丰富。1.17.16 的 ACP Adapter：
 首版处理：
 
 - 在线调用耗时由 UI 根据当前收到的 Tool Call/Update 计时；
-- 历史重放没有时间戳时明确显示“历史耗时不可用”；
+- 历史重放没有时间戳时明确显示 `Timing unavailable`；
 - 不在 ACP Bridge 中读取 OpenCode 私有数据库补齐事件；
 - 如果未来必须无损展示，优先推动内部 OpenCode ACP Adapter 增加标准化字段。
 

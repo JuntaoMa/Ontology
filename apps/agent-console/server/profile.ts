@@ -31,6 +31,28 @@ export interface EnvReference {
   env: string;
 }
 
+export type ProfileModelAuthenticationV1 =
+  | {
+      source: "opencode";
+    }
+  | {
+      source: "environment";
+      api_key: EnvReference;
+    };
+
+export type ProfileModelV1 =
+  | {
+      id: string;
+      source: "opencode";
+      auth: ProfileModelAuthenticationV1;
+    }
+  | {
+      id: string;
+      source: "profile";
+      api_base: EnvReference;
+      auth: ProfileModelAuthenticationV1;
+    };
+
 export interface ProfileV1 {
   schema_version: 1;
   id: string;
@@ -47,17 +69,14 @@ export interface ProfileV1 {
   };
   opencode: {
     config: string;
+    assets?: string[];
   };
-  model: {
-    id: string;
-    api_base: EnvReference;
-    api_key: EnvReference;
-  };
+  model: ProfileModelV1;
   skills: Array<{
     id: string;
     path: string;
   }>;
-  retrieval: {
+  retrieval?: {
     endpoint: EnvReference;
     vector_top_k: number;
     graph_algorithm: string;
@@ -107,17 +126,18 @@ export interface LoadedProfile {
     startupTimeoutMs: number;
   };
   configPath: string;
+  configAssets: Array<{
+    path: string;
+    relativePath: string;
+  }>;
   skills: Array<{
     id: string;
     path: string;
   }>;
+  skillsRoot?: string;
   requiredEnv: string[];
-  model: {
-    id: string;
-    apiBaseEnv: string;
-    apiKeyEnv: string;
-  };
-  retrieval: {
+  model: LoadedProfileModel;
+  retrieval?: {
     endpointEnv: string;
     vectorTopK: number;
     graphAlgorithm: string;
@@ -128,6 +148,28 @@ export interface LoadedProfile {
   };
   source: ProfileV1;
 }
+
+export type LoadedProfileModelAuthentication =
+  | {
+      source: "opencode";
+    }
+  | {
+      source: "environment";
+      apiKeyEnv: string;
+    };
+
+export type LoadedProfileModel =
+  | {
+      id: string;
+      source: "opencode";
+      auth: LoadedProfileModelAuthentication;
+    }
+  | {
+      id: string;
+      source: "profile";
+      apiBaseEnv: string;
+      auth: LoadedProfileModelAuthentication;
+    };
 
 export interface PublicAgent {
   id: string;
@@ -241,6 +283,44 @@ export async function loadProfile(
     absoluteProfilePath,
   );
   const configDir = await realpath(path.dirname(configPath));
+  const configAssets = [];
+  const configAssetPaths = new Set<string>();
+  for (const asset of source.opencode.assets ?? []) {
+    const assetPath = await resolveExistingFile(
+      profileDirectory,
+      asset,
+      `opencode.assets.${asset}`,
+      absoluteProfilePath,
+    );
+    assertPathInside(
+      configDir,
+      assetPath,
+      "opencode.assets files must be children of the OpenCode config directory",
+      true,
+    );
+    const relativePath = toPortableRelativePath(configDir, assetPath);
+    const normalizedRelativePath = normalizedPathKey(relativePath);
+    if (configAssetPaths.has(normalizedRelativePath)) {
+      throw new ProfileValidationError(
+        `Duplicate OpenCode asset destination "${relativePath}"`,
+        absoluteProfilePath,
+      );
+    }
+    if (
+      normalizedPathKey(path.basename(configPath)) ===
+      normalizedRelativePath
+    ) {
+      throw new ProfileValidationError(
+        "opencode.assets must not repeat the declared config file",
+        absoluteProfilePath,
+      );
+    }
+    configAssetPaths.add(normalizedRelativePath);
+    configAssets.push({ path: assetPath, relativePath });
+  }
+  configAssets.sort((left, right) =>
+    left.relativePath.localeCompare(right.relativePath),
+  );
   const command = await resolveCommand(
     source.runtime.command,
     profileDirectory,
@@ -262,6 +342,7 @@ export async function loadProfile(
   await rejectExistingSymlinkSegments(projectRoot, stateDir, absoluteProfilePath);
 
   const skills = [];
+  let skillsRoot: string | undefined;
   for (const skill of source.skills) {
     const skillPath = await resolveExistingDirectory(
       profileDirectory,
@@ -273,6 +354,22 @@ export async function loadProfile(
       path.join(skillPath, "SKILL.md"),
       `Skill "${skill.id}" SKILL.md`,
     );
+    assertPathInside(
+      root,
+      skillPath,
+      `Skill "${skill.id}" must be inside the Profile catalog`,
+    );
+    const skillParent = await realpath(path.dirname(skillPath));
+    if (
+      skillsRoot !== undefined &&
+      normalizedPathKey(skillsRoot) !== normalizedPathKey(skillParent)
+    ) {
+      throw new ProfileValidationError(
+        "All declared Skill directories must share the same parent directory",
+        absoluteProfilePath,
+      );
+    }
+    skillsRoot = skillParent;
     skills.push({ id: skill.id, path: skillPath });
   }
 
@@ -298,23 +395,48 @@ export async function loadProfile(
       startupTimeoutMs: source.runtime.startup_timeout_ms,
     },
     configPath,
+    configAssets,
     skills,
+    ...(skillsRoot !== undefined ? { skillsRoot } : {}),
     requiredEnv: [...source.environment.required].sort(),
-    model: {
-      id: source.model.id,
-      apiBaseEnv: source.model.api_base.env,
-      apiKeyEnv: source.model.api_key.env,
-    },
-    retrieval: {
-      endpointEnv: source.retrieval.endpoint.env,
-      vectorTopK: source.retrieval.vector_top_k,
-      graphAlgorithm: source.retrieval.graph_algorithm,
-    },
+    model: loadProfileModel(source.model),
+    ...(source.retrieval
+      ? {
+          retrieval: {
+            endpointEnv: source.retrieval.endpoint.env,
+            vectorTopK: source.retrieval.vector_top_k,
+            graphAlgorithm: source.retrieval.graph_algorithm,
+          },
+        }
+      : {}),
     ontology: {
       id: source.ontology.id,
       sha256: source.ontology.sha256,
     },
     source,
+  };
+}
+
+function loadProfileModel(model: ProfileModelV1): LoadedProfileModel {
+  const auth: LoadedProfileModelAuthentication =
+    model.auth.source === "opencode"
+      ? { source: "opencode" }
+      : {
+          source: "environment",
+          apiKeyEnv: model.auth.api_key.env,
+        };
+  if (model.source === "opencode") {
+    return {
+      id: model.id,
+      source: "opencode",
+      auth,
+    };
+  }
+  return {
+    id: model.id,
+    source: "profile",
+    apiBaseEnv: model.api_base.env,
+    auth,
   };
 }
 
@@ -539,6 +661,10 @@ function validateProfileSemantics(profile: ProfileV1, profilePath: string): void
     ["runtime.cwd", profile.runtime.cwd],
     ["runtime.state_dir", profile.runtime.state_dir],
     ["opencode.config", profile.opencode.config],
+    ...(profile.opencode.assets ?? []).map((asset) => [
+      `opencode.assets.${asset}`,
+      asset,
+    ]),
     ...profile.skills.map((skill) => [`skills.${skill.id}.path`, skill.path]),
   ]) {
     ensureRelativePath(value, field, profilePath);
