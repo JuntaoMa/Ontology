@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import type { ToolCallInfo } from '../lib/types';
 import { findOntologyArtifact } from '../lib/ontology-artifact';
 import OntologySubgraphCard from './OntologySubgraphCard.vue';
+import UiIcon from './UiIcon.vue';
 
 const props = defineProps<{
   toolCall: ToolCallInfo;
@@ -30,16 +31,6 @@ onBeforeUnmount(() => {
 
 const statusClass = computed(() => `status-${props.toolCall.status}`);
 
-const statusIcon = computed(() => {
-  switch (props.toolCall.status) {
-    case 'pending': return '⏳';
-    case 'in_progress': return '⚙️';
-    case 'completed': return '✓';
-    case 'failed': return '✕';
-    default: return '•';
-  }
-});
-
 const statusLabel = computed(() => {
   switch (props.toolCall.status) {
     case 'pending': return 'Pending';
@@ -47,21 +38,6 @@ const statusLabel = computed(() => {
     case 'completed': return 'Completed';
     case 'failed': return 'Failed';
     default: return props.toolCall.status;
-  }
-});
-
-const kindIcon = computed(() => {
-  switch (props.toolCall.kind) {
-    case 'read': return '📖';
-    case 'edit': return '✏️';
-    case 'delete': return '🗑️';
-    case 'move': return '📦';
-    case 'search': return '🔍';
-    case 'execute': return '▶️';
-    case 'think': return '💭';
-    case 'fetch': return '🌐';
-    case 'switch_mode': return '↔️';
-    default: return '🔧';
   }
 });
 
@@ -89,10 +65,18 @@ function formatValue(value: unknown): string {
 
 const formattedInput = computed(() => formatValue(props.toolCall.rawInput));
 const formattedOutput = computed(() => formatValue(props.toolCall.rawOutput));
-const formattedContent = computed(() => formatValue(props.toolCall.content));
 const ontologyArtifact = computed(() =>
   findOntologyArtifact(props.toolCall.rawOutput, props.toolCall.content),
 );
+
+const kindIcon = computed<'skill' | 'terminal' | 'thought' | 'tool'>(() => {
+  if (/^Loaded skill:\s+/i.test(props.toolCall.title.trimStart())) {
+    return 'skill';
+  }
+  if (props.toolCall.kind === 'think') return 'thought';
+  if (props.toolCall.kind === 'execute') return 'terminal';
+  return 'tool';
+});
 
 const durationLabel = computed(() => {
   if (props.toolCall.timingUnavailable) return 'Timing unavailable';
@@ -100,26 +84,44 @@ const durationLabel = computed(() => {
   const end = props.toolCall.finishedAt ?? clock.value;
   const durationMs = Math.max(0, end - props.toolCall.startedAt);
   if (durationMs < 1000) return `${durationMs} ms`;
-  return `${(durationMs / 1000).toFixed(durationMs < 10_000 ? 1 : 0)} s`;
+  return `${(durationMs / 1000).toFixed(durationMs < 10_000 ? 1 : 0)}s`;
 });
 </script>
 
 <template>
-  <article class="tool-call-card" :class="statusClass">
-    <header class="tool-header">
-      <span class="kind-icon" aria-hidden="true">{{ kindIcon }}</span>
+  <details class="tool-call-card" :class="statusClass">
+    <summary class="tool-header">
+      <UiIcon class="kind-icon" :name="kindIcon" />
       <span class="tool-heading">
-        <strong class="tool-title">{{ toolCall.title }}</strong>
+        <strong class="tool-title" :title="toolCall.title">
+          {{ toolCall.title }}
+        </strong>
         <span v-if="toolCall.locations?.length" class="tool-location">
           {{ toolCall.locations[0].path }}
         </span>
       </span>
-      <span v-if="durationLabel" class="tool-duration">{{ durationLabel }}</span>
       <span class="tool-status" aria-live="polite">
-        <span aria-hidden="true">{{ statusIcon }}</span>
+        <span
+          v-if="
+            toolCall.status === 'pending' ||
+            toolCall.status === 'in_progress'
+          "
+          class="status-marker"
+          :class="{ spinner: toolCall.status === 'in_progress' }"
+          aria-hidden="true"
+        />
         {{ statusLabel }}
       </span>
-    </header>
+      <span
+        v-if="durationLabel"
+        class="tool-separator"
+        aria-hidden="true"
+      >
+        ·
+      </span>
+      <span v-if="durationLabel" class="tool-duration">{{ durationLabel }}</span>
+      <UiIcon class="tool-chevron" name="chevron" />
+    </summary>
 
     <div v-if="toolCall.locations && toolCall.locations.length > 1" class="tool-locations">
       <span v-for="location in toolCall.locations.slice(1)" :key="`${location.path}:${location.line ?? ''}`">
@@ -128,7 +130,7 @@ const durationLabel = computed(() => {
     </div>
 
     <div
-      v-if="formattedInput || formattedOutput || formattedContent"
+      v-if="formattedInput || formattedOutput"
       class="tool-details"
     >
       <details v-if="formattedInput">
@@ -139,137 +141,189 @@ const durationLabel = computed(() => {
         <summary>Output</summary>
         <pre>{{ formattedOutput }}</pre>
       </details>
-      <details v-if="formattedContent">
-        <summary>ACP content</summary>
-        <pre>{{ formattedContent }}</pre>
-      </details>
     </div>
 
     <OntologySubgraphCard
       v-if="ontologyArtifact"
       :artifact="ontologyArtifact"
     />
-  </article>
+  </details>
 </template>
 
 <style scoped>
 .tool-call-card {
-  padding: 0.65rem 0.75rem;
-  border: 1px solid var(--border-color, #d7dce3);
-  border-left: 3px solid var(--border-color, #cbd5e1);
-  border-radius: 7px;
-  background: var(--bg-tool, rgba(255, 255, 255, 0.58));
-}
-
-.status-pending {
-  border-left-color: #d97706;
-}
-
-.status-in_progress {
-  border-left-color: #2563eb;
-  background: color-mix(in srgb, #2563eb 6%, var(--bg-tool, white));
-}
-
-.status-completed {
-  border-left-color: #059669;
-}
-
-.status-failed {
-  border-left-color: #dc2626;
-  background: color-mix(in srgb, #dc2626 5%, var(--bg-tool, white));
+  overflow: hidden;
+  border: 1px solid var(--line, #deded9);
+  border-radius: 11px;
+  background: #fbfbfa;
 }
 
 .tool-header {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 8px;
   min-width: 0;
+  padding: 11px 13px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.tool-header::-webkit-details-marker {
+  display: none;
+}
+
+.tool-header:focus-visible {
+  outline: 2px solid var(--accent, #3b6ee8);
+  outline-offset: -2px;
 }
 
 .kind-icon {
+  width: 15px;
+  height: 15px;
   flex: 0 0 auto;
-  font-size: 0.9rem;
+  color: var(--text-secondary, #5f5f5b);
 }
 
 .tool-heading {
   display: flex;
+  overflow: hidden;
   flex: 1;
   align-items: baseline;
-  gap: 0.6rem;
+  gap: 8px;
   min-width: 0;
 }
 
 .tool-title {
-  color: var(--text-primary, #1f2937);
-  font-size: 0.82rem;
-  font-weight: 600;
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  flex: 1 1 auto;
+  color: var(--text, #282826);
+  font-size: 12px;
+  font-weight: 590;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tool-location {
+  display: block;
   overflow: hidden;
   min-width: 0;
-  color: var(--text-muted, #64748b);
+  max-width: min(34%, 14rem);
+  flex: 0 1 auto;
+  color: var(--text-muted, #8a8a84);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.7rem;
+  font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .tool-duration {
-  color: var(--text-muted, #64748b);
-  font-size: 0.7rem;
+  color: var(--text-muted, #8a8a84);
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.tool-separator {
+  margin: 0 -3px;
+  color: var(--text-muted, #8a8a84);
+  font-size: 11px;
 }
 
 .tool-status {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 0.7rem;
-  font-weight: 600;
+  gap: 5px;
+  color: var(--success, #39835d);
+  font-size: 11px;
+  font-weight: 500;
   white-space: nowrap;
 }
 
-.status-pending .tool-status { color: #b45309; }
-.status-in_progress .tool-status { color: #1d4ed8; }
-.status-completed .tool-status { color: #047857; }
-.status-failed .tool-status { color: #b91c1c; }
+.tool-chevron {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  color: var(--text-muted, #8a8a84);
+  transform: rotate(-90deg);
+  transition: transform 130ms ease;
+}
+
+.tool-call-card[open] .tool-chevron {
+  transform: rotate(0);
+}
+
+.status-pending .tool-status,
+.status-in_progress .tool-status {
+  color: var(--warning, #b47b20);
+}
+
+.status-failed .tool-status {
+  color: var(--danger, #c83f35);
+}
+
+.status-marker {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-marker.spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #d1d1cb;
+  border-top-color: currentColor;
+  background: transparent;
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 .tool-locations {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  margin: 0.45rem 0 0 1.45rem;
-  color: var(--text-muted, #64748b);
+  gap: 3px;
+  border-top: 1px solid var(--line-soft, #e9e9e5);
+  padding: 10px 13px 0 36px;
+  color: var(--text-muted, #8a8a84);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.7rem;
+  font-size: 11px;
 }
 
 .tool-details {
   display: grid;
-  gap: 0.4rem;
-  margin-top: 0.55rem;
+  gap: 0;
+  border-top: 1px solid var(--line-soft, #e9e9e5);
 }
 
 .tool-details details {
   overflow: hidden;
-  border: 1px solid var(--border-color, #d7dce3);
-  border-radius: 6px;
-  background: var(--bg-main, #fff);
+  border: 0;
+  background: transparent;
+}
+
+.tool-details details + details {
+  border-top: 1px solid var(--line-soft, #e9e9e5);
 }
 
 .tool-details summary {
-  padding: 0.4rem 0.55rem;
-  color: var(--text-muted, #475569);
+  padding: 8px 13px;
+  color: var(--text-secondary, #5f5f5b);
   cursor: pointer;
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 11.5px;
+  font-weight: 550;
   user-select: none;
 }
 
 .tool-details summary:focus-visible {
-  outline: 2px solid var(--text-accent, #2563eb);
+  outline: 2px solid var(--accent, #3b6ee8);
   outline-offset: -2px;
 }
 
@@ -277,21 +331,19 @@ const durationLabel = computed(() => {
   overflow: auto;
   max-height: 22rem;
   margin: 0;
-  padding: 0.65rem;
-  border-top: 1px solid var(--border-color, #d7dce3);
-  background: var(--bg-code, #111827);
-  color: var(--text-code, #e5e7eb);
-  font: 0.72rem/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  border-top: 1px solid var(--line-soft, #e9e9e5);
+  padding: 10px 13px 12px;
+  background: #f4f4f2;
+  color: #40403c;
+  font: 11.5px/1.6 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
   overflow-wrap: normal;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 @media (max-width: 800px) {
-  .tool-heading {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.15rem;
+  .tool-location {
+    display: none;
   }
 
   .tool-duration {

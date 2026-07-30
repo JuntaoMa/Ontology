@@ -24,6 +24,11 @@
 `initialize` 返回的具体能力必须由 UI 动态读取，不得仅依据本表硬编码。内部版 OpenCode
 可能与本机版本不同。
 
+ACP `0.13.1` 没有持久 Session 删除方法。Console 的垃圾桶操作不是伪装成 ACP：
+loopback Bridge 使用所属 Profile 的独立 `OPENCODE_DB` 执行
+`opencode session delete <sessionID>`。Profile 级 maintenance lock 会先排除在途
+ACP 请求和重连，再关闭空闲 ACP 进程并以有界子进程执行删除；UI 随后恢复原可见会话。
+
 ## 2. `load` 与 `resume`
 
 - `session/load` 从 OpenCode 持久层读取历史，并把消息和 Tool Call 重新投影为 ACP
@@ -53,6 +58,8 @@ OpenCode 原生历史比 ACP 投影更丰富。1.17.16 的 ACP Adapter：
 
 - 在线调用耗时由 UI 根据当前收到的 Tool Call/Update 计时；
 - 历史重放没有时间戳时明确显示 `Timing unavailable`；
+- 实时成功回答可以显示浏览器当地完成时间和 `session/prompt` 客户端观测总耗时；
+  历史重放不提供这两个字段，因此不显示回答完成页脚；
 - 不在 ACP Bridge 中读取 OpenCode 私有数据库补齐事件；
 - 如果未来必须无损展示，优先推动内部 OpenCode ACP Adapter 增加标准化字段。
 

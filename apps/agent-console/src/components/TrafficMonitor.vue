@@ -200,6 +200,7 @@ function handleCopy(entry: TrafficEntry) {
           <span class="expand-icon">{{ expandedIds.has(entry.id) ? '▾' : '▸' }}</span>
           <span class="timestamp">{{ formatTime(entry.timestamp) }}</span>
           <span class="direction-icon">{{ getDirectionIcon(entry) }}</span>
+          <span v-if="entry.profileId" class="profile-id">{{ entry.profileId }}</span>
           <span class="method">{{ entry.method }}</span>
           <span class="type-label">{{ getTypeLabel(entry) }}</span>
           <span v-if="entry.requestId !== undefined" class="request-id">#{{ entry.requestId }}</span>
@@ -263,6 +264,16 @@ function handleCopy(entry: TrafficEntry) {
 .title {
   font-weight: 600;
   margin-right: auto;
+}
+
+.profile-id {
+  max-width: 10rem;
+  overflow: hidden;
+  color: var(--text-accent);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .controls {

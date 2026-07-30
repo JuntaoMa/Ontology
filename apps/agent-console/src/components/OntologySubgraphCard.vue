@@ -155,8 +155,13 @@ function shortLabel(label: string): string {
 <template>
   <details class="subgraph-card">
     <summary class="subgraph-header">
-      <span>
-        <strong>{{ artifact.title || 'Ontology subgraph' }}</strong>
+      <span class="subgraph-heading">
+        <strong
+          class="subgraph-title"
+          :title="artifact.title || 'Ontology subgraph'"
+        >
+          {{ artifact.title || 'Ontology subgraph' }}
+        </strong>
         <span class="subgraph-counts">
           {{ artifact.totalNodeCount }} nodes · {{ artifact.totalEdgeCount }} edges
         </span>
@@ -251,17 +256,41 @@ function shortLabel(label: string): string {
   list-style-position: inside;
 }
 
+.subgraph-heading {
+  display: flex;
+  overflow: hidden;
+  min-width: 0;
+  flex: 1;
+  align-items: baseline;
+}
+
+.subgraph-title {
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  flex: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .subgraph-counts {
   margin-left: 0.5rem;
+  flex: 0 0 auto;
   color: var(--text-muted, #64748b);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .subgraph-meta {
   display: inline-flex;
+  overflow: hidden;
+  max-width: 38%;
+  flex: 0 1 auto;
   gap: 0.45rem;
   color: var(--text-muted, #64748b);
   font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .subgraph-svg {

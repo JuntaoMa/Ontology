@@ -1,14 +1,21 @@
 <script setup lang="ts">
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import type { PermissionRequest } from '../lib/types';
+import UiIcon from './UiIcon.vue';
 
 defineProps<{
   request: PermissionRequest;
+  agentName?: string;
+  sessionTitle?: string;
 }>();
 
 const emit = defineEmits<{
   select: [optionId: string];
   cancel: [];
 }>();
+
+const dialogRef = ref<HTMLDivElement | null>(null);
+let previousFocus: HTMLElement | null = null;
 
 function handleSelect(optionId: string) {
   emit('select', optionId);
@@ -17,17 +24,73 @@ function handleSelect(optionId: string) {
 function handleCancel() {
   emit('cancel');
 }
+
+function focusableButtons(): HTMLButtonElement[] {
+  return Array.from(
+    dialogRef.value?.querySelectorAll<HTMLButtonElement>(
+      'button:not(:disabled)',
+    ) ?? [],
+  );
+}
+
+function handleKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    handleCancel();
+    return;
+  }
+  if (event.key !== 'Tab') return;
+
+  const buttons = focusableButtons();
+  const first = buttons[0];
+  const last = buttons[buttons.length - 1];
+  if (!first || !last) return;
+
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+onMounted(async () => {
+  previousFocus =
+    document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+  window.addEventListener('keydown', handleKeydown);
+  await nextTick();
+  focusableButtons()[0]?.focus();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown);
+  previousFocus?.focus();
+});
 </script>
 
 <template>
-  <div class="permission-overlay">
-    <div class="permission-dialog">
+  <div class="modal-backdrop" @mousedown.self="handleCancel">
+    <section
+      ref="dialogRef"
+      class="modal permission-dialog"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="permission-dialog-title"
+    >
       <div class="dialog-header">
-        <span class="icon">🔐</span>
-        <h3>Permission Required</h3>
+        <UiIcon name="terminal" />
+        <h2 id="permission-dialog-title">Permission required</h2>
       </div>
 
       <div class="dialog-content">
+        <p v-if="agentName || sessionTitle" class="request-context">
+          <strong>{{ agentName || 'Agent Profile' }}</strong>
+          <span v-if="sessionTitle"> · {{ sessionTitle }}</span>
+        </p>
+
         <div class="tool-info">
           <span class="tool-title">{{ request.toolCall.title }}</span>
           <span class="tool-kind">{{ request.toolCall.kind }}</span>
@@ -39,7 +102,8 @@ function handleCancel() {
             :key="index"
             class="location"
           >
-            📁 {{ loc.path }}
+            <UiIcon name="folder" />
+            <span>{{ loc.path }}</span>
           </div>
         </div>
       </div>
@@ -49,151 +113,164 @@ function handleCancel() {
           v-for="option in request.options"
           :key="option.optionId"
           :class="['option-btn', `option-${option.kind}`]"
+          type="button"
           @click="handleSelect(option.optionId)"
         >
           {{ option.name }}
         </button>
-        <button class="cancel-btn" @click="handleCancel">
+        <button class="cancel-btn" type="button" @click="handleCancel">
           Cancel
         </button>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
-.permission-overlay {
+.modal-backdrop {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+  z-index: 50;
+  display: grid;
+  inset: 0;
+  place-items: center;
+  padding: 24px;
+  background: rgba(30, 30, 28, 0.28);
+  backdrop-filter: blur(3px);
 }
 
-.permission-dialog {
-  background: var(--bg-dialog, #fff);
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  max-width: 480px;
-  width: 90%;
-  overflow: hidden;
+.modal {
+  width: min(100%, 430px);
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  padding: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 .dialog-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 1rem;
-  background: var(--bg-header, #f5f5f5);
-  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  gap: 9px;
 }
 
-.dialog-header .icon {
-  font-size: 1.5rem;
+.dialog-header :deep(svg) {
+  width: 19px;
+  height: 19px;
+  color: var(--text-secondary);
 }
 
-.dialog-header h3 {
+.dialog-header h2 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 17px;
+  letter-spacing: -0.015em;
 }
 
 .dialog-content {
-  padding: 1rem;
+  padding-top: 14px;
+}
+
+.request-context {
+  margin: 0 0 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
 }
 
 .tool-info {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 9px;
+  padding: 9px 10px;
 }
 
 .tool-title {
+  font-size: 13px;
   font-weight: 600;
-  font-size: 1rem;
 }
 
 .tool-kind {
-  font-size: 0.875rem;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
+  font-size: 11px;
   text-transform: capitalize;
 }
 
 .locations {
-  margin-top: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--bg-hover, #f5f5f5);
-  border-radius: 4px;
-  border: 1px solid var(--border-color, #e0e0e0);
+  display: grid;
+  gap: 5px;
+  margin-top: 8px;
+  border-radius: 9px;
+  padding: 9px 10px;
+  background: #f4f4f1;
 }
 
 .location {
-  font-family: monospace;
-  font-size: 0.8rem;
-  padding: 0.125rem 0;
-  color: var(--text-primary, #333);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-secondary);
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 11px;
   word-break: break-all;
+}
+
+.location :deep(svg) {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
 }
 
 .dialog-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 1rem;
-  border-top: 1px solid var(--border-color, #e0e0e0);
-  background: var(--bg-footer, #fafafa);
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
 }
 
 .option-btn {
-  flex: 1;
-  min-width: 120px;
-  padding: 0.625rem 1rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 13px;
+  font-size: 12.5px;
+  font-weight: 550;
   cursor: pointer;
-  transition: background 0.15s;
 }
 
 .option-allow_once,
 .option-allow_always {
-  background: var(--bg-success, #28a745);
+  background: #30302d;
   color: white;
 }
 
 .option-allow_once:hover,
 .option-allow_always:hover {
-  background: var(--bg-success-hover, #218838);
+  background: #1f1f1d;
 }
 
 .option-reject_once,
 .option-reject_always {
-  background: var(--bg-danger, #dc3545);
+  background: var(--danger);
   color: white;
 }
 
 .option-reject_once:hover,
 .option-reject_always:hover {
-  background: var(--bg-danger-hover, #c82333);
+  background: #ad332c;
 }
 
 .cancel-btn {
-  flex: 1;
-  min-width: 120px;
-  padding: 0.625rem 1rem;
-  border: 1px solid var(--border-color, #ccc);
-  border-radius: 4px;
-  background: var(--bg-button, #fff);
-  font-size: 0.9rem;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 13px;
+  background: var(--surface-hover);
+  font-size: 12.5px;
+  font-weight: 550;
   cursor: pointer;
 }
 
 .cancel-btn:hover {
-  background: var(--bg-hover, #f0f0f0);
+  background: var(--surface-active);
 }
 </style>

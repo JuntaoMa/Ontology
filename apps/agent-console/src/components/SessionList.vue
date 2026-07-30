@@ -21,6 +21,16 @@ const sessions = computed(() =>
     .filter((session) => session.agentName === props.agentName)
     .sort((a, b) => b.lastUpdated - a.lastUpdated)
 );
+const isRefreshing = computed(() =>
+  props.agentName
+    ? sessionStore.isRefreshingAgent(props.agentName)
+    : false,
+);
+const listError = computed(() =>
+  props.agentName
+    ? sessionStore.sessionListErrorFor(props.agentName)
+    : null,
+);
 
 function formatDate(timestamp: number): string {
   if (!timestamp) return 'Updated time unavailable';
@@ -40,19 +50,20 @@ function handleResume(session: SavedSession) {
       <button
         class="refresh-btn"
         type="button"
-        :disabled="!agentName || sessionStore.isRefreshingSessions"
+        :disabled="!agentName || isRefreshing"
+        aria-label="Refresh OpenCode sessions"
         title="Refresh sessions from the Agent"
         @click="emit('refresh')"
       >
-        {{ sessionStore.isRefreshingSessions ? '…' : '↻' }}
+        {{ isRefreshing ? '…' : '↻' }}
       </button>
     </div>
 
-    <p v-if="sessionStore.sessionListError" class="list-error">
-      {{ sessionStore.sessionListError }}
+    <p v-if="listError" class="list-error">
+      {{ listError }}
     </p>
 
-    <div v-else-if="sessionStore.isRefreshingSessions" class="empty-state">
+    <div v-else-if="isRefreshing" class="empty-state">
       <p>Loading sessions from the Agent…</p>
     </div>
 
@@ -68,12 +79,38 @@ function handleResume(session: SavedSession) {
       >
         <button
           class="session-item"
+          :class="{
+            active: sessionStore.isSessionActive(session.agentName, session.sessionId),
+          }"
           type="button"
-          :disabled="sessionStore.isLoading || resumeDisabled"
+          :aria-current="
+            sessionStore.isSessionActive(session.agentName, session.sessionId)
+              ? 'page'
+              : undefined
+          "
+          :disabled="
+            sessionStore.isSessionHydrating(
+              session.agentName,
+              session.sessionId,
+            ) ||
+            (resumeDisabled &&
+              !sessionStore.isSessionOpen(
+                session.agentName,
+                session.sessionId,
+              ))
+          "
           @click="handleResume(session)"
         >
           <span class="session-title">{{ session.title }}</span>
-          <span class="session-date">{{ formatDate(session.lastUpdated) }}</span>
+          <span class="session-meta">
+            <span class="session-date">{{ formatDate(session.lastUpdated) }}</span>
+            <span
+              v-if="sessionStore.isSessionOpen(session.agentName, session.sessionId)"
+              class="open-badge"
+            >
+              Open
+            </span>
+          </span>
         </button>
       </li>
     </ul>
@@ -166,6 +203,15 @@ ul {
   background: var(--bg-hover, #f5f5f5);
 }
 
+.session-item.active {
+  border-color: var(--bg-primary, #0066cc);
+}
+
+.session-item:focus-visible {
+  outline: 2px solid var(--bg-primary, #0066cc);
+  outline-offset: 2px;
+}
+
 .session-item:disabled {
   cursor: not-allowed;
   opacity: 0.6;
@@ -181,5 +227,19 @@ ul {
 .session-date {
   font-size: 0.75rem;
   color: var(--text-muted, #999);
+}
+
+.session-meta {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.open-badge {
+  color: var(--text-accent, #0066cc);
+  font-size: 0.7rem;
+  font-weight: 600;
 }
 </style>

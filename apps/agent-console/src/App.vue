@@ -1,101 +1,170 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+} from 'vue';
 import { useConfigStore } from './stores/config';
 import { useSessionStore } from './stores/session';
-import AgentSelector from './components/AgentSelector.vue';
-import SessionList from './components/SessionList.vue';
+import AuthMethodDialog from './components/AuthMethodDialog.vue';
 import ChatView from './components/ChatView.vue';
 import PermissionDialog from './components/PermissionDialog.vue';
-import AuthMethodDialog from './components/AuthMethodDialog.vue';
-import TrafficMonitor from './components/TrafficMonitor.vue';
-import StartupProgress from './components/StartupProgress.vue';
-import type { SavedSession } from './lib/types';
+import ProfileSidebar from './components/ProfileSidebar.vue';
+import UiIcon from './components/UiIcon.vue';
 
 const configStore = useConfigStore();
 const sessionStore = useSessionStore();
-
-const selectedAgent = ref('');
-const selectedCwd = ref('');
 const showSidebar = ref(true);
-const showTrafficMonitor = ref(false);
-const showStartupDetails = ref(false);
-
-// Reactive flag tracking whether the viewport is narrow enough to show the
-// sidebar as a slide-in drawer (mobile / very narrow desktop windows). Used
-// by the template to decide when the backdrop is interactive and by
-// onMounted to default the drawer closed.
 const isNarrowLayout = ref(false);
+const welcomeReveal = ref<HTMLButtonElement | null>(null);
 let narrowMql: MediaQueryList | null = null;
-function syncNarrowLayout() {
-  if (narrowMql) isNarrowLayout.value = narrowMql.matches;
-}
-
-// Foreground-reconnect plumbing. Mobile OSes freeze the WebView when the
-// app is backgrounded and routers may drop the idle TCP connection while
-// we're away. When the user returns we ask the session store to silently
-// reattach to the last session if we have one.
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-function scheduleReconnect() {
-  // Coalesce rapid visibility/online flips into a single attempt.
-  if (reconnectTimer) return;
-  reconnectTimer = setTimeout(() => {
-    reconnectTimer = null;
-    // Skip if the browser still thinks we're offline; we'll be re-triggered
-    // by the `online` event when connectivity returns.
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
-    void sessionStore.tryReconnect();
-  }, 250);
-}
-function handleVisibilityChange() {
-  if (typeof document !== 'undefined' && !document.hidden) scheduleReconnect();
-}
-function handleOnline() {
-  scheduleReconnect();
-}
+let drawerReturnFocus: HTMLElement | null = null;
 
-const isConnected = computed(() => sessionStore.isConnected);
-const isLoading = computed(() => sessionStore.isLoading);
+const hasActiveSession = computed(() => sessionStore.hasActiveSession);
+const hasAgents = computed(() => configStore.hasAgents);
 const isConnecting = computed(() => sessionStore.isConnecting);
 const isReconnecting = computed(() => sessionStore.isReconnecting);
-const error = computed(() => sessionStore.error || configStore.error);
-const hasAgents = computed(() => configStore.hasAgents);
-const selectedProfileUnavailable = computed(
-  () => configStore.getAgent(selectedAgent.value)?.status === 'unavailable',
+const isConnected = computed(() => sessionStore.isConnected);
+const error = computed(
+  () => sessionStore.error || configStore.error,
 );
-
-// Name of the agent the reconnect banner refers to. Falls back to the
-// generic "agent" if the saved session has no name (shouldn't happen).
 const reconnectingAgentName = computed(
-  () => sessionStore.currentSession?.agentName ?? 'agent'
+  () => sessionStore.currentSession?.agentName ?? 'Agent',
 );
-
-// True when there is a saved session we *could* reconnect to but the
-// transport is currently down. Surfaces a manual "Reconnect" affordance on
-// the error banner so users don't have to background+foreground the app to
-// trigger the auto path.
 const canManuallyReconnect = computed(
   () =>
     !isConnected.value &&
     !isReconnecting.value &&
     !isConnecting.value &&
-    !!sessionStore.currentSession?.supportsLoadSession
+    !!sessionStore.currentSession?.supportsLoadSession,
+);
+const pendingPermission = computed(() => sessionStore.pendingPermission);
+const pendingAuthMethods = computed(() => sessionStore.pendingAuthMethods);
+const pendingAuthAgentName = computed(
+  () => sessionStore.pendingAuthAgentName,
 );
 
-async function handleManualReconnect() {
+function syncNarrowLayout(): void {
+  if (narrowMql) isNarrowLayout.value = narrowMql.matches;
+}
+
+function scheduleReconnect(): void {
+  if (reconnectTimer) return;
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+    void sessionStore.tryReconnect();
+  }, 250);
+}
+
+function handleVisibilityChange(): void {
+  if (typeof document !== 'undefined' && !document.hidden) scheduleReconnect();
+}
+
+function handleOnline(): void {
+  scheduleReconnect();
+}
+
+async function closeSidebar(restoreFocus = true): Promise<void> {
+  showSidebar.value = false;
+  await nextTick();
+  if (!restoreFocus) return;
+  const returnTarget =
+    drawerReturnFocus?.isConnected && !drawerReturnFocus.closest('[inert]')
+      ? drawerReturnFocus
+      : document.querySelector<HTMLButtonElement>('[data-sidebar-reveal]');
+  drawerReturnFocus = null;
+  returnTarget?.focus();
+}
+
+async function collapseSidebar(): Promise<void> {
+  await closeSidebar();
+}
+
+async function expandSidebar(): Promise<void> {
+  if (isNarrowLayout.value) {
+    drawerReturnFocus =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+  }
+  showSidebar.value = true;
+  await nextTick();
+  document
+    .querySelector<HTMLButtonElement>(
+      '#profile-sidebar [aria-label="Collapse sidebar"]',
+    )
+    ?.focus();
+}
+
+async function handleConversationSelected(): Promise<void> {
+  if (isNarrowLayout.value) await closeSidebar();
+}
+
+async function handleBackdropClick(): Promise<void> {
+  if (isNarrowLayout.value) await closeSidebar();
+}
+
+function drawerFocusableElements(): HTMLElement[] {
+  const sidebar = document.querySelector<HTMLElement>('#profile-sidebar');
+  if (!sidebar) return [];
+  return Array.from(
+    sidebar.querySelectorAll<HTMLElement>(
+      'button:not(:disabled), [href], input:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+    ),
+  ).filter((element) => element.offsetParent !== null);
+}
+
+function handleWindowKeydown(event: KeyboardEvent): void {
+  if (!isNarrowLayout.value || !showSidebar.value) return;
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    void closeSidebar();
+    return;
+  }
+  if (event.key !== 'Tab') return;
+  const focusable = drawerFocusableElements();
+  if (focusable.length === 0) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+async function handleManualReconnect(): Promise<void> {
   await sessionStore.tryReconnect();
 }
 
-// Watch for permission requests from session store
-const pendingPermission = computed(() => sessionStore.pendingPermission);
+function clearError(): void {
+  sessionStore.clearError(sessionStore.currentSession?.agentName);
+  configStore.clearError();
+}
 
-// Watch for auth method selection requests
-const pendingAuthMethods = computed(() => sessionStore.pendingAuthMethods);
-const pendingAuthAgentName = computed(() => sessionStore.pendingAuthAgentName);
+function handlePermissionSelect(optionId: string): void {
+  sessionStore.resolvePermission(optionId);
+}
+
+function handlePermissionCancel(): void {
+  sessionStore.cancelPermission();
+}
+
+function handleAuthMethodSelect(methodId: string): void {
+  sessionStore.selectAuthMethod(methodId);
+}
+
+function handleAuthMethodCancel(): void {
+  sessionStore.cancelAuthSelection();
+}
 
 onMounted(async () => {
-  // Track viewport width so the sidebar can default-collapse into a drawer
-  // on phones / narrow windows. We watch a MediaQueryList rather than
-  // resize for correctness across orientation changes on iOS.
   if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
     narrowMql = window.matchMedia('(max-width: 800px)');
     syncNarrowLayout();
@@ -103,286 +172,156 @@ onMounted(async () => {
     if (isNarrowLayout.value) showSidebar.value = false;
   }
 
-  // Initialize stores
   await sessionStore.initStore();
   await configStore.loadConfig();
   await configStore.setupHotReload();
 
-  // Hook foreground-reconnect listeners. `pageshow` fires both on initial
-  // navigation and when iOS restores a frozen WebView from the back/forward
-  // cache, so it complements `visibilitychange` on Safari/iOS.
-  if (typeof document !== 'undefined') {
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-  }
-  if (typeof window !== 'undefined') {
-    window.addEventListener('pageshow', scheduleReconnect);
-    window.addEventListener('online', handleOnline);
-  }
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('keydown', handleWindowKeydown);
+  window.addEventListener('pageshow', scheduleReconnect);
+  window.addEventListener('online', handleOnline);
 });
-
-async function handleAgentSelect(agentName: string) {
-  selectedAgent.value = agentName;
-  const profile = configStore.getAgent(agentName);
-  selectedCwd.value = profile?.cwd ?? '';
-  await sessionStore.refreshSessions(agentName);
-}
-
-async function handleNewSession() {
-  if (!selectedAgent.value) return;
-
-  const profile = configStore.getAgent(selectedAgent.value);
-  const cwd = profile?.cwd?.trim() ?? '';
-  if (!cwd) {
-    sessionStore.error = 'The selected Agent Profile has no fixed working directory.';
-    return;
-  }
-
-  try {
-    await sessionStore.createSession(selectedAgent.value, cwd);
-  } catch (e) {
-    console.error('Failed to create session:', e);
-  }
-}
-
-async function handleResumeSession(session: SavedSession) {
-  selectedAgent.value = session.agentName;
-  selectedCwd.value = session.cwd;
-  try {
-    await sessionStore.resumeSession(session);
-  } catch (e) {
-    console.error('Failed to resume session:', e);
-  }
-}
-
-async function handleDisconnect() {
-  await sessionStore.disconnect();
-}
-
-async function handleRefreshSessions() {
-  if (selectedAgent.value) {
-    await sessionStore.refreshSessions(selectedAgent.value);
-  }
-}
-
-async function handleCancelConnection() {
-  await sessionStore.cancelConnection();
-}
-
-function handlePermissionSelect(optionId: string) {
-  sessionStore.resolvePermission(optionId);
-}
-
-function handlePermissionCancel() {
-  sessionStore.cancelPermission();
-}
-
-function handleAuthMethodSelect(methodId: string) {
-  sessionStore.selectAuthMethod(methodId);
-}
-
-function handleAuthMethodCancel() {
-  sessionStore.cancelAuthSelection();
-}
-
-function toggleSidebar() {
-  showSidebar.value = !showSidebar.value;
-}
-
-/** Close the drawer when the user taps the backdrop on a narrow viewport. */
-function handleBackdropClick() {
-  if (isNarrowLayout.value) showSidebar.value = false;
-}
 
 onBeforeUnmount(() => {
-  if (narrowMql) {
-    narrowMql.removeEventListener('change', syncNarrowLayout);
-    narrowMql = null;
-  }
-  if (typeof document !== 'undefined') {
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('pageshow', scheduleReconnect);
-    window.removeEventListener('online', handleOnline);
-  }
-  if (reconnectTimer) {
-    clearTimeout(reconnectTimer);
-    reconnectTimer = null;
-  }
+  narrowMql?.removeEventListener('change', syncNarrowLayout);
+  narrowMql = null;
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  window.removeEventListener('keydown', handleWindowKeydown);
+  window.removeEventListener('pageshow', scheduleReconnect);
+  window.removeEventListener('online', handleOnline);
+  if (reconnectTimer) clearTimeout(reconnectTimer);
 });
-
-function clearError() {
-  sessionStore.clearError();
-  configStore.clearError();
-}
 </script>
 
 <template>
-  <div class="app-container" :class="{ 'narrow-layout': isNarrowLayout }">
-    <!-- Sidebar (slides in as a drawer on narrow viewports) -->
-    <aside
-      v-show="showSidebar"
-      class="sidebar"
-      :class="{ 'is-drawer': isNarrowLayout }"
-    >
-      <div class="sidebar-header">
-        <h1>Ontology Agent Console</h1>
-        <div class="header-actions">
-          <button
-            class="settings-btn"
-            :class="{ active: showTrafficMonitor }"
-            @click="showTrafficMonitor = !showTrafficMonitor"
-            title="ACP Traffic Monitor"
-          >📡</button>
-          <button class="toggle-btn" @click="toggleSidebar">◀</button>
-        </div>
-      </div>
+  <div
+    class="app-shell"
+    :class="{
+      'sidebar-collapsed': !showSidebar,
+      'narrow-layout': isNarrowLayout,
+    }"
+  >
+    <ProfileSidebar
+      :collapsed="!showSidebar"
+      :drawer="isNarrowLayout"
+      @collapse="collapseSidebar"
+      @conversation-selected="handleConversationSelected"
+    />
 
-      <div class="sidebar-content">
-        <!-- Agent Selection -->
-        <div class="section">
-          <AgentSelector
-            v-model:selected="selectedAgent"
-            :disabled="isConnecting || isConnected"
-            @select="handleAgentSelect"
-          />
-
-          <!-- ACP requires cwd, but the server-owned Profile fixes it. -->
-          <div class="cwd-picker">
-            <label>Profile workspace</label>
-            <span class="cwd-path" :title="selectedCwd || 'Select an Agent Profile'">
-              {{ selectedCwd ? selectedCwd.split(/[\\/]/).pop() : '—' }}
-            </span>
-          </div>
-
-          <button
-            v-if="hasAgents && !isConnected && !isConnecting"
-            class="new-session-btn"
-            :disabled="
-              !selectedAgent ||
-              selectedProfileUnavailable ||
-              isLoading ||
-              sessionStore.isRefreshingSessions
-            "
-            @click="handleNewSession"
-          >
-            {{ isLoading ? 'Connecting...' : 'New conversation' }}
-          </button>
-
-          <!-- Startup Progress -->
-          <StartupProgress
-            v-if="isConnecting"
-            :agent-name="selectedAgent"
-            :phase="sessionStore.startupPhase"
-            :logs="sessionStore.startupLogs"
-            :elapsed-seconds="sessionStore.startupElapsed"
-            :show-details="showStartupDetails"
-            @cancel="handleCancelConnection"
-            @toggle-details="showStartupDetails = !showStartupDetails"
-          />
-
-          <button
-            v-if="isConnected"
-            class="disconnect-btn"
-            @click="handleDisconnect"
-          >
-            Disconnect
-          </button>
-        </div>
-
-        <!-- Session List -->
-        <div class="section">
-          <SessionList
-            :agent-name="selectedAgent"
-            :resume-disabled="isConnected || isConnecting"
-            @resume="handleResumeSession"
-            @refresh="handleRefreshSessions"
-          />
-        </div>
-      </div>
-    </aside>
-
-    <!-- Backdrop behind the drawer on narrow viewports. Only intercepts
-         taps when the layout is narrow; on desktop it's display:none. -->
     <div
-      v-show="isNarrowLayout && showSidebar"
+      v-if="isNarrowLayout && showSidebar"
       class="drawer-backdrop"
+      aria-hidden="true"
       @click="handleBackdropClick"
     />
 
-    <!-- Mobile hamburger to open the drawer when collapsed. The desktop
-         chevron toggle (`.sidebar-toggle-collapsed`) is hidden on narrow
-         viewports via CSS so we don't show two affordances. -->
-    <button
-      v-show="isNarrowLayout && !showSidebar"
-      class="mobile-hamburger"
-      @click="showSidebar = true"
-      aria-label="Open menu"
-    >☰</button>
-
-    <!-- Collapsed sidebar toggle -->
-    <button
-      v-if="!showSidebar"
-      class="sidebar-toggle-collapsed"
-      @click="toggleSidebar"
+    <main
+      class="workspace"
+      :inert="isNarrowLayout && showSidebar"
+      :aria-hidden="isNarrowLayout && showSidebar ? 'true' : undefined"
     >
-      ▶
-    </button>
-
-    <!-- Main Content Area -->
-    <div class="main-area">
-      <main class="main-content">
-        <!-- Reconnect banner takes priority over the error banner: while a
-             reconnect is in progress we don't want a contradictory red
-             "Connection lost" pill. -->
-        <div v-if="isReconnecting" class="reconnect-banner">
-          <span class="reconnect-spinner" aria-hidden="true"></span>
-          <span class="reconnect-text">
+      <div class="status-stack" aria-live="polite">
+        <div v-if="isReconnecting" class="status-banner">
+          <span class="status-spinner" aria-hidden="true" />
+          <span>
             Reconnecting to <strong>{{ reconnectingAgentName }}</strong>…
           </span>
         </div>
-
-        <!-- Error display (suppressed while reconnecting). -->
-        <div v-else-if="error" class="error-banner">
-          <span class="error-icon">⚠</span>
-          <span class="error-text">{{ error }}</span>
+        <div v-else-if="error" class="status-banner is-error">
+          <UiIcon name="alert" />
+          <span class="status-copy">{{ error }}</span>
           <button
             v-if="canManuallyReconnect"
-            class="error-action"
+            class="banner-action"
+            type="button"
             @click="handleManualReconnect"
-            title="Reconnect"
-          >Reconnect</button>
-          <button class="error-close" @click="clearError" title="Dismiss">×</button>
+          >
+            Reconnect
+          </button>
+          <button
+            class="banner-icon-button"
+            type="button"
+            aria-label="Dismiss error"
+            title="Dismiss"
+            @click="clearError"
+          >
+            <UiIcon name="close" />
+          </button>
         </div>
+        <div
+          v-else-if="canManuallyReconnect"
+          class="status-banner"
+        >
+          <span class="status-copy">
+            <strong>{{ reconnectingAgentName }}</strong> is disconnected.
+          </span>
+          <button
+            class="banner-action"
+            type="button"
+            @click="handleManualReconnect"
+          >
+            Reconnect
+          </button>
+        </div>
+      </div>
 
-        <!-- Chat View when connected -->
-        <ChatView v-if="isConnected" />
+      <ChatView
+        v-if="hasActiveSession"
+        :sidebar-collapsed="!showSidebar"
+        @toggle-sidebar="expandSidebar"
+      />
 
-        <!-- Welcome screen when not connected -->
-        <div v-else class="welcome-screen">
-          <h2>Ontology Agent Console</h2>
-          <p>Select an Agent Profile, resume an OpenCode session, or start a new conversation.</p>
-          <p v-if="!hasAgents" class="hint">
-            No valid Agent Profiles were published by the Bridge.
+      <template v-else>
+        <header class="workspace-header">
+          <div class="workspace-heading-row">
+            <button
+              v-show="!showSidebar"
+              ref="welcomeReveal"
+              class="icon-button sidebar-reveal"
+              type="button"
+              data-sidebar-reveal
+              aria-label="Expand sidebar"
+              aria-controls="profile-sidebar"
+              :aria-expanded="showSidebar"
+              title="Expand sidebar"
+              @click="expandSidebar"
+            >
+              <UiIcon name="panel-left" />
+            </button>
+            <div class="conversation-heading">
+              <h1>Ontology Agent Console</h1>
+              <div class="conversation-profile">
+                <UiIcon name="folder" />
+                <span>Choose a Profile conversation</span>
+              </div>
+            </div>
+          </div>
+        </header>
+        <div class="welcome-screen">
+          <div class="welcome-mark" aria-hidden="true">
+            <UiIcon name="logo" />
+          </div>
+          <h2>Start with an Agent Profile</h2>
+          <p>
+            Create a conversation from a fixed Profile in the sidebar, or
+            reopen an existing OpenCode Session.
+          </p>
+          <p v-if="!hasAgents" class="welcome-hint">
+            No valid Agent Profiles were published by the ACP Bridge.
           </p>
         </div>
-      </main>
+      </template>
+    </main>
 
-      <!-- Traffic Monitor Panel -->
-      <div v-if="showTrafficMonitor" class="traffic-panel">
-        <TrafficMonitor @close="showTrafficMonitor = false" />
-      </div>
-    </div>
-
-    <!-- Permission Dialog -->
     <PermissionDialog
       v-if="pendingPermission"
       :request="pendingPermission"
+      :agent-name="sessionStore.pendingPermissionAgentName"
+      :session-title="sessionStore.pendingPermissionSessionTitle"
       @select="handlePermissionSelect"
       @cancel="handlePermissionCancel"
     />
 
-    <!-- Auth Method Dialog -->
     <AuthMethodDialog
       v-if="pendingAuthMethods.length > 0"
       :auth-methods="pendingAuthMethods"
@@ -390,425 +329,360 @@ function clearError() {
       @select="handleAuthMethodSelect"
       @cancel="handleAuthMethodCancel"
     />
-
   </div>
 </template>
 
 <style>
 :root {
-  --bg-primary: #0066cc;
-  --bg-primary-hover: #0052a3;
-  --bg-sidebar: #f8f9fa;
+  color-scheme: light;
+  --sidebar-width: 326px;
+  --bg: #ffffff;
+  --sidebar-bg: #f7f7f5;
+  --surface: #ffffff;
+  --surface-subtle: #f5f5f3;
+  --surface-hover: #eeeeeb;
+  --surface-active: #e5e5e2;
+  --text: #282826;
+  --text-primary: #282826;
+  --text-secondary: #5f5f5b;
+  --text-muted: #8a8a84;
+  --line: #deded9;
+  --line-soft: #e9e9e5;
+  --border-color: #deded9;
+  --accent: #3b6ee8;
+  --text-accent: #3b6ee8;
+  --danger: #c83f35;
+  --danger-soft: #fff1ef;
+  --success: #39835d;
+  --warning: #b47b20;
   --bg-main: #ffffff;
-  --bg-hover: #f0f0f0;
-  --bg-user: #e3f2fd;
-  --bg-assistant: #f5f5f5;
-  --bg-code: #282c34;
-  --bg-success: #28a745;
-  --bg-danger: #dc3545;
-  --bg-warning: #fff3cd;
-  --text-primary: #333;
-  --text-secondary: #666;
-  --text-muted: #999;
-  --text-accent: #0066cc;
-  --text-code: #abb2bf;
-  --border-color: #e0e0e0;
-
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  font-size: 16px;
+  --bg-hover: #eeeeeb;
+  --bg-code: #f4f4f2;
+  --text-code: #40403c;
+  --bg-warning: #fff7e8;
+  --shadow:
+    0 18px 50px rgba(32, 32, 28, 0.12),
+    0 2px 10px rgba(32, 32, 28, 0.08);
+  font-family:
+    Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  font-size: 14px;
+  font-synthesis: none;
   line-height: 1.5;
-  color: var(--text-primary);
-  background-color: #ffffff;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-primary: #4da6ff;
-    --bg-primary-hover: #3399ff;
-    --bg-sidebar: #1e1e1e;
-    --bg-main: #252525;
-    --bg-hover: #333;
-    --bg-user: #1a3a5c;
-    --bg-assistant: #2d2d2d;
-    --text-primary: #e0e0e0;
-    --text-secondary: #a0a0a0;
-    --text-muted: #707070;
-    --text-accent: #4da6ff;
-    --border-color: #404040;
-    background-color: #252525;
-  }
+  -webkit-font-smoothing: antialiased;
 }
 
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
-html, body, #app {
+html,
+body,
+#app {
+  width: 100%;
   height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background: var(--bg);
+}
+
+button,
+textarea {
+  color: inherit;
+  font: inherit;
+}
+
+button:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 74%, white);
+  outline-offset: 2px;
+}
+
+svg {
+  display: block;
+}
+
+@media (max-width: 1040px) and (min-width: 801px) {
+  :root {
+    --sidebar-width: 304px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 </style>
 
 <style scoped>
-.app-container {
-  display: flex;
-  height: 100vh;
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
   overflow: hidden;
+  transition: grid-template-columns 180ms ease;
 }
 
-.sidebar {
-  width: 320px;
-  min-width: 320px;
-  background: var(--bg-sidebar);
-  border-right: 1px solid var(--border-color);
+.app-shell.sidebar-collapsed {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+
+.workspace {
+  position: relative;
   display: flex;
+  min-width: 0;
+  min-height: 0;
   flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
 }
 
-.sidebar-header {
+.workspace-header {
   display: flex;
+  min-height: 64px;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-color);
+  gap: 20px;
+  border-bottom: 1px solid var(--line-soft);
+  padding: 11px 24px 11px 28px;
 }
 
-.sidebar-header h1 {
-  font-size: 1.05rem;
-  margin: 0;
-}
-
-.header-actions {
+.workspace-heading-row {
   display: flex;
-  gap: 0.25rem;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
 }
 
-.header-actions button,
-.toggle-btn {
-  padding: 0.25rem 0.5rem;
-  border: none;
+.icon-button {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
   background: transparent;
-  cursor: pointer;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-}
-
-.header-actions button:hover,
-.toggle-btn:hover {
-  color: var(--text-primary);
-}
-
-.sidebar-content {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.section {
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.new-session-btn,
-.disconnect-btn {
-  width: 100%;
-  margin-top: 0.75rem;
-  padding: 0.625rem 1rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.new-session-btn {
-  background: var(--bg-primary);
-  color: white;
-}
-
-.new-session-btn:hover:not(:disabled) {
-  background: var(--bg-primary-hover);
-}
-
-.new-session-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.cwd-picker {
-  margin-top: 0.75rem;
-}
-
-.cwd-picker label {
-  display: block;
-  font-size: 0.8rem;
   color: var(--text-secondary);
-  margin-bottom: 0.25rem;
+  cursor: pointer;
 }
 
-.cwd-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.icon-button:hover {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--text);
 }
 
-.cwd-path {
-  display: block;
-  width: 100%;
-  padding: 0.375rem 0.5rem;
-  background: var(--bg-main);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  font-size: 0.8rem;
-  color: var(--text-primary);
-  white-space: nowrap;
+.icon-button :deep(svg) {
+  width: 16px;
+  height: 16px;
+}
+
+.conversation-heading {
+  min-width: 0;
+}
+
+.conversation-heading h1 {
   overflow: hidden;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 630;
+  letter-spacing: -0.01em;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.disconnect-btn {
-  background: var(--bg-danger);
-  color: white;
-}
-
-.disconnect-btn:hover {
-  background: #c82333;
-}
-
-.sidebar-toggle-collapsed {
-  position: fixed;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 0.5rem;
-  border: 1px solid var(--border-color);
-  border-left: none;
-  border-radius: 0 4px 4px 0;
-  background: var(--bg-sidebar);
-  cursor: pointer;
-}
-
-.main-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: var(--bg-main);
-}
-
-.traffic-panel {
-  flex-shrink: 0;
-  border-top: 2px solid var(--border-color);
-}
-
-.error-banner {
+.conversation-profile {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: #fee;
-  color: #c00;
-  border-bottom: 1px solid #fcc;
+  gap: 5px;
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 11px;
 }
 
-.error-icon {
-  flex-shrink: 0;
-}
-
-.error-text {
-  flex: 1;
-}
-
-.error-close {
-  flex-shrink: 0;
-  padding: 0.25rem 0.5rem;
-  border: none;
-  background: transparent;
-  color: #c00;
-  font-size: 1.25rem;
-  line-height: 1;
-  cursor: pointer;
-  opacity: 0.6;
-  border-radius: 4px;
-}
-
-.error-close:hover {
-  opacity: 1;
-  background: rgba(204, 0, 0, 0.1);
-}
-
-/* Inline "Reconnect" affordance shown next to a stale error when we have a
-   saved session we could reattach to. */
-.error-action {
-  flex-shrink: 0;
-  padding: 0.25rem 0.6rem;
-  margin-right: 0.25rem;
-  border: 1px solid #c00;
-  border-radius: 4px;
-  background: transparent;
-  color: #c00;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.error-action:hover {
-  background: rgba(204, 0, 0, 0.1);
-}
-
-/* Foreground-reconnect banner. Distinct visual style from the red error
-   banner so users immediately read it as transient progress, not failure. */
-.reconnect-banner {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.75rem 1rem;
-  background: #e0f2fe;
-  color: #0369a1;
-  border-bottom: 1px solid #bae6fd;
-}
-
-.reconnect-text {
-  flex: 1;
-  font-size: 0.9rem;
-}
-
-.reconnect-text strong {
-  font-weight: 600;
-}
-
-.reconnect-spinner {
-  flex-shrink: 0;
-  width: 14px;
-  height: 14px;
-  border: 2px solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: reconnect-spin 0.9s linear infinite;
-}
-
-@keyframes reconnect-spin {
-  to { transform: rotate(360deg); }
-}
-
-@media (prefers-color-scheme: dark) {
-  .reconnect-banner {
-    background: #082f49;
-    color: #7dd3fc;
-    border-bottom-color: #0c4a6e;
-  }
+.conversation-profile :deep(svg) {
+  width: 12px;
+  height: 12px;
 }
 
 .welcome-screen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 2rem;
+  display: grid;
+  max-width: 430px;
+  margin: auto;
+  justify-items: center;
+  padding: 40px;
   color: var(--text-secondary);
+  text-align: center;
+}
+
+.welcome-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 16px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  box-shadow: 0 2px 8px rgba(30, 30, 27, 0.06);
+}
+
+.welcome-mark :deep(svg) {
+  width: 23px;
+  height: 23px;
 }
 
 .welcome-screen h2 {
-  margin-bottom: 0.5rem;
-  color: var(--text-primary);
+  margin: 0;
+  color: var(--text);
+  font-size: 19px;
+  letter-spacing: -0.015em;
 }
 
-.welcome-screen .hint {
-  margin-top: 1rem;
-  font-size: 0.875rem;
-  color: var(--text-muted);
+.welcome-screen p {
+  margin: 9px 0 0;
+  font-size: 13px;
+  line-height: 1.65;
 }
 
-/* ---------- Mobile / narrow-viewport layout ---------- */
+.welcome-hint {
+  color: var(--danger);
+}
+
+.status-stack {
+  position: absolute;
+  z-index: 24;
+  top: 74px;
+  right: 18px;
+  left: 18px;
+  display: grid;
+  justify-items: center;
+  pointer-events: none;
+}
+
+.status-banner {
+  display: flex;
+  max-width: min(720px, 100%);
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 11px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 5px 20px rgba(32, 32, 28, 0.1);
+  color: var(--text-secondary);
+  font-size: 12px;
+  pointer-events: auto;
+}
+
+.status-banner.is-error {
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--line));
+  color: var(--danger);
+}
+
+.status-banner > :deep(svg) {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.status-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.status-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #c5c5bf;
+  border-top-color: var(--text-secondary);
+  border-radius: 50%;
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.banner-action {
+  border: 0;
+  border-radius: 7px;
+  padding: 5px 8px;
+  background: var(--surface-hover);
+  color: inherit;
+  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.banner-icon-button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.banner-icon-button :deep(svg) {
+  width: 15px;
+  height: 15px;
+}
 
 .drawer-backdrop {
   display: none;
 }
 
-.mobile-hamburger {
-  display: none;
-}
-
 @media (max-width: 800px) {
-  .app-container {
-    /* Prevent the off-screen drawer from causing horizontal scroll. */
-    overflow-x: hidden;
+  .app-shell,
+  .app-shell.sidebar-collapsed {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  /* Banners sit at the very top of the main area, where the OS status bar
-     / camera notch overlap on phones. Extend the banner colour through the
-     safe-area inset and push the text below it so the status bar reads as
-     a tinted continuation of the banner instead of clipping its content. */
-  .reconnect-banner,
-  .error-banner {
-    padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
-  }
-
-  .sidebar.is-drawer {
+  .app-shell :deep(.sidebar.is-drawer) {
     position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 85vw;
-    max-width: 360px;
-    z-index: 100;
-    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.3);
-    /* Honour iOS notch / Android status bar. */
-    padding-top: env(safe-area-inset-top, 0px);
+    z-index: 42;
+    inset: 0 auto 0 0;
+    width: min(85vw, 360px);
+    box-shadow: 12px 0 36px rgba(32, 32, 28, 0.14);
   }
 
   .drawer-backdrop {
+    position: fixed;
+    z-index: 41;
     display: block;
-    position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 90;
+    background: rgba(30, 30, 28, 0.24);
+    backdrop-filter: blur(2px);
   }
 
-  /* Hide the desktop chevron when the mobile hamburger is in play. */
-  .sidebar-toggle-collapsed {
-    display: none;
+  .workspace-header {
+    padding-top: calc(11px + env(safe-area-inset-top, 0px));
+    padding-right: 16px;
+    padding-left: 16px;
   }
 
-  .mobile-hamburger {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-    top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
-    left: 0.5rem;
-    z-index: 50;
+  .sidebar-reveal {
     width: 44px;
     height: 44px;
-    padding: 0;
-    background: var(--bg-sidebar);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 1.25rem;
-    cursor: pointer;
-    color: var(--text-primary);
-  }
-
-  /* Tap-target sizing for the icon buttons inside the sidebar header. */
-  .settings-btn,
-  .toggle-btn {
-    min-width: 40px;
-    min-height: 40px;
-    font-size: 1rem;
-  }
-
-  /* Honour the iOS home indicator at the bottom of the main area. */
-  .main-area {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
 </style>

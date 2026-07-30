@@ -19,8 +19,9 @@
 
 ## ADR-004：可信单用户与固定 Profile 白名单
 
-- 状态：接受
-- 决策：首版只监听本机或受控内网；浏览器不能提交命令、cwd 或环境变量。
+- 状态：被 ADR-023 收紧
+- 原决策：首版只监听本机或受控内网；浏览器不能提交命令、cwd 或环境变量。
+- 当前约束：首版只允许 loopback；“受控内网”也必须等认证和主机隔离设计完成后再开放。
 
 ## ADR-005：一 Profile 一持久进程
 
@@ -151,7 +152,8 @@
   `session/list` 后关闭；创建或加载会话时再建立正式连接。已有活跃会话时复用该连接。
 - 结果：不增加 Session 后端或协议多路复用；代价是进入会话前多启动一次轻量 ACP
   进程。
-- 补充：当前 ACP 没有删除持久 Session 的标准方法，UI 不提供伪删除按钮。
+- 补充：当前 ACP 没有删除持久 Session 的标准方法。UI 不做本地伪删除；后续
+  ADR-035 采用窄幅 Profile-aware Bridge 端点调用 OpenCode 原生 CLI。
 
 ## ADR-021：Profile 发布采用严格 Bundle 与外部本体摘要
 
@@ -280,10 +282,11 @@
 - Agent 自主性：OAG Profile 不设置固定 `steps`，也不使用 wrapper-only Bash 白名单。
   本机 Demo 按既有安全边界开放 Bash，由 Skill 和 Agent Prompt 描述推荐路径；Agent
   可根据观察反思和继续调用，实际事件完整投影到页面。
-- 边界：首版仍不增加并排比较、自动评分、自有历史数据库或总轮次计时器；页面展示
+- 边界：首版仍不增加并排比较、自动评分或自有历史数据库；页面展示
   和历史事实继续来自 OpenCode ACP。当前合格标准验证流程连通性，不把查询计划业务
   正确性、模型附带过渡语或非关键 Tool 权限拒绝混入接线判定；这些事实仍必须在 UI
-  中完整可见。
+  中完整可见。客户端可以显示当前在线轮次的观测耗时，但不把它写成 OpenCode 权威
+  历史。
 
 ## ADR-031：loopback OAG 请求显式绕过系统代理
 
@@ -311,3 +314,91 @@
 - 边界：首版保留用户已选择的开放 Bash 和 Agent 自主控制，不新增 wrapper-only
   Tool、容器或文件系统沙箱。未来需要严格实验隔离时，应把它作为独立门控能力，而
   不是隐藏或改写已发生的 Agent 轨迹。
+
+## ADR-033：完整 JSON 只在展示层格式化
+
+- 状态：接受
+- 事实：两条基线故意要求模型输出裸 `data-query-plan.v1` JSON，以保持结果可直接
+  解析；acp-ui 的 Markdown 渲染会把这种裸 JSON 当作普通段落并折叠缩进。
+- 决策：最终 Agent 消息若整体是合法 JSON object/array，或以合法的
+  `json`/`application-json` fenced object/array 收尾，UI 在渲染时使用两空格缩进，
+  把 JSON 部分放入标题为“查询Plan”的可折叠安全代码块；末尾 fence 之前的 Markdown
+  说明保留在卡片之外。ACP 事件、Session Store 和 OpenCode 历史仍保留 Agent 原始
+  输出，不给 Prompt 增加 Markdown fence，也不改写消息内容。
+- 安全边界：JSON 字符串按纯文本转义后再进入 HTML；流式未闭合 JSON、标量、非末尾
+  fence、普通 Markdown 和无效 JSON 继续走现有 `marked` 加 DOMPurify 路径。
+
+## ADR-034：单页按 Profile 复用 ACP 连接并路由多 Session
+
+- 状态：WebUI 验证后采纳
+- 事实：ACP 的 `session/prompt`、`session/cancel`、`session/update` 和
+  `session/request_permission` 都携带 `sessionId`；OpenCode ACP 能在一个进程中管理
+  多个 Session。现有“必须断开才能切 Agent”来自前端唯一 `acpClient`、唯一
+  `currentSession` 和唯一消息数组，不是 ACP 或 Bridge 的限制。
+- 决策：浏览器维护 `Profile -> AcpClientBridge` 和
+  `(Profile, Session) -> ConversationState` 两级在线状态。每个 Profile 最多一条
+  WebSocket/ACP 连接，同 Profile 的 Session 复用该连接；不同 Profile 可以同时连接
+  和执行。`activeConversationKey` 只决定唯一 `ChatView` 显示哪条会话，后台事件继续
+  按 `profileId + sessionId` 写入原会话。
+- UI：固定 Profile 直接作为项目分组，每组提供只读信息和新建对话；组内合并已打开
+  会话与可恢复 Session，不再保留全局 Profile Selector、独立的 Open/History 分组或
+  断开按钮。不引入标签页框架、并排结果、同步广播或前端 Session 数据库。
+- 并发边界：第一版允许不同 Profile 的 Prompt 真并行，同一 Profile 同时只允许一轮
+  Prompt。当前 `AcpClientBridge` 每条连接只有一个 Permission resolver；同 Profile
+  并发轮次可能覆盖权限交互。以后若需要解除限制，先把 Permission 改为按请求或
+  Session 路由并补充 OpenCode 并发验证。
+- 持久性：打开会话和运行状态只存在浏览器内存；页面刷新后仍以 OpenCode
+  `session/list`/`session/load` 为事实源。后台 Profile 断线或报错不能清空其他
+  Profile 的会话。
+- 验证：同页启动 Direct-context 后，在其运行中创建 OAG Session；Direct 在后台完成，
+  OAG 独立展示 Skill、Bash、子图和最终消息。相同 OAG 连接可再创建第二个 Session，
+  另一轮执行时显示串行门控。刷新后仍通过 `session/list`/`session/load` 恢复历史。
+
+## ADR-035：固定 Profile 项目侧栏、真实删除与在线完成元信息
+
+- 状态：真实 WebUI 视觉与交互验证后采纳
+- 事实：用户已接受项目式 Profile 侧栏原型。ACP `0.13.1` 没有持久 Session 删除；
+  只移除浏览器行会在刷新后复现。OpenCode CLI 提供
+  `opencode session delete <sessionID>`。同时，ACP 历史不投影每轮回答的权威完成时间
+  和总耗时。
+- UI 决策：每个 Catalog Profile 固定为一个可折叠分组；Profile 级操作只有脱敏信息
+  与新建对话。Session 行保留独立状态点和直接垃圾桶按钮；活动/运行/等待权限状态不
+  与删除图标共用区域。侧栏整体可折叠，单页仍只有一个可见 `ChatView`，其他 Profile
+  可在后台继续执行。
+- 删除决策：新增同源 loopback
+  `DELETE /agents/:profileId/sessions/:sessionId`。Bridge 只接受严格 OpenCode Session
+  ID，禁止请求体，使用 Catalog 所属 cwd、配置 overlay 与独立 `OPENCODE_DB`，并以
+  参数数组而非 shell 启动 CLI。Profile 级 maintenance lock 在任一 ACP 请求在途、
+  重连或同 Profile 删除进行中时返回 409，并原子覆盖关闭空闲 ACP 子进程、CLI 删除
+  和释放锁。删除进程使用 TERM → 短 grace → KILL 的有界进程组终止。UI 将维护断开
+  视为预期，失效删除前的旧列表 generation，成功后恢复原会话或选择相邻会话并刷新
+  事实源；不保留会掩盖异常复现的永久 tombstone。
+- Profile 信息：`/agents` 只增加 Model ID/source、Retrieval Top-K/算法和 Ontology ID
+  等经过审查的非敏感字段；endpoint、密钥、环境变量名、命令、配置路径与状态目录仍
+  不返回浏览器。
+- 时序决策：实时 `session/prompt` 使用单调时钟计算客户端观测总耗时，成功响应用
+  `Date.now()` 记录浏览器当地完成时间。`cancelled` 不显示 Completed。历史
+  `session/load` 不使用 Session `updatedAt` 或加载耗时伪造页脚。
+- 验证：在 1280×720、DPR 2 的同一浏览器视口对照静态稿；Profile/Session 标题左缘
+  差为 0px，文件夹与标题中心差 0.5px，状态点和 28px 删除按钮间距 6px。实际 WebUI
+  验证了侧栏/分组折叠、信息卡、删除确认及焦点恢复、实时完成页脚，并通过新建空闲
+  Session → 删除 → 刷新不复现的持久删除检查。
+
+## ADR-036：紧凑 Session 列表与形式化输出层级
+
+- 状态：接受
+- 事实：当前桌面 Session 行的文字与上下边界留白过大；Thinking、Skill 加载和 Tool
+  执行都使用终端图标，无法快速辨别事件类型。Tool Call、ACP Plan 与最终 JSON 的展示
+  结构也不一致，通用 `ACP content` 面板经常重复 Output。
+- 密度决策：桌面 Session 行把上下留白压缩到原布局约一半，但不压缩标题字号或状态
+  语义；移动端保持至少 44 px 的 Session 行和行内操作触控目标。
+- 图标决策：Thinking、Skill 加载、Execute/Bash、普通 Tool 各使用语义不同的图标。
+  分类只影响 UI，不修改 ACP Tool Call，也不通过图标推断新的执行步骤。
+- 折叠决策：Tool Call 整卡、ACP Plan 和完整 Assistant JSON 均采用可展开/折叠的
+  摘要结构；最终 JSON 摘要固定命名为“查询Plan”。折叠状态是临时 UI 偏好，不写回
+  OpenCode Session。
+- 标题决策：形式化卡片标题固定一行，溢出使用省略号；标题节点通过 `title` 提供全文。
+  Tool 的完整命令仍在展开后的 Input 中，不依赖被截断的摘要。
+- ACP 内容决策：Tool UI 只展示明确的 Input、Output 和结构化 artifact，不再提供
+  通用 `ACP content` 面板。Store 仍保留底层 `content`，artifact 提取可以在
+  `rawOutput` 不含标记时从该字段读取，因而这是去重展示而不是协议数据丢弃。

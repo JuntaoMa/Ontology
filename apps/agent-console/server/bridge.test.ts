@@ -9,6 +9,7 @@ import {
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
 import {
+  AcpBridge,
   buildChildEnvironment,
   isAllowedClientMessage,
   prepareRuntimeConfigOverlay,
@@ -421,6 +422,43 @@ describe("Agent Profile request gate", () => {
       expect(
         isAllowedClientMessage(JSON.stringify(request), cwd),
       ).toBe(false);
+    }
+  });
+});
+
+describe("Agent Profile maintenance gate", () => {
+  it("serializes maintenance for one Profile", async () => {
+    const profile: BridgeProfile = {
+      id: "baseline-v1",
+      title: "Baseline v1",
+      profilePath: "/srv/profiles/baseline-v1/profile.yaml",
+      configPath: "/srv/profiles/baseline-v1/opencode.jsonc",
+      configAssets: [],
+      runtime: {
+        command: "opencode",
+        args: ["acp"],
+        cwd: "/srv/project",
+        stateDir: "/srv/state/baseline-v1",
+        configDir: "/srv/profiles/baseline-v1",
+        startupTimeoutMs: 15_000,
+      },
+      requiredEnv: [],
+      model: {
+        id: "test/model",
+        source: "opencode",
+        auth: { source: "opencode" },
+      },
+      ontology: { id: "test" },
+    };
+    const bridge = new AcpBridge([profile]);
+    try {
+      expect(bridge.beginProfileMaintenance(profile.id)).toBe(true);
+      expect(bridge.beginProfileMaintenance(profile.id)).toBe(false);
+      bridge.endProfileMaintenance(profile.id);
+      expect(bridge.beginProfileMaintenance(profile.id)).toBe(true);
+    } finally {
+      bridge.endProfileMaintenance(profile.id);
+      await bridge.close();
     }
   });
 });

@@ -121,6 +121,17 @@ describe("Agent Profile v1", () => {
         status: "stopped",
         ws_url: "/agents/dev/acp",
         cwd: canonicalProjectRoot,
+        model: {
+          id: "qwen-compatible",
+          source: "profile",
+        },
+        retrieval: {
+          vector_top_k: 5,
+          graph_algorithm: "minimum_connected_subgraph",
+        },
+        ontology: {
+          id: "smart-building-sample",
+        },
       });
       expect(JSON.stringify(publicAgent)).not.toContain("QWEN_API_KEY");
       expect(JSON.stringify(publicAgent)).not.toContain(loaded.runtime.command);

@@ -8,6 +8,8 @@ export type TrafficType = 'request' | 'response' | 'notification';
 export interface TrafficEntry {
   id: string;
   timestamp: number;
+  /** Agent Profile that owns the ACP connection. */
+  profileId?: string;
   direction: TrafficDirection;
   type: TrafficType;
   method: string;
@@ -44,6 +46,7 @@ export const useTrafficStore = defineStore('traffic', () => {
     const query = searchQuery.value.trim().toLowerCase();
     if (query) {
       result = result.filter(e =>
+        e.profileId?.toLowerCase().includes(query) ||
         e.method.toLowerCase().includes(query) ||
         JSON.stringify(e.payload).toLowerCase().includes(query)
       );

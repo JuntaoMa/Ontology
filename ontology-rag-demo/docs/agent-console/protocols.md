@@ -191,6 +191,8 @@ ONTOLOGY_ARTIFACT:{"schema_version":1,"kind":"ontology.subgraph",...}
 - 支持缩放、画布平移、悬停和锚点高亮。
 - 不支持编辑、图查询、复杂筛选或属性工作台。
 - artifact 解析或渲染失败不得影响对话和原始 Tool Call 展示。
+- artifact 提取可以读取 `rawOutput` 或底层 ACP Tool Call `content`。通用
+  `ACP content` 不作为独立 UI 面板展示，但不得因展示去重而提前丢弃该协议字段。
 
 ## 4. ACP Bridge HTTP/WS 接口
 

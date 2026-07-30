@@ -199,25 +199,52 @@ CLI 运行器和 ACP 探针只做预检，不能替代浏览器验收。在终�
 
 依次检查：
 
-1. 选择 `baseline-direct-context`，点击 `New conversation` 并原样发送问题。页面没有
+1. 在 `baseline-direct-context` Profile 分组点击新建对话图标并原样发送问题。页面没有
    Tool Call 卡，最终消息包含 `data-query-plan.v1`、`baseline=direct-context` 和
-   原始问题。
-2. 点击 `Disconnect`，选择 `baseline-oag`，新建会话并发送完全相同的问题。
+   原始问题；整条裸 JSON，或前置说明后位于消息末尾的合法 `json`/`application-json`
+   fenced object/array，应把 JSON 显示在标题为“查询Plan”的可折叠缩进代码块中。
+   前置 Markdown 继续显示，ACP/OpenCode 保存的最终消息仍是模型原始输出。
+2. Direct-context 尚在生成时，在 `baseline-oag` 分组点击新建对话图标。单个对话窗口
+   切到新会话，但 Direct-context 必须继续在后台
+   执行；不需要先 Disconnect。
 3. OAG 页面至少出现成功完成的 `ontology-retrieval` Skill 和 wrapper Bash 调用。
    Bash 原始输出包含 5 条 `hits`、`graph`，并出现
-   `minimum_connected_subgraph` 轻量子图卡；当前示例预期为 5 节点、4 边。
+   `minimum_connected_subgraph` 轻量子图卡；当前示例预期为 5 节点、4 边。Skill
+   加载与 Execute/Bash 必须使用不同图标，且均不同于 Thinking 和普通 Tool。
 4. OAG 最终消息包含 `data-query-plan.v1`、`baseline=oag` 和原始问题。当前阶段验证
-   流程连通性，不把查询计划的业务正确性或模型是否附带过渡语作为接线失败。
+   流程连通性；若最终消息整体是合法 JSON，或在前置说明后以合法 JSON fence 收尾，
+   JSON 部分都应显示为可折叠“查询Plan”代码块，前置说明不能被吞掉。不把查询计划的
+   业务正确性或模型是否附带过渡语作为接线失败。
 5. 本机 Demo 的 OAG Profile 开放 Bash，不用固定 `steps` 或 wrapper-only 白名单阻断
    Agent 的观察、反思和后续调用。Agent 自主提出的额外工具调用不得隐藏；UI 必须
    如实显示成功、失败或权限拒绝。只要必需的 Skill、OAG wrapper 和最终计划成功，
    额外的非关键调用不否定首版流程验收。
-6. 两个 Profile 分别 `Disconnect`，刷新 `OpenCode sessions`，再点击刚才的 Session。
-   `session/load` 后应恢复用户消息、Agent 消息、工具状态、原始输出、子图和最终结果。
+6. 在两个固定 Profile 分组中来回切换会话；两边的消息、Tool Call 和 loading 状态
+   不得串流，切回 Direct-context 时应看到它的后台增量或最终结果。
+7. 当前会话运行只禁用自身输入；另一个 Profile 仍可发送。Cancel 只取消当前可见
+   Session。同一 Profile 已有一轮执行时，第二条 Session 的发送入口应说明该 Profile
+   正忙，而不是影响其他 Profile。
+8. 刷新页面并从所属 Profile 分组再次点击刚才的 Session；`session/load` 后应恢复
+   用户消息、Agent 消息、工具状态、原始输出、子图和最终结果。历史仍在加载时重复
+   选择同一 Session 不应发出第二次 `session/load`，也不能提前开放 Prompt 输入。
+9. 折叠/恢复整个侧栏和单个 Profile 分组；信息图标应显示真实的 Status、Profile ID、
+   Model 和 Retrieval。Session 的状态点与垃圾桶按钮不能重叠。桌面 Session 行上下
+   留白约为此前布局的一半；窄屏下行高与行内操作仍不得小于 44 px。
+10. 新建一条无运行任务的测试会话，使用垃圾桶按钮打开确认框；Cancel 应恢复到触发
+    按钮。确认删除后行消失、显示成功提示，页面刷新后不能重新出现。任何正在运行的
+    同 Profile 会话存在时，删除按钮必须禁用。删除同 Profile 的另一条历史会话后，
+    当前可见会话应自动恢复连接；删除期间同 Profile 的重连和第二次删除应被拒绝。
+11. 展开和折叠 Thinking、Tool Call 整卡、ACP Plan 与“查询Plan”，确认操作只改变
+    可见性，不丢失内容。Tool 卡只能出现 Input、Output 与 artifact，不能再显示通用
+    `ACP content` 面板；仅存在于底层 `content` 的 artifact 仍应能够渲染。
+12. 使用长 Bash 命令检查 Tool 等形式化卡片：标题只能占一行并以省略号结束，悬停时
+    浏览器原生提示显示全文，展开 Input 后仍能查看完整命令。
 
-在线执行时 Tool 卡显示 UI 观测到的耗时。OpenCode `1.17.16` 在
+在线执行时 Tool 卡显示 UI 观测到的耗时；成功的实时 Agent 回答末尾还应显示浏览器
+当地完成时间和全轮耗时。OpenCode `1.17.16` 在
 `session/load` 重放时不投影 Tool 的原生时间戳，所以恢复后的卡片显示
-`Timing unavailable`；这是已知信息损失，不是验收失败。
+`Timing unavailable`，且恢复后的回答没有完成时间页脚；这是已知信息损失，不是验收
+失败。
 
 开放 Bash 时，Prompt 中的“OAG 是唯一Ontology来源”只是软约束。若轨迹显示 Agent
 直接读取 TTL、LanceDB 或其他本体实现文件，WebUI 接线仍可判为通过，但该 Session
@@ -255,6 +282,21 @@ pnpm --filter ontology-agent-console profile:publish -- \
 10. WebSocket 断开或 Profile 进程异常退出后能够报告故障；重新连接会创建新进程，
     并可从 OpenCode 恢复已有 Session。
 11. 日志、HTTP 响应和前端状态不包含密钥或真实内网地址。
+12. 同一页面可以保持多个 Profile 连接；每个 Profile 复用一条 ACP 连接，当前窗口
+    只显示一条 Session，切换后其他 Profile 的执行继续且事件不串流。
+13. 同一 Profile 的多个 Session 可以保留和切换，但首版同时只执行一轮 Prompt。
+14. 同一 Session 的并发恢复请求会合并为一次 `session/load`；主动 Disconnect 不留下
+    `transport closed` 错误横幅。
+15. 固定 Profile 分组、直接删除图标、Profile 信息卡、确认对话框和侧栏折叠符合
+    `apps/agent-console/prototypes/profile-sidebar.html` 的已接受设计。
+16. 实时成功回答显示当地完成时间和全轮耗时；历史恢复不伪造这两个字段。
+17. Conversation 删除写入所属 Profile 的 OpenCode 数据库，刷新页面后不复现；运行中
+    的 Profile 不能删除。
+18. 桌面 Session 列表使用紧凑行距，移动端 Session 行和行内操作保持至少 44 px。
+19. Thinking、Skill、Execute/Bash 和普通 Tool 使用不同语义图标；Tool Call、ACP Plan
+    和完整 JSON 都可折叠，完整 JSON 标题为“查询Plan”。
+20. 形式化卡片标题单行截断并可悬停查看全文；Tool UI 不显示通用 `ACP content` 面板，
+    但底层 `content` 仍可供 artifact 提取。
 
 ## 4. 上游偏差记录
 

@@ -1,100 +1,142 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, watch } from 'vue';
-import { useSessionStore } from '../stores/session';
+import { computed, nextTick, ref, watch } from 'vue';
 import { isMobile } from '../lib/platform';
 import { renderSafeMarkdown } from '../lib/markdown';
+import { useConfigStore } from '../stores/config';
+import { useSessionStore } from '../stores/session';
+import type { ChatMessage, SlashCommand } from '../lib/types';
 import CommandPalette from './CommandPalette.vue';
+import MessageContent from './MessageContent.vue';
 import ToolCallCard from './ToolCallCard.vue';
-import type { SlashCommand } from '../lib/types';
+import UiIcon from './UiIcon.vue';
 
+defineProps<{
+  sidebarCollapsed: boolean;
+}>();
+
+const emit = defineEmits<{
+  'toggle-sidebar': [];
+}>();
+
+const configStore = useConfigStore();
 const sessionStore = useSessionStore();
 const inputText = ref('');
+const textarea = ref<HTMLTextAreaElement | null>(null);
 const messagesContainer = ref<HTMLElement | null>(null);
 const commandPaletteRef = ref<InstanceType<typeof CommandPalette> | null>(null);
-
-// On mobile (iOS/Android) the soft-keyboard's Return key should insert a
-// newline like every other native chat app; submitting is the dedicated
-// Send button. On desktop, Enter still submits and Shift+Enter newlines.
-const submitOnEnter = !isMobile();
-
-// Track expanded thought sections by message id
 const expandedThoughts = ref<Set<string>>(new Set());
+const submitOnEnter = !isMobile();
 
 const messages = computed(() => sessionStore.messageList);
 const isLoading = computed(() => sessionStore.isLoading);
+const isPrompting = computed(() => sessionStore.isPrompting);
+const isConnected = computed(() => sessionStore.isConnected);
 const isReconnecting = computed(() => sessionStore.isReconnecting);
+const isProfileBusyElsewhere = computed(
+  () => sessionStore.isCurrentProfileBusyElsewhere,
+);
 const currentSession = computed(() => sessionStore.currentSession);
+const currentProfile = computed(() =>
+  currentSession.value
+    ? configStore.getAgent(currentSession.value.agentName)
+    : undefined,
+);
 const availableCommands = computed(() => sessionStore.availableCommands);
+const profileDisplayName = computed(
+  () =>
+    currentProfile.value?.title?.trim() ||
+    currentSession.value?.agentName ||
+    'Agent Profile',
+);
+const connectionLabel = computed(() => {
+  if (isReconnecting.value) return 'Reconnecting';
+  if (isPrompting.value) return 'Running';
+  if (isConnected.value) return 'Connected';
+  return 'Disconnected';
+});
 
-// Slash command state
 const showCommandPalette = computed(() => {
   if (availableCommands.value.length === 0) return false;
   const text = inputText.value;
-  // Show palette when input starts with "/" and cursor is after it
-  if (!text.startsWith('/')) return false;
-  // Don't show if there's a space (command already entered)
-  const spaceIndex = text.indexOf(' ');
-  return spaceIndex === -1;
+  return text.startsWith('/') && !text.includes(' ');
 });
 
-const commandFilter = computed(() => {
-  if (!inputText.value.startsWith('/')) return '';
-  return inputText.value.slice(1); // Remove the leading "/"
-});
+const commandFilter = computed(() =>
+  inputText.value.startsWith('/') ? inputText.value.slice(1) : '',
+);
 
-// Auto-scroll to bottom when new messages arrive
-watch(messages, async () => {
-  await nextTick();
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-  }
-}, { deep: true });
+watch(
+  messages,
+  async () => {
+    await nextTick();
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop =
+        messagesContainer.value.scrollHeight;
+    }
+  },
+  { deep: true },
+);
 
-async function handleSend() {
+watch(
+  () => currentSession.value?.id,
+  () => {
+    inputText.value = '';
+    expandedThoughts.value = new Set();
+    void nextTick(resizeTextarea);
+  },
+);
+
+function resizeTextarea(): void {
+  const element = textarea.value;
+  if (!element) return;
+  element.style.height = 'auto';
+  element.style.height = `${Math.min(element.scrollHeight, 160)}px`;
+}
+
+async function handleSend(): Promise<void> {
   const text = inputText.value.trim();
-  if (!text || isLoading.value) return;
-
+  if (
+    !text ||
+    isLoading.value ||
+    !isConnected.value ||
+    isProfileBusyElsewhere.value
+  ) {
+    return;
+  }
   inputText.value = '';
+  resizeTextarea();
   try {
     await sessionStore.sendPrompt(text);
-  } catch (e) {
-    console.error('Failed to send prompt:', e);
+  } catch (cause) {
+    console.error('Failed to send prompt:', cause);
   }
 }
 
-function handleKeyDown(event: KeyboardEvent) {
-  // Let CommandPalette handle navigation keys when visible
-  if (showCommandPalette.value && commandPaletteRef.value) {
-    if (['ArrowDown', 'ArrowUp', 'Enter', 'Tab', 'Escape'].includes(event.key)) {
-      commandPaletteRef.value.handleKeyDown(event);
-      return;
-    }
+function handleKeyDown(event: KeyboardEvent): void {
+  if (
+    showCommandPalette.value &&
+    commandPaletteRef.value &&
+    ['ArrowDown', 'ArrowUp', 'Enter', 'Tab', 'Escape'].includes(event.key)
+  ) {
+    commandPaletteRef.value.handleKeyDown(event);
+    return;
   }
-
-  // Enter-to-send is desktop only. On mobile we let the textarea insert a
-  // newline like every other native chat app and require an explicit tap
-  // on the Send button.
   if (submitOnEnter && event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
-    handleSend();
+    void handleSend();
   }
 }
 
-function handleCommandSelect(command: SlashCommand) {
-  // Replace current input with the command
-  if (command.hint) {
-    inputText.value = `/${command.name} `;
-  } else {
-    inputText.value = `/${command.name} `;
-  }
+function handleCommandSelect(command: SlashCommand): void {
+  inputText.value = `/${command.name} `;
+  void nextTick(() => {
+    resizeTextarea();
+    textarea.value?.focus();
+  });
 }
 
-function handleCommandClose() {
-  // Just dismiss, keep the text
-}
-
-function handleCancel() {
-  sessionStore.cancelOperation();
+function handleCancel(): void {
+  void sessionStore.cancelOperation();
 }
 
 function isThoughtExpanded(messageId: string): boolean {
@@ -109,455 +151,811 @@ function toggleThought(messageId: string): void {
   }
 }
 
+function completionVerb(message: ChatMessage): string {
+  return message.finishReason === 'end_turn' || !message.finishReason
+    ? 'Completed'
+    : 'Finished';
+}
+
+function completionTime(timestamp: number): string {
+  return new Intl.DateTimeFormat(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(new Date(timestamp));
+}
+
+function completionTitle(timestamp: number): string {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'full',
+    timeStyle: 'long',
+  }).format(new Date(timestamp));
+}
+
+function durationLabel(durationMs: number): string {
+  if (durationMs < 1000) return `${durationMs} ms`;
+  if (durationMs < 60_000) {
+    const seconds = durationMs / 1000;
+    return `${seconds.toFixed(durationMs < 10_000 ? 1 : 0)}s`;
+  }
+  const totalSeconds = Math.round(durationMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}m ${seconds}s`;
+}
 </script>
 
 <template>
   <div class="chat-view">
-    <div class="chat-header">
-      <h2>{{ currentSession?.title || 'Chat' }}</h2>
-      <div class="header-right">
-        <span class="agent-name">{{ currentSession?.agentName }}</span>
-      </div>
-    </div>
-
-    <div ref="messagesContainer" class="messages-container">
-      <div
-        v-for="message in messages"
-        :key="message.id"
-        :class="['message', `message-${message.role}`]"
-      >
-        <div class="message-header">
-          <span class="role">{{ message.role === 'user' ? 'You' : 'Assistant' }}</span>
-        </div>
-
-        <!-- ACP plans are descriptive runtime observations, not a Console-
-             enforced workflow. Each update replaces the complete plan. -->
-        <div v-if="message.plan?.length" class="plan-section">
-          <div class="plan-heading">Agent plan</div>
-          <ol>
-            <li
-              v-for="(entry, index) in message.plan"
-              :key="`${index}:${entry.content}`"
-              :class="`plan-${entry.status}`"
-            >
-              <span class="plan-status" aria-hidden="true">
-                {{ entry.status === 'completed' ? '✓' : entry.status === 'in_progress' ? '●' : '○' }}
-              </span>
-              <span>{{ entry.content }}</span>
-            </li>
-          </ol>
-        </div>
-
-        <!-- Agent thinking section (collapsible). -->
-        <div v-if="message.thought && message.role === 'assistant'" class="thought-section">
-          <button class="thought-toggle" @click="toggleThought(message.id)">
-            <span class="thought-icon">💭</span>
-            <span class="thought-label">{{ isThoughtExpanded(message.id) ? 'Hide Thinking' : 'Show Thinking' }}</span>
-            <span class="thought-chevron">{{ isThoughtExpanded(message.id) ? '▲' : '▼' }}</span>
-          </button>
-          <div v-if="isThoughtExpanded(message.id)" class="thought-content">
-            <div v-html="renderSafeMarkdown(message.thought)" />
+    <header class="workspace-header">
+      <div class="workspace-heading-row">
+        <button
+          v-show="sidebarCollapsed"
+          class="icon-button sidebar-reveal"
+          type="button"
+          data-sidebar-reveal
+          aria-label="Expand sidebar"
+          aria-controls="profile-sidebar"
+          :aria-expanded="!sidebarCollapsed"
+          title="Expand sidebar"
+          @click="emit('toggle-sidebar')"
+        >
+          <UiIcon name="panel-left" />
+        </button>
+        <div class="conversation-heading">
+          <h1>{{ currentSession?.title || 'Conversation' }}</h1>
+          <div class="conversation-profile">
+            <UiIcon name="folder" />
+            <span>{{ profileDisplayName }}</span>
           </div>
         </div>
+      </div>
+      <div class="header-meta">
+        <span
+          class="status-pill"
+          :class="{
+            running: isPrompting,
+            disconnected: !isConnected && !isReconnecting,
+          }"
+        >
+          {{ connectionLabel }}
+        </span>
+      </div>
+    </header>
 
-        <!-- Tool calls for this message (shown after thinking) -->
-        <div v-if="message.toolCalls?.length" class="tool-calls-section">
-          <ToolCallCard
-            v-for="tc in message.toolCalls"
-            :key="tc.toolCallId"
-            :tool-call="tc"
-          />
+    <div v-if="isProfileBusyElsewhere" class="profile-busy-notice">
+      This Profile is running another conversation. You can read this Session
+      now and send after that turn finishes.
+    </div>
+
+    <section class="conversation">
+      <div ref="messagesContainer" class="thread">
+        <div class="thread-inner">
+          <article
+            v-for="message in messages"
+            :key="message.id"
+            class="message"
+            :class="`message-${message.role}`"
+          >
+            <div class="message-label">
+              {{ message.role === 'user' ? 'You' : message.role === 'system' ? 'System' : 'Agent' }}
+            </div>
+
+            <div v-if="message.role === 'user'" class="user-message">
+              <MessageContent :content="message.content" />
+            </div>
+
+            <div v-else class="assistant-message">
+              <details v-if="message.plan?.length" class="plan-section">
+                <summary class="plan-heading" title="Agent plan">
+                  <UiIcon class="plan-icon" name="plan" />
+                  <span>Agent plan</span>
+                  <UiIcon class="plan-chevron" name="chevron" />
+                </summary>
+                <ol>
+                  <li
+                    v-for="(entry, index) in message.plan"
+                    :key="`${index}:${entry.content}`"
+                    :class="`plan-${entry.status}`"
+                  >
+                    <span class="plan-status" aria-hidden="true">
+                      <UiIcon
+                        v-if="entry.status === 'completed'"
+                        name="check"
+                      />
+                      <span
+                        v-else
+                        class="plan-dot"
+                        :class="{ active: entry.status === 'in_progress' }"
+                      />
+                    </span>
+                    <span>{{ entry.content }}</span>
+                  </li>
+                </ol>
+              </details>
+
+              <section
+                v-if="message.thought && message.role === 'assistant'"
+                class="thought-section"
+              >
+                <button
+                  class="thought-toggle"
+                  type="button"
+                  :aria-expanded="isThoughtExpanded(message.id)"
+                  @click="toggleThought(message.id)"
+                >
+                  <UiIcon name="thought" />
+                  <span>
+                    {{ isThoughtExpanded(message.id) ? 'Hide thinking' : 'Show thinking' }}
+                  </span>
+                  <UiIcon
+                    class="thought-chevron"
+                    name="chevron"
+                  />
+                </button>
+                <div
+                  v-if="isThoughtExpanded(message.id)"
+                  class="thought-content"
+                  v-html="renderSafeMarkdown(message.thought)"
+                />
+              </section>
+
+              <div
+                v-if="message.toolCalls?.length"
+                class="tool-calls-section"
+              >
+                <ToolCallCard
+                  v-for="toolCall in message.toolCalls"
+                  :key="toolCall.toolCallId"
+                  :tool-call="toolCall"
+                />
+              </div>
+
+              <div v-if="message.content" class="message-content">
+                <MessageContent
+                  :content="message.content"
+                  :format-json="message.role === 'assistant'"
+                />
+              </div>
+
+              <footer
+                v-if="
+                  message.role === 'assistant' &&
+                  message.completedAt !== undefined &&
+                  message.durationMs !== undefined
+                "
+                class="completion-meta"
+              >
+                <UiIcon name="check" />
+                <span>{{ completionVerb(message) }} at</span>
+                <time
+                  :datetime="new Date(message.completedAt).toISOString()"
+                  :title="completionTitle(message.completedAt)"
+                >
+                  {{ completionTime(message.completedAt) }}
+                </time>
+                <span class="completion-separator" aria-hidden="true">·</span>
+                <span>{{ durationLabel(message.durationMs) }} total</span>
+              </footer>
+            </div>
+          </article>
+
+          <div v-if="isLoading" class="loading-indicator" role="status">
+            <span class="spinner" aria-hidden="true" />
+            <span>{{ isPrompting ? 'Thinking…' : 'Loading history…' }}</span>
+            <button
+              v-if="isPrompting"
+              class="cancel-button"
+              type="button"
+              @click="handleCancel"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
-
-        <div
-          v-if="message.content"
-          class="message-content"
-          v-html="renderSafeMarkdown(message.content)"
-        />
       </div>
 
-      <!-- Loading indicator -->
-      <div v-if="isLoading" class="loading-indicator">
-        <span class="spinner"></span>
-        <span>Thinking...</span>
-        <button class="cancel-btn" @click="handleCancel">Cancel</button>
+      <div class="composer-wrap">
+        <div class="composer-shell">
+          <CommandPalette
+            ref="commandPaletteRef"
+            :commands="availableCommands"
+            :filter="commandFilter"
+            :visible="showCommandPalette"
+            @select="handleCommandSelect"
+            @close="textarea?.focus()"
+          />
+          <div class="composer">
+            <textarea
+              ref="textarea"
+              v-model="inputText"
+              rows="1"
+              :placeholder="
+                isReconnecting
+                  ? 'Reconnecting…'
+                  : !isConnected
+                    ? 'Reconnect this conversation to continue'
+                    : isProfileBusyElsewhere
+                      ? 'This Profile is busy in another conversation'
+                      : availableCommands.length > 0
+                        ? 'Ask this Profile… (/ for commands)'
+                        : 'Ask this Profile…'
+              "
+              :disabled="
+                isLoading ||
+                isReconnecting ||
+                !isConnected ||
+                isProfileBusyElsewhere
+              "
+              aria-label="Message"
+              @input="resizeTextarea"
+              @keydown="handleKeyDown"
+            />
+            <button
+              class="send-button"
+              type="button"
+              aria-label="Send message"
+              title="Send message"
+              :disabled="
+                !inputText.trim() ||
+                isLoading ||
+                isReconnecting ||
+                !isConnected ||
+                isProfileBusyElsewhere
+              "
+              @click="handleSend"
+            >
+              <UiIcon name="send" />
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <div class="input-container">
-      <CommandPalette
-        ref="commandPaletteRef"
-        :commands="availableCommands"
-        :filter="commandFilter"
-        :visible="showCommandPalette"
-        @select="handleCommandSelect"
-        @close="handleCommandClose"
-      />
-      <textarea
-        v-model="inputText"
-        :placeholder="
-          isReconnecting
-            ? 'Reconnecting…'
-            : (availableCommands.length > 0
-                ? 'Type your message... (/ for commands)'
-                : 'Type your message...')
-        "
-        :disabled="isLoading || isReconnecting"
-        @keydown="handleKeyDown"
-        rows="3"
-      />
-      <button
-        class="send-btn"
-        :disabled="!inputText.trim() || isLoading || isReconnecting"
-        @click="handleSend"
-      >
-        Send
-      </button>
-    </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
 .chat-view {
   display: flex;
+  min-height: 0;
+  flex: 1;
   flex-direction: column;
-  height: 100%;
 }
 
-.chat-header {
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-color, #e0e0e0);
+.workspace-header {
   display: flex;
+  min-height: 64px;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 20px;
+  border-bottom: 1px solid var(--line-soft);
+  padding: 11px 24px 11px 28px;
 }
 
-.chat-header h2 {
-  margin: 0;
-  font-size: 1.1rem;
-  white-space: nowrap;
+.workspace-heading-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-button {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--text);
+}
+
+.icon-button :deep(svg) {
+  width: 16px;
+  height: 16px;
+}
+
+.conversation-heading {
+  min-width: 0;
+}
+
+.conversation-heading h1 {
   overflow: hidden;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 630;
+  letter-spacing: -0.01em;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.header-right {
+.conversation-profile {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 5px;
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 11px;
 }
 
-.agent-name {
-  font-size: 0.875rem;
-  color: var(--text-accent, #0066cc);
+.conversation-profile :deep(svg) {
+  width: 12px;
+  height: 12px;
 }
 
-.messages-container {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1rem;
-}
-
-.message {
-  margin-bottom: 1rem;
-  padding: 0.75rem;
-  border-radius: 8px;
-}
-
-.message-user {
-  background: var(--bg-user, #e3f2fd);
-  margin-left: 2rem;
-}
-
-.message-assistant {
-  background: var(--bg-assistant, #f5f5f5);
-  margin-right: 2rem;
-}
-
-.message-header {
-  margin-bottom: 0.5rem;
-}
-
-.role {
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--text-secondary, #666);
-}
-
-.plan-section {
-  margin-bottom: 0.75rem;
-  padding: 0.6rem 0.7rem;
-  border: 1px solid var(--border-color, #d7dce3);
-  border-radius: 7px;
-  background: var(--bg-main, #fff);
-}
-
-.plan-heading {
-  margin-bottom: 0.4rem;
-  color: var(--text-secondary, #475569);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.plan-section ol {
-  display: grid;
-  gap: 0.3rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.plan-section li {
+.header-meta {
   display: flex;
-  gap: 0.45rem;
-  color: var(--text-secondary, #475569);
-  font-size: 0.78rem;
+  align-items: center;
+  gap: 8px;
 }
 
-.plan-status {
-  flex: 0 0 1rem;
-  color: var(--text-muted, #94a3b8);
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: var(--success);
+  font-size: 11px;
+}
+
+.status-pill::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  content: '';
+}
+
+.status-pill.running {
+  color: var(--warning);
+}
+
+.status-pill.disconnected {
+  color: var(--text-muted);
+}
+
+.profile-busy-notice {
+  border-bottom: 1px solid var(--line-soft);
+  padding: 7px 24px;
+  background: #fff9ee;
+  color: var(--text-secondary);
+  font-size: 11.5px;
   text-align: center;
 }
 
-.plan-in_progress {
-  color: var(--text-primary, #1f2937) !important;
-  font-weight: 500;
-}
-
-.plan-in_progress .plan-status {
-  color: #2563eb;
-}
-
-.plan-completed .plan-status {
-  color: #059669;
-}
-
-/* Tool calls inline styles */
-.tool-calls-section {
-  margin-bottom: 0.75rem;
+.conversation {
+  position: relative;
   display: flex;
+  min-height: 0;
+  flex: 1;
   flex-direction: column;
-  gap: 0.4rem;
+  overflow: hidden;
+}
+
+.thread {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 42px 32px 128px;
+  scrollbar-color: #cacac4 transparent;
+  scrollbar-width: thin;
+}
+
+.thread-inner {
+  width: min(100%, 790px);
+  margin: 0 auto;
+}
+
+.message {
+  margin-bottom: 32px;
+}
+
+.message-label {
+  margin-bottom: 9px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.message-user .message-label {
+  text-align: right;
+}
+
+.user-message {
+  width: fit-content;
+  max-width: 78%;
+  margin-left: auto;
+  border-radius: 17px 17px 5px 17px;
+  padding: 11px 15px;
+  background: var(--surface-subtle);
+  color: #333330;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.assistant-message {
+  color: #333330;
+  font-size: 14px;
+  line-height: 1.75;
 }
 
 .message-content {
-  line-height: 1.5;
   overflow-wrap: break-word;
-  word-wrap: break-word;
 }
 
-.message-content :deep(p) {
-  margin: 0.5rem 0;
+.message-content :deep(p),
+.user-message :deep(p) {
+  margin: 0 0 12px;
+}
+
+.message-content :deep(p:last-child),
+.user-message :deep(p:last-child) {
+  margin-bottom: 0;
 }
 
 .message-content :deep(ol),
 .message-content :deep(ul) {
-  margin: 0.5rem 0;
-  padding-left: 1.5rem;
-}
-
-.message-content :deep(li) {
-  margin: 0.25rem 0;
+  margin: 8px 0;
+  padding-left: 22px;
 }
 
 .message-content :deep(pre) {
-  background: var(--bg-code, #282c34);
-  color: var(--text-code, #abb2bf);
-  padding: 0.75rem;
-  border-radius: 4px;
-  overflow-x: auto;
+  overflow: auto;
+  margin: 14px 0 0;
+  border-radius: 10px;
+  padding: 13px 15px;
+  background: #f4f4f2;
+  color: #40403c;
+  font-family:
+    'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  font-size: 11.5px;
+  line-height: 1.6;
+  white-space: pre;
 }
 
 .message-content :deep(code) {
-  font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 0.9rem;
+  font-family:
+    'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  font-size: 0.9em;
+}
+
+.plan-section {
+  margin: 0 0 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fbfbfa;
+}
+
+.plan-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 590;
+  list-style: none;
+  user-select: none;
+}
+
+.plan-heading::-webkit-details-marker {
+  display: none;
+}
+
+.plan-heading:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.plan-heading > span {
+  overflow: hidden;
+  min-width: 0;
+  flex: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-icon,
+.plan-chevron {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+}
+
+.plan-chevron {
+  color: var(--text-muted);
+  transform: rotate(-90deg);
+  transition: transform 130ms ease;
+}
+
+.plan-section[open] .plan-heading {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.plan-section[open] .plan-chevron {
+  transform: rotate(0);
+}
+
+.plan-section ol {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 13px 12px;
+  list-style: none;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.plan-section li {
+  display: flex;
+  gap: 8px;
+}
+
+.plan-status {
+  display: grid;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--success);
+}
+
+.plan-status :deep(svg) {
+  width: 13px;
+  height: 13px;
+}
+
+.plan-dot {
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid var(--text-muted);
+  border-radius: 50%;
+}
+
+.plan-dot.active {
+  border: 0;
+  background: var(--warning);
+}
+
+.thought-section {
+  margin: 18px 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fbfbfa;
+}
+
+.thought-toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  padding: 11px 13px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 590;
+  text-align: left;
+}
+
+.thought-toggle > :deep(svg) {
+  width: 15px;
+  height: 15px;
+}
+
+.thought-toggle span {
+  overflow: hidden;
+  min-width: 0;
+  flex: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thought-chevron {
+  transform: rotate(-90deg);
+  transition: transform 130ms ease;
+}
+
+.thought-toggle[aria-expanded='true'] .thought-chevron {
+  transform: rotate(0);
+}
+
+.thought-content {
+  border-top: 1px solid var(--line-soft);
+  padding: 10px 13px 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.tool-calls-section {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.completion-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 13px 2px 0;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.completion-meta :deep(svg) {
+  width: 13px;
+  height: 13px;
+  color: var(--success);
+}
+
+.completion-separator {
+  color: #b5b5af;
 }
 
 .loading-indicator {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  color: var(--text-muted, #666);
+  gap: 8px;
+  margin-bottom: 32px;
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 .spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--border-color, #ccc);
-  border-top-color: var(--text-accent, #0066cc);
+  width: 14px;
+  height: 14px;
+  border: 2px solid #c5c5bf;
+  border-top-color: var(--text-secondary);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 900ms linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.cancel-btn {
-  margin-left: auto;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid var(--border-color, #ccc);
-  border-radius: 4px;
-  background: transparent;
-  font-size: 0.8rem;
+.cancel-button {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 4px 8px;
+  background: var(--surface);
+  color: var(--text-secondary);
   cursor: pointer;
+  font-size: 11.5px;
 }
 
-.input-container {
+.composer-wrap {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 22px 32px 24px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0.92) 26%,
+    #ffffff 62%
+  );
+}
+
+.composer-shell {
   position: relative;
+  width: min(100%, 790px);
+  margin: 0 auto;
+}
+
+.composer {
   display: flex;
-  gap: 0.5rem;
-  padding: 1rem;
-  border-top: 1px solid var(--border-color, #e0e0e0);
+  min-height: 58px;
+  align-items: flex-end;
+  gap: 10px;
+  border: 1px solid #cecec8;
+  border-radius: 17px;
+  padding: 9px 10px 9px 15px;
+  background: var(--surface);
+  box-shadow: 0 7px 24px rgba(35, 35, 31, 0.08);
 }
 
-textarea {
+.composer textarea {
+  min-height: 38px;
+  max-height: 160px;
   flex: 1;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color, #ccc);
-  border-radius: 6px;
-  font-size: 1rem;
-  font-family: inherit;
   resize: none;
+  overflow-y: auto;
+  border: 0;
+  outline: 0;
+  padding: 8px 0 4px;
+  background: transparent;
+  color: var(--text);
+  line-height: 1.45;
 }
 
-textarea:focus {
-  outline: none;
-  border-color: var(--text-accent, #0066cc);
+.composer textarea::placeholder {
+  color: #9a9a94;
 }
 
-.send-btn {
-  padding: 0.75rem 1.5rem;
-  background: var(--bg-primary, #0066cc);
+.send-button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 11px;
+  background: #30302d;
   color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s;
 }
 
-.send-btn:hover:not(:disabled) {
-  background: var(--bg-primary-hover, #0052a3);
+.send-button :deep(svg) {
+  width: 16px;
+  height: 16px;
 }
 
-.send-btn:disabled {
-  opacity: 0.5;
+.send-button:disabled {
   cursor: not-allowed;
+  opacity: 0.28;
 }
 
-/* ---------- Mobile / narrow-viewport tweaks ---------- */
+@media (max-width: 1040px) {
+  .thread {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .composer-wrap {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+}
 
 @media (max-width: 800px) {
-  /* Reserve space for the floating mobile hamburger (44px wide, fixed in
-     App.vue) so the mode/model pickers don't sit underneath it. Also push
-     the header below the camera notch / status bar so picker buttons aren't
-     clipped on phones with a hole-punch or notch. */
-  .chat-header {
-    padding-top: calc(1rem + env(safe-area-inset-top, 0px));
-    padding-left: calc(44px + 1rem);
+  .workspace-header {
+    padding-top: calc(11px + env(safe-area-inset-top, 0px));
+    padding-right: 16px;
+    padding-left: 16px;
   }
 
-  /* Agent identity is already shown in the sidebar drawer; on a phone the
-     chat header should belong to mode/model/actions. Hiding the long name
-     also avoids awkward 4-line wraps for names like "Copilot CLI dev tunnel". */
-  .agent-name {
-    display: none;
+  .sidebar-reveal {
+    width: 44px;
+    height: 44px;
   }
 
-  /* Session title is also redundant on mobile (visible in the sidebar
-     SessionList) and otherwise gets crushed to a single character by the
-     mode/model pickers. Reclaim the horizontal space. */
-  .chat-header h2 {
-    display: none;
+  .conversation-heading h1 {
+    max-width: 52vw;
   }
 
-  .input-container {
-    /* iOS home-indicator: keep Send button reachable above the gesture area. */
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
-    gap: 0.5rem;
+  .thread {
+    padding: 28px 16px 132px;
   }
 
-  textarea {
-    /* Avoid iOS auto-zoom on focus when font-size < 16px. */
+  .composer-wrap {
+    padding: 22px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .composer textarea {
     font-size: 16px;
-    min-height: 44px;
   }
-
-  .send-btn {
-    min-width: 64px;
-    min-height: 44px;
-    padding: 0.5rem 1rem;
-  }
-}
-
-/* Agent Thinking Section */
-.thought-section {
-  margin-bottom: 0.75rem;
-  border: 1px solid var(--border-color, #e0e0e0);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.thought-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  background: var(--bg-hover, #f5f5f5);
-  border: none;
-  cursor: pointer;
-  font-size: 0.85rem;
-  color: var(--text-muted, #666);
-  text-align: left;
-  transition: background 0.15s ease;
-}
-
-.thought-toggle:hover {
-  background: var(--bg-user, #e3f2fd);
-}
-
-.thought-icon {
-  font-size: 1rem;
-  flex-shrink: 0;
-}
-
-.thought-label {
-  flex: 1;
-  font-weight: 500;
-}
-
-.thought-chevron {
-  font-size: 0.7rem;
-  color: var(--text-muted, #999);
-}
-
-.thought-content {
-  padding: 0.75rem 1rem 0.75rem 1.25rem;
-  background: var(--bg-main, #fafafa);
-  border-top: 1px solid var(--border-color, #e0e0e0);
-  font-size: 0.9rem;
-  color: var(--text-muted, #666);
-  font-style: italic;
-  line-height: 1.5;
-}
-
-.thought-content :deep(p) {
-  margin: 0 0 0.5rem 0;
-}
-
-.thought-content :deep(p:last-child) {
-  margin-bottom: 0;
-}
-
-.thought-content :deep(code) {
-  background: var(--bg-hover, #f0f0f0);
-  padding: 0.125rem 0.25rem;
-  border-radius: 3px;
-  font-size: 0.85em;
 }
 </style>

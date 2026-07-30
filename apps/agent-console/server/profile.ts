@@ -180,6 +180,17 @@ export interface PublicAgent {
   status: string;
   ws_url: string;
   cwd: string;
+  model: {
+    id: string;
+    source: "opencode" | "profile";
+  };
+  retrieval?: {
+    vector_top_k: number;
+    graph_algorithm: string;
+  };
+  ontology: {
+    id: string;
+  };
 }
 
 export class ProfileValidationError extends Error {
@@ -450,6 +461,21 @@ export function toPublicAgent(profile: LoadedProfile, status: string): PublicAge
     status,
     ws_url: `/agents/${profile.id}/acp`,
     cwd: profile.runtime.cwd,
+    model: {
+      id: profile.model.id,
+      source: profile.model.source,
+    },
+    ...(profile.retrieval
+      ? {
+          retrieval: {
+            vector_top_k: profile.retrieval.vectorTopK,
+            graph_algorithm: profile.retrieval.graphAlgorithm,
+          },
+        }
+      : {}),
+    ontology: {
+      id: profile.ontology.id,
+    },
   };
 }
 

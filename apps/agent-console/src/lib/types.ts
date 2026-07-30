@@ -5,6 +5,7 @@ import type {
   ToolCallLocation,
   ToolCallStatus,
   ToolKind,
+  StopReason,
 } from '@agentclientprotocol/sdk';
 
 /**
@@ -40,6 +41,18 @@ export interface AgentConfig {
   mutable?: boolean;
   status?: string;
   cwd?: string;
+  /** Sanitized Profile metadata exposed by the loopback Bridge. */
+  model?: {
+    id: string;
+    source: 'opencode' | 'profile';
+  };
+  retrieval?: {
+    vectorTopK: number;
+    graphAlgorithm: string;
+  };
+  ontology?: {
+    id: string;
+  };
 }
 
 export interface AgentsConfig {
@@ -101,6 +114,14 @@ export interface ChatMessage {
   content: string;
   thought?: string;
   timestamp?: number;
+  /**
+   * Browser-observed completion metadata for a live prompt. ACP history does
+   * not currently provide authoritative turn timing, so replayed messages
+   * intentionally omit these fields.
+   */
+  completedAt?: number;
+  durationMs?: number;
+  finishReason?: StopReason;
   toolCalls?: ToolCallInfo[];
   plan?: PlanEntry[];
 }

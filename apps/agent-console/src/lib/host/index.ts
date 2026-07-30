@@ -48,6 +48,17 @@ interface PublicAgentProfile {
   status: string;
   ws_url: string;
   cwd: string;
+  model: {
+    id: string;
+    source: 'opencode' | 'profile';
+  };
+  retrieval?: {
+    vector_top_k: number;
+    graph_algorithm: string;
+  };
+  ontology: {
+    id: string;
+  };
 }
 
 async function loadWebConfig(): Promise<AgentsConfig> {
@@ -74,6 +85,14 @@ async function loadWebConfig(): Promise<AgentsConfig> {
       mutable: candidate.mutable,
       status: candidate.status,
       cwd: candidate.cwd,
+      model: candidate.model,
+      retrieval: candidate.retrieval
+        ? {
+            vectorTopK: candidate.retrieval.vector_top_k,
+            graphAlgorithm: candidate.retrieval.graph_algorithm,
+          }
+        : undefined,
+      ontology: candidate.ontology,
       transport: 'websocket',
       url: toWebSocketUrl(candidate.ws_url),
     };
@@ -94,8 +113,74 @@ function isPublicAgentProfile(value: unknown): value is PublicAgentProfile {
     typeof candidate.status === 'string' &&
     typeof candidate.ws_url === 'string' &&
     candidate.ws_url.startsWith('/agents/') &&
-    typeof candidate.cwd === 'string'
+    typeof candidate.cwd === 'string' &&
+    isPublicModel(candidate.model) &&
+    (candidate.retrieval === undefined ||
+      isPublicRetrieval(candidate.retrieval)) &&
+    typeof candidate.ontology === 'object' &&
+    candidate.ontology !== null &&
+    typeof candidate.ontology.id === 'string'
   );
+}
+
+function isPublicModel(value: unknown): value is PublicAgentProfile['model'] {
+  if (typeof value !== 'object' || value === null) return false;
+  const candidate = value as Partial<PublicAgentProfile['model']>;
+  return (
+    typeof candidate.id === 'string' &&
+    (candidate.source === 'opencode' || candidate.source === 'profile')
+  );
+}
+
+function isPublicRetrieval(
+  value: unknown,
+): value is NonNullable<PublicAgentProfile['retrieval']> {
+  if (typeof value !== 'object' || value === null) return false;
+  const candidate = value as Partial<
+    NonNullable<PublicAgentProfile['retrieval']>
+  >;
+  return (
+    typeof candidate.vector_top_k === 'number' &&
+    Number.isInteger(candidate.vector_top_k) &&
+    candidate.vector_top_k > 0 &&
+    typeof candidate.graph_algorithm === 'string'
+  );
+}
+
+export async function deleteProfileSession(
+  profileId: string,
+  sessionId: string,
+): Promise<void> {
+  if (isTauriHost()) {
+    throw new Error(
+      'Permanent OpenCode Session deletion is only available through the ACP Bridge',
+    );
+  }
+  const response = await fetch(
+    `/agents/${encodeURIComponent(profileId)}/sessions/${encodeURIComponent(sessionId)}`,
+    {
+      method: 'DELETE',
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+    },
+  );
+  if (response.ok) return;
+
+  let message = `Conversation deletion failed (${response.status})`;
+  try {
+    const payload = (await response.json()) as {
+      error?: unknown;
+      message?: unknown;
+    };
+    if (typeof payload.message === 'string' && payload.message.trim()) {
+      message = payload.message;
+    } else if (payload.error === 'session_busy') {
+      message = 'This conversation is still running and cannot be deleted';
+    }
+  } catch {
+    // Keep the status-based fallback for malformed or empty responses.
+  }
+  throw new Error(message);
 }
 
 function toWebSocketUrl(relativeUrl: string): string {

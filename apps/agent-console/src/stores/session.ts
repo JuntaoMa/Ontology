@@ -1,17 +1,95 @@
-// Session store for managing ACP sessions and persistence
+// ACP session manager.
+//
+// OpenCode owns durable sessions and history. This store only keeps the
+// conversations that are open in the current page, with one ACP connection
+// per Agent Profile and one independent projection per ACP session.
 import { defineStore } from 'pinia';
-import { ref, computed, watch } from 'vue';
-import { getAppVersion } from '../lib/host';
-import type { SavedSession, ChatMessage, ToolCallInfo, PermissionRequest, SessionMode, SlashCommand, ModelInfo, AgentConfig } from '../lib/types';
-import { getTransportKind } from '../lib/types';
+import { computed, reactive, ref, shallowRef, watch } from 'vue';
+import type {
+  AuthMethod,
+  InitializeResponse,
+  SessionNotification,
+} from '@agentclientprotocol/sdk';
+import { deleteProfileSession, getAppVersion } from '../lib/host';
+import {
+  getTransportKind,
+  type AgentConfig,
+  type ChatMessage,
+  type ModelInfo,
+  type PermissionRequest,
+  type SavedSession,
+  type SessionMode,
+  type SlashCommand,
+  type ToolCallInfo,
+} from '../lib/types';
 import { applyToolCallUpdate, createToolCallInfo } from '../lib/tool-call';
-import { AcpClientBridge, createAcpClient } from '../lib/acp-bridge';
-import { onAgentStderr, spawnAgent, killAgent } from '../lib/host';
+import { createAcpClient, type AcpClientBridge } from '../lib/acp-bridge';
+import { killAgent, onAgentStderr, spawnAgent } from '../lib/host';
 import { isDesktop } from '../lib/platform';
 import { useConfigStore } from './config';
-import type { SessionNotification, AuthMethod } from '@agentclientprotocol/sdk';
 
 const PROTOCOL_VERSION = 1;
+
+type ProfileConnectionStatus =
+  | 'disconnected'
+  | 'connecting'
+  | 'connected'
+  | 'reconnecting'
+  | 'error';
+
+export type OpenConversationStatus =
+  | 'running'
+  | 'needs_attention'
+  | 'connecting'
+  | 'reconnecting'
+  | 'connected'
+  | 'disconnected'
+  | 'error';
+
+export interface OpenConversationSummary {
+  key: string;
+  agentName: string;
+  sessionId: string;
+  title: string;
+  lastUpdated: number;
+  status: OpenConversationStatus;
+  statusLabel: string;
+  isActive: boolean;
+}
+
+interface ProfileState {
+  profileId: string;
+  status: ProfileConnectionStatus;
+  error: string | null;
+  supportsSessionList: boolean;
+  supportsLoadSession: boolean;
+  activePromptKey: string | null;
+  startupPhase: string;
+  startupLogs: string[];
+  startupElapsed: number;
+  isRefreshingSessions: boolean;
+  sessionListError: string | null;
+  listGeneration: number;
+}
+
+interface ConversationState {
+  key: string;
+  session: SavedSession;
+  messages: ChatMessage[];
+  toolCalls: Map<string, ToolCallInfo>;
+  isLoading: boolean;
+  isHydrating: boolean;
+  hydrated: boolean;
+  replayingHistory: boolean;
+  replayLastUpdateAt: number;
+  error: string | null;
+  availableModes: SessionMode[];
+  currentModeId: string;
+  availableCommands: SlashCommand[];
+  availableModels: ModelInfo[];
+  currentModelId: string;
+  openedAt: number;
+}
 
 interface ConnectionAttempt {
   cancelled: boolean;
@@ -19,10 +97,55 @@ interface ConnectionAttempt {
   spawnedAgentId?: string;
 }
 
-// App version (loaded once at startup)
+interface ProfileRuntime {
+  client: AcpClientBridge | null;
+  connectPromise: Promise<AcpClientBridge> | null;
+  pendingLoads: Map<string, Promise<string>>;
+  connectionAttempt: ConnectionAttempt | null;
+  stopPermissionWatch: (() => void) | null;
+  startupTimer: ReturnType<typeof setInterval> | null;
+  stderrUnlisten: (() => void) | null;
+  authMethods: AuthMethod[];
+  pendingSessionCreations: number;
+  pendingUpdates: Map<string, SessionNotification[]>;
+}
+
+interface AuthPrompt {
+  id: string;
+  agentName: string;
+  methods: AuthMethod[];
+  resolve: (methodId: string | null) => void;
+}
+
+interface SessionSetupMetadata {
+  modes?: {
+    availableModes?: Array<{
+      id: string;
+      name: string;
+      description?: string | null;
+    }>;
+    currentModeId?: string;
+  } | null;
+  models?: {
+    availableModels?: Array<{
+      modelId: string;
+      name: string;
+      description?: string | null;
+    }>;
+    currentModelId?: string;
+  } | null;
+}
+
 let appVersion = '0.1.0';
 
-// Startup phase detection patterns
+function keyOf(agentName: string, sessionId: string): string {
+  return `${agentName}:${sessionId}`;
+}
+
+function monotonicNow(): number {
+  return globalThis.performance?.now?.() ?? Date.now();
+}
+
 function detectPhase(line: string): string | null {
   const lower = line.toLowerCase();
   if (lower.includes('download') || lower.includes('fetch') || lower.includes('get ')) {
@@ -40,78 +163,272 @@ function detectPhase(line: string): string | null {
   return null;
 }
 
+function isAuthRequired(cause: unknown): boolean {
+  const message = cause instanceof Error ? cause.message : String(cause);
+  return (
+    message.toLowerCase().includes('authentication required') ||
+    message.includes('-32000')
+  );
+}
+
 export const useSessionStore = defineStore('session', () => {
-  // State
   const savedSessions = ref<SavedSession[]>([]);
-  const currentSession = ref<SavedSession | null>(null);
-  const messages = ref<ChatMessage[]>([]);
-  const toolCalls = ref<Map<string, ToolCallInfo>>(new Map());
-  const isConnected = ref(false);
-  const isLoading = ref(false);
-  const isConnecting = ref(false);
-  const isRefreshingSessions = ref(false);
-  const sessionListError = ref<string | null>(null);
-  // True while a foreground reconnect attempt is in flight. Distinct from
-  // `isConnecting` (which is the multi-phase initial spawn/connect path):
-  // reconnects skip the spawn/stderr-progress UI and just need a small
-  // "Reconnecting…" indicator.
-  const isReconnecting = ref(false);
-  const error = ref<string | null>(null);
-  const pendingPermission = ref<PermissionRequest | null>(null);
+  const conversations = reactive(new Map<string, ConversationState>());
+  const profileStates = reactive(new Map<string, ProfileState>());
+  const activeConversationKey = ref<string | null>(null);
+  const globalError = ref<string | null>(null);
+  const pendingPermissions = reactive(new Map<string, PermissionRequest>());
+  const authPrompts = shallowRef<AuthPrompt[]>([]);
+  const maintenanceProfiles = new Set<string>();
 
-  // Authentication state
-  const pendingAuthMethods = ref<AuthMethod[]>([]);
-  const pendingAuthAgentName = ref<string>('');
-  let authMethodResolver: ((methodId: string | null) => void) | null = null;
+  // ACP clients, promises, timers and unwatch functions must not be wrapped
+  // in Vue proxies.
+  const runtimes = new Map<string, ProfileRuntime>();
+  let openedSequence = 0;
 
-  // Session modes
-  const availableModes = ref<SessionMode[]>([]);
-  const currentModeId = ref<string>('');
+  function getProfileState(agentName: string): ProfileState {
+    let state = profileStates.get(agentName);
+    if (!state) {
+      state = {
+        profileId: agentName,
+        status: 'disconnected',
+        error: null,
+        supportsSessionList: false,
+        supportsLoadSession: false,
+        activePromptKey: null,
+        startupPhase: 'starting',
+        startupLogs: [],
+        startupElapsed: 0,
+        isRefreshingSessions: false,
+        sessionListError: null,
+        listGeneration: 0,
+      };
+      profileStates.set(agentName, state);
+      // Return the Map's reactive proxy, not the raw object that was just
+      // inserted. Async mutations on the raw object would otherwise update
+      // data without notifying Vue.
+      return profileStates.get(agentName) as ProfileState;
+    }
+    return state;
+  }
 
-  // Slash commands
-  const availableCommands = ref<SlashCommand[]>([]);
+  function getRuntime(agentName: string): ProfileRuntime {
+    let runtime = runtimes.get(agentName);
+    if (!runtime) {
+      runtime = {
+        client: null,
+        connectPromise: null,
+        pendingLoads: new Map(),
+        connectionAttempt: null,
+        stopPermissionWatch: null,
+        startupTimer: null,
+        stderrUnlisten: null,
+        authMethods: [],
+        pendingSessionCreations: 0,
+        pendingUpdates: new Map(),
+      };
+      runtimes.set(agentName, runtime);
+    }
+    return runtime;
+  }
 
-  // Session models
-  const availableModels = ref<ModelInfo[]>([]);
-  const currentModelId = ref<string>('');
+  const activeConversation = computed(() => {
+    const key = activeConversationKey.value;
+    return key ? conversations.get(key) ?? null : null;
+  });
 
-  // Startup progress tracking
-  const startupPhase = ref<string>('starting');
-  const startupLogs = ref<string[]>([]);
-  const startupElapsed = ref<number>(0);
-  let startupTimer: ReturnType<typeof setInterval> | null = null;
-  let stderrUnlisten: (() => void) | null = null;
+  const activeProfileState = computed(() => {
+    const conversation = activeConversation.value;
+    return conversation
+      ? getProfileState(conversation.session.agentName)
+      : null;
+  });
 
-  // Current ACP client
-  let acpClient: AcpClientBridge | null = null;
-  let sessionListGeneration = 0;
-  let replayingHistory = false;
-  let replayLastUpdateAt = 0;
-  let activeSupportsSessionList = false;
-  let connectionAttempt: ConnectionAttempt | null = null;
-  let stopPermissionWatch: (() => void) | null = null;
-  let expectedSessionId: string | null = null;
-
-  // Computed
-  const hasActiveSession = computed(() => currentSession.value !== null);
+  const currentSession = computed(
+    () => activeConversation.value?.session ?? null,
+  );
+  const messages = computed(
+    () => activeConversation.value?.messages ?? [],
+  );
   const messageList = computed(() => messages.value);
-  const toolCallList = computed(() => Array.from(toolCalls.value.values()));
-  // Only sessions that support resuming (loadSession capability)
+  const toolCallList = computed(() =>
+    activeConversation.value
+      ? Array.from(activeConversation.value.toolCalls.values())
+      : [],
+  );
+  const hasActiveSession = computed(() => activeConversation.value !== null);
+  const isConnected = computed(() => {
+    const conversation = activeConversation.value;
+    const profile = activeProfileState.value;
+    return (
+      conversation !== null &&
+      conversation.hydrated &&
+      profile?.status === 'connected'
+    );
+  });
+  const isLoading = computed(() => {
+    const conversation = activeConversation.value;
+    return Boolean(conversation?.isLoading || conversation?.isHydrating);
+  });
+  const isPrompting = computed(
+    () => activeConversation.value?.isLoading ?? false,
+  );
+  const isConnecting = computed(
+    () => activeProfileState.value?.status === 'connecting',
+  );
+  const isReconnecting = computed(() => {
+    const conversation = activeConversation.value;
+    return Boolean(
+      conversation?.isHydrating ||
+      activeProfileState.value?.status === 'reconnecting',
+    );
+  });
+  const error = computed(
+    () =>
+      activeConversation.value?.error ??
+      activeProfileState.value?.error ??
+      globalError.value,
+  );
+  const availableModes = computed(
+    () => activeConversation.value?.availableModes ?? [],
+  );
+  const currentModeId = computed(
+    () => activeConversation.value?.currentModeId ?? '',
+  );
+  const availableCommands = computed(
+    () => activeConversation.value?.availableCommands ?? [],
+  );
+  const availableModels = computed(
+    () => activeConversation.value?.availableModels ?? [],
+  );
+  const currentModelId = computed(
+    () => activeConversation.value?.currentModelId ?? '',
+  );
+  const startupPhase = computed(
+    () => activeProfileState.value?.startupPhase ?? 'starting',
+  );
+  const startupLogs = computed(
+    () => activeProfileState.value?.startupLogs ?? [],
+  );
+  const startupElapsed = computed(
+    () => activeProfileState.value?.startupElapsed ?? 0,
+  );
   const resumableSessions = computed(() =>
-    savedSessions.value.filter(s => s.supportsLoadSession === true)
+    savedSessions.value.filter((session) => session.supportsLoadSession === true),
+  );
+  const isRefreshingSessions = computed(() =>
+    Array.from(profileStates.values()).some(
+      (state) => state.isRefreshingSessions,
+    ),
+  );
+  const sessionListError = computed(() => {
+    for (const state of profileStates.values()) {
+      if (state.sessionListError) return state.sessionListError;
+    }
+    return null;
+  });
+  const isCurrentProfileBusyElsewhere = computed(() => {
+    const conversation = activeConversation.value;
+    const owner = activeProfileState.value?.activePromptKey;
+    return Boolean(conversation && owner && owner !== conversation.key);
+  });
+
+  function getPendingPermissionEntry():
+    | { agentName: string; request: PermissionRequest }
+    | null {
+    const conversation = activeConversation.value;
+    if (conversation) {
+      const request = pendingPermissions.get(conversation.session.agentName);
+      if (request?.sessionId === conversation.session.sessionId) {
+        return {
+          agentName: conversation.session.agentName,
+          request,
+        };
+      }
+    }
+
+    for (const [agentName, request] of pendingPermissions) {
+      return { agentName, request };
+    }
+    return null;
+  }
+
+  const pendingPermission = computed(
+    () => getPendingPermissionEntry()?.request ?? null,
+  );
+  const pendingPermissionAgentName = computed(
+    () => getPendingPermissionEntry()?.agentName ?? '',
+  );
+  const pendingPermissionSessionTitle = computed(() => {
+    const entry = getPendingPermissionEntry();
+    if (!entry) return '';
+    return (
+      conversations.get(keyOf(entry.agentName, entry.request.sessionId))
+        ?.session.title ?? entry.request.sessionId
+    );
+  });
+  const pendingAuthMethods = computed(
+    () => authPrompts.value[0]?.methods ?? [],
+  );
+  const pendingAuthAgentName = computed(
+    () => authPrompts.value[0]?.agentName ?? '',
   );
 
-  // Initialize store
-  async function initStore() {
-    // Load app version (Tauri API on desktop/mobile, build-time inject on web)
+  function conversationStatus(
+    conversation: ConversationState,
+  ): Pick<OpenConversationSummary, 'status' | 'statusLabel'> {
+    const permission = pendingPermissions.get(conversation.session.agentName);
+    if (permission?.sessionId === conversation.session.sessionId) {
+      return { status: 'needs_attention', statusLabel: 'Needs attention' };
+    }
+    if (conversation.isLoading) {
+      return { status: 'running', statusLabel: 'Running' };
+    }
+    if (conversation.isHydrating) {
+      return { status: 'connecting', statusLabel: 'Loading' };
+    }
+
+    const profile = getProfileState(conversation.session.agentName);
+    if (profile.status === 'connecting') {
+      return { status: 'connecting', statusLabel: 'Connecting' };
+    }
+    if (profile.status === 'reconnecting') {
+      return { status: 'reconnecting', statusLabel: 'Reconnecting' };
+    }
+    if (conversation.error || profile.status === 'error') {
+      return { status: 'error', statusLabel: 'Error' };
+    }
+    if (profile.status === 'connected' && conversation.hydrated) {
+      return { status: 'connected', statusLabel: 'Connected' };
+    }
+    return { status: 'disconnected', statusLabel: 'Disconnected' };
+  }
+
+  const openConversations = computed<OpenConversationSummary[]>(() =>
+    Array.from(conversations.values())
+      .sort((left, right) => right.openedAt - left.openedAt)
+      .map((conversation) => ({
+        key: conversation.key,
+        agentName: conversation.session.agentName,
+        sessionId: conversation.session.sessionId,
+        title: conversation.session.title,
+        lastUpdated: conversation.session.lastUpdated,
+        ...conversationStatus(conversation),
+        isActive: conversation.key === activeConversationKey.value,
+      })),
+  );
+
+  async function initStore(): Promise<void> {
     try {
       appVersion = await getAppVersion();
-    } catch (e) {
-      console.warn('Failed to get app version:', e);
+    } catch (cause) {
+      console.warn('Failed to get app version:', cause);
     }
   }
 
-  function initializeClient(client: AcpClientBridge) {
+  function initializeClient(
+    client: AcpClientBridge,
+  ): Promise<InitializeResponse> {
     const canAccessFs = isDesktop();
     return client.initialize({
       protocolVersion: PROTOCOL_VERSION,
@@ -129,32 +446,420 @@ export const useSessionStore = defineStore('session', () => {
     });
   }
 
+  function createConversation(session: SavedSession): ConversationState {
+    const key = keyOf(session.agentName, session.sessionId);
+    const existing = conversations.get(key);
+    if (existing) {
+      existing.session = session;
+      return existing;
+    }
+
+    const conversation: ConversationState = {
+      key,
+      session,
+      messages: [],
+      toolCalls: new Map(),
+      isLoading: false,
+      isHydrating: false,
+      hydrated: false,
+      replayingHistory: false,
+      replayLastUpdateAt: 0,
+      error: null,
+      availableModes: [],
+      currentModeId: '',
+      availableCommands: [],
+      availableModels: [],
+      currentModelId: '',
+      openedAt: ++openedSequence,
+    };
+    conversations.set(key, conversation);
+    return conversations.get(key) as ConversationState;
+  }
+
+  function saveSession(session: SavedSession): void {
+    const normalized: SavedSession = {
+      ...session,
+      id: keyOf(session.agentName, session.sessionId),
+    };
+    const conversation = conversations.get(normalized.id);
+    if (conversation) {
+      conversation.session = normalized;
+    }
+    savedSessions.value = [
+      normalized,
+      ...savedSessions.value.filter(
+        (saved) =>
+          saved.agentName !== normalized.agentName ||
+          saved.sessionId !== normalized.sessionId,
+      ),
+    ];
+  }
+
   function replaceSessionsForAgent(
     agentName: string,
-    sessions: SavedSession[],
+    listedSessions: SavedSession[],
   ): void {
+    const sessions = listedSessions
+      .map((listed) => {
+        const key = keyOf(agentName, listed.sessionId);
+        const open = conversations.get(key);
+        if (!open) return { ...listed, id: key };
+        open.session.title = listed.title;
+        open.session.lastUpdated = listed.lastUpdated;
+        open.session.supportsLoadSession = listed.supportsLoadSession;
+        return open.session;
+      });
     savedSessions.value = [
-      ...savedSessions.value.filter((session) => session.agentName !== agentName),
+      ...savedSessions.value.filter(
+        (session) => session.agentName !== agentName,
+      ),
       ...sessions,
     ];
   }
 
-  async function waitForReplayQuiescence(): Promise<void> {
-    const deadline = Date.now() + 250;
-    while (Date.now() < deadline) {
-      if (Date.now() - replayLastUpdateAt >= 50) return;
-      await new Promise<void>((resolve) => setTimeout(resolve, 20));
+  function applySetupMetadata(
+    conversation: ConversationState,
+    response: unknown,
+  ): void {
+    const metadata = response as SessionSetupMetadata;
+    if (metadata.modes) {
+      conversation.availableModes = (
+        metadata.modes.availableModes ?? []
+      ).map((mode) => ({
+        id: mode.id,
+        name: mode.name,
+        description: mode.description ?? undefined,
+      }));
+      conversation.currentModeId = metadata.modes.currentModeId ?? '';
+    }
+    if (metadata.models) {
+      conversation.availableModels = (
+        metadata.models.availableModels ?? []
+      ).map((model) => ({
+        modelId: model.modelId,
+        name: model.name,
+        description: model.description ?? undefined,
+      }));
+      conversation.currentModelId = metadata.models.currentModelId ?? '';
     }
   }
 
-  async function connectProfileClient(
+  function ensureAssistantMessageForToolCall(
+    conversation: ConversationState,
+  ): ChatMessage {
+    const lastMessage =
+      conversation.messages[conversation.messages.length - 1];
+    if (lastMessage?.role === 'assistant') {
+      lastMessage.toolCalls ??= [];
+      return lastMessage;
+    }
+
+    const assistantMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: 'assistant',
+      content: '',
+      timestamp: conversation.replayingHistory ? undefined : Date.now(),
+      toolCalls: [],
+    };
+    conversation.messages.push(assistantMessage);
+    return assistantMessage;
+  }
+
+  function attachToolCall(
+    conversation: ConversationState,
+    toolCall: ToolCallInfo,
+  ): void {
+    const assistantMessage = ensureAssistantMessageForToolCall(conversation);
+    assistantMessage.toolCalls ??= [];
+    if (
+      !assistantMessage.toolCalls.some(
+        (item) => item.toolCallId === toolCall.toolCallId,
+      )
+    ) {
+      assistantMessage.toolCalls.push(toolCall);
+    }
+  }
+
+  function applySessionUpdate(
+    agentName: string,
+    conversation: ConversationState,
+    notification: SessionNotification,
+  ): void {
+    if (conversation.replayingHistory) {
+      conversation.replayLastUpdateAt = Date.now();
+    }
+    const update = notification.update;
+
+    switch (update.sessionUpdate) {
+      case 'user_message_chunk': {
+        const lastMessage =
+          conversation.messages[conversation.messages.length - 1];
+        if (lastMessage?.role === 'user') {
+          if (update.content.type === 'text') {
+            lastMessage.content += update.content.text;
+          }
+        } else {
+          conversation.messages.push({
+            id: crypto.randomUUID(),
+            role: 'user',
+            content:
+              update.content.type === 'text' ? update.content.text : '',
+            timestamp: conversation.replayingHistory
+              ? undefined
+              : Date.now(),
+          });
+        }
+        break;
+      }
+
+      case 'agent_message_chunk': {
+        const lastMessage =
+          conversation.messages[conversation.messages.length - 1];
+        if (lastMessage?.role === 'assistant') {
+          if (update.content.type === 'text') {
+            lastMessage.content += update.content.text;
+          }
+        } else {
+          conversation.messages.push({
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content:
+              update.content.type === 'text' ? update.content.text : '',
+            timestamp: conversation.replayingHistory
+              ? undefined
+              : Date.now(),
+            toolCalls: [],
+          });
+        }
+        break;
+      }
+
+      case 'agent_thought_chunk': {
+        const lastMessage =
+          conversation.messages[conversation.messages.length - 1];
+        if (lastMessage?.role === 'assistant') {
+          if (update.content.type === 'text') {
+            lastMessage.thought =
+              (lastMessage.thought ?? '') + update.content.text;
+          }
+        } else {
+          conversation.messages.push({
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content: '',
+            thought:
+              update.content.type === 'text' ? update.content.text : '',
+            timestamp: conversation.replayingHistory
+              ? undefined
+              : Date.now(),
+            toolCalls: [],
+          });
+        }
+        break;
+      }
+
+      case 'plan': {
+        const assistantMessage =
+          ensureAssistantMessageForToolCall(conversation);
+        assistantMessage.plan = update.entries.map((entry) => ({ ...entry }));
+        break;
+      }
+
+      case 'tool_call': {
+        const observedAt = conversation.replayingHistory ? null : Date.now();
+        const existing = conversation.toolCalls.get(update.toolCallId);
+        const toolCall = existing
+          ? applyToolCallUpdate(existing, update, observedAt)
+          : createToolCallInfo(update, observedAt);
+        conversation.toolCalls.set(update.toolCallId, toolCall);
+        attachToolCall(conversation, toolCall);
+        break;
+      }
+
+      case 'tool_call_update': {
+        const observedAt = conversation.replayingHistory ? null : Date.now();
+        const existing = conversation.toolCalls.get(update.toolCallId);
+        const toolCall = existing
+          ? applyToolCallUpdate(existing, update, observedAt)
+          : createToolCallInfo(update, observedAt);
+        conversation.toolCalls.set(update.toolCallId, toolCall);
+        attachToolCall(conversation, toolCall);
+
+        for (const message of conversation.messages) {
+          const attached = message.toolCalls?.find(
+            (item) => item.toolCallId === update.toolCallId,
+          );
+          if (attached && attached !== toolCall) {
+            applyToolCallUpdate(attached, update, observedAt);
+          }
+        }
+        break;
+      }
+
+      case 'current_mode_update':
+        if ('modeId' in update && update.modeId) {
+          conversation.currentModeId = update.modeId as string;
+        }
+        break;
+
+      case 'available_commands_update':
+        if (
+          'availableCommands' in update &&
+          Array.isArray(update.availableCommands)
+        ) {
+          conversation.availableCommands = update.availableCommands.map(
+            (command) => ({
+              name: command.name,
+              description: command.description,
+              hint: command.input?.hint ?? undefined,
+            }),
+          );
+        }
+        break;
+
+      case 'session_info_update': {
+        if ('title' in update && update.title !== undefined) {
+          conversation.session.title =
+            update.title?.trim() || 'Untitled session';
+        }
+        if ('updatedAt' in update && update.updatedAt) {
+          const parsed = Date.parse(update.updatedAt);
+          if (Number.isFinite(parsed)) {
+            conversation.session.lastUpdated = parsed;
+          }
+        }
+        const saved = savedSessions.value.find(
+          (session) =>
+            session.agentName === agentName &&
+            session.sessionId === notification.sessionId,
+        );
+        if (saved && saved !== conversation.session) {
+          saved.title = conversation.session.title;
+          saved.lastUpdated = conversation.session.lastUpdated;
+        }
+        break;
+      }
+
+      default:
+        // Unknown events remain visible in ACP Traffic.
+        break;
+    }
+  }
+
+  function handleSessionUpdate(
+    agentName: string,
+    notification: SessionNotification,
+  ): void {
+    const conversation = conversations.get(
+      keyOf(agentName, notification.sessionId),
+    );
+    if (conversation) {
+      applySessionUpdate(agentName, conversation, notification);
+      return;
+    }
+
+    // session/new may emit initial updates before its response reveals the
+    // new sessionId. Buffer only while a creation request is active.
+    const runtime = getRuntime(agentName);
+    if (runtime.pendingSessionCreations > 0) {
+      const queued = runtime.pendingUpdates.get(notification.sessionId) ?? [];
+      if (queued.length < 100) queued.push(notification);
+      runtime.pendingUpdates.set(notification.sessionId, queued);
+    }
+  }
+
+  function drainPendingUpdates(
+    agentName: string,
+    conversation: ConversationState,
+  ): void {
+    const runtime = getRuntime(agentName);
+    const queued = runtime.pendingUpdates.get(conversation.session.sessionId);
+    runtime.pendingUpdates.delete(conversation.session.sessionId);
+    if (!queued) return;
+    for (const notification of queued) {
+      applySessionUpdate(agentName, conversation, notification);
+    }
+  }
+
+  function handleUnexpectedClose(
+    agentName: string,
+    client: AcpClientBridge,
+    reason?: string,
+  ): void {
+    const runtime = getRuntime(agentName);
+    if (runtime.client !== client) return;
+
+    runtime.stopPermissionWatch?.();
+    runtime.stopPermissionWatch = null;
+    runtime.client = null;
+    pendingPermissions.delete(agentName);
+
+    const state = getProfileState(agentName);
+    const expectedMaintenance = maintenanceProfiles.has(agentName);
+    state.status = expectedMaintenance ? 'disconnected' : 'error';
+    state.error = expectedMaintenance
+      ? null
+      : `Connection lost: ${reason ?? 'transport closed'}`;
+    state.activePromptKey = null;
+    state.supportsSessionList = false;
+
+    for (const conversation of conversations.values()) {
+      if (conversation.session.agentName !== agentName) continue;
+      conversation.hydrated = false;
+      conversation.isLoading = false;
+      conversation.isHydrating = false;
+      conversation.replayingHistory = false;
+    }
+  }
+
+  function bindClient(
+    agentName: string,
+    client: AcpClientBridge,
+  ): void {
+    const runtime = getRuntime(agentName);
+    client.onSessionUpdate = (notification) => {
+      handleSessionUpdate(agentName, notification);
+    };
+    client.onTransportClose = (reason) => {
+      handleUnexpectedClose(agentName, client, reason);
+    };
+    runtime.stopPermissionWatch?.();
+    runtime.stopPermissionWatch = watch(
+      () => client.pendingPermissionRequest.value,
+      (request) => {
+        if (runtime.client !== client) return;
+        if (request) {
+          pendingPermissions.set(agentName, request);
+        } else {
+          pendingPermissions.delete(agentName);
+        }
+      },
+      { immediate: true },
+    );
+  }
+
+  function unbindClient(
+    agentName: string,
+    client: AcpClientBridge,
+  ): void {
+    const runtime = getRuntime(agentName);
+    if (runtime.client !== client) return;
+    runtime.stopPermissionWatch?.();
+    runtime.stopPermissionWatch = null;
+    pendingPermissions.delete(agentName);
+    client.onSessionUpdate = null;
+    client.onTransportClose = null;
+  }
+
+  async function connectProfileTransport(
     agentName: string,
     agentConfig: AgentConfig,
-    shouldStop: () => boolean = () => false,
+    shouldStop: () => boolean,
   ): Promise<AcpClientBridge> {
-    const delays = getTransportKind(agentConfig) === 'websocket'
-      ? [0, 100, 200, 400, 800]
-      : [0];
+    const delays =
+      getTransportKind(agentConfig) === 'websocket'
+        ? [0, 100, 200, 400, 800]
+        : [0];
     let lastError: unknown;
     for (const delayMs of delays) {
       if (shouldStop()) throw new Error('Connection cancelled');
@@ -163,7 +868,10 @@ export const useSessionStore = defineStore('session', () => {
       }
       if (shouldStop()) throw new Error('Connection cancelled');
       try {
-        return await createAcpClient({ name: agentName, config: agentConfig });
+        return await createAcpClient(
+          { name: agentName, config: agentConfig },
+          { profileId: agentName },
+        );
       } catch (cause) {
         lastError = cause;
       }
@@ -173,16 +881,256 @@ export const useSessionStore = defineStore('session', () => {
       : new Error('Unable to connect to the Agent');
   }
 
-  /**
-   * Ask the Agent for its durable sessions. The browser does not maintain a
-   * competing session index; OpenCode remains the sole session owner.
-   */
-  async function refreshSessions(agentName: string): Promise<void> {
-    const generation = ++sessionListGeneration;
-    isRefreshingSessions.value = true;
-    sessionListError.value = null;
-    let listClient: AcpClientBridge | null = null;
+  function startStartupProgress(
+    state: ProfileState,
+    runtime: ProfileRuntime,
+  ): void {
+    state.startupPhase = 'starting';
+    state.startupLogs = [];
+    state.startupElapsed = 0;
+    if (runtime.startupTimer) clearInterval(runtime.startupTimer);
+    runtime.startupTimer = setInterval(() => {
+      state.startupElapsed += 1;
+    }, 1000);
+  }
 
+  function stopStartupProgress(runtime: ProfileRuntime): void {
+    if (runtime.startupTimer) {
+      clearInterval(runtime.startupTimer);
+      runtime.startupTimer = null;
+    }
+    runtime.stderrUnlisten?.();
+    runtime.stderrUnlisten = null;
+  }
+
+  async function ensureProfileClient(
+    agentName: string,
+    options: { reconnecting?: boolean } = {},
+  ): Promise<AcpClientBridge> {
+    const state = getProfileState(agentName);
+    const runtime = getRuntime(agentName);
+    if (runtime.client && state.status === 'connected') {
+      return runtime.client;
+    }
+    if (runtime.connectPromise) return runtime.connectPromise;
+
+    const configStore = useConfigStore();
+    const agentConfig = configStore.getAgent(agentName);
+    if (!agentConfig) {
+      throw new Error(`Agent '${agentName}' not found in catalog`);
+    }
+    if (agentConfig.status === 'unavailable') {
+      throw new Error(
+        'This Agent Profile is unavailable until its required environment is configured',
+      );
+    }
+    if (!agentConfig.cwd) {
+      throw new Error(`Agent '${agentName}' has no fixed working directory`);
+    }
+
+    const attempt: ConnectionAttempt = { cancelled: false, client: null };
+    runtime.connectionAttempt = attempt;
+    state.status = options.reconnecting ? 'reconnecting' : 'connecting';
+    state.error = null;
+    startStartupProgress(state, runtime);
+
+    const promise = (async (): Promise<AcpClientBridge> => {
+      let spawnedInstance: { id: string } | null = null;
+      try {
+        const transportKind = getTransportKind(agentConfig);
+        let client: AcpClientBridge;
+
+        if (transportKind === 'stdio') {
+          state.startupPhase = 'starting';
+          const agentInstance = await spawnAgent(agentName);
+          spawnedInstance = agentInstance;
+          attempt.spawnedAgentId = agentInstance.id;
+
+          runtime.stderrUnlisten = (await onAgentStderr((stderr) => {
+            if (stderr.agent_id !== agentInstance.id) return;
+            state.startupLogs.push(stderr.line);
+            const phase = detectPhase(stderr.line);
+            if (phase) state.startupPhase = phase;
+          })) as unknown as () => void;
+
+          if (attempt.cancelled || runtime.connectionAttempt !== attempt) {
+            await killAgent(agentInstance.id).catch(() => undefined);
+            spawnedInstance = null;
+            attempt.spawnedAgentId = undefined;
+            throw new Error('Connection cancelled');
+          }
+
+          state.startupPhase = 'initializing';
+          client = await createAcpClient(agentInstance, {
+            profileId: agentName,
+          });
+          spawnedInstance = null;
+          attempt.spawnedAgentId = undefined;
+        } else {
+          state.startupPhase = 'connecting';
+          client = await connectProfileTransport(
+            agentName,
+            agentConfig,
+            () =>
+              attempt.cancelled ||
+              runtime.connectionAttempt !== attempt,
+          );
+        }
+
+        attempt.client = client;
+        if (attempt.cancelled || runtime.connectionAttempt !== attempt) {
+          await client.disconnect();
+          throw new Error('Connection cancelled');
+        }
+
+        runtime.client = client;
+        bindClient(agentName, client);
+        state.startupPhase = 'initializing';
+        const response = await initializeClient(client);
+
+        if (
+          attempt.cancelled ||
+          runtime.connectionAttempt !== attempt ||
+          runtime.client !== client
+        ) {
+          throw new Error('Connection cancelled');
+        }
+
+        runtime.authMethods = response.authMethods ?? [];
+        state.supportsSessionList =
+          response.agentCapabilities?.sessionCapabilities?.list != null;
+        state.supportsLoadSession =
+          response.agentCapabilities?.loadSession ?? false;
+        state.status = 'connected';
+        state.error = null;
+        return client;
+      } catch (cause) {
+        if (attempt.client) {
+          try {
+            if (runtime.client === attempt.client) {
+              unbindClient(agentName, attempt.client);
+              runtime.client = null;
+            }
+            await attempt.client.disconnect();
+          } catch (cleanupError) {
+            console.warn(
+              'disconnect during profile connection cleanup failed:',
+              cleanupError,
+            );
+          }
+        } else if (spawnedInstance) {
+          await killAgent(spawnedInstance.id).catch(() => undefined);
+        }
+
+        state.status = attempt.cancelled ? 'disconnected' : 'error';
+        state.error = attempt.cancelled
+          ? null
+          : cause instanceof Error
+            ? cause.message
+            : String(cause);
+        throw cause;
+      }
+    })();
+
+    runtime.connectPromise = promise;
+    try {
+      return await promise;
+    } finally {
+      if (runtime.connectPromise === promise) {
+        runtime.connectPromise = null;
+      }
+      if (runtime.connectionAttempt === attempt) {
+        runtime.connectionAttempt = null;
+      }
+      stopStartupProgress(runtime);
+    }
+  }
+
+  async function waitForReplayQuiescence(
+    conversation: ConversationState,
+  ): Promise<void> {
+    const deadline = Date.now() + 250;
+    while (Date.now() < deadline) {
+      if (Date.now() - conversation.replayLastUpdateAt >= 50) return;
+      await new Promise<void>((resolve) => setTimeout(resolve, 20));
+    }
+  }
+
+  function promptForAuthMethod(
+    methods: AuthMethod[],
+    agentName: string,
+  ): Promise<string | null> {
+    return new Promise((resolve) => {
+      authPrompts.value = [
+        ...authPrompts.value,
+        {
+          id: crypto.randomUUID(),
+          agentName,
+          methods,
+          resolve,
+        },
+      ];
+    });
+  }
+
+  function settleAuthPrompt(methodId: string | null): void {
+    const [prompt, ...remaining] = authPrompts.value;
+    if (!prompt) return;
+    authPrompts.value = remaining;
+    prompt.resolve(methodId);
+  }
+
+  function selectAuthMethod(methodId: string): void {
+    settleAuthPrompt(methodId);
+  }
+
+  function cancelAuthSelection(): void {
+    settleAuthPrompt(null);
+  }
+
+  function cancelAuthForProfile(agentName: string): void {
+    const cancelled = authPrompts.value.filter(
+      (prompt) => prompt.agentName === agentName,
+    );
+    if (cancelled.length === 0) return;
+    authPrompts.value = authPrompts.value.filter(
+      (prompt) => prompt.agentName !== agentName,
+    );
+    for (const prompt of cancelled) prompt.resolve(null);
+  }
+
+  async function withAuthentication<T>(
+    agentName: string,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await operation();
+    } catch (cause) {
+      const runtime = getRuntime(agentName);
+      if (!isAuthRequired(cause) || runtime.authMethods.length === 0) {
+        throw cause;
+      }
+
+      const methodId = await promptForAuthMethod(
+        runtime.authMethods,
+        agentName,
+      );
+      if (!methodId) throw new Error('Authentication cancelled by user');
+      const client = runtime.client;
+      if (!client) throw new Error('Agent connection closed during authentication');
+      await client.authenticate({ methodId });
+      return operation();
+    }
+  }
+
+  async function refreshSessions(agentName: string): Promise<void> {
+    const state = getProfileState(agentName);
+    const generation = ++state.listGeneration;
+    state.isRefreshingSessions = true;
+    state.sessionListError = null;
+
+    let client: AcpClientBridge | null = null;
+    let ownsClient = false;
     try {
       const configStore = useConfigStore();
       const agentConfig = configStore.getAgent(agentName);
@@ -190,45 +1138,40 @@ export const useSessionStore = defineStore('session', () => {
         throw new Error(`Agent '${agentName}' not found in catalog`);
       }
       if (agentConfig.status === 'unavailable') {
-        throw new Error('This Agent Profile is unavailable until its required environment is configured');
+        throw new Error(
+          'This Agent Profile is unavailable until its required environment is configured',
+        );
       }
       if (!agentConfig.cwd) {
         throw new Error(`Agent '${agentName}' has no fixed working directory`);
       }
 
-      // Reuse an active connection for the same profile. Otherwise, open a
-      // short-lived ACP connection solely for initialize + session/list.
-      const activeClient = acpClient;
-      const reusableClient =
-        activeClient !== null &&
-        currentSession.value?.agentName === agentName &&
-        isConnected.value
-          ? activeClient
-          : null;
-      const canReuseCurrent = reusableClient !== null;
-      const client = reusableClient
-        ? reusableClient
-        : await connectProfileClient(
+      const runtime = getRuntime(agentName);
+      if (runtime.client || runtime.connectPromise) {
+        client = await ensureProfileClient(agentName);
+      } else {
+        client = await connectProfileTransport(
           agentName,
           agentConfig,
-          () => generation !== sessionListGeneration,
+          () => generation !== state.listGeneration,
         );
-      listClient = client;
+        ownsClient = true;
+      }
 
-      const initResponse = canReuseCurrent
-        ? null
-        : await initializeClient(client);
-      const supportsList = canReuseCurrent
-        ? activeSupportsSessionList
-        : initResponse?.agentCapabilities?.sessionCapabilities?.list != null;
-      const supportsLoad = canReuseCurrent
-        ? currentSession.value?.supportsLoadSession === true
-        : initResponse?.agentCapabilities?.loadSession === true;
+      const initResponse = ownsClient
+        ? await initializeClient(client)
+        : null;
+      const supportsList = ownsClient
+        ? initResponse?.agentCapabilities?.sessionCapabilities?.list != null
+        : state.supportsSessionList;
+      const supportsLoad = ownsClient
+        ? initResponse?.agentCapabilities?.loadSession === true
+        : state.supportsLoadSession;
 
       if (!supportsList || !supportsLoad) {
-        if (generation === sessionListGeneration) {
+        if (generation === state.listGeneration) {
           replaceSessionsForAgent(agentName, []);
-          sessionListError.value =
+          state.sessionListError =
             'This Agent does not advertise ACP session/list and session/load.';
         }
         return;
@@ -243,18 +1186,18 @@ export const useSessionStore = defineStore('session', () => {
           cursor,
         });
         for (const session of response.sessions) {
-          // Do not let a non-conforming Agent redirect session/load to a cwd
-          // outside the server-published profile.
           if (session.cwd !== agentConfig.cwd) continue;
           const parsedUpdatedAt = session.updatedAt
             ? Date.parse(session.updatedAt)
             : Number.NaN;
           listed.push({
-            id: `${agentName}:${session.sessionId}`,
+            id: keyOf(agentName, session.sessionId),
             agentName,
             sessionId: session.sessionId,
             title: session.title?.trim() || 'Untitled session',
-            lastUpdated: Number.isFinite(parsedUpdatedAt) ? parsedUpdatedAt : 0,
+            lastUpdated: Number.isFinite(parsedUpdatedAt)
+              ? parsedUpdatedAt
+              : 0,
             cwd: agentConfig.cwd,
             supportsLoadSession: true,
           });
@@ -272,900 +1215,700 @@ export const useSessionStore = defineStore('session', () => {
         }
       }
 
-      if (generation === sessionListGeneration) {
+      if (generation === state.listGeneration) {
         replaceSessionsForAgent(agentName, listed);
       }
     } catch (cause) {
-      if (generation === sessionListGeneration) {
+      if (generation === state.listGeneration) {
         replaceSessionsForAgent(agentName, []);
-        sessionListError.value =
+        state.sessionListError =
           cause instanceof Error ? cause.message : String(cause);
       }
     } finally {
-      if (listClient && listClient !== acpClient) {
-        try {
-          await listClient.disconnect();
-        } catch {
-          // The list request has already completed or failed; there is no
-          // useful recovery action for a short-lived connection.
-        }
+      if (client && ownsClient) {
+        await client.disconnect().catch(() => undefined);
       }
-      if (generation === sessionListGeneration) {
-        isRefreshingSessions.value = false;
+      if (generation === state.listGeneration) {
+        state.isRefreshingSessions = false;
       }
     }
   }
 
-  // Handle an unexpected transport close (e.g. WebSocket dropped while idle,
-  // local agent process exited). The bridge has already rejected any
-  // in-flight requests; we just need to tear down UI state so the user gets
-  // a clear "disconnected" signal instead of a stale "connected" view.
-  function handleUnexpectedClose(client: AcpClientBridge, reason?: string): void {
-    // If `acpClient` is already null, this fired during a voluntary
-    // disconnect that's tearing down anyway — nothing to do.
-    if (acpClient !== client) return;
-    stopPermissionWatch?.();
-    stopPermissionWatch = null;
-    acpClient = null;
-    activeSupportsSessionList = false;
-    isConnected.value = false;
-    isLoading.value = false;
-    pendingPermission.value = null;
-    error.value = `Connection lost: ${reason ?? 'transport closed'}`;
-  }
-
-  function bindClient(client: AcpClientBridge): void {
-    client.onSessionUpdate = handleSessionUpdate;
-    client.onTransportClose = (reason) => {
-      handleUnexpectedClose(client, reason);
-    };
-    stopPermissionWatch?.();
-    stopPermissionWatch = watch(
-      () => client.pendingPermissionRequest.value,
-      (newValue) => {
-        if (acpClient === client) {
-          pendingPermission.value = newValue ?? null;
-        }
-      },
-      { immediate: true },
-    );
-  }
-
-  function unbindClient(client: AcpClientBridge): void {
-    if (acpClient !== client) return;
-    stopPermissionWatch?.();
-    stopPermissionWatch = null;
-    pendingPermission.value = null;
-  }
-
-  function ensureAssistantMessageForToolCall(): ChatMessage {
-    const lastMessage = messages.value[messages.value.length - 1];
-    if (lastMessage?.role === 'assistant') {
-      lastMessage.toolCalls ??= [];
-      return lastMessage;
+  async function createSession(
+    agentName: string,
+    cwd: string,
+    options: { activate?: boolean } = {},
+  ): Promise<string> {
+    if (maintenanceProfiles.has(agentName)) {
+      throw new Error(
+        'This Profile is undergoing maintenance. Try again in a moment.',
+      );
     }
-
-    const assistantMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: 'assistant',
-      content: '',
-      timestamp: replayingHistory ? undefined : Date.now(),
-      toolCalls: [],
-    };
-    messages.value.push(assistantMessage);
-    return assistantMessage;
-  }
-
-  function attachToolCall(toolCall: ToolCallInfo): void {
-    const assistantMessage = ensureAssistantMessageForToolCall();
-    assistantMessage.toolCalls ??= [];
-    if (!assistantMessage.toolCalls.some((item) => item.toolCallId === toolCall.toolCallId)) {
-      assistantMessage.toolCalls.push(toolCall);
-    }
-  }
-
-  // Session update handler
-  function handleSessionUpdate(notification: SessionNotification) {
-    if (
-      expectedSessionId === null ||
-      notification.sessionId !== expectedSessionId
-    ) {
-      return;
-    }
-    if (replayingHistory) replayLastUpdateAt = Date.now();
-    const update = notification.update;
-
-    switch (update.sessionUpdate) {
-      case 'user_message_chunk':
-        // Append to last user message or create new (for replay)
-        const lastUserMsg = messages.value[messages.value.length - 1];
-        if (lastUserMsg && lastUserMsg.role === 'user') {
-          if (update.content.type === 'text') {
-            lastUserMsg.content += update.content.text;
-          }
-        } else {
-          messages.value.push({
-            id: crypto.randomUUID(),
-            role: 'user',
-            content: update.content.type === 'text' ? update.content.text : '',
-            timestamp: replayingHistory ? undefined : Date.now(),
-          });
-        }
-        break;
-
-      case 'agent_message_chunk':
-        // Append to last assistant message or create new
-        const lastMsg = messages.value[messages.value.length - 1];
-        if (lastMsg && lastMsg.role === 'assistant') {
-          if (update.content.type === 'text') {
-            lastMsg.content += update.content.text;
-          }
-        } else {
-          messages.value.push({
-            id: crypto.randomUUID(),
-            role: 'assistant',
-            content: update.content.type === 'text' ? update.content.text : '',
-            timestamp: replayingHistory ? undefined : Date.now(),
-            toolCalls: [],
-          });
-        }
-        break;
-
-      case 'agent_thought_chunk':
-        // Append to last assistant message's thought field or create new
-        const lastAssistantMsg = messages.value[messages.value.length - 1];
-        if (lastAssistantMsg && lastAssistantMsg.role === 'assistant') {
-          if (update.content.type === 'text') {
-            lastAssistantMsg.thought = (lastAssistantMsg.thought || '') + update.content.text;
-          }
-        } else {
-          messages.value.push({
-            id: crypto.randomUUID(),
-            role: 'assistant',
-            content: '',
-            thought: update.content.type === 'text' ? update.content.text : '',
-            timestamp: replayingHistory ? undefined : Date.now(),
-            toolCalls: [],
-          });
-        }
-        break;
-
-      case 'plan': {
-        const assistantMessage = ensureAssistantMessageForToolCall();
-        assistantMessage.plan = update.entries.map((entry) => ({ ...entry }));
-        break;
-      }
-
-      case 'tool_call':
-        {
-          const observedAt = replayingHistory ? null : Date.now();
-          const existingToolCall = toolCalls.value.get(update.toolCallId);
-          const toolCall = existingToolCall
-            ? applyToolCallUpdate(existingToolCall, update, observedAt)
-            : createToolCallInfo(update, observedAt);
-          toolCalls.value.set(update.toolCallId, toolCall);
-          attachToolCall(toolCall);
-        }
-        break;
-
-      case 'tool_call_update':
-        {
-          const observedAt = replayingHistory ? null : Date.now();
-          const existing = toolCalls.value.get(update.toolCallId);
-          const toolCall = existing
-            ? applyToolCallUpdate(existing, update, observedAt)
-            : createToolCallInfo(update, observedAt);
-          toolCalls.value.set(update.toolCallId, toolCall);
-          attachToolCall(toolCall);
-
-          // Retain compatibility with any pre-existing state that held a
-          // separate object instead of the shared map/message reference.
-          for (const msg of messages.value) {
-            if (msg.toolCalls) {
-              const tc = msg.toolCalls.find(t => t.toolCallId === update.toolCallId);
-              if (tc && tc !== toolCall) {
-                applyToolCallUpdate(tc, update, observedAt);
-              }
-            }
-          }
-        }
-        break;
-
-      case 'current_mode_update':
-        // Agent changed the mode
-        if ('modeId' in update && update.modeId) {
-          currentModeId.value = update.modeId as string;
-        }
-        break;
-
-      case 'available_commands_update':
-        // Agent advertised slash commands
-        if ('availableCommands' in update && Array.isArray(update.availableCommands)) {
-          availableCommands.value = update.availableCommands.map((cmd) => ({
-            name: cmd.name,
-            description: cmd.description,
-            hint: cmd.input?.hint ?? undefined,
-          }));
-        }
-        break;
-
-      case 'session_info_update': {
-        const matching = savedSessions.value.find(
-          (session) =>
-            session.sessionId === notification.sessionId &&
-            session.agentName === currentSession.value?.agentName,
-        );
-        if (matching) {
-          if ('title' in update && update.title !== undefined) {
-            matching.title = update.title?.trim() || 'Untitled session';
-          }
-          if ('updatedAt' in update && update.updatedAt) {
-            const parsed = Date.parse(update.updatedAt);
-            if (Number.isFinite(parsed)) matching.lastUpdated = parsed;
-          }
-        }
-        break;
-      }
-
-      default:
-        // Unknown updates remain visible in ACP Traffic. Avoid logging the
-        // payload because it may contain conversation or tool data.
-        break;
-    }
-  }
-
-  // Prompt user to select auth method
-  async function promptForAuthMethod(authMethods: AuthMethod[], agentName: string): Promise<string | null> {
-    return new Promise((resolve) => {
-      pendingAuthMethods.value = authMethods;
-      pendingAuthAgentName.value = agentName;
-      authMethodResolver = resolve;
-    });
-  }
-
-  // User selected an auth method
-  function selectAuthMethod(methodId: string): void {
-    if (authMethodResolver) {
-      authMethodResolver(methodId);
-      authMethodResolver = null;
-      pendingAuthMethods.value = [];
-      pendingAuthAgentName.value = '';
-    }
-  }
-
-  // User cancelled auth selection
-  function cancelAuthSelection(): void {
-    if (authMethodResolver) {
-      authMethodResolver(null);
-      authMethodResolver = null;
-      pendingAuthMethods.value = [];
-      pendingAuthAgentName.value = '';
-    }
-  }
-
-  // Create new session
-  async function createSession(agentName: string, cwd: string): Promise<void> {
-    if (isLoading.value || isConnected.value || acpClient) {
-      throw new Error('Disconnect the current session before starting another one');
-    }
-    isLoading.value = true;
-    isConnecting.value = true;
-    const attempt: ConnectionAttempt = { cancelled: false, client: null };
-    connectionAttempt = attempt;
-    error.value = null;
-
-    // Look up the agent's transport kind so we know whether to do the
-    // stdio-only startup choreography (spawn → stderr progress) or the
-    // streamlined remote path (just open a network transport).
+    globalError.value = null;
     const configStore = useConfigStore();
-    const agentConfig: AgentConfig | undefined = configStore.getAgent(agentName);
-    const transportKind = agentConfig
-      ? getTransportKind(agentConfig)
-      : 'stdio';
-    const isRemote = transportKind !== 'stdio';
+    const agentConfig = configStore.getAgent(agentName);
+    if (!agentConfig) throw new Error(`Agent '${agentName}' not found in catalog`);
+    if (!agentConfig.cwd || cwd !== agentConfig.cwd) {
+      throw new Error(
+        'Session working directory does not match its Agent Profile',
+      );
+    }
 
-    // Reset and start progress tracking
-    startupPhase.value = 'starting';
-    startupLogs.value = [];
-    startupElapsed.value = 0;
-    startupTimer = setInterval(() => {
-      startupElapsed.value++;
-    }, 1000);
-
-    // Track the spawned stdio instance separately so we can `killAgent` it
-    // if cancellation/abort happens before we've wrapped it in a bridge.
-    // Once `acpClient` is set, ownership transfers to the bridge and
-    // `acpClient.disconnect()` becomes the only correct cleanup path.
-    let spawnedInstance: { id: string } | null = null;
-
+    const state = getProfileState(agentName);
+    const runtime = getRuntime(agentName);
+    const client = await ensureProfileClient(agentName);
+    runtime.pendingSessionCreations += 1;
     try {
-      if (!agentConfig) {
-        throw new Error(`Agent '${agentName}' not found in config`);
-      }
-
-      if (!isRemote) {
-        // For stdio agents we need the spawned process's id up front so the
-        // stderr listener can filter on it (multiple agents may be running
-        // concurrently). We spawn here, hand the resulting AgentInstance to
-        // a StdioTransport, then build the bridge from that transport.
-        startupPhase.value = 'starting';
-        const agentInstance = await spawnAgent(agentName);
-        spawnedInstance = agentInstance;
-        attempt.spawnedAgentId = agentInstance.id;
-
-        stderrUnlisten = await onAgentStderr((stderr) => {
-          if (stderr.agent_id !== agentInstance.id) return;
-          startupLogs.value.push(stderr.line);
-          // Detect phase from output
-          const detectedPhase = detectPhase(stderr.line);
-          if (detectedPhase) {
-            startupPhase.value = detectedPhase;
-          }
-        }) as unknown as () => void;
-
-        if (attempt.cancelled || connectionAttempt !== attempt) {
-          // Process was spawned but no bridge exists yet — kill the orphan
-          // before throwing so the local agent doesn't keep running.
-          await killAgent(agentInstance.id).catch((err) =>
-            console.warn('killAgent during abort failed:', err)
-          );
-          spawnedInstance = null;
-          attempt.spawnedAgentId = undefined;
-          throw new Error('Connection cancelled');
-        }
-
-        startupPhase.value = 'initializing';
-
-        // Wrap the just-spawned instance in a StdioTransport. Using the
-        // legacy single-arg form keeps backward compatibility and avoids a
-        // double-spawn (StdioTransport.spawn would call spawnAgent again).
-        const client = await createAcpClient(agentInstance);
-        attempt.client = client;
-        if (attempt.cancelled || connectionAttempt !== attempt) {
-          await client.disconnect();
-          throw new Error('Connection cancelled');
-        }
-        acpClient = client;
-        bindClient(client);
-        // Ownership of the child process now belongs to the bridge — clear
-        // our local reference so the catch block doesn't double-kill it.
-        spawnedInstance = null;
-        attempt.spawnedAgentId = undefined;
-      } else {
-        // Remote agents have no stderr stream; show a minimal "connecting"
-        // state instead of the multi-phase progress UI.
-        startupPhase.value = 'connecting';
-
-        if (attempt.cancelled || connectionAttempt !== attempt) {
-          throw new Error('Connection cancelled');
-        }
-
-        // The factory opens a WebSocket / HTTP connection based on
-        // agentConfig.transport.
-        const client = await connectProfileClient(
-          agentName,
-          agentConfig,
-          () => attempt.cancelled || connectionAttempt !== attempt,
-        );
-        attempt.client = client;
-        if (attempt.cancelled || connectionAttempt !== attempt) {
-          await client.disconnect();
-          throw new Error('Connection cancelled');
-        }
-        acpClient = client;
-        bindClient(client);
-      }
-
-      if (attempt.cancelled || connectionAttempt !== attempt) {
-        await acpClient.disconnect();
-        throw new Error('Connection cancelled');
-      }
-
-      startupPhase.value = 'connecting';
-
-      const initResponse = await initializeClient(acpClient);
-      activeSupportsSessionList =
-        initResponse.agentCapabilities?.sessionCapabilities?.list != null;
-
-      // Check if agent supports session loading
-      const supportsLoadSession = initResponse.agentCapabilities?.loadSession ?? false;
-
-      if (attempt.cancelled || connectionAttempt !== attempt) {
-        await acpClient.disconnect();
-        throw new Error('Connection cancelled');
-      }
-
-      // Store available auth methods for potential retry
-      const availableAuthMethods = initResponse.authMethods || [];
-
-      if (attempt.cancelled || connectionAttempt !== attempt) {
-        await acpClient.disconnect();
-        throw new Error('Connection cancelled');
-      }
-
-      // Try to create session - may fail with auth_required
-      let sessionResponse;
-      try {
-        sessionResponse = await acpClient.newSession({
+      const response = await withAuthentication(agentName, () =>
+        client.newSession({
           cwd,
           mcpServers: [],
-        });
-      } catch (sessionError: unknown) {
-        // Check if auth is required (error code -32000)
-        const errorMessage = sessionError instanceof Error ? sessionError.message : String(sessionError);
-        const isAuthRequired = errorMessage.toLowerCase().includes('authentication required') ||
-                               errorMessage.includes('-32000');
-
-        if (isAuthRequired && availableAuthMethods.length > 0) {
-          // Prompt user to select auth method
-          const selectedMethodId = await promptForAuthMethod(availableAuthMethods, agentName);
-
-          if (
-            !selectedMethodId ||
-            attempt.cancelled ||
-            connectionAttempt !== attempt
-          ) {
-            await acpClient.disconnect();
-            throw new Error('Authentication cancelled by user');
-          }
-
-          await acpClient.authenticate({
-            methodId: selectedMethodId,
-          });
-
-          if (attempt.cancelled || connectionAttempt !== attempt) {
-            await acpClient.disconnect();
-            throw new Error('Connection cancelled');
-          }
-
-          // Retry session creation after auth
-          sessionResponse = await acpClient.newSession({
-            cwd,
-            mcpServers: [],
-          });
-        } else {
-          throw sessionError;
-        }
-      }
-
-      // Save session
+        }),
+      );
       const session: SavedSession = {
-        id: crypto.randomUUID(),
+        id: keyOf(agentName, response.sessionId),
         agentName,
-        sessionId: sessionResponse.sessionId,
+        sessionId: response.sessionId,
         title: `Session ${new Date().toLocaleString()}`,
         lastUpdated: Date.now(),
         cwd,
-        supportsLoadSession,
+        supportsLoadSession: state.supportsLoadSession,
       };
-
-      expectedSessionId = session.sessionId;
-      currentSession.value = session;
-      savedSessions.value = [
-        session,
-        ...savedSessions.value.filter(
-          (saved) =>
-            saved.agentName !== agentName ||
-            saved.sessionId !== session.sessionId,
-        ),
-      ];
-
-      isConnected.value = true;
-      messages.value = [];
-      toolCalls.value.clear();
-
-      // Set up session modes if available
-      if (sessionResponse.modes) {
-        availableModes.value = (sessionResponse.modes.availableModes || []).map(m => ({
-          id: m.id,
-          name: m.name,
-          description: m.description ?? undefined,
-        }));
-        currentModeId.value = sessionResponse.modes.currentModeId || '';
-      } else {
-        availableModes.value = [];
-        currentModeId.value = '';
+      const conversation = createConversation(session);
+      conversation.hydrated = true;
+      conversation.error = null;
+      applySetupMetadata(conversation, response);
+      drainPendingUpdates(agentName, conversation);
+      saveSession(session);
+      if (options.activate !== false) {
+        activeConversationKey.value = conversation.key;
       }
-
-      // Set up session models if available
-      if (sessionResponse.models) {
-        availableModels.value = (sessionResponse.models.availableModels || []).map(m => ({
-          modelId: m.modelId,
-          name: m.name,
-          description: m.description ?? undefined,
-        }));
-        currentModelId.value = sessionResponse.models.currentModelId || '';
-      } else {
-        availableModels.value = [];
-        currentModelId.value = '';
-      }
-
-    } catch (e) {
-      error.value = attempt.cancelled
-        ? null
-        : (e instanceof Error ? e.message : String(e));
-      // Tear down whichever side of the connection is live. The bridge owns
-      // the spawned process once it exists, so prefer disconnecting it.
-      // Otherwise (e.g. abort right after spawn but before bridge creation)
-      // kill the orphaned local agent directly.
-      if (attempt.client) {
-        try {
-          unbindClient(attempt.client);
-          await attempt.client.disconnect();
-        } catch (cleanupErr) {
-          console.warn('disconnect during createSession cleanup failed:', cleanupErr);
-        }
-      } else if (spawnedInstance) {
-        try {
-          await killAgent(spawnedInstance.id);
-        } catch (cleanupErr) {
-          console.warn('killAgent during createSession cleanup failed:', cleanupErr);
-        }
-      }
-      if (acpClient === attempt.client) acpClient = null;
-      activeSupportsSessionList = false;
-      throw e;
-    } finally {
-      if (connectionAttempt === attempt) {
-        connectionAttempt = null;
-        isLoading.value = false;
-        isConnecting.value = false;
-        // Clean up startup progress tracking
-        if (startupTimer) {
-          clearInterval(startupTimer);
-          startupTimer = null;
-        }
-        if (stderrUnlisten) {
-          stderrUnlisten();
-          stderrUnlisten = null;
-        }
-      }
-    }
-  }
-
-  // Resume existing session
-  async function resumeSession(savedSession: SavedSession): Promise<void> {
-    if (isLoading.value || isConnected.value || acpClient) {
-      throw new Error('Disconnect the current session before resuming another one');
-    }
-    isLoading.value = true;
-    const attempt: ConnectionAttempt = { cancelled: false, client: null };
-    connectionAttempt = attempt;
-    error.value = null;
-
-    try {
-      const configStore = useConfigStore();
-      const agentConfig: AgentConfig | undefined = configStore.getAgent(savedSession.agentName);
-      if (!agentConfig) {
-        throw new Error(`Agent '${savedSession.agentName}' not found in config`);
-      }
-
-      // Create ACP client bridge (transport selected based on agent config).
-      const client = await connectProfileClient(
-        savedSession.agentName,
-        agentConfig,
-        () => attempt.cancelled || connectionAttempt !== attempt,
+      return conversation.key;
+    } catch (cause) {
+      state.error = cause instanceof Error ? cause.message : String(cause);
+      const profileHasConversation = Array.from(conversations.values()).some(
+        (conversation) => conversation.session.agentName === agentName,
       );
-      attempt.client = client;
-      if (attempt.cancelled || connectionAttempt !== attempt) {
-        await client.disconnect();
-        throw new Error('Connection cancelled');
+      if (
+        !profileHasConversation &&
+        runtime.pendingSessionCreations === 1 &&
+        runtime.client === client
+      ) {
+        unbindClient(agentName, client);
+        runtime.client = null;
+        await client.disconnect().catch(() => undefined);
+        state.status = 'error';
+        state.supportsSessionList = false;
       }
-      acpClient = client;
-      bindClient(client);
-
-      const initResponse = await initializeClient(acpClient);
-      activeSupportsSessionList =
-        initResponse.agentCapabilities?.sessionCapabilities?.list != null;
-
-      // Store available auth methods for potential retry
-      const availableAuthMethods = initResponse.authMethods || [];
-
-      // Clear messages BEFORE loadSession - the agent will stream replay via notifications
-      messages.value = [];
-      toolCalls.value.clear();
-
-      if (!agentConfig.cwd || savedSession.cwd !== agentConfig.cwd) {
-        throw new Error('Session working directory does not match its Agent Profile');
-      }
-      expectedSessionId = savedSession.sessionId;
-
-      // `session/load` replays historical events over session/update. ACP
-      // does not carry canonical timestamps for those events, so mark the
-      // replay and avoid displaying fabricated tool durations.
-      replayingHistory = true;
-      replayLastUpdateAt = Date.now();
-      try {
-        // Try to load existing session - may fail with auth_required
-        try {
-          await acpClient.loadSession({
-            sessionId: savedSession.sessionId,
-            cwd: agentConfig.cwd,
-            mcpServers: [],
-          });
-        } catch (sessionError: unknown) {
-          // Check if auth is required (error code -32000)
-          const errorMessage = sessionError instanceof Error ? sessionError.message : String(sessionError);
-          const isAuthRequired = errorMessage.toLowerCase().includes('authentication required') ||
-                                 errorMessage.includes('-32000');
-
-          if (isAuthRequired && availableAuthMethods.length > 0) {
-            // Prompt user to select auth method
-            const selectedMethodId = await promptForAuthMethod(availableAuthMethods, savedSession.agentName);
-
-            if (!selectedMethodId) {
-              await acpClient.disconnect();
-              throw new Error('Authentication cancelled by user');
-            }
-
-            await acpClient.authenticate({
-              methodId: selectedMethodId,
-            });
-
-            // Retry loading session after auth
-            await acpClient.loadSession({
-              sessionId: savedSession.sessionId,
-              cwd: agentConfig.cwd,
-              mcpServers: [],
-            });
-          } else {
-            throw sessionError;
-          }
-        }
-        await waitForReplayQuiescence();
-      } finally {
-        replayingHistory = false;
-      }
-
-      currentSession.value = savedSession;
-      isConnected.value = true;
-      // Messages already populated by session/update notifications during loadSession
-
-    } catch (e) {
-      error.value = attempt.cancelled
-        ? null
-        : (e instanceof Error ? e.message : String(e));
-      expectedSessionId = null;
-      expectedSessionId = null;
-      // Disconnect the bridge if it was created — otherwise we leak the
-      // spawned stdio process or open WebSocket on initialize/loadSession
-      // failure.
-      if (attempt.client) {
-        try {
-          unbindClient(attempt.client);
-          await attempt.client.disconnect();
-        } catch (cleanupErr) {
-          console.warn('disconnect during resumeSession cleanup failed:', cleanupErr);
-        }
-        if (acpClient === attempt.client) acpClient = null;
-        activeSupportsSessionList = false;
-      }
-      throw e;
+      throw cause;
     } finally {
-      if (connectionAttempt === attempt) {
-        connectionAttempt = null;
-        isLoading.value = false;
-      }
+      runtime.pendingSessionCreations -= 1;
     }
   }
 
-  // Send prompt
-  async function sendPrompt(text: string): Promise<void> {
-    if (!acpClient || !currentSession.value) {
-      throw new Error('No active session');
+  async function performConversationLoad(
+    savedSession: SavedSession,
+    reconnecting = false,
+  ): Promise<string> {
+    if (maintenanceProfiles.has(savedSession.agentName)) {
+      throw new Error(
+        'This Profile is undergoing maintenance. Try again in a moment.',
+      );
+    }
+    const key = keyOf(savedSession.agentName, savedSession.sessionId);
+    let conversation = conversations.get(key);
+    if (!conversation) {
+      conversation = createConversation({
+        ...savedSession,
+        id: key,
+      });
+    }
+    activeConversationKey.value = key;
+
+    const state = getProfileState(savedSession.agentName);
+    const runtime = getRuntime(savedSession.agentName);
+    if (
+      state.activePromptKey &&
+      state.activePromptKey !== conversation.key
+    ) {
+      const message =
+        'This Profile is running another conversation. Wait for that turn to finish before loading this session.';
+      conversation.error = message;
+      throw new Error(message);
     }
 
-    // Add user message
-    messages.value.push({
+    const configStore = useConfigStore();
+    const agentConfig = configStore.getAgent(savedSession.agentName);
+    if (!agentConfig) {
+      throw new Error(
+        `Agent '${savedSession.agentName}' not found in catalog`,
+      );
+    }
+    if (!agentConfig.cwd || savedSession.cwd !== agentConfig.cwd) {
+      throw new Error(
+        'Session working directory does not match its Agent Profile',
+      );
+    }
+
+    const previousProjection = {
+      messages: [...conversation.messages],
+      toolCalls: new Map(conversation.toolCalls),
+      availableModes: [...conversation.availableModes],
+      currentModeId: conversation.currentModeId,
+      availableCommands: [...conversation.availableCommands],
+      availableModels: [...conversation.availableModels],
+      currentModelId: conversation.currentModelId,
+      title: conversation.session.title,
+      lastUpdated: conversation.session.lastUpdated,
+    };
+    conversation.error = null;
+    conversation.isHydrating = true;
+    let client: AcpClientBridge | null = null;
+    try {
+      const activeClient = await ensureProfileClient(savedSession.agentName, {
+        reconnecting,
+      });
+      client = activeClient;
+      if (!state.supportsLoadSession) {
+        throw new Error('This Agent does not advertise ACP session/load');
+      }
+
+      conversation.messages.splice(0);
+      conversation.toolCalls.clear();
+      conversation.availableCommands = [];
+      conversation.replayingHistory = true;
+      conversation.replayLastUpdateAt = Date.now();
+
+      const response = await withAuthentication(savedSession.agentName, () =>
+        activeClient.loadSession({
+          sessionId: savedSession.sessionId,
+          cwd: agentConfig.cwd as string,
+          mcpServers: [],
+        }),
+      );
+      await waitForReplayQuiescence(conversation);
+      applySetupMetadata(conversation, response);
+      conversation.hydrated = true;
+      conversation.error = null;
+      state.status = 'connected';
+      state.error = null;
+      saveSession(conversation.session);
+      return key;
+    } catch (cause) {
+      // A reconnect must not destroy the last useful in-page projection when
+      // session/load fails halfway through. OpenCode remains authoritative,
+      // but the retained snapshot lets the user read and retry.
+      conversation.messages.splice(
+        0,
+        conversation.messages.length,
+        ...previousProjection.messages,
+      );
+      conversation.toolCalls.clear();
+      for (const [toolCallId, toolCall] of previousProjection.toolCalls) {
+        conversation.toolCalls.set(toolCallId, toolCall);
+      }
+      conversation.availableModes = previousProjection.availableModes;
+      conversation.currentModeId = previousProjection.currentModeId;
+      conversation.availableCommands = previousProjection.availableCommands;
+      conversation.availableModels = previousProjection.availableModels;
+      conversation.currentModelId = previousProjection.currentModelId;
+      conversation.session.title = previousProjection.title;
+      conversation.session.lastUpdated = previousProjection.lastUpdated;
+      conversation.hydrated = false;
+      // An explicit disconnect replaces the runtime client before closing
+      // the transport. Keep that user action from surfacing as a failed
+      // history load; unexpected closes are reported at Profile level.
+      conversation.error =
+        client && runtime.client !== client
+          ? null
+          : cause instanceof Error
+            ? cause.message
+            : String(cause);
+      throw cause;
+    } finally {
+      conversation.replayingHistory = false;
+      conversation.isHydrating = false;
+      // Keep the runtime alive; another Session on this Profile may already
+      // be using the same ACP connection.
+      void runtime;
+    }
+  }
+
+  function loadConversation(
+    savedSession: SavedSession,
+    reconnecting = false,
+  ): Promise<string> {
+    const key = keyOf(savedSession.agentName, savedSession.sessionId);
+    const runtime = getRuntime(savedSession.agentName);
+    const pending = runtime.pendingLoads.get(key);
+    if (pending) {
+      activeConversationKey.value = key;
+      return pending;
+    }
+
+    const load = performConversationLoad(savedSession, reconnecting);
+    runtime.pendingLoads.set(key, load);
+    void load.finally(() => {
+      if (runtime.pendingLoads.get(key) === load) {
+        runtime.pendingLoads.delete(key);
+      }
+    }).catch(() => undefined);
+    return load;
+  }
+
+  async function resumeSession(savedSession: SavedSession): Promise<string> {
+    const key = keyOf(savedSession.agentName, savedSession.sessionId);
+    const existing = conversations.get(key);
+    const state = getProfileState(savedSession.agentName);
+    const runtime = getRuntime(savedSession.agentName);
+    if (
+      existing?.hydrated &&
+      runtime.client &&
+      state.status === 'connected'
+    ) {
+      activeConversationKey.value = key;
+      return key;
+    }
+    return loadConversation(savedSession);
+  }
+
+  function selectConversation(key: string): void {
+    if (!conversations.has(key)) return;
+    activeConversationKey.value = key;
+    globalError.value = null;
+  }
+
+  async function sendPrompt(text: string): Promise<void> {
+    const key = activeConversationKey.value;
+    const conversation = key ? conversations.get(key) : null;
+    if (!key || !conversation) throw new Error('No active session');
+
+    const agentName = conversation.session.agentName;
+    const state = getProfileState(agentName);
+    const client = getRuntime(agentName).client;
+    if (!client || state.status !== 'connected' || !conversation.hydrated) {
+      throw new Error('The current conversation is not connected');
+    }
+    if (state.activePromptKey && state.activePromptKey !== key) {
+      const message =
+        'This Profile is already running another conversation. Switch to it or wait for that turn to finish.';
+      conversation.error = message;
+      throw new Error(message);
+    }
+    if (conversation.isLoading) {
+      throw new Error('This conversation is already running');
+    }
+
+    const turnStartedAt = Date.now();
+    const turnStartedMonotonic = monotonicNow();
+    const firstUserMessage = !conversation.messages.some(
+      (message) => message.role === 'user',
+    );
+    conversation.messages.push({
       id: crypto.randomUUID(),
       role: 'user',
       content: text,
-      timestamp: Date.now(),
+      timestamp: turnStartedAt,
     });
+    const turnMessageStartIndex = conversation.messages.length;
+    if (firstUserMessage) {
+      conversation.session.title =
+        text.slice(0, 50) + (text.length > 50 ? '...' : '');
+    }
+    conversation.session.lastUpdated = Date.now();
+    conversation.error = null;
+    state.error = null;
+    state.activePromptKey = key;
+    conversation.isLoading = true;
 
-    isLoading.value = true;
     try {
-      await acpClient.prompt({
-        sessionId: currentSession.value.sessionId,
-        prompt: [
-          {
-            type: 'text',
-            text,
-          },
-        ],
+      const promptResponse = await client.prompt({
+        sessionId: conversation.session.sessionId,
+        prompt: [{ type: 'text', text }],
       });
-
-      // Update session title if it's the first message
-      if (messages.value.length === 2 && currentSession.value) {
-        currentSession.value.title = text.slice(0, 50) + (text.length > 50 ? '...' : '');
-        currentSession.value.lastUpdated = Date.now();
+      const completedAt = Date.now();
+      const durationMs = Math.max(
+        0,
+        Math.round(monotonicNow() - turnStartedMonotonic),
+      );
+      if (promptResponse.stopReason !== 'cancelled') {
+        for (
+          let index = conversation.messages.length - 1;
+          index >= turnMessageStartIndex;
+          index -= 1
+        ) {
+          const message = conversation.messages[index];
+          if (message.role !== 'assistant') continue;
+          message.completedAt = completedAt;
+          message.durationMs = durationMs;
+          message.finishReason = promptResponse.stopReason;
+          break;
+        }
       }
+      conversation.session.lastUpdated = completedAt;
+      saveSession(conversation.session);
+    } catch (cause) {
+      // disconnectProfile() unbinds and clears the runtime client before
+      // closing it. The rejected Prompt still reaches this catch, but an
+      // intentional disconnect should not leave a red transport error.
+      if (getRuntime(agentName).client === client) {
+        conversation.error =
+          cause instanceof Error ? cause.message : String(cause);
+      }
+      throw cause;
     } finally {
-      isLoading.value = false;
+      conversation.isLoading = false;
+      if (state.activePromptKey === key) {
+        state.activePromptKey = null;
+      }
     }
   }
 
-  // Cancel current operation
-  async function cancelOperation(): Promise<void> {
-    if (!acpClient || !currentSession.value) return;
+  async function deleteConversation(
+    agentName: string,
+    sessionId: string,
+  ): Promise<void> {
+    const key = keyOf(agentName, sessionId);
+    const permission = pendingPermissions.get(agentName);
+    const runtime = getRuntime(agentName);
+    const profile = getProfileState(agentName);
+    const profileConversationBusy = Array.from(conversations.values()).some(
+      (candidate) =>
+        candidate.session.agentName === agentName &&
+        (candidate.isLoading || candidate.isHydrating),
+    );
+    if (
+      maintenanceProfiles.has(agentName) ||
+      profileConversationBusy ||
+      permission !== undefined ||
+      profile.activePromptKey !== null ||
+      runtime.pendingSessionCreations > 0
+    ) {
+      throw new Error(
+        'This Profile is still running and cannot delete a conversation',
+      );
+    }
 
-    await acpClient.cancel({
-      sessionId: currentSession.value.sessionId,
+    const wasConnected =
+      runtime.client !== null && profile.status === 'connected';
+    const activeBefore = activeConversationKey.value;
+    maintenanceProfiles.add(agentName);
+    if (wasConnected) {
+      // Make the server-initiated Profile close expected from the browser's
+      // perspective. The durable delete requires OpenCode's in-memory cache
+      // to be gone before its CLI touches the isolated database.
+      await disconnectProfile(agentName);
+    }
+
+    let durableDeleted = false;
+    try {
+      await deleteProfileSession(agentName, sessionId);
+      durableDeleted = true;
+      // Invalidate only a session/list response that began before the durable
+      // delete. A later authoritative list must be allowed to expose any
+      // unexpected reappearance rather than being hidden by a tombstone.
+      profile.listGeneration += 1;
+      profile.isRefreshingSessions = false;
+      savedSessions.value = savedSessions.value.filter(
+        (saved) =>
+          saved.agentName !== agentName || saved.sessionId !== sessionId,
+      );
+      conversations.delete(key);
+
+      if (activeConversationKey.value === key) {
+        const fallback = Array.from(conversations.values()).sort(
+          (left, right) => right.openedAt - left.openedAt,
+        )[0];
+        activeConversationKey.value = fallback?.key ?? null;
+      }
+      if (pendingPermissions.get(agentName)?.sessionId === sessionId) {
+        pendingPermissions.delete(agentName);
+      }
+      globalError.value = null;
+    } finally {
+      maintenanceProfiles.delete(agentName);
+      if (wasConnected) {
+        const preferredKey = durableDeleted
+          ? activeConversationKey.value
+          : activeBefore;
+        const reconnectConversation =
+          (preferredKey
+            ? conversations.get(preferredKey)
+            : undefined)?.session.agentName === agentName
+            ? conversations.get(preferredKey as string)
+            : Array.from(conversations.values())
+                .filter(
+                  (candidate) =>
+                    candidate.session.agentName === agentName &&
+                    candidate.key !== (durableDeleted ? key : ''),
+                )
+                .sort(
+                  (left, right) => right.openedAt - left.openedAt,
+                )[0];
+        if (reconnectConversation) {
+          const visibleBeforeReconnect = activeConversationKey.value;
+          try {
+            await loadConversation(
+              reconnectConversation.session,
+              true,
+            );
+            if (
+              visibleBeforeReconnect &&
+              conversations.has(visibleBeforeReconnect)
+            ) {
+              activeConversationKey.value = visibleBeforeReconnect;
+            }
+          } catch (cause) {
+            console.warn(
+              'Profile reconnect after Session maintenance failed:',
+              cause,
+            );
+          }
+        }
+      }
+    }
+  }
+
+  async function cancelOperation(): Promise<void> {
+    const conversation = activeConversation.value;
+    if (!conversation?.isLoading) return;
+    const client = getRuntime(conversation.session.agentName).client;
+    if (!client) return;
+    await client.cancel({
+      sessionId: conversation.session.sessionId,
     });
   }
 
-  // Cancel ongoing connection attempt
-  async function cancelConnection(): Promise<void> {
-    const attempt = connectionAttempt;
+  async function cancelConnection(agentName?: string): Promise<void> {
+    const resolvedAgentName =
+      agentName || activeConversation.value?.session.agentName;
+    if (!resolvedAgentName) return;
+    const state = getProfileState(resolvedAgentName);
+    const runtime = getRuntime(resolvedAgentName);
+    const attempt = runtime.connectionAttempt;
     if (!attempt) return;
+
     attempt.cancelled = true;
-    startupPhase.value = 'cancelling';
-    error.value = null;
+    state.startupPhase = 'cancelling';
+    state.error = null;
+    cancelAuthForProfile(resolvedAgentName);
 
-    // Cancel auth selection if pending
-    if (authMethodResolver) {
-      authMethodResolver(null);
-      authMethodResolver = null;
-      pendingAuthMethods.value = [];
-      pendingAuthAgentName.value = '';
-    }
-
-    // Disconnect if client exists
     if (attempt.client) {
       try {
-        unbindClient(attempt.client);
+        if (runtime.client === attempt.client) {
+          unbindClient(resolvedAgentName, attempt.client);
+          runtime.client = null;
+        }
         await attempt.client.disconnect();
-      } catch (e) {
-        console.error('Error disconnecting:', e);
+      } catch (cause) {
+        console.error('Error disconnecting:', cause);
       }
-      if (acpClient === attempt.client) acpClient = null;
-      activeSupportsSessionList = false;
     }
     if (attempt.spawnedAgentId) {
-      try {
-        await killAgent(attempt.spawnedAgentId);
-      } catch {
-        // The create path may already have transferred or terminated it.
-      }
+      await killAgent(attempt.spawnedAgentId).catch(() => undefined);
     }
   }
 
-  // Handle permission response
   function resolvePermission(optionId: string): void {
-    if (acpClient) {
-      acpClient.resolvePermission(optionId);
-    }
+    const entry = getPendingPermissionEntry();
+    if (!entry) return;
+    getRuntime(entry.agentName).client?.resolvePermission(optionId);
   }
 
   function cancelPermission(): void {
-    if (acpClient) {
-      acpClient.cancelPermission();
-    }
+    const entry = getPendingPermissionEntry();
+    if (!entry) return;
+    getRuntime(entry.agentName).client?.cancelPermission();
   }
 
-  // Disconnect current session
-  async function disconnect(): Promise<void> {
-    const client = acpClient;
+  async function disconnectProfile(agentName: string): Promise<void> {
+    const runtime = getRuntime(agentName);
+    const state = getProfileState(agentName);
+    cancelAuthForProfile(agentName);
+
+    const client = runtime.client;
     if (client) {
-      unbindClient(client);
-      await client.disconnect();
-      if (acpClient === client) acpClient = null;
+      unbindClient(agentName, client);
+      runtime.client = null;
+      await client.disconnect().catch((cause) => {
+        console.error('Error disconnecting:', cause);
+      });
     }
-    activeSupportsSessionList = false;
-    expectedSessionId = null;
-    pendingPermission.value = null;
+    state.status = 'disconnected';
+    state.error = null;
+    state.activePromptKey = null;
+    state.supportsSessionList = false;
+    pendingPermissions.delete(agentName);
+    runtime.pendingUpdates.clear();
 
-    currentSession.value = null;
-    isConnected.value = false;
-    messages.value = [];
-    toolCalls.value.clear();
-    availableModes.value = [];
-    currentModeId.value = '';
-    availableCommands.value = [];
-    availableModels.value = [];
-    currentModelId.value = '';
+    for (const conversation of conversations.values()) {
+      if (conversation.session.agentName !== agentName) continue;
+      conversation.hydrated = false;
+      conversation.isLoading = false;
+      conversation.isHydrating = false;
+      conversation.replayingHistory = false;
+      conversation.error = null;
+    }
   }
 
-  // Set session mode
-  async function setMode(modeId: string): Promise<void> {
-    if (!acpClient || !currentSession.value) {
-      throw new Error('No active session');
-    }
+  async function disconnect(): Promise<void> {
+    const agentName = activeConversation.value?.session.agentName;
+    if (agentName) await disconnectProfile(agentName);
+  }
 
-    await acpClient.setMode({
-      sessionId: currentSession.value.sessionId,
+  async function disconnectAll(): Promise<void> {
+    await Promise.all(
+      Array.from(runtimes.keys()).map((agentName) =>
+        disconnectProfile(agentName),
+      ),
+    );
+  }
+
+  async function setMode(modeId: string): Promise<void> {
+    const conversation = activeConversation.value;
+    if (!conversation) throw new Error('No active session');
+    const client = getRuntime(conversation.session.agentName).client;
+    if (!client) throw new Error('No active session');
+    await client.setMode({
+      sessionId: conversation.session.sessionId,
       modeId,
     });
-
-    // Optimistically update the current mode
-    currentModeId.value = modeId;
+    conversation.currentModeId = modeId;
   }
 
-  // Set session model
   async function setModel(modelId: string): Promise<void> {
-    if (!acpClient || !currentSession.value) {
-      throw new Error('No active session');
-    }
-
-    await acpClient.unstable_setSessionModel({
-      sessionId: currentSession.value.sessionId,
+    const conversation = activeConversation.value;
+    if (!conversation) throw new Error('No active session');
+    const client = getRuntime(conversation.session.agentName).client;
+    if (!client) throw new Error('No active session');
+    await client.unstable_setSessionModel({
+      sessionId: conversation.session.sessionId,
       modelId,
     });
-
-    // Optimistically update the current model
-    currentModelId.value = modelId;
+    conversation.currentModelId = modelId;
   }
 
-  function clearError() {
-    error.value = null;
+  function clearError(agentName?: string): void {
+    globalError.value = null;
+    if (agentName) {
+      const state = getProfileState(agentName);
+      state.error = null;
+      state.sessionListError = null;
+    }
+    if (activeConversation.value) {
+      activeConversation.value.error = null;
+      getProfileState(activeConversation.value.session.agentName).error = null;
+    }
   }
 
-  /**
-   * Foreground reconnect: when the user returns to the app and we're
-   * disconnected (because the OS froze the WebView, the NAT killed the TCP
-   * connection, or the network changed), silently re-attach to the saved
-   * session if possible.
-   *
-   * Returns `true` if a reconnect was attempted, `false` if there was
-   * nothing to do (no saved session, already connected/connecting, agent
-   * doesn't advertise session-load support, etc.).
-   *
-   * Errors are surfaced via `error.value` exactly like a manual resume
-   * would; the caller doesn't need to handle them.
-   */
+  function setError(message: string): void {
+    globalError.value = message;
+  }
+
   async function tryReconnect(): Promise<boolean> {
-    // Already connected or already trying — leave it alone.
-    if (isConnected.value || isConnecting.value || isLoading.value) {
+    const conversation = activeConversation.value;
+    if (!conversation || conversation.isHydrating || conversation.isLoading) {
       return false;
     }
-    // No prior session to reconnect to.
-    const session = currentSession.value;
-    if (!session) {
-      return false;
-    }
-    // Bridge already exists (race with another reconnect in flight).
-    if (acpClient) {
-      return false;
-    }
-    // Agent must support `session/load` for resume to be meaningful;
-    // otherwise we'd just create a fresh session, which is a strictly
-    // user-initiated action.
-    if (!session.supportsLoadSession) {
+    if (!conversation.session.supportsLoadSession) return false;
+    if (
+      conversation.hydrated &&
+      getProfileState(conversation.session.agentName).status === 'connected'
+    ) {
       return false;
     }
 
-    // Clear the stale "Connection lost" banner up-front so the UI shows
-    // an honest "Reconnecting…" state instead of a contradictory red
-    // banner during the attempt. If the reconnect ultimately fails, the
-    // catch below restores a real error message.
-    error.value = null;
-    isReconnecting.value = true;
     try {
-      await resumeSession(session);
-      return true;
-    } catch (e) {
-      // `resumeSession`'s own catch already wrote `error.value`; nothing
-      // more to do here. Returning true so the caller knows we tried.
-      console.warn('Foreground reconnect failed:', e);
-      return true;
-    } finally {
-      isReconnecting.value = false;
+      await loadConversation(conversation.session, true);
+    } catch (cause) {
+      console.warn('Foreground reconnect failed:', cause);
     }
+    return true;
   }
+
+  function isProfileConnected(agentName: string): boolean {
+    return getProfileState(agentName).status === 'connected';
+  }
+
+  function isProfileConnecting(agentName: string): boolean {
+    const status = getProfileState(agentName).status;
+    return status === 'connecting' || status === 'reconnecting';
+  }
+
+  function isProfileBusy(agentName: string): boolean {
+    const state = getProfileState(agentName);
+    const runtime = getRuntime(agentName);
+    return (
+      maintenanceProfiles.has(agentName) ||
+      state.activePromptKey !== null ||
+      pendingPermissions.has(agentName) ||
+      runtime.pendingSessionCreations > 0 ||
+      Array.from(conversations.values()).some(
+        (conversation) =>
+          conversation.session.agentName === agentName &&
+          (conversation.isLoading || conversation.isHydrating),
+      )
+    );
+  }
+
+  function isRefreshingAgent(agentName: string): boolean {
+    return getProfileState(agentName).isRefreshingSessions;
+  }
+
+  function sessionListErrorFor(agentName: string): string | null {
+    return getProfileState(agentName).sessionListError;
+  }
+
+  function profileErrorFor(agentName: string): string | null {
+    return getProfileState(agentName).error;
+  }
+
+  function startupPhaseFor(agentName: string): string {
+    return getProfileState(agentName).startupPhase;
+  }
+
+  function startupLogsFor(agentName: string): string[] {
+    return getProfileState(agentName).startupLogs;
+  }
+
+  function startupElapsedFor(agentName: string): number {
+    return getProfileState(agentName).startupElapsed;
+  }
+
+  function isSessionOpen(agentName: string, sessionId: string): boolean {
+    return conversations.has(keyOf(agentName, sessionId));
+  }
+
+  function isSessionActive(agentName: string, sessionId: string): boolean {
+    return activeConversationKey.value === keyOf(agentName, sessionId);
+  }
+
+  function isSessionHydrating(agentName: string, sessionId: string): boolean {
+    return Boolean(
+      conversations.get(keyOf(agentName, sessionId))?.isHydrating,
+    );
+  }
+
+  const acpClient = computed(() => {
+    const agentName = activeConversation.value?.session.agentName;
+    return agentName ? getRuntime(agentName).client : null;
+  });
 
   return {
-    // State
     savedSessions,
     currentSession,
     messages,
     isConnected,
     isLoading,
+    isPrompting,
     isConnecting,
     isRefreshingSessions,
     sessionListError,
     isReconnecting,
     error,
     pendingPermission,
+    pendingPermissionAgentName,
+    pendingPermissionSessionTitle,
     pendingAuthMethods,
     pendingAuthAgentName,
     availableModes,
@@ -1176,18 +1919,22 @@ export const useSessionStore = defineStore('session', () => {
     startupPhase,
     startupLogs,
     startupElapsed,
+    activeConversationKey,
+    openConversations,
+    isCurrentProfileBusyElsewhere,
+    acpClient,
 
-    // Computed
     hasActiveSession,
     messageList,
     toolCallList,
     resumableSessions,
 
-    // Actions
     initStore,
     refreshSessions,
     createSession,
     resumeSession,
+    selectConversation,
+    deleteConversation,
     sendPrompt,
     cancelOperation,
     cancelConnection,
@@ -1196,12 +1943,24 @@ export const useSessionStore = defineStore('session', () => {
     selectAuthMethod,
     cancelAuthSelection,
     disconnect,
+    disconnectProfile,
+    disconnectAll,
     setMode,
     setModel,
     clearError,
+    setError,
     tryReconnect,
-
-    // Expose client for permission handling
-    get acpClient() { return acpClient; },
+    isProfileConnected,
+    isProfileConnecting,
+    isProfileBusy,
+    isRefreshingAgent,
+    sessionListErrorFor,
+    profileErrorFor,
+    startupPhaseFor,
+    startupLogsFor,
+    startupElapsedFor,
+    isSessionOpen,
+    isSessionActive,
+    isSessionHydrating,
   };
 });

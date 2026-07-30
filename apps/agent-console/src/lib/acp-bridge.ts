@@ -64,6 +64,7 @@ export class AcpClientBridge implements Client {
   private nextRequestId = 0;
   private unlistenMessage: Unsubscribe | null = null;
   private unlistenClose: Unsubscribe | null = null;
+  private profileId?: string;
 
   // Permission request handling
   public pendingPermissionRequest: Ref<LocalPermissionRequest | null> = ref(null);
@@ -75,8 +76,12 @@ export class AcpClientBridge implements Client {
   /** Optional callback for when the underlying transport closes unexpectedly. */
   public onTransportClose: ((reason?: string) => void) | null = null;
 
-  constructor(transport: AcpTransport, options?: { fsAvailable?: boolean }) {
+  constructor(
+    transport: AcpTransport,
+    options?: { fsAvailable?: boolean; profileId?: string },
+  ) {
     this.transport = transport;
+    this.profileId = options?.profileId;
     // Default: fs is available iff we are on Tauri desktop. Callers (e.g.
     // remote agents that trust the host fs) can override.
     this.fsAvailable = options?.fsAvailable ?? hasLocalFs();
@@ -150,6 +155,7 @@ export class AcpClientBridge implements Client {
       if ('id' in parsed && parsed.id !== undefined && !('method' in parsed)) {
         // Track incoming response
         store.addEntry({
+          profileId: this.profileId,
           direction: 'in',
           type: 'response',
           method: this.pendingMethods.get(parsed.id) || 'unknown',
@@ -176,6 +182,7 @@ export class AcpClientBridge implements Client {
       if ('id' in parsed && parsed.id !== undefined && 'method' in parsed) {
         // Track incoming request from agent
         store.addEntry({
+          profileId: this.profileId,
           direction: 'in',
           type: 'request',
           method: parsed.method,
@@ -192,6 +199,7 @@ export class AcpClientBridge implements Client {
       if (!('id' in parsed) && parsed.method) {
         // Track incoming notification
         store.addEntry({
+          profileId: this.profileId,
           direction: 'in',
           type: 'notification',
           method: parsed.method,
@@ -244,6 +252,7 @@ export class AcpClientBridge implements Client {
     // Track outgoing response
     const store = getTrafficStore();
     store.addEntry({
+      profileId: this.profileId,
       direction: 'out',
       type: 'response',
       method,
@@ -279,6 +288,7 @@ export class AcpClientBridge implements Client {
     // Track outgoing request
     const store = getTrafficStore();
     store.addEntry({
+      profileId: this.profileId,
       direction: 'out',
       type: 'request',
       method,
@@ -328,6 +338,7 @@ export class AcpClientBridge implements Client {
     // Track outgoing notification
     const store = getTrafficStore();
     store.addEntry({
+      profileId: this.profileId,
       direction: 'out',
       type: 'notification',
       method,
@@ -476,7 +487,7 @@ export class AcpClientBridge implements Client {
  */
 export async function createAcpClient(
   arg: AgentInstance | { name: string; config: AgentConfig },
-  options?: { fsAvailable?: boolean }
+  options?: { fsAvailable?: boolean; profileId?: string },
 ): Promise<AcpClientBridge> {
   if ('config' in arg) {
     const transport = await createTransport(arg.name, arg.config);

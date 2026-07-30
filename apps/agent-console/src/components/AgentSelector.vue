@@ -53,7 +53,7 @@ function handleSelect(event: Event) {
 
 <template>
   <div class="agent-selector">
-    <label for="agent-select">Agent:</label>
+    <label for="agent-select">Profile for new conversation</label>
     <select
       id="agent-select"
       :value="selectedAgent"
@@ -70,6 +70,9 @@ function handleSelect(event: Event) {
 
     <p v-if="selectedProfile?.description" class="profile-description">
       {{ selectedProfile.description }}
+    </p>
+    <p v-if="hasAgents" class="binding-hint">
+      Existing conversations stay bound to their original Profile.
     </p>
 
     <div v-if="!hasAgents" class="config-hint">
@@ -126,5 +129,11 @@ select:disabled {
   color: var(--text-muted, #777);
   font-size: 0.8rem;
   line-height: 1.4;
+}
+
+.binding-hint {
+  color: var(--text-muted, #777);
+  font-size: 0.75rem;
+  line-height: 1.35;
 }
 </style>

@@ -46,6 +46,10 @@ interface ActiveConnection {
   child: ChildProcessWithoutNullStreams;
   socket: WebSocket;
   startedAt: string;
+  pendingRequests: Set<string>;
+  pendingSessionRequests: Map<string, string>;
+  busySessionCounts: Map<string, number>;
+  close: (reason: "socket" | "child" | "protocol") => Promise<void>;
 }
 
 type SpawnChild = typeof spawn;
@@ -55,6 +59,7 @@ export class AcpBridge {
   private readonly profiles: Map<string, BridgeProfile>;
   private readonly active = new Map<string, ActiveConnection>();
   private readonly reserved = new Set<string>();
+  private readonly maintenance = new Set<string>();
   private readonly spawnChild: SpawnChild;
 
   constructor(profiles: BridgeProfile[], options?: { spawnChild?: SpawnChild }) {
@@ -74,6 +79,53 @@ export class AcpBridge {
       : { active: false };
   }
 
+  isSessionBusy(profileId: string, sessionId: string): boolean {
+    return (this.active.get(profileId)?.busySessionCounts.get(sessionId) ?? 0) > 0;
+  }
+
+  isProfileBusy(profileId: string): boolean {
+    const connection = this.active.get(profileId);
+    if (!connection) return false;
+    return (
+      connection.pendingRequests.size > 0 ||
+      Array.from(connection.busySessionCounts.values()).some(
+        (count) => count > 0,
+      )
+    );
+  }
+
+  /**
+   * Reserve a Profile for an operation that needs exclusive access to its
+   * durable state. The check and reservation are synchronous so an Upgrade or
+   * second maintenance request cannot slip between them.
+   */
+  beginProfileMaintenance(profileId: string): boolean {
+    if (
+      !this.profiles.has(profileId) ||
+      this.maintenance.has(profileId) ||
+      this.reserved.has(profileId) ||
+      this.isProfileBusy(profileId)
+    ) {
+      return false;
+    }
+    this.maintenance.add(profileId);
+    return true;
+  }
+
+  endProfileMaintenance(profileId: string): void {
+    this.maintenance.delete(profileId);
+  }
+
+  async closeProfile(profileId: string): Promise<void> {
+    const connection = this.active.get(profileId);
+    if (!connection) {
+      this.reserved.delete(profileId);
+      return;
+    }
+    closeSocket(connection.socket, 1000, "Agent Profile disconnected");
+    await connection.close("socket");
+  }
+
   handleUpgrade(
     request: IncomingMessage,
     socket: Duplex,
@@ -85,7 +137,11 @@ export class AcpBridge {
       rejectUpgrade(socket, 404, "Unknown Agent Profile");
       return;
     }
-    if (this.active.has(profileId) || this.reserved.has(profileId)) {
+    if (
+      this.active.has(profileId) ||
+      this.reserved.has(profileId) ||
+      this.maintenance.has(profileId)
+    ) {
       rejectUpgrade(socket, 409, "Agent Profile already has an active client");
       return;
     }
@@ -112,13 +168,13 @@ export class AcpBridge {
   }
 
   async close(): Promise<void> {
-    const connections = [...this.active.values()];
+    const profileIds = [...this.active.keys()];
     this.reserved.clear();
-    for (const connection of connections) {
-      closeSocket(connection.socket, 1001, "Bridge shutting down");
-      await terminateChild(connection.child);
+    for (const profileId of profileIds) {
+      await this.closeProfile(profileId);
     }
     this.active.clear();
+    this.maintenance.clear();
     this.webSocketServer.close();
   }
 
@@ -159,31 +215,43 @@ export class AcpBridge {
       return;
     }
     const startedAt = new Date().toISOString();
-    this.active.set(profile.id, { child, socket, startedAt });
+    const connection: ActiveConnection = {
+      child,
+      socket,
+      startedAt,
+      pendingRequests: new Set(),
+      pendingSessionRequests: new Map(),
+      busySessionCounts: new Map(),
+      close: async () => undefined,
+    };
+    this.active.set(profile.id, connection);
     this.reserved.delete(profile.id);
 
     let stdoutBuffer = "";
     let stderrBuffer = "";
-    let closed = false;
+    let cleanupPromise: Promise<void> | null = null;
     let startupTimer: NodeJS.Timeout | null = null;
 
-    const cleanup = async (reason: "socket" | "child" | "protocol"): Promise<void> => {
-      if (closed) return;
-      closed = true;
-      if (startupTimer) {
-        clearTimeout(startupTimer);
-        startupTimer = null;
-      }
-      if (reason !== "socket") {
-        closeSocket(socket, CLOSE_INTERNAL_ERROR, "Agent connection closed");
-      }
-      await terminateChild(child);
-      const current = this.active.get(profile.id);
-      if (current?.child === child) {
-        this.active.delete(profile.id);
-      }
-      this.reserved.delete(profile.id);
+    const cleanup = (reason: "socket" | "child" | "protocol"): Promise<void> => {
+      if (cleanupPromise) return cleanupPromise;
+      cleanupPromise = (async () => {
+        if (startupTimer) {
+          clearTimeout(startupTimer);
+          startupTimer = null;
+        }
+        if (reason !== "socket") {
+          closeSocket(socket, CLOSE_INTERNAL_ERROR, "Agent connection closed");
+        }
+        await terminateChild(child);
+        const current = this.active.get(profile.id);
+        if (current?.child === child) {
+          this.active.delete(profile.id);
+        }
+        this.reserved.delete(profile.id);
+      })();
+      return cleanupPromise;
     };
+    connection.close = cleanup;
 
     startupTimer = setTimeout(() => {
       console.error(`[${profile.id}] ACP agent did not produce a response before startup timeout`);
@@ -197,7 +265,7 @@ export class AcpBridge {
     });
 
     child.on("exit", (code, signal) => {
-      if (!closed) {
+      if (!cleanupPromise) {
         console.error(
           `[${profile.id}] ACP agent exited`,
           JSON.stringify({ code, signal: signal ?? undefined }),
@@ -230,6 +298,7 @@ export class AcpBridge {
           clearTimeout(startupTimer);
           startupTimer = null;
         }
+        this.trackAgentResponse(profile.id, line);
         if (socket.readyState === WebSocket.OPEN) {
           socket.send(line, (error) => {
             if (error) void cleanup("socket");
@@ -293,6 +362,7 @@ export class AcpBridge {
           void cleanup("child");
           return;
         }
+        this.trackClientRequest(profile.id, line);
         child.stdin.write(`${line}\n`);
       }
     });
@@ -304,6 +374,68 @@ export class AcpBridge {
       void cleanup("socket");
     });
   }
+
+  private trackClientRequest(profileId: string, line: string): void {
+    const connection = this.active.get(profileId);
+    if (!connection) return;
+    const message = JSON.parse(line) as {
+      id?: unknown;
+      method?: unknown;
+      params?: { sessionId?: unknown };
+    };
+    if (
+      (typeof message.id === "string" || typeof message.id === "number") &&
+      typeof message.method === "string"
+    ) {
+      connection.pendingRequests.add(jsonRpcIdKey(message.id));
+    }
+    if (
+      !(
+        message.method === "session/prompt" ||
+        message.method === "session/load" ||
+        message.method === "session/resume" ||
+        message.method === "session/fork"
+      ) ||
+      (typeof message.id !== "string" && typeof message.id !== "number") ||
+      typeof message.params?.sessionId !== "string"
+    ) {
+      return;
+    }
+    const requestKey = jsonRpcIdKey(message.id);
+    const sessionId = message.params.sessionId;
+    connection.pendingSessionRequests.set(requestKey, sessionId);
+    connection.busySessionCounts.set(
+      sessionId,
+      (connection.busySessionCounts.get(sessionId) ?? 0) + 1,
+    );
+  }
+
+  private trackAgentResponse(profileId: string, line: string): void {
+    const connection = this.active.get(profileId);
+    if (!connection) return;
+    const message = JSON.parse(line) as { id?: unknown; method?: unknown };
+    if (
+      typeof message.method === "string" ||
+      (typeof message.id !== "string" && typeof message.id !== "number")
+    ) {
+      return;
+    }
+    const requestKey = jsonRpcIdKey(message.id);
+    connection.pendingRequests.delete(requestKey);
+    const sessionId = connection.pendingSessionRequests.get(requestKey);
+    if (!sessionId) return;
+    connection.pendingSessionRequests.delete(requestKey);
+    const remaining = (connection.busySessionCounts.get(sessionId) ?? 1) - 1;
+    if (remaining > 0) {
+      connection.busySessionCounts.set(sessionId, remaining);
+    } else {
+      connection.busySessionCounts.delete(sessionId);
+    }
+  }
+}
+
+function jsonRpcIdKey(value: string | number): string {
+  return `${typeof value}:${String(value)}`;
 }
 
 const SAFE_INHERITED_ENVIRONMENT = [
