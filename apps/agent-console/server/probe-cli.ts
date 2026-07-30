@@ -1,29 +1,16 @@
 import { pathToFileURL } from "node:url";
-import {
-  AcpProbeError,
-  probeAcpCapabilities,
-  type AcpProbeOptions,
-} from "./acp-probe.js";
-import {
-  probeAcpProfile,
-  type ProfileProbeOptions,
-} from "./profile-probe.js";
+import { AcpProbeError, type AcpSmokeResult } from "./acp-probe.js";
+import { probeAcpProfile } from "./profile-probe.js";
 import { ProfileValidationError } from "./profile.js";
 
-const HELP = `Usage: pnpm probe:acp [options]
+const HELP = `Usage: pnpm probe:acp --profile <path>
 
-Safely probes an ACP subprocess with initialize and session/list. It never
-creates a session or sends a prompt.
+Smoke-tests one validated Agent Profile with ACP initialize and session/list.
+It never creates, loads, resumes, prompts, or mutates a Session.
 
 Options:
-  --profile <path>       Probe an Agent Profile using its fixed runtime
-  --command <path>       ACP executable (default: opencode)
-  --arg <value>          Executable argument; repeatable (default: acp)
-  --cwd <path>           Child and ACP working directory
-  --env <NAME=VALUE>     Child environment override; repeatable
-  --load-session <id>    Read-only load; count update types without printing bodies
-  --timeout-ms <number>  Timeout per ACP request (default: 15000)
-  -h, --help             Show this help
+  --profile <path>  Profile declaration below a profiles/ catalog
+  -h, --help        Show this help
 `;
 
 export interface ProbeCliIo {
@@ -31,104 +18,41 @@ export interface ProbeCliIo {
   stderr: Pick<NodeJS.WriteStream, "write">;
 }
 
-export interface ParsedProbeCli {
-  help: boolean;
-  options: AcpProbeOptions;
-  profilePath?: string;
-}
+export type ParsedProbeCli =
+  | { help: true }
+  | { help: false; profilePath: string };
 
 export interface ProbeCliDependencies {
-  probeCommand?: (options: AcpProbeOptions) => ReturnType<typeof probeAcpCapabilities>;
-  probeProfile?: (
-    profilePath: string,
-    options: ProfileProbeOptions,
-  ) => ReturnType<typeof probeAcpProfile>;
+  probeProfile?: (profilePath: string) => Promise<AcpSmokeResult>;
 }
 
 export function parseProbeCliArgs(argv: readonly string[]): ParsedProbeCli {
   let profilePath: string | undefined;
-  let command: string | undefined;
-  let cwd: string | undefined;
-  let loadSessionId: string | undefined;
-  let timeoutMs: number | undefined;
-  const args: string[] = [];
-  const env: Record<string, string> = {};
-  let explicitArgs = false;
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
     switch (argument) {
       case "-h":
       case "--help":
-        return { help: true, options: {} };
+        return { help: true };
       case "--profile":
+        if (profilePath !== undefined) {
+          throw new Error("--profile may only be provided once");
+        }
         profilePath = nextValue(argv, ++index, "--profile");
-        break;
-      case "--command":
-        command = nextValue(argv, ++index, "--command");
-        break;
-      case "--arg":
-        explicitArgs = true;
-        args.push(nextValue(argv, ++index, "--arg"));
-        break;
-      case "--cwd":
-        cwd = nextValue(argv, ++index, "--cwd");
-        break;
-      case "--env": {
-        const entry = nextValue(argv, ++index, "--env");
-        const separator = entry.indexOf("=");
-        if (separator <= 0) {
-          throw new Error("--env must use NAME=VALUE");
-        }
-        const name = entry.slice(0, separator);
-        if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
-          throw new Error("--env contains an invalid variable name");
-        }
-        env[name] = entry.slice(separator + 1);
-        break;
-      }
-      case "--load-session":
-        loadSessionId = nextValue(argv, ++index, "--load-session");
-        break;
-      case "--timeout-ms": {
-        const raw = nextValue(argv, ++index, "--timeout-ms");
-        timeoutMs = Number(raw);
-        if (!Number.isInteger(timeoutMs)) {
-          throw new Error("--timeout-ms must be an integer");
+        if (profilePath.length === 0) {
+          throw new Error("--profile requires a non-empty path");
         }
         break;
-      }
       default:
         throw new Error(`Unknown option at argument ${index + 1}`);
     }
   }
 
-  if (
-    profilePath !== undefined &&
-    (
-      command !== undefined ||
-      explicitArgs ||
-      cwd !== undefined ||
-      Object.keys(env).length > 0
-    )
-  ) {
-    throw new Error(
-      "--profile cannot be combined with --command, --arg, --cwd, or --env",
-    );
+  if (profilePath === undefined) {
+    throw new Error("--profile is required");
   }
-
-  return {
-    help: false,
-    ...(profilePath !== undefined ? { profilePath } : {}),
-    options: {
-      ...(command !== undefined ? { command } : {}),
-      ...(explicitArgs ? { args } : {}),
-      ...(cwd !== undefined ? { cwd } : {}),
-      ...(Object.keys(env).length > 0 ? { env } : {}),
-      ...(loadSessionId !== undefined ? { loadSessionId } : {}),
-      ...(timeoutMs !== undefined ? { timeoutMs } : {}),
-    },
-  };
+  return { help: false, profilePath };
 }
 
 export async function runProbeCli(
@@ -159,21 +83,9 @@ export async function runProbeCli(
   }
 
   try {
-    const result = parsed.profilePath
-      ? await (dependencies.probeProfile ?? probeAcpProfile)(
-          parsed.profilePath,
-          {
-            ...(parsed.options.loadSessionId !== undefined
-              ? { loadSessionId: parsed.options.loadSessionId }
-              : {}),
-            ...(parsed.options.timeoutMs !== undefined
-              ? { timeoutMs: parsed.options.timeoutMs }
-              : {}),
-          },
-        )
-      : await (dependencies.probeCommand ?? probeAcpCapabilities)(
-          parsed.options,
-        );
+    const result = await (dependencies.probeProfile ?? probeAcpProfile)(
+      parsed.profilePath,
+    );
     writeJson(io.stdout, { ok: true, ...result });
     return 0;
   } catch (error) {
@@ -200,7 +112,7 @@ export async function runProbeCli(
         ok: false,
         error: {
           phase: "unknown",
-          message: "ACP capability probe failed",
+          message: "ACP Profile smoke test failed",
         },
       });
     }

@@ -1,67 +1,21 @@
-// WebSocket transport — connects directly to a remote ACP agent that
-// natively speaks JSON-RPC over `ws://` / `wss://`.
+// WebSocket transport for the same-origin loopback ACP Bridge.
 //
-// Design notes (see plan §6.2):
-// - The browser WebSocket API cannot set arbitrary HTTP headers. To carry an
-//   `Authorization` value we fold it into the WebSocket subprotocol list as
-//   `bearer.<token>`. Servers that want to authenticate this way negotiate
-//   the protocol back; servers that prefer cookies / query params will simply
-//   ignore the extra subprotocol entries.
-// - One inbound `MessageEvent` is assumed to carry exactly one JSON-RPC frame
-//   (this matches every draft of the ACP Streamable HTTP / WebSocket RFD so
-//   far). Binary frames are not part of the ACP wire format and are rejected.
+// Design notes:
+// - A text `MessageEvent` may contain one JSON-RPC object or multiple
+//   newline-delimited objects. Binary frames are not part of the wire format.
 // - `close()` is idempotent; the unhealthy-states (closing/closed) are mapped
 //   to no-ops so callers don't have to track them themselves.
-// - This transport intentionally does NOT auto-reconnect. The plan calls for
-//   reconnect+backoff, but reconnecting silently can desync session state on
-//   the agent side (sessions are per-connection in most ACP implementations).
-//   We instead surface the close to the session store, which can present a
-//   clear "reconnect" affordance to the user.
+// - Reconnection belongs to the Session store because a new socket creates a
+//   new OpenCode ACP process and history must be restored explicitly.
 import { TransportListeners, type AcpTransport, type Unsubscribe } from './types';
-
-const ACP_SUBPROTOCOL = 'acp.v1';
-
-/**
- * Default heartbeat interval (ms). Many home NATs evict idle UDP/TCP
- * mappings around 60 s, devtunnel/free-tier reverse proxies typically use
- * ~60 s, and nginx defaults `proxy_read_timeout` to 60 s. We send a
- * JSON-RPC notification every 25 s so a tick always lands inside the
- * shortest common window even with a dropped one. Set to 0 to disable.
- */
-const DEFAULT_HEARTBEAT_MS = 25_000;
-
-/** Method name for the heartbeat ping. The `$/`-prefixed namespace follows
- * the LSP/JSON-RPC convention for implementation-defined notifications: a
- * conforming server that doesn't recognise the method MUST silently ignore
- * it (JSON-RPC 2.0 §4.1, "The Server MUST NOT reply to a Notification"). */
-const HEARTBEAT_METHOD = '$/ping';
 
 /** Options accepted by `WebSocketTransport.connect`. */
 export interface WebSocketTransportOptions {
-  /** Full ws:// or wss:// URL to the agent endpoint. Required. */
+  /** Full same-origin ws:// or wss:// Profile endpoint. */
   url: string;
-  /**
-   * Optional HTTP-style headers. Only `Authorization: Bearer <token>` is
-   * meaningfully transmitted, encoded as a `bearer.<token>` subprotocol entry.
-   * Other entries are recorded but ignored on the wire.
-   */
-  headers?: Record<string, string>;
-  /**
-   * Override the connection timeout (ms). Defaults to 15s; long enough for a
-   * cold TLS handshake on slow mobile networks but short enough that users
-   * notice a wedged endpoint.
-   */
+  /** Override the connection timeout (ms). Defaults to 15 seconds. */
   connectTimeoutMs?: number;
-  /**
-   * Application-level heartbeat interval in milliseconds. Sends a `$/ping`
-   * JSON-RPC notification on this cadence to keep idle NAT/proxy mappings
-   * warm. Defaults to {@link DEFAULT_HEARTBEAT_MS}; set to `0` to disable.
-   */
-  heartbeatMs?: number;
-  /**
-   * Inject a constructor for testability. Defaults to the global
-   * `WebSocket`. Tests pass a fake constructor here.
-   */
+  /** Inject a constructor for tests. */
   WebSocketCtor?: typeof WebSocket;
 }
 
@@ -70,10 +24,8 @@ export class WebSocketTransport implements AcpTransport {
   private readonly closeListeners = new TransportListeners<string | undefined>();
   private ws: WebSocket | null = null;
   private closed = false;
-  /** Periodic heartbeat timer (see {@link DEFAULT_HEARTBEAT_MS}). */
-  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
-  private constructor(ws: WebSocket, heartbeatMs: number) {
+  private constructor(ws: WebSocket) {
     this.ws = ws;
     ws.addEventListener('message', (ev) => this.handleMessage(ev));
     ws.addEventListener('close', (ev) =>
@@ -83,9 +35,6 @@ export class WebSocketTransport implements AcpTransport {
       // The `close` event always fires after `error`, so we forward only
       // there to avoid double-emitting close to listeners.
     });
-    if (heartbeatMs > 0) {
-      this.startHeartbeat(heartbeatMs);
-    }
   }
 
   /**
@@ -103,8 +52,7 @@ export class WebSocketTransport implements AcpTransport {
       throw new Error('WebSocketTransport requires a url');
     }
 
-    const subprotocols = buildSubprotocols(opts.headers);
-    const ws = new Ctor(opts.url, subprotocols);
+    const ws = new Ctor(opts.url);
     const timeoutMs = opts.connectTimeoutMs ?? 15000;
 
     await new Promise<void>((resolve, reject) => {
@@ -146,7 +94,7 @@ export class WebSocketTransport implements AcpTransport {
       });
     });
 
-    return new WebSocketTransport(ws, opts.heartbeatMs ?? DEFAULT_HEARTBEAT_MS);
+    return new WebSocketTransport(ws);
   }
 
   private handleMessage(ev: MessageEvent): void {
@@ -168,52 +116,18 @@ export class WebSocketTransport implements AcpTransport {
       }
     } else {
       // Binary frames are not part of ACP. Surface a clear error rather than
-      // silently dropping data so misbehaving servers are easy to diagnose.
-      console.error('WebSocketTransport received non-string frame; dropping', ev.data);
+      // silently dropping them, without logging the possibly-sensitive frame.
+      console.error('WebSocketTransport received a non-string frame');
     }
   }
 
   private handleClose(reason: string): void {
     if (this.closed) return;
     this.closed = true;
-    this.stopHeartbeat();
     this.closeListeners.emit(reason);
     this.messageListeners.clear();
     this.closeListeners.clear();
     this.ws = null;
-  }
-
-  /**
-   * Send a JSON-RPC `$/ping` notification on a fixed interval to keep the
-   * connection alive across NAT / reverse-proxy idle timeouts. The frame is
-   * sent below the bridge layer so it never appears in the Traffic Monitor.
-   *
-   * Heartbeats are notifications (no `id`) so a conforming agent never
-   * replies; agents that don't recognise `$/ping` MUST silently ignore it
-   * per JSON-RPC 2.0. We tolerate a transient send error (e.g. a race with
-   * the server's own close) by stopping the timer rather than surfacing it.
-   */
-  private startHeartbeat(intervalMs: number): void {
-    const frame = `{"jsonrpc":"2.0","method":"${HEARTBEAT_METHOD}"}\n`;
-    this.heartbeatTimer = setInterval(() => {
-      if (this.closed || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
-        this.stopHeartbeat();
-        return;
-      }
-      try {
-        this.ws.send(frame);
-      } catch (e) {
-        console.warn('WebSocketTransport heartbeat send failed:', e);
-        this.stopHeartbeat();
-      }
-    }, intervalMs);
-  }
-
-  private stopHeartbeat(): void {
-    if (this.heartbeatTimer !== null) {
-      clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = null;
-    }
   }
 
   async send(json: string): Promise<void> {
@@ -244,7 +158,6 @@ export class WebSocketTransport implements AcpTransport {
 
   async close(): Promise<void> {
     if (this.closed) return;
-    this.stopHeartbeat();
     if (this.ws) {
       try {
         this.ws.close(1000, 'client closed');
@@ -264,42 +177,4 @@ export class WebSocketTransport implements AcpTransport {
       }
     });
   }
-}
-
-/**
- * Build the WebSocket subprotocol list from optional ACP/auth headers.
- *
- * Always advertises `acp.v1` as the canonical subprotocol so servers can
- * negotiate; folds an `Authorization: Bearer <token>` header into a
- * `bearer.<token>` entry so it survives the no-custom-headers limitation
- * of the browser WebSocket API.
- */
-export function buildSubprotocols(
-  headers?: Record<string, string>
-): string[] {
-  const protocols: string[] = [ACP_SUBPROTOCOL];
-  if (!headers) return protocols;
-  const auth = pickHeader(headers, 'authorization');
-  if (auth) {
-    const m = /^Bearer\s+(.+)$/i.exec(auth.trim());
-    if (m) {
-      // Subprotocol tokens cannot contain whitespace; the bearer token in
-      // practice is base64-ish so this is safe, but we still strip just in
-      // case to avoid handing the browser an invalid header value.
-      const tok = m[1].replace(/\s+/g, '');
-      protocols.push(`bearer.${tok}`);
-    }
-  }
-  return protocols;
-}
-
-function pickHeader(
-  headers: Record<string, string>,
-  name: string
-): string | undefined {
-  const target = name.toLowerCase();
-  for (const [k, v] of Object.entries(headers)) {
-    if (k.toLowerCase() === target) return v;
-  }
-  return undefined;
 }

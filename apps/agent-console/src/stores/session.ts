@@ -10,22 +10,19 @@ import type {
   InitializeResponse,
   SessionNotification,
 } from '@agentclientprotocol/sdk';
-import { deleteProfileSession, getAppVersion } from '../lib/host';
+import { deleteProfileSession, getAppVersion } from '../lib/bridge-api';
 import {
-  getTransportKind,
   type AgentConfig,
-  type ChatMessage,
-  type ModelInfo,
   type PermissionRequest,
   type SavedSession,
-  type SessionMode,
-  type SlashCommand,
-  type ToolCallInfo,
 } from '../lib/types';
-import { applyToolCallUpdate, createToolCallInfo } from '../lib/tool-call';
 import { createAcpClient, type AcpClientBridge } from '../lib/acp-bridge';
-import { killAgent, onAgentStderr, spawnAgent } from '../lib/host';
-import { isDesktop } from '../lib/platform';
+import {
+  applyProjectionUpdate,
+  restoreProjection,
+  snapshotProjection,
+  type SessionProjection,
+} from '../lib/session-projection';
 import { useConfigStore } from './config';
 
 const PROTOCOL_VERSION = 1;
@@ -58,53 +55,31 @@ export interface OpenConversationSummary {
 }
 
 interface ProfileState {
-  profileId: string;
   status: ProfileConnectionStatus;
   error: string | null;
   supportsSessionList: boolean;
   supportsLoadSession: boolean;
   activePromptKey: string | null;
-  startupPhase: string;
-  startupLogs: string[];
-  startupElapsed: number;
   isRefreshingSessions: boolean;
   sessionListError: string | null;
   listGeneration: number;
 }
 
-interface ConversationState {
+interface ConversationState extends SessionProjection {
   key: string;
-  session: SavedSession;
-  messages: ChatMessage[];
-  toolCalls: Map<string, ToolCallInfo>;
   isLoading: boolean;
   isHydrating: boolean;
   hydrated: boolean;
-  replayingHistory: boolean;
-  replayLastUpdateAt: number;
   error: string | null;
-  availableModes: SessionMode[];
-  currentModeId: string;
-  availableCommands: SlashCommand[];
-  availableModels: ModelInfo[];
-  currentModelId: string;
   openedAt: number;
-}
-
-interface ConnectionAttempt {
-  cancelled: boolean;
-  client: AcpClientBridge | null;
-  spawnedAgentId?: string;
 }
 
 interface ProfileRuntime {
   client: AcpClientBridge | null;
   connectPromise: Promise<AcpClientBridge> | null;
+  discoveryPromise: Promise<void> | null;
   pendingLoads: Map<string, Promise<string>>;
-  connectionAttempt: ConnectionAttempt | null;
   stopPermissionWatch: (() => void) | null;
-  startupTimer: ReturnType<typeof setInterval> | null;
-  stderrUnlisten: (() => void) | null;
   authMethods: AuthMethod[];
   pendingSessionCreations: number;
   pendingUpdates: Map<string, SessionNotification[]>;
@@ -117,26 +92,7 @@ interface AuthPrompt {
   resolve: (methodId: string | null) => void;
 }
 
-interface SessionSetupMetadata {
-  modes?: {
-    availableModes?: Array<{
-      id: string;
-      name: string;
-      description?: string | null;
-    }>;
-    currentModeId?: string;
-  } | null;
-  models?: {
-    availableModels?: Array<{
-      modelId: string;
-      name: string;
-      description?: string | null;
-    }>;
-    currentModelId?: string;
-  } | null;
-}
-
-let appVersion = '0.1.0';
+const appVersion = getAppVersion();
 
 function keyOf(agentName: string, sessionId: string): string {
   return `${agentName}:${sessionId}`;
@@ -146,24 +102,15 @@ function monotonicNow(): number {
   return globalThis.performance?.now?.() ?? Date.now();
 }
 
-function detectPhase(line: string): string | null {
-  const lower = line.toLowerCase();
-  if (lower.includes('download') || lower.includes('fetch') || lower.includes('get ')) {
-    return 'downloading';
-  }
-  if (lower.includes('install') || lower.includes('added') || lower.includes('packages')) {
-    return 'installing';
-  }
-  if (lower.includes('build') || lower.includes('compil')) {
-    return 'building';
-  }
-  if (lower.includes('start') || lower.includes('spawn')) {
-    return 'starting';
-  }
-  return null;
-}
-
 function isAuthRequired(cause: unknown): boolean {
+  if (
+    typeof cause === 'object' &&
+    cause !== null &&
+    'code' in cause &&
+    cause.code === -32000
+  ) {
+    return true;
+  }
   const message = cause instanceof Error ? cause.message : String(cause);
   return (
     message.toLowerCase().includes('authentication required') ||
@@ -176,7 +123,6 @@ export const useSessionStore = defineStore('session', () => {
   const conversations = reactive(new Map<string, ConversationState>());
   const profileStates = reactive(new Map<string, ProfileState>());
   const activeConversationKey = ref<string | null>(null);
-  const globalError = ref<string | null>(null);
   const pendingPermissions = reactive(new Map<string, PermissionRequest>());
   const authPrompts = shallowRef<AuthPrompt[]>([]);
   const maintenanceProfiles = new Set<string>();
@@ -190,15 +136,11 @@ export const useSessionStore = defineStore('session', () => {
     let state = profileStates.get(agentName);
     if (!state) {
       state = {
-        profileId: agentName,
         status: 'disconnected',
         error: null,
         supportsSessionList: false,
         supportsLoadSession: false,
         activePromptKey: null,
-        startupPhase: 'starting',
-        startupLogs: [],
-        startupElapsed: 0,
         isRefreshingSessions: false,
         sessionListError: null,
         listGeneration: 0,
@@ -218,11 +160,9 @@ export const useSessionStore = defineStore('session', () => {
       runtime = {
         client: null,
         connectPromise: null,
+        discoveryPromise: null,
         pendingLoads: new Map(),
-        connectionAttempt: null,
         stopPermissionWatch: null,
-        startupTimer: null,
-        stderrUnlisten: null,
         authMethods: [],
         pendingSessionCreations: 0,
         pendingUpdates: new Map(),
@@ -247,14 +187,8 @@ export const useSessionStore = defineStore('session', () => {
   const currentSession = computed(
     () => activeConversation.value?.session ?? null,
   );
-  const messages = computed(
+  const messageList = computed(
     () => activeConversation.value?.messages ?? [],
-  );
-  const messageList = computed(() => messages.value);
-  const toolCallList = computed(() =>
-    activeConversation.value
-      ? Array.from(activeConversation.value.toolCalls.values())
-      : [],
   );
   const hasActiveSession = computed(() => activeConversation.value !== null);
   const isConnected = computed(() => {
@@ -287,46 +221,11 @@ export const useSessionStore = defineStore('session', () => {
     () =>
       activeConversation.value?.error ??
       activeProfileState.value?.error ??
-      globalError.value,
-  );
-  const availableModes = computed(
-    () => activeConversation.value?.availableModes ?? [],
-  );
-  const currentModeId = computed(
-    () => activeConversation.value?.currentModeId ?? '',
-  );
-  const availableCommands = computed(
-    () => activeConversation.value?.availableCommands ?? [],
-  );
-  const availableModels = computed(
-    () => activeConversation.value?.availableModels ?? [],
-  );
-  const currentModelId = computed(
-    () => activeConversation.value?.currentModelId ?? '',
-  );
-  const startupPhase = computed(
-    () => activeProfileState.value?.startupPhase ?? 'starting',
-  );
-  const startupLogs = computed(
-    () => activeProfileState.value?.startupLogs ?? [],
-  );
-  const startupElapsed = computed(
-    () => activeProfileState.value?.startupElapsed ?? 0,
+      null,
   );
   const resumableSessions = computed(() =>
     savedSessions.value.filter((session) => session.supportsLoadSession === true),
   );
-  const isRefreshingSessions = computed(() =>
-    Array.from(profileStates.values()).some(
-      (state) => state.isRefreshingSessions,
-    ),
-  );
-  const sessionListError = computed(() => {
-    for (const state of profileStates.values()) {
-      if (state.sessionListError) return state.sessionListError;
-    }
-    return null;
-  });
   const isCurrentProfileBusyElsewhere = computed(() => {
     const conversation = activeConversation.value;
     const owner = activeProfileState.value?.activePromptKey;
@@ -418,24 +317,15 @@ export const useSessionStore = defineStore('session', () => {
       })),
   );
 
-  async function initStore(): Promise<void> {
-    try {
-      appVersion = await getAppVersion();
-    } catch (cause) {
-      console.warn('Failed to get app version:', cause);
-    }
-  }
-
   function initializeClient(
     client: AcpClientBridge,
   ): Promise<InitializeResponse> {
-    const canAccessFs = isDesktop();
     return client.initialize({
       protocolVersion: PROTOCOL_VERSION,
       clientCapabilities: {
         fs: {
-          readTextFile: canAccessFs,
-          writeTextFile: canAccessFs,
+          readTextFile: false,
+          writeTextFile: false,
         },
       },
       clientInfo: {
@@ -458,18 +348,12 @@ export const useSessionStore = defineStore('session', () => {
       key,
       session,
       messages: [],
-      toolCalls: new Map(),
       isLoading: false,
       isHydrating: false,
       hydrated: false,
       replayingHistory: false,
       replayLastUpdateAt: 0,
       error: null,
-      availableModes: [],
-      currentModeId: '',
-      availableCommands: [],
-      availableModels: [],
-      currentModelId: '',
       openedAt: ++openedSequence,
     };
     conversations.set(key, conversation);
@@ -517,232 +401,20 @@ export const useSessionStore = defineStore('session', () => {
     ];
   }
 
-  function applySetupMetadata(
-    conversation: ConversationState,
-    response: unknown,
-  ): void {
-    const metadata = response as SessionSetupMetadata;
-    if (metadata.modes) {
-      conversation.availableModes = (
-        metadata.modes.availableModes ?? []
-      ).map((mode) => ({
-        id: mode.id,
-        name: mode.name,
-        description: mode.description ?? undefined,
-      }));
-      conversation.currentModeId = metadata.modes.currentModeId ?? '';
-    }
-    if (metadata.models) {
-      conversation.availableModels = (
-        metadata.models.availableModels ?? []
-      ).map((model) => ({
-        modelId: model.modelId,
-        name: model.name,
-        description: model.description ?? undefined,
-      }));
-      conversation.currentModelId = metadata.models.currentModelId ?? '';
-    }
-  }
-
-  function ensureAssistantMessageForToolCall(
-    conversation: ConversationState,
-  ): ChatMessage {
-    const lastMessage =
-      conversation.messages[conversation.messages.length - 1];
-    if (lastMessage?.role === 'assistant') {
-      lastMessage.toolCalls ??= [];
-      return lastMessage;
-    }
-
-    const assistantMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: 'assistant',
-      content: '',
-      timestamp: conversation.replayingHistory ? undefined : Date.now(),
-      toolCalls: [],
-    };
-    conversation.messages.push(assistantMessage);
-    return assistantMessage;
-  }
-
-  function attachToolCall(
-    conversation: ConversationState,
-    toolCall: ToolCallInfo,
-  ): void {
-    const assistantMessage = ensureAssistantMessageForToolCall(conversation);
-    assistantMessage.toolCalls ??= [];
-    if (
-      !assistantMessage.toolCalls.some(
-        (item) => item.toolCallId === toolCall.toolCallId,
-      )
-    ) {
-      assistantMessage.toolCalls.push(toolCall);
-    }
-  }
-
   function applySessionUpdate(
     agentName: string,
     conversation: ConversationState,
     notification: SessionNotification,
   ): void {
-    if (conversation.replayingHistory) {
-      conversation.replayLastUpdateAt = Date.now();
-    }
-    const update = notification.update;
-
-    switch (update.sessionUpdate) {
-      case 'user_message_chunk': {
-        const lastMessage =
-          conversation.messages[conversation.messages.length - 1];
-        if (lastMessage?.role === 'user') {
-          if (update.content.type === 'text') {
-            lastMessage.content += update.content.text;
-          }
-        } else {
-          conversation.messages.push({
-            id: crypto.randomUUID(),
-            role: 'user',
-            content:
-              update.content.type === 'text' ? update.content.text : '',
-            timestamp: conversation.replayingHistory
-              ? undefined
-              : Date.now(),
-          });
-        }
-        break;
-      }
-
-      case 'agent_message_chunk': {
-        const lastMessage =
-          conversation.messages[conversation.messages.length - 1];
-        if (lastMessage?.role === 'assistant') {
-          if (update.content.type === 'text') {
-            lastMessage.content += update.content.text;
-          }
-        } else {
-          conversation.messages.push({
-            id: crypto.randomUUID(),
-            role: 'assistant',
-            content:
-              update.content.type === 'text' ? update.content.text : '',
-            timestamp: conversation.replayingHistory
-              ? undefined
-              : Date.now(),
-            toolCalls: [],
-          });
-        }
-        break;
-      }
-
-      case 'agent_thought_chunk': {
-        const lastMessage =
-          conversation.messages[conversation.messages.length - 1];
-        if (lastMessage?.role === 'assistant') {
-          if (update.content.type === 'text') {
-            lastMessage.thought =
-              (lastMessage.thought ?? '') + update.content.text;
-          }
-        } else {
-          conversation.messages.push({
-            id: crypto.randomUUID(),
-            role: 'assistant',
-            content: '',
-            thought:
-              update.content.type === 'text' ? update.content.text : '',
-            timestamp: conversation.replayingHistory
-              ? undefined
-              : Date.now(),
-            toolCalls: [],
-          });
-        }
-        break;
-      }
-
-      case 'plan': {
-        const assistantMessage =
-          ensureAssistantMessageForToolCall(conversation);
-        assistantMessage.plan = update.entries.map((entry) => ({ ...entry }));
-        break;
-      }
-
-      case 'tool_call': {
-        const observedAt = conversation.replayingHistory ? null : Date.now();
-        const existing = conversation.toolCalls.get(update.toolCallId);
-        const toolCall = existing
-          ? applyToolCallUpdate(existing, update, observedAt)
-          : createToolCallInfo(update, observedAt);
-        conversation.toolCalls.set(update.toolCallId, toolCall);
-        attachToolCall(conversation, toolCall);
-        break;
-      }
-
-      case 'tool_call_update': {
-        const observedAt = conversation.replayingHistory ? null : Date.now();
-        const existing = conversation.toolCalls.get(update.toolCallId);
-        const toolCall = existing
-          ? applyToolCallUpdate(existing, update, observedAt)
-          : createToolCallInfo(update, observedAt);
-        conversation.toolCalls.set(update.toolCallId, toolCall);
-        attachToolCall(conversation, toolCall);
-
-        for (const message of conversation.messages) {
-          const attached = message.toolCalls?.find(
-            (item) => item.toolCallId === update.toolCallId,
-          );
-          if (attached && attached !== toolCall) {
-            applyToolCallUpdate(attached, update, observedAt);
-          }
-        }
-        break;
-      }
-
-      case 'current_mode_update':
-        if ('modeId' in update && update.modeId) {
-          conversation.currentModeId = update.modeId as string;
-        }
-        break;
-
-      case 'available_commands_update':
-        if (
-          'availableCommands' in update &&
-          Array.isArray(update.availableCommands)
-        ) {
-          conversation.availableCommands = update.availableCommands.map(
-            (command) => ({
-              name: command.name,
-              description: command.description,
-              hint: command.input?.hint ?? undefined,
-            }),
-          );
-        }
-        break;
-
-      case 'session_info_update': {
-        if ('title' in update && update.title !== undefined) {
-          conversation.session.title =
-            update.title?.trim() || 'Untitled session';
-        }
-        if ('updatedAt' in update && update.updatedAt) {
-          const parsed = Date.parse(update.updatedAt);
-          if (Number.isFinite(parsed)) {
-            conversation.session.lastUpdated = parsed;
-          }
-        }
-        const saved = savedSessions.value.find(
-          (session) =>
-            session.agentName === agentName &&
-            session.sessionId === notification.sessionId,
-        );
-        if (saved && saved !== conversation.session) {
-          saved.title = conversation.session.title;
-          saved.lastUpdated = conversation.session.lastUpdated;
-        }
-        break;
-      }
-
-      default:
-        // Unknown events remain visible in ACP Traffic.
-        break;
+    if (!applyProjectionUpdate(conversation, notification)) return;
+    const saved = savedSessions.value.find(
+      (session) =>
+        session.agentName === agentName &&
+        session.sessionId === notification.sessionId,
+    );
+    if (saved && saved !== conversation.session) {
+      saved.title = conversation.session.title;
+      saved.lastUpdated = conversation.session.lastUpdated;
     }
   }
 
@@ -854,61 +526,29 @@ export const useSessionStore = defineStore('session', () => {
   async function connectProfileTransport(
     agentName: string,
     agentConfig: AgentConfig,
-    shouldStop: () => boolean,
   ): Promise<AcpClientBridge> {
-    const delays =
-      getTransportKind(agentConfig) === 'websocket'
-        ? [0, 100, 200, 400, 800]
-        : [0];
-    let lastError: unknown;
-    for (const delayMs of delays) {
-      if (shouldStop()) throw new Error('Connection cancelled');
-      if (delayMs > 0) {
-        await new Promise<void>((resolve) => setTimeout(resolve, delayMs));
-      }
-      if (shouldStop()) throw new Error('Connection cancelled');
-      try {
-        return await createAcpClient(
-          { name: agentName, config: agentConfig },
-          { profileId: agentName },
-        );
-      } catch (cause) {
-        lastError = cause;
-      }
-    }
-    throw lastError instanceof Error
-      ? lastError
-      : new Error('Unable to connect to the Agent');
-  }
-
-  function startStartupProgress(
-    state: ProfileState,
-    runtime: ProfileRuntime,
-  ): void {
-    state.startupPhase = 'starting';
-    state.startupLogs = [];
-    state.startupElapsed = 0;
-    if (runtime.startupTimer) clearInterval(runtime.startupTimer);
-    runtime.startupTimer = setInterval(() => {
-      state.startupElapsed += 1;
-    }, 1000);
-  }
-
-  function stopStartupProgress(runtime: ProfileRuntime): void {
-    if (runtime.startupTimer) {
-      clearInterval(runtime.startupTimer);
-      runtime.startupTimer = null;
-    }
-    runtime.stderrUnlisten?.();
-    runtime.stderrUnlisten = null;
+    return createAcpClient({ name: agentName, config: agentConfig });
   }
 
   async function ensureProfileClient(
     agentName: string,
-    options: { reconnecting?: boolean } = {},
+    options: { reconnecting?: boolean; skipDiscovery?: boolean } = {},
   ): Promise<AcpClientBridge> {
     const state = getProfileState(agentName);
     const runtime = getRuntime(agentName);
+    if (maintenanceProfiles.has(agentName)) {
+      throw new Error(
+        'This Profile is undergoing maintenance. Try again in a moment.',
+      );
+    }
+    if (!options.skipDiscovery && runtime.discoveryPromise) {
+      await runtime.discoveryPromise;
+      if (maintenanceProfiles.has(agentName)) {
+        throw new Error(
+          'This Profile is undergoing maintenance. Try again in a moment.',
+        );
+      }
+    }
     if (runtime.client && state.status === 'connected') {
       return runtime.client;
     }
@@ -927,73 +567,32 @@ export const useSessionStore = defineStore('session', () => {
     if (!agentConfig.cwd) {
       throw new Error(`Agent '${agentName}' has no fixed working directory`);
     }
+    if (!agentConfig.url) {
+      throw new Error(`Agent '${agentName}' has no Bridge WebSocket URL`);
+    }
 
-    const attempt: ConnectionAttempt = { cancelled: false, client: null };
-    runtime.connectionAttempt = attempt;
     state.status = options.reconnecting ? 'reconnecting' : 'connecting';
     state.error = null;
-    startStartupProgress(state, runtime);
 
     const promise = (async (): Promise<AcpClientBridge> => {
-      let spawnedInstance: { id: string } | null = null;
+      let client: AcpClientBridge | null = null;
       try {
-        const transportKind = getTransportKind(agentConfig);
-        let client: AcpClientBridge;
-
-        if (transportKind === 'stdio') {
-          state.startupPhase = 'starting';
-          const agentInstance = await spawnAgent(agentName);
-          spawnedInstance = agentInstance;
-          attempt.spawnedAgentId = agentInstance.id;
-
-          runtime.stderrUnlisten = (await onAgentStderr((stderr) => {
-            if (stderr.agent_id !== agentInstance.id) return;
-            state.startupLogs.push(stderr.line);
-            const phase = detectPhase(stderr.line);
-            if (phase) state.startupPhase = phase;
-          })) as unknown as () => void;
-
-          if (attempt.cancelled || runtime.connectionAttempt !== attempt) {
-            await killAgent(agentInstance.id).catch(() => undefined);
-            spawnedInstance = null;
-            attempt.spawnedAgentId = undefined;
-            throw new Error('Connection cancelled');
-          }
-
-          state.startupPhase = 'initializing';
-          client = await createAcpClient(agentInstance, {
-            profileId: agentName,
-          });
-          spawnedInstance = null;
-          attempt.spawnedAgentId = undefined;
-        } else {
-          state.startupPhase = 'connecting';
-          client = await connectProfileTransport(
-            agentName,
-            agentConfig,
-            () =>
-              attempt.cancelled ||
-              runtime.connectionAttempt !== attempt,
-          );
-        }
-
-        attempt.client = client;
-        if (attempt.cancelled || runtime.connectionAttempt !== attempt) {
+        client = await connectProfileTransport(agentName, agentConfig);
+        if (maintenanceProfiles.has(agentName)) {
           await client.disconnect();
-          throw new Error('Connection cancelled');
+          client = null;
+          throw new Error('Profile entered maintenance while connecting');
         }
 
         runtime.client = client;
         bindClient(agentName, client);
-        state.startupPhase = 'initializing';
         const response = await initializeClient(client);
 
         if (
-          attempt.cancelled ||
-          runtime.connectionAttempt !== attempt ||
-          runtime.client !== client
+          runtime.client !== client ||
+          maintenanceProfiles.has(agentName)
         ) {
-          throw new Error('Connection cancelled');
+          throw new Error('Connection closed while initializing');
         }
 
         runtime.authMethods = response.authMethods ?? [];
@@ -1005,25 +604,25 @@ export const useSessionStore = defineStore('session', () => {
         state.error = null;
         return client;
       } catch (cause) {
-        if (attempt.client) {
+        if (client) {
           try {
-            if (runtime.client === attempt.client) {
-              unbindClient(agentName, attempt.client);
+            if (runtime.client === client) {
+              unbindClient(agentName, client);
               runtime.client = null;
             }
-            await attempt.client.disconnect();
+            await client.disconnect();
           } catch (cleanupError) {
             console.warn(
               'disconnect during profile connection cleanup failed:',
               cleanupError,
             );
           }
-        } else if (spawnedInstance) {
-          await killAgent(spawnedInstance.id).catch(() => undefined);
         }
 
-        state.status = attempt.cancelled ? 'disconnected' : 'error';
-        state.error = attempt.cancelled
+        state.status = maintenanceProfiles.has(agentName)
+          ? 'disconnected'
+          : 'error';
+        state.error = maintenanceProfiles.has(agentName)
           ? null
           : cause instanceof Error
             ? cause.message
@@ -1039,10 +638,6 @@ export const useSessionStore = defineStore('session', () => {
       if (runtime.connectPromise === promise) {
         runtime.connectPromise = null;
       }
-      if (runtime.connectionAttempt === attempt) {
-        runtime.connectionAttempt = null;
-      }
-      stopStartupProgress(runtime);
     }
   }
 
@@ -1123,7 +718,24 @@ export const useSessionStore = defineStore('session', () => {
     }
   }
 
-  async function refreshSessions(agentName: string): Promise<void> {
+  function refreshSessions(agentName: string): Promise<void> {
+    const runtime = getRuntime(agentName);
+    if (runtime.discoveryPromise) return runtime.discoveryPromise;
+    if (maintenanceProfiles.has(agentName)) {
+      return Promise.resolve();
+    }
+
+    const discovery = performSessionRefresh(agentName);
+    runtime.discoveryPromise = discovery;
+    void discovery.finally(() => {
+      if (runtime.discoveryPromise === discovery) {
+        runtime.discoveryPromise = null;
+      }
+    });
+    return discovery;
+  }
+
+  async function performSessionRefresh(agentName: string): Promise<void> {
     const state = getProfileState(agentName);
     const generation = ++state.listGeneration;
     state.isRefreshingSessions = true;
@@ -1148,13 +760,11 @@ export const useSessionStore = defineStore('session', () => {
 
       const runtime = getRuntime(agentName);
       if (runtime.client || runtime.connectPromise) {
-        client = await ensureProfileClient(agentName);
+        client = await ensureProfileClient(agentName, {
+          skipDiscovery: true,
+        });
       } else {
-        client = await connectProfileTransport(
-          agentName,
-          agentConfig,
-          () => generation !== state.listGeneration,
-        );
+        client = await connectProfileTransport(agentName, agentConfig);
         ownsClient = true;
       }
 
@@ -1220,7 +830,6 @@ export const useSessionStore = defineStore('session', () => {
       }
     } catch (cause) {
       if (generation === state.listGeneration) {
-        replaceSessionsForAgent(agentName, []);
         state.sessionListError =
           cause instanceof Error ? cause.message : String(cause);
       }
@@ -1244,7 +853,6 @@ export const useSessionStore = defineStore('session', () => {
         'This Profile is undergoing maintenance. Try again in a moment.',
       );
     }
-    globalError.value = null;
     const configStore = useConfigStore();
     const agentConfig = configStore.getAgent(agentName);
     if (!agentConfig) throw new Error(`Agent '${agentName}' not found in catalog`);
@@ -1277,7 +885,6 @@ export const useSessionStore = defineStore('session', () => {
       const conversation = createConversation(session);
       conversation.hydrated = true;
       conversation.error = null;
-      applySetupMetadata(conversation, response);
       drainPendingUpdates(agentName, conversation);
       saveSession(session);
       if (options.activate !== false) {
@@ -1350,17 +957,7 @@ export const useSessionStore = defineStore('session', () => {
       );
     }
 
-    const previousProjection = {
-      messages: [...conversation.messages],
-      toolCalls: new Map(conversation.toolCalls),
-      availableModes: [...conversation.availableModes],
-      currentModeId: conversation.currentModeId,
-      availableCommands: [...conversation.availableCommands],
-      availableModels: [...conversation.availableModels],
-      currentModelId: conversation.currentModelId,
-      title: conversation.session.title,
-      lastUpdated: conversation.session.lastUpdated,
-    };
+    const previousProjection = snapshotProjection(conversation);
     conversation.error = null;
     conversation.isHydrating = true;
     let client: AcpClientBridge | null = null;
@@ -1374,12 +971,10 @@ export const useSessionStore = defineStore('session', () => {
       }
 
       conversation.messages.splice(0);
-      conversation.toolCalls.clear();
-      conversation.availableCommands = [];
       conversation.replayingHistory = true;
       conversation.replayLastUpdateAt = Date.now();
 
-      const response = await withAuthentication(savedSession.agentName, () =>
+      await withAuthentication(savedSession.agentName, () =>
         activeClient.loadSession({
           sessionId: savedSession.sessionId,
           cwd: agentConfig.cwd as string,
@@ -1387,7 +982,6 @@ export const useSessionStore = defineStore('session', () => {
         }),
       );
       await waitForReplayQuiescence(conversation);
-      applySetupMetadata(conversation, response);
       conversation.hydrated = true;
       conversation.error = null;
       state.status = 'connected';
@@ -1398,22 +992,7 @@ export const useSessionStore = defineStore('session', () => {
       // A reconnect must not destroy the last useful in-page projection when
       // session/load fails halfway through. OpenCode remains authoritative,
       // but the retained snapshot lets the user read and retry.
-      conversation.messages.splice(
-        0,
-        conversation.messages.length,
-        ...previousProjection.messages,
-      );
-      conversation.toolCalls.clear();
-      for (const [toolCallId, toolCall] of previousProjection.toolCalls) {
-        conversation.toolCalls.set(toolCallId, toolCall);
-      }
-      conversation.availableModes = previousProjection.availableModes;
-      conversation.currentModeId = previousProjection.currentModeId;
-      conversation.availableCommands = previousProjection.availableCommands;
-      conversation.availableModels = previousProjection.availableModels;
-      conversation.currentModelId = previousProjection.currentModelId;
-      conversation.session.title = previousProjection.title;
-      conversation.session.lastUpdated = previousProjection.lastUpdated;
+      restoreProjection(conversation, previousProjection);
       conversation.hydrated = false;
       // An explicit disconnect replaces the runtime client before closing
       // the transport. Keep that user action from surfacing as a failed
@@ -1475,7 +1054,6 @@ export const useSessionStore = defineStore('session', () => {
   function selectConversation(key: string): void {
     if (!conversations.has(key)) return;
     activeConversationKey.value = key;
-    globalError.value = null;
   }
 
   async function sendPrompt(text: string): Promise<void> {
@@ -1582,7 +1160,13 @@ export const useSessionStore = defineStore('session', () => {
       profileConversationBusy ||
       permission !== undefined ||
       profile.activePromptKey !== null ||
-      runtime.pendingSessionCreations > 0
+      runtime.pendingSessionCreations > 0 ||
+      runtime.pendingLoads.size > 0 ||
+      runtime.connectPromise !== null ||
+      runtime.discoveryPromise !== null ||
+      profile.isRefreshingSessions ||
+      profile.status === 'connecting' ||
+      profile.status === 'reconnecting'
     ) {
       throw new Error(
         'This Profile is still running and cannot delete a conversation',
@@ -1624,7 +1208,6 @@ export const useSessionStore = defineStore('session', () => {
       if (pendingPermissions.get(agentName)?.sessionId === sessionId) {
         pendingPermissions.delete(agentName);
       }
-      globalError.value = null;
     } finally {
       maintenanceProfiles.delete(agentName);
       if (wasConnected) {
@@ -1679,36 +1262,6 @@ export const useSessionStore = defineStore('session', () => {
     });
   }
 
-  async function cancelConnection(agentName?: string): Promise<void> {
-    const resolvedAgentName =
-      agentName || activeConversation.value?.session.agentName;
-    if (!resolvedAgentName) return;
-    const state = getProfileState(resolvedAgentName);
-    const runtime = getRuntime(resolvedAgentName);
-    const attempt = runtime.connectionAttempt;
-    if (!attempt) return;
-
-    attempt.cancelled = true;
-    state.startupPhase = 'cancelling';
-    state.error = null;
-    cancelAuthForProfile(resolvedAgentName);
-
-    if (attempt.client) {
-      try {
-        if (runtime.client === attempt.client) {
-          unbindClient(resolvedAgentName, attempt.client);
-          runtime.client = null;
-        }
-        await attempt.client.disconnect();
-      } catch (cause) {
-        console.error('Error disconnecting:', cause);
-      }
-    }
-    if (attempt.spawnedAgentId) {
-      await killAgent(attempt.spawnedAgentId).catch(() => undefined);
-    }
-  }
-
   function resolvePermission(optionId: string): void {
     const entry = getPendingPermissionEntry();
     if (!entry) return;
@@ -1751,45 +1304,7 @@ export const useSessionStore = defineStore('session', () => {
     }
   }
 
-  async function disconnect(): Promise<void> {
-    const agentName = activeConversation.value?.session.agentName;
-    if (agentName) await disconnectProfile(agentName);
-  }
-
-  async function disconnectAll(): Promise<void> {
-    await Promise.all(
-      Array.from(runtimes.keys()).map((agentName) =>
-        disconnectProfile(agentName),
-      ),
-    );
-  }
-
-  async function setMode(modeId: string): Promise<void> {
-    const conversation = activeConversation.value;
-    if (!conversation) throw new Error('No active session');
-    const client = getRuntime(conversation.session.agentName).client;
-    if (!client) throw new Error('No active session');
-    await client.setMode({
-      sessionId: conversation.session.sessionId,
-      modeId,
-    });
-    conversation.currentModeId = modeId;
-  }
-
-  async function setModel(modelId: string): Promise<void> {
-    const conversation = activeConversation.value;
-    if (!conversation) throw new Error('No active session');
-    const client = getRuntime(conversation.session.agentName).client;
-    if (!client) throw new Error('No active session');
-    await client.unstable_setSessionModel({
-      sessionId: conversation.session.sessionId,
-      modelId,
-    });
-    conversation.currentModelId = modelId;
-  }
-
   function clearError(agentName?: string): void {
-    globalError.value = null;
     if (agentName) {
       const state = getProfileState(agentName);
       state.error = null;
@@ -1799,10 +1314,6 @@ export const useSessionStore = defineStore('session', () => {
       activeConversation.value.error = null;
       getProfileState(activeConversation.value.session.agentName).error = null;
     }
-  }
-
-  function setError(message: string): void {
-    globalError.value = message;
   }
 
   async function tryReconnect(): Promise<boolean> {
@@ -1837,12 +1348,16 @@ export const useSessionStore = defineStore('session', () => {
 
   function isProfileBusy(agentName: string): boolean {
     const state = getProfileState(agentName);
-    const runtime = getRuntime(agentName);
+    // UI gating must depend on reactive mirrors. The runtime promise maps are
+    // deliberately non-reactive and can otherwise leave buttons stale after
+    // a Promise settles; mutation methods still enforce those exact gates.
     return (
       maintenanceProfiles.has(agentName) ||
+      state.status === 'connecting' ||
+      state.status === 'reconnecting' ||
+      state.isRefreshingSessions ||
       state.activePromptKey !== null ||
       pendingPermissions.has(agentName) ||
-      runtime.pendingSessionCreations > 0 ||
       Array.from(conversations.values()).some(
         (conversation) =>
           conversation.session.agentName === agentName &&
@@ -1855,55 +1370,18 @@ export const useSessionStore = defineStore('session', () => {
     return getProfileState(agentName).isRefreshingSessions;
   }
 
-  function sessionListErrorFor(agentName: string): string | null {
-    return getProfileState(agentName).sessionListError;
-  }
-
   function profileErrorFor(agentName: string): string | null {
-    return getProfileState(agentName).error;
+    const state = getProfileState(agentName);
+    return state.error ?? state.sessionListError;
   }
-
-  function startupPhaseFor(agentName: string): string {
-    return getProfileState(agentName).startupPhase;
-  }
-
-  function startupLogsFor(agentName: string): string[] {
-    return getProfileState(agentName).startupLogs;
-  }
-
-  function startupElapsedFor(agentName: string): number {
-    return getProfileState(agentName).startupElapsed;
-  }
-
-  function isSessionOpen(agentName: string, sessionId: string): boolean {
-    return conversations.has(keyOf(agentName, sessionId));
-  }
-
-  function isSessionActive(agentName: string, sessionId: string): boolean {
-    return activeConversationKey.value === keyOf(agentName, sessionId);
-  }
-
-  function isSessionHydrating(agentName: string, sessionId: string): boolean {
-    return Boolean(
-      conversations.get(keyOf(agentName, sessionId))?.isHydrating,
-    );
-  }
-
-  const acpClient = computed(() => {
-    const agentName = activeConversation.value?.session.agentName;
-    return agentName ? getRuntime(agentName).client : null;
-  });
 
   return {
     savedSessions,
     currentSession,
-    messages,
     isConnected,
     isLoading,
     isPrompting,
     isConnecting,
-    isRefreshingSessions,
-    sessionListError,
     isReconnecting,
     error,
     pendingPermission,
@@ -1911,25 +1389,14 @@ export const useSessionStore = defineStore('session', () => {
     pendingPermissionSessionTitle,
     pendingAuthMethods,
     pendingAuthAgentName,
-    availableModes,
-    currentModeId,
-    availableCommands,
-    availableModels,
-    currentModelId,
-    startupPhase,
-    startupLogs,
-    startupElapsed,
     activeConversationKey,
     openConversations,
     isCurrentProfileBusyElsewhere,
-    acpClient,
 
     hasActiveSession,
     messageList,
-    toolCallList,
     resumableSessions,
 
-    initStore,
     refreshSessions,
     createSession,
     resumeSession,
@@ -1937,30 +1404,17 @@ export const useSessionStore = defineStore('session', () => {
     deleteConversation,
     sendPrompt,
     cancelOperation,
-    cancelConnection,
     resolvePermission,
     cancelPermission,
     selectAuthMethod,
     cancelAuthSelection,
-    disconnect,
     disconnectProfile,
-    disconnectAll,
-    setMode,
-    setModel,
     clearError,
-    setError,
     tryReconnect,
     isProfileConnected,
     isProfileConnecting,
     isProfileBusy,
     isRefreshingAgent,
-    sessionListErrorFor,
     profileErrorFor,
-    startupPhaseFor,
-    startupLogsFor,
-    startupElapsedFor,
-    isSessionOpen,
-    isSessionActive,
-    isSessionHydrating,
   };
 });

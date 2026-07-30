@@ -9,31 +9,19 @@ const bridgeMocks = vi.hoisted(() => ({
   createAcpClient: vi.fn(),
 }));
 
-const hostMocks = vi.hoisted(() => ({
+const apiMocks = vi.hoisted(() => ({
   deleteProfileSession: vi.fn(async () => undefined),
+  getProfiles: vi.fn(async () => ({ agents: {} })),
 }));
 
 vi.mock('../lib/acp-bridge', () => ({
   createAcpClient: bridgeMocks.createAcpClient,
 }));
 
-vi.mock('../lib/host', () => ({
-  getAppVersion: vi.fn(async () => 'test'),
-  getConfig: vi.fn(async () => ({ agents: {} })),
-  reloadConfig: vi.fn(async () => ({ agents: {} })),
-  getConfigPath: vi.fn(async () => ''),
-  onConfigChanged: vi.fn(async () => () => undefined),
-  spawnAgent: vi.fn(),
-  killAgent: vi.fn(async () => undefined),
-  onAgentStderr: vi.fn(async () => () => undefined),
-  deleteProfileSession: hostMocks.deleteProfileSession,
-}));
-
-vi.mock('../lib/platform', () => ({
-  isDesktop: vi.fn(() => false),
-  restrictedTransports: vi.fn(() => false),
-  isMobile: vi.fn(() => false),
-  hasLocalFs: vi.fn(() => false),
+vi.mock('../lib/bridge-api', () => ({
+  getAppVersion: vi.fn(() => 'test'),
+  getProfiles: apiMocks.getProfiles,
+  deleteProfileSession: apiMocks.deleteProfileSession,
 }));
 
 import { useConfigStore } from './config';
@@ -69,8 +57,6 @@ interface FakeClient {
   disconnect: ReturnType<typeof vi.fn>;
   resolvePermission: ReturnType<typeof vi.fn>;
   cancelPermission: ReturnType<typeof vi.fn>;
-  setMode: ReturnType<typeof vi.fn>;
-  unstable_setSessionModel: ReturnType<typeof vi.fn>;
 }
 
 function createFakeClient(sessionIds: string[]): {
@@ -107,8 +93,6 @@ function createFakeClient(sessionIds: string[]): {
     disconnect: vi.fn(async () => undefined),
     resolvePermission: vi.fn(),
     cancelPermission: vi.fn(),
-    setMode: vi.fn(async () => undefined),
-    unstable_setSessionModel: vi.fn(async () => undefined),
   };
   return { client, prompts };
 }
@@ -136,8 +120,8 @@ describe('multi-Profile ACP session store', () => {
     clients.clear();
     promptMaps.clear();
     bridgeMocks.createAcpClient.mockReset();
-    hostMocks.deleteProfileSession.mockReset();
-    hostMocks.deleteProfileSession.mockResolvedValue(undefined);
+    apiMocks.deleteProfileSession.mockReset();
+    apiMocks.deleteProfileSession.mockResolvedValue(undefined);
     bridgeMocks.createAcpClient.mockImplementation(
       async (arg: unknown): Promise<AcpClientBridge> => {
         const name =
@@ -156,12 +140,10 @@ describe('multi-Profile ACP session store', () => {
     useConfigStore().updateFromEvent({
       agents: {
         direct: {
-          transport: 'websocket',
           url: 'ws://127.0.0.1/direct',
           cwd: '/demo',
         },
         oag: {
-          transport: 'websocket',
           url: 'ws://127.0.0.1/oag',
           cwd: '/demo',
         },
@@ -235,6 +217,57 @@ describe('multi-Profile ACP session store', () => {
     expect(assistant?.durationMs).toEqual(expect.any(Number));
   });
 
+  it('replays events emitted before session/new reveals the Session id', async () => {
+    const direct = register('direct', []);
+    const created = deferred<{ sessionId: string }>();
+    direct.newSession.mockImplementationOnce(() => {
+      emitText(direct, 'direct-buffered', 'early answer');
+      return created.promise;
+    });
+    const store = useSessionStore();
+
+    const creation = store.createSession('direct', '/demo');
+    await vi.waitFor(() => {
+      expect(direct.newSession).toHaveBeenCalledTimes(1);
+    });
+    created.resolve({ sessionId: 'direct-buffered' });
+
+    await expect(creation).resolves.toBe('direct:direct-buffered');
+    expect(store.messageList).toMatchObject([
+      { role: 'assistant', content: 'early answer' },
+    ]);
+  });
+
+  it('uses the ACP authentication error code even with a custom message', async () => {
+    const direct = register('direct', ['direct-1']);
+    direct.initialize.mockResolvedValueOnce({
+      protocolVersion: 1,
+      agentCapabilities: {
+        loadSession: true,
+        sessionCapabilities: { list: {} },
+      },
+      authMethods: [{ id: 'login', name: 'Sign in' }],
+    });
+    direct.newSession.mockRejectedValueOnce(
+      Object.assign(new Error('Please sign in to continue'), {
+        code: -32000,
+      }),
+    );
+    const store = useSessionStore();
+
+    const creation = store.createSession('direct', '/demo');
+    await vi.waitFor(() => {
+      expect(store.pendingAuthMethods).toEqual([
+        { id: 'login', name: 'Sign in' },
+      ]);
+    });
+    store.selectAuthMethod('login');
+
+    await expect(creation).resolves.toBe('direct:direct-1');
+    expect(direct.authenticate).toHaveBeenCalledWith({ methodId: 'login' });
+    expect(direct.newSession).toHaveBeenCalledTimes(2);
+  });
+
   it('does not label a cancelled Prompt as completed', async () => {
     const direct = register('direct', ['direct-1']);
     const store = useSessionStore();
@@ -264,7 +297,7 @@ describe('multi-Profile ACP session store', () => {
 
     await store.deleteConversation('direct', 'direct-2');
 
-    expect(hostMocks.deleteProfileSession).toHaveBeenCalledWith(
+    expect(apiMocks.deleteProfileSession).toHaveBeenCalledWith(
       'direct',
       'direct-2',
     );
@@ -318,11 +351,39 @@ describe('multi-Profile ACP session store', () => {
     ).toContain('direct-1');
   });
 
+  it('preserves the last Session catalog when discovery fails transiently', async () => {
+    const direct = register('direct', []);
+    direct.unstable_listSessions
+      .mockResolvedValueOnce({
+        sessions: [
+          {
+            sessionId: 'direct-existing',
+            cwd: '/demo',
+            title: 'Existing session',
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+        nextCursor: null,
+      })
+      .mockRejectedValueOnce(new Error('temporary network failure'));
+    const store = useSessionStore();
+
+    await store.refreshSessions('direct');
+    await store.refreshSessions('direct');
+
+    expect(
+      store.resumableSessions.map((session) => session.sessionId),
+    ).toContain('direct-existing');
+    expect(store.profileErrorFor('direct')).toBe(
+      'temporary network failure',
+    );
+  });
+
   it('keeps local state when permanent Session deletion fails', async () => {
     register('direct', ['direct-1']);
     const store = useSessionStore();
     const key = await store.createSession('direct', '/demo');
-    hostMocks.deleteProfileSession.mockRejectedValueOnce(
+    apiMocks.deleteProfileSession.mockRejectedValueOnce(
       new Error('delete failed'),
     );
 
@@ -343,7 +404,7 @@ describe('multi-Profile ACP session store', () => {
     await expect(
       store.deleteConversation('direct', 'direct-2'),
     ).rejects.toThrow('still running');
-    expect(hostMocks.deleteProfileSession).not.toHaveBeenCalled();
+    expect(apiMocks.deleteProfileSession).not.toHaveBeenCalled();
 
     promptMaps.get('direct')?.get('direct-1')?.resolve({});
     await running;
@@ -448,6 +509,113 @@ describe('multi-Profile ACP session store', () => {
     stop();
 
     expect(observed).toEqual([true, false]);
+  });
+
+  it('finishes discovery before opening the persistent Profile connection', async () => {
+    const direct = register('direct', ['direct-1']);
+    const listResult = deferred<{
+      sessions: [];
+      nextCursor: null;
+    }>();
+    direct.unstable_listSessions.mockImplementationOnce(
+      () => listResult.promise,
+    );
+    const store = useSessionStore();
+
+    const refresh = store.refreshSessions('direct');
+    await vi.waitFor(() => {
+      expect(direct.unstable_listSessions).toHaveBeenCalledTimes(1);
+    });
+
+    const creation = store.createSession('direct', '/demo');
+    await Promise.resolve();
+    expect(bridgeMocks.createAcpClient).toHaveBeenCalledTimes(1);
+    expect(direct.newSession).not.toHaveBeenCalled();
+
+    listResult.resolve({ sessions: [], nextCursor: null });
+    await refresh;
+    await expect(creation).resolves.toBe('direct:direct-1');
+
+    expect(bridgeMocks.createAcpClient).toHaveBeenCalledTimes(2);
+    expect(direct.disconnect).toHaveBeenCalledTimes(1);
+    expect(direct.newSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects deletion while Session discovery is in flight', async () => {
+    const direct = register('direct', []);
+    const listResult = deferred<{
+      sessions: [];
+      nextCursor: null;
+    }>();
+    direct.unstable_listSessions.mockImplementationOnce(
+      () => listResult.promise,
+    );
+    const store = useSessionStore();
+
+    const refresh = store.refreshSessions('direct');
+    await vi.waitFor(() => {
+      expect(store.isProfileBusy('direct')).toBe(true);
+    });
+
+    await expect(
+      store.deleteConversation('direct', 'session-1'),
+    ).rejects.toThrow('still running');
+    expect(apiMocks.deleteProfileSession).not.toHaveBeenCalled();
+
+    listResult.resolve({ sessions: [], nextCursor: null });
+    await refresh;
+    expect(store.isProfileBusy('direct')).toBe(false);
+  });
+
+  it('rejects deletion while a Profile connection is opening', async () => {
+    const direct = register('direct', ['direct-1']);
+    const connection = deferred<AcpClientBridge>();
+    bridgeMocks.createAcpClient.mockImplementationOnce(
+      () => connection.promise,
+    );
+    const store = useSessionStore();
+
+    const creation = store.createSession('direct', '/demo');
+    await vi.waitFor(() => {
+      expect(store.isProfileConnecting('direct')).toBe(true);
+      expect(store.isProfileBusy('direct')).toBe(true);
+    });
+
+    await expect(
+      store.deleteConversation('direct', 'session-1'),
+    ).rejects.toThrow('still running');
+    expect(apiMocks.deleteProfileSession).not.toHaveBeenCalled();
+
+    connection.resolve(direct as unknown as AcpClientBridge);
+    await expect(creation).resolves.toBe('direct:direct-1');
+  });
+
+  it('blocks new discovery and connections during durable deletion', async () => {
+    register('direct', ['direct-1', 'direct-2']);
+    const deletion = deferred<undefined>();
+    apiMocks.deleteProfileSession.mockImplementationOnce(
+      () => deletion.promise,
+    );
+    const store = useSessionStore();
+    await store.createSession('direct', '/demo');
+
+    const remove = store.deleteConversation('direct', 'direct-1');
+    await vi.waitFor(() => {
+      expect(apiMocks.deleteProfileSession).toHaveBeenCalledTimes(1);
+    });
+    const bridgeCallsBeforeMaintenanceChecks =
+      bridgeMocks.createAcpClient.mock.calls.length;
+
+    await expect(store.refreshSessions('direct')).resolves.toBeUndefined();
+    await expect(
+      store.createSession('direct', '/demo'),
+    ).rejects.toThrow('undergoing maintenance');
+    expect(bridgeMocks.createAcpClient).toHaveBeenCalledTimes(
+      bridgeCallsBeforeMaintenanceChecks,
+    );
+
+    deletion.resolve(undefined);
+    await remove;
   });
 
   it('can finish a background Session creation without stealing the visible conversation', async () => {

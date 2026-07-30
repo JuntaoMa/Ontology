@@ -1,407 +1,313 @@
-// ACP Client Bridge - Adapts a generic AcpTransport to the ACP SDK's
-// Client interface. The bridge is transport-agnostic: it neither knows
-// nor cares whether the underlying byte stream is a local subprocess
-// (stdio), a WebSocket, or a Streamable HTTP connection.
 import type {
-  Client,
-  SessionNotification,
-  RequestPermissionRequest,
-  RequestPermissionResponse,
-  WriteTextFileRequest,
-  WriteTextFileResponse,
-  ReadTextFileRequest,
-  ReadTextFileResponse,
-  InitializeRequest,
-  InitializeResponse,
-  NewSessionRequest,
-  NewSessionResponse,
-  LoadSessionRequest,
-  LoadSessionResponse,
-  ListSessionsRequest,
-  ListSessionsResponse,
-  PromptRequest,
-  PromptResponse,
-  CancelNotification,
   AuthenticateRequest,
   AuthenticateResponse,
+  InitializeRequest,
+  InitializeResponse,
+  ListSessionsRequest,
+  ListSessionsResponse,
+  LoadSessionRequest,
+  LoadSessionResponse,
+  NewSessionRequest,
+  NewSessionResponse,
+  PromptRequest,
+  PromptResponse,
+  RequestPermissionRequest,
+  RequestPermissionResponse,
+  SessionNotification,
 } from '@agentclientprotocol/sdk';
-import { readTextFile as hostReadTextFile, writeTextFile as hostWriteTextFile } from './host';
-import type { AcpTransport, Unsubscribe } from './transport/types';
-import { createTransport } from './transport';
-import type { AgentConfig, AgentInstance, PermissionRequest as LocalPermissionRequest } from './types';
-import { createToolCallInfo } from './tool-call';
-import { hasLocalFs } from './platform';
 import { ref, type Ref } from 'vue';
-import { useTrafficStore } from '../stores/traffic';
+import type {
+  AgentConfig,
+  PermissionRequest as LocalPermissionRequest,
+} from './types';
+import { createToolCallInfo } from './tool-call';
+import { createTransport } from './transport';
+import type { AcpTransport, Unsubscribe } from './transport/types';
 
-// Event emitter for permission requests
-type PermissionResolver = (response: RequestPermissionResponse) => void;
+const JSONRPC_METHOD_NOT_FOUND = -32601;
+const INITIALIZE_TIMEOUT_MS = 130_000;
 
-// Traffic store instance (lazily initialized)
-let trafficStore: ReturnType<typeof useTrafficStore> | null = null;
-function getTrafficStore() {
-  if (!trafficStore) {
-    trafficStore = useTrafficStore();
-  }
-  return trafficStore;
+interface PendingRequest {
+  method: string;
+  resolve: (response: unknown) => void;
+  reject: (error: Error) => void;
+  timer: ReturnType<typeof setTimeout> | null;
 }
 
-/** JSON-RPC method-not-found error code. */
-const JSONRPC_METHOD_NOT_FOUND = -32601;
+type PermissionResolver = (response: RequestPermissionResponse) => void;
 
-export class AcpClientBridge implements Client {
-  private transport: AcpTransport;
-  /**
-   * Local filesystem RPCs (`fs/read_text_file`, `fs/write_text_file`) are
-   * handled by the Tauri fs plugin on desktop. On mobile and web builds the
-   * plugin is not available and these handlers respond with a method-not-found
-   * error so a misbehaving agent can't hang waiting for a response.
-   */
-  private fsAvailable: boolean;
-  private messageResolvers: Map<number, (response: unknown) => void> = new Map();
-  private messageRejecters: Map<number, (error: Error) => void> = new Map();
-  private pendingMethods: Map<number, string> = new Map(); // Track method names for responses
-  private nextRequestId = 0;
-  private unlistenMessage: Unsubscribe | null = null;
-  private unlistenClose: Unsubscribe | null = null;
-  private profileId?: string;
-
-  // Permission request handling
-  public pendingPermissionRequest: Ref<LocalPermissionRequest | null> = ref(null);
-  private permissionResolver: PermissionResolver | null = null;
-
-  // Session update callback
-  public onSessionUpdate: ((notification: SessionNotification) => void) | null = null;
-
-  /** Optional callback for when the underlying transport closes unexpectedly. */
-  public onTransportClose: ((reason?: string) => void) | null = null;
-
+export class AcpRpcError extends Error {
   constructor(
-    transport: AcpTransport,
-    options?: { fsAvailable?: boolean; profileId?: string },
+    readonly code: number,
+    message: string,
+    readonly data?: unknown,
   ) {
-    this.transport = transport;
-    this.profileId = options?.profileId;
-    // Default: fs is available iff we are on Tauri desktop. Callers (e.g.
-    // remote agents that trust the host fs) can override.
-    this.fsAvailable = options?.fsAvailable ?? hasLocalFs();
-    this.unlistenMessage = this.transport.onMessage((msg) => this.handleMessage(msg));
-    this.unlistenClose = this.transport.onClose((reason) => {
-      // Reject all in-flight requests so callers stop hanging.
-      const err = new Error(`transport closed: ${reason ?? 'unknown reason'}`);
-      for (const reject of this.messageRejecters.values()) {
-        try {
-          reject(err);
-        } catch {
-          /* ignore */
-        }
-      }
-      this.messageResolvers.clear();
-      this.messageRejecters.clear();
-      this.pendingMethods.clear();
-      this.abandonPendingPermission();
-      if (this.onTransportClose) {
-        this.onTransportClose(reason);
-      }
+    super(message);
+    this.name = 'AcpRpcError';
+  }
+}
+
+/**
+ * Small browser-side ACP JSON-RPC client.
+ *
+ * The SDK's public connection currently does not reject all outstanding
+ * requests when its stream closes, while a Prompt intentionally has no short
+ * timeout. This bridge keeps that lifecycle explicit and never logs raw frames.
+ */
+export class AcpClientBridge {
+  private readonly pendingRequests = new Map<number, PendingRequest>();
+  private nextRequestId = 0;
+  private unlistenMessage: Unsubscribe | null;
+  private unlistenClose: Unsubscribe | null;
+  private permissionResolver: PermissionResolver | null = null;
+  private disconnected = false;
+
+  readonly pendingPermissionRequest: Ref<LocalPermissionRequest | null> =
+    ref(null);
+  onSessionUpdate: ((notification: SessionNotification) => void) | null = null;
+  onTransportClose: ((reason?: string) => void) | null = null;
+
+  constructor(private readonly transport: AcpTransport) {
+    this.unlistenMessage = transport.onMessage((message) => {
+      this.handleMessage(message);
+    });
+    this.unlistenClose = transport.onClose((reason) => {
+      this.handleTransportClose(reason);
     });
   }
 
-  /**
-   * Backwards-compatible no-op. Connection setup now happens in the factory
-   * (`createAcpClient`) before the bridge is constructed.
-   */
-  async connect(): Promise<void> {
-    // No-op: transport is already connected when handed to the bridge.
+  async disconnect(): Promise<void> {
+    if (this.disconnected) return;
+    this.disconnected = true;
+    this.unlistenMessage?.();
+    this.unlistenMessage = null;
+    this.unlistenClose?.();
+    this.unlistenClose = null;
+    this.rejectPendingRequests(
+      new Error('transport closed: client disconnected'),
+    );
+    this.cancelPendingPermission();
+    await this.transport.close();
   }
 
-  async disconnect(): Promise<void> {
-    // Unlisten first so the transport's close handler (which would re-reject
-    // pending requests and fire `onTransportClose`) doesn't run for a
-    // voluntary disconnect — `onTransportClose` is reserved for unexpected
-    // closes. Then explicitly reject any in-flight requests here so callers
-    // don't hang waiting for responses that will never arrive, and finally
-    // close the transport.
-    if (this.unlistenMessage) {
-      this.unlistenMessage();
-      this.unlistenMessage = null;
+  private handleTransportClose(reason?: string): void {
+    if (this.disconnected) return;
+    this.disconnected = true;
+    this.unlistenMessage = null;
+    this.unlistenClose = null;
+    this.rejectPendingRequests(
+      new Error(`transport closed: ${reason ?? 'unknown reason'}`),
+    );
+    this.cancelPendingPermission();
+    this.onTransportClose?.(reason);
+  }
+
+  private rejectPendingRequests(error: Error): void {
+    for (const [id, pending] of this.pendingRequests) {
+      this.pendingRequests.delete(id);
+      if (pending.timer) clearTimeout(pending.timer);
+      pending.reject(error);
     }
-    if (this.unlistenClose) {
-      this.unlistenClose();
-      this.unlistenClose = null;
-    }
-    if (this.messageRejecters.size > 0) {
-      const err = new Error('transport closed: client disconnected');
-      for (const reject of this.messageRejecters.values()) {
-        try {
-          reject(err);
-        } catch {
-          /* ignore */
-        }
-      }
-      this.messageResolvers.clear();
-      this.messageRejecters.clear();
-      this.pendingMethods.clear();
-    }
-    this.abandonPendingPermission();
-    await this.transport.close();
   }
 
   private handleMessage(message: string): void {
     try {
-      const parsed = JSON.parse(message);
-      const store = getTrafficStore();
+      const parsed = JSON.parse(message) as unknown;
+      if (!isJsonRpcObject(parsed)) {
+        throw new Error('ACP frame must be an object');
+      }
 
-      // Handle JSON-RPC response (has id and result/error, no method)
       if ('id' in parsed && parsed.id !== undefined && !('method' in parsed)) {
-        // Track incoming response
-        store.addEntry({
-          profileId: this.profileId,
-          direction: 'in',
-          type: 'response',
-          method: this.pendingMethods.get(parsed.id) || 'unknown',
-          requestId: parsed.id,
-          payload: parsed,
-          error: !!parsed.error,
-        });
-        this.pendingMethods.delete(parsed.id);
-
-        const resolver = this.messageResolvers.get(parsed.id);
-        const rejecter = this.messageRejecters.get(parsed.id);
-        if (resolver && rejecter) {
-          this.messageResolvers.delete(parsed.id);
-          this.messageRejecters.delete(parsed.id);
-          if (parsed.error) {
-            rejecter(new Error(parsed.error.message || 'Unknown error'));
-          } else {
-            resolver(parsed.result);
-          }
-        }
+        this.handleResponse(parsed);
+        return;
       }
-
-      // Handle JSON-RPC request from agent (has id and method)
       if ('id' in parsed && parsed.id !== undefined && 'method' in parsed) {
-        // Track incoming request from agent
-        store.addEntry({
-          profileId: this.profileId,
-          direction: 'in',
-          type: 'request',
-          method: parsed.method,
-          requestId: parsed.id,
-          payload: parsed,
+        if (typeof parsed.method !== 'string') {
+          throw new Error('ACP method must be a string');
+        }
+        void this.handleRequest(
+          parsed.id as number | string,
+          parsed.method,
+          parsed.params,
+        ).catch(() => {
+          // The socket can close while an interactive request is pending.
         });
-        void this.handleRequest(parsed.id, parsed.method, parsed.params).catch(() => {
-          // The transport can close while an interactive request is pending.
-          // All relevant UI state is cleared by disconnect/onClose.
-        });
+        return;
       }
-
-      // Handle JSON-RPC notification (no id, has method)
-      if (!('id' in parsed) && parsed.method) {
-        // Track incoming notification
-        store.addEntry({
-          profileId: this.profileId,
-          direction: 'in',
-          type: 'notification',
-          method: parsed.method,
-          payload: parsed,
-        });
+      if (!('id' in parsed) && typeof parsed.method === 'string') {
         this.handleNotification(parsed.method, parsed.params);
       }
     } catch {
-      // Raw ACP frames may contain prompts, tool output and internal paths.
-      // Never duplicate them into the browser console.
+      // Frames may contain prompts, tool output and internal paths.
       console.error('Failed to parse an ACP message');
     }
   }
 
-  private async handleRequest(id: number | string, method: string, params: unknown): Promise<void> {
+  private handleResponse(response: Record<string, unknown>): void {
+    if (typeof response.id !== 'number') return;
+    const pending = this.pendingRequests.get(response.id);
+    if (!pending) return;
+    this.pendingRequests.delete(response.id);
+    if (pending.timer) clearTimeout(pending.timer);
+
+    if (
+      typeof response.error === 'object' &&
+      response.error !== null
+    ) {
+      const error = response.error as Record<string, unknown>;
+      pending.reject(
+        new AcpRpcError(
+          typeof error.code === 'number' ? error.code : -32603,
+          typeof error.message === 'string' ? error.message : 'Unknown error',
+          error.data,
+        ),
+      );
+      return;
+    }
+    pending.resolve(response.result);
+  }
+
+  private async handleRequest(
+    id: number | string,
+    method: string,
+    params: unknown,
+  ): Promise<void> {
     let result: unknown;
     let error: { code: number; message: string } | undefined;
-
     try {
-      switch (method) {
-        case 'fs/read_text_file':
-          if (!this.fsAvailable) {
-            error = { code: JSONRPC_METHOD_NOT_FOUND, message: 'fs/read_text_file not available on this client' };
-          } else {
-            result = await this.readTextFile(params as ReadTextFileRequest);
-          }
-          break;
-        case 'fs/write_text_file':
-          if (!this.fsAvailable) {
-            error = { code: JSONRPC_METHOD_NOT_FOUND, message: 'fs/write_text_file not available on this client' };
-          } else {
-            result = await this.writeTextFile(params as WriteTextFileRequest);
-          }
-          break;
-        case 'session/request_permission':
-          result = await this.requestPermission(params as RequestPermissionRequest);
-          break;
-        default:
-          error = { code: JSONRPC_METHOD_NOT_FOUND, message: `Method not found: ${method}` };
+      if (method === 'session/request_permission') {
+        result = await this.requestPermission(
+          params as RequestPermissionRequest,
+        );
+      } else {
+        error = {
+          code: JSONRPC_METHOD_NOT_FOUND,
+          message: `Method not found: ${method}`,
+        };
       }
-    } catch (e) {
-      error = { code: -32603, message: e instanceof Error ? e.message : String(e) };
+    } catch (cause) {
+      error = {
+        code: -32603,
+        message: cause instanceof Error ? cause.message : String(cause),
+      };
     }
 
-    // Send response back to agent
     const response = error
       ? { jsonrpc: '2.0', id, error }
       : { jsonrpc: '2.0', id, result };
-
-    // Track outgoing response
-    const store = getTrafficStore();
-    store.addEntry({
-      profileId: this.profileId,
-      direction: 'out',
-      type: 'response',
-      method,
-      requestId: id,
-      payload: response,
-      error: !!error,
-    });
-
     await this.transport.send(JSON.stringify(response));
   }
 
   private handleNotification(method: string, params: unknown): void {
     if (method === 'session/update') {
-      if (this.onSessionUpdate) {
-        this.onSessionUpdate(params as SessionNotification);
-      }
+      this.onSessionUpdate?.(params as SessionNotification);
     }
   }
 
-  private async sendRequest<T>(
+  private sendRequest<T>(
     method: string,
     params?: unknown,
-    timeoutMs: number | null = 60_000
+    timeoutMs: number | null = 60_000,
   ): Promise<T> {
+    if (this.disconnected) {
+      return Promise.reject(new Error('transport closed'));
+    }
+
     const id = this.nextRequestId++;
     const request = {
       jsonrpc: '2.0',
       id,
       method,
-      params: params || {},
+      params: params ?? {},
     };
 
-    // Track outgoing request
-    const store = getTrafficStore();
-    store.addEntry({
-      profileId: this.profileId,
-      direction: 'out',
-      type: 'request',
-      method,
-      requestId: id,
-      payload: request,
-    });
-    this.pendingMethods.set(id, method);
-
-    return new Promise((resolve, reject) => {
-      let timer: ReturnType<typeof setTimeout> | null = null;
-      this.messageResolvers.set(id, (response) => {
-        if (timer) clearTimeout(timer);
-        resolve(response as T);
-      });
-      this.messageRejecters.set(id, (error) => {
-        if (timer) clearTimeout(timer);
-        reject(error);
-      });
-
-      this.transport.send(JSON.stringify(request)).catch((e) => {
-        this.messageResolvers.delete(id);
-        this.messageRejecters.delete(id);
-        this.pendingMethods.delete(id);
-        reject(e);
-      });
-
+    return new Promise<T>((resolve, reject) => {
+      const pending: PendingRequest = {
+        method,
+        resolve: (response) => resolve(response as T),
+        reject,
+        timer: null,
+      };
       if (timeoutMs !== null) {
-        timer = setTimeout(() => {
-          if (this.messageResolvers.has(id)) {
-            this.messageResolvers.delete(id);
-            this.messageRejecters.delete(id);
-            this.pendingMethods.delete(id);
-            reject(new Error(`Request timeout: ${method}`));
-          }
+        pending.timer = setTimeout(() => {
+          if (this.pendingRequests.get(id) !== pending) return;
+          this.pendingRequests.delete(id);
+          reject(new Error(`Request timeout: ${pending.method}`));
         }, timeoutMs);
       }
+      this.pendingRequests.set(id, pending);
+
+      void this.transport.send(JSON.stringify(request)).catch((cause) => {
+        if (this.pendingRequests.get(id) !== pending) return;
+        this.pendingRequests.delete(id);
+        if (pending.timer) clearTimeout(pending.timer);
+        reject(cause instanceof Error ? cause : new Error(String(cause)));
+      });
     });
   }
 
-  private async sendNotification(method: string, params?: unknown): Promise<void> {
-    const notification = {
-      jsonrpc: '2.0',
-      method,
-      params: params || {},
-    };
-
-    // Track outgoing notification
-    const store = getTrafficStore();
-    store.addEntry({
-      profileId: this.profileId,
-      direction: 'out',
-      type: 'notification',
-      method,
-      payload: notification,
-    });
-
-    await this.transport.send(JSON.stringify(notification));
+  private async sendNotification(
+    method: string,
+    params?: unknown,
+  ): Promise<void> {
+    if (this.disconnected) throw new Error('transport closed');
+    await this.transport.send(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        method,
+        params: params ?? {},
+      }),
+    );
   }
 
-  // ACP Agent methods (client calls these to talk to agent)
-  async initialize(params: InitializeRequest): Promise<InitializeResponse> {
-    return this.sendRequest<InitializeResponse>('initialize', params);
+  initialize(params: InitializeRequest): Promise<InitializeResponse> {
+    // Profile startup is bounded at 120 seconds by the Bridge. Keep the
+    // browser deadline slightly longer so the server owns startup failure.
+    return this.sendRequest('initialize', params, INITIALIZE_TIMEOUT_MS);
   }
 
-  async newSession(params: NewSessionRequest): Promise<NewSessionResponse> {
-    return this.sendRequest<NewSessionResponse>('session/new', params);
+  newSession(params: NewSessionRequest): Promise<NewSessionResponse> {
+    return this.sendRequest('session/new', params);
   }
 
-  async loadSession(params: LoadSessionRequest): Promise<LoadSessionResponse> {
-    return this.sendRequest<LoadSessionResponse>('session/load', params, 300_000);
+  loadSession(params: LoadSessionRequest): Promise<LoadSessionResponse> {
+    return this.sendRequest('session/load', params, 300_000);
   }
 
-  async unstable_listSessions(
-    params: ListSessionsRequest
+  unstable_listSessions(
+    params: ListSessionsRequest,
   ): Promise<ListSessionsResponse> {
-    return this.sendRequest<ListSessionsResponse>('session/list', params, 30_000);
+    return this.sendRequest('session/list', params, 30_000);
   }
 
-  async prompt(params: PromptRequest): Promise<PromptResponse> {
-    return this.sendRequest<PromptResponse>('session/prompt', params, null);
+  prompt(params: PromptRequest): Promise<PromptResponse> {
+    return this.sendRequest('session/prompt', params, null);
   }
 
-  async cancel(params: CancelNotification): Promise<void> {
-    await this.sendNotification('session/cancel', params);
+  cancel(params: { sessionId: string }): Promise<void> {
+    return this.sendNotification('session/cancel', params);
   }
 
-  async setMode(params: { sessionId: string; modeId: string }): Promise<void> {
-    await this.sendRequest('session/set_mode', params);
+  authenticate(
+    params: AuthenticateRequest,
+  ): Promise<AuthenticateResponse> {
+    return this.sendRequest('authenticate', params);
   }
 
-  async unstable_setSessionModel(params: { sessionId: string; modelId: string }): Promise<void> {
-    await this.sendRequest('session/set_model', params);
-  }
-
-  async authenticate(params: AuthenticateRequest): Promise<AuthenticateResponse> {
-    return this.sendRequest<AuthenticateResponse>('authenticate', params);
-  }
-
-  // ACP Client interface methods (agent calls these)
-  async requestPermission(
-    params: RequestPermissionRequest
+  private requestPermission(
+    params: RequestPermissionRequest,
   ): Promise<RequestPermissionResponse> {
     if (this.permissionResolver) {
-      return { outcome: { outcome: 'cancelled' } };
+      return Promise.resolve({ outcome: { outcome: 'cancelled' } });
     }
     return new Promise((resolve) => {
       this.pendingPermissionRequest.value = {
         sessionId: params.sessionId,
         toolCall: createToolCallInfo(params.toolCall),
-        options: params.options.map((opt) => ({
-          kind: opt.kind,
-          name: opt.name,
-          optionId: opt.optionId,
+        options: params.options.map((option) => ({
+          kind: option.kind,
+          name: option.name,
+          optionId: option.optionId,
         })),
       };
       this.permissionResolver = resolve;
@@ -409,94 +315,33 @@ export class AcpClientBridge implements Client {
   }
 
   resolvePermission(optionId: string): void {
-    if (this.permissionResolver) {
-      this.permissionResolver({
-        outcome: {
-          outcome: 'selected',
-          optionId,
-        },
-      });
-      this.permissionResolver = null;
-      this.pendingPermissionRequest.value = null;
-    }
+    const resolve = this.permissionResolver;
+    if (!resolve) return;
+    this.permissionResolver = null;
+    this.pendingPermissionRequest.value = null;
+    resolve({ outcome: { outcome: 'selected', optionId } });
   }
 
   cancelPermission(): void {
-    if (this.permissionResolver) {
-      this.permissionResolver({
-        outcome: {
-          outcome: 'cancelled',
-        },
-      });
-      this.permissionResolver = null;
-      this.pendingPermissionRequest.value = null;
-    }
+    this.cancelPendingPermission();
   }
 
-  private abandonPendingPermission(): void {
+  private cancelPendingPermission(): void {
+    const resolve = this.permissionResolver;
+    if (!resolve) return;
     this.permissionResolver = null;
     this.pendingPermissionRequest.value = null;
-  }
-
-  async sessionUpdate(_params: SessionNotification): Promise<void> {
-    // This is called by the agent, we handle it in handleNotification
-  }
-
-  async writeTextFile(
-    params: WriteTextFileRequest
-  ): Promise<WriteTextFileResponse> {
-    try {
-      await hostWriteTextFile(params.path, params.content);
-      return {};
-    } catch (error) {
-      console.error('ACP file write failed');
-      throw error;
-    }
-  }
-
-  async readTextFile(
-    params: ReadTextFileRequest
-  ): Promise<ReadTextFileResponse> {
-    try {
-      let content = await hostReadTextFile(params.path);
-
-      // Handle line/limit parameters if specified
-      if (params.line !== undefined || params.limit !== undefined) {
-        const lines = content.split('\n');
-        const startLine = params.line ? params.line - 1 : 0; // 1-based to 0-based
-        const endLine = params.limit ? startLine + params.limit : lines.length;
-        content = lines.slice(startLine, endLine).join('\n');
-      }
-
-      return { content };
-    } catch (error) {
-      console.error('ACP file read failed');
-      throw error;
-    }
+    resolve({ outcome: { outcome: 'cancelled' } });
   }
 }
 
-/**
- * Factory: connect a transport for the given agent and wrap it in an
- * `AcpClientBridge`.
- *
- * For backward compatibility, the legacy single-argument form (passing an
- * `AgentInstance` for an already-spawned stdio process) is still accepted and
- * routes through a freshly attached `StdioTransport`. The stdio transport
- * is lazy-imported so it never lands in the web bundle.
- */
 export async function createAcpClient(
-  arg: AgentInstance | { name: string; config: AgentConfig },
-  options?: { fsAvailable?: boolean; profileId?: string },
+  profile: { name: string; config: AgentConfig },
 ): Promise<AcpClientBridge> {
-  if ('config' in arg) {
-    const transport = await createTransport(arg.name, arg.config);
-    return new AcpClientBridge(transport, options);
-  }
-  // Legacy path: caller already invoked spawnAgent and just wants us to wire
-  // up the events.
-  const { StdioTransport } = await import('./transport/stdio');
-  const transport = new StdioTransport(arg);
-  await transport.attach();
-  return new AcpClientBridge(transport, options);
+  const transport = await createTransport(profile.name, profile.config);
+  return new AcpClientBridge(transport);
+}
+
+function isJsonRpcObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

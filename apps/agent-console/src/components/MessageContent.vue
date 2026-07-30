@@ -22,11 +22,17 @@ const jsonPresentation = computed(() =>
       v-if="jsonPresentation.leadingMarkdown"
       v-html="renderSafeMarkdown(jsonPresentation.leadingMarkdown)"
     />
-    <details class="formal-output-card">
-      <summary class="formal-output-summary" title="查询Plan">
-        <UiIcon class="formal-output-icon" name="plan" />
-        <span>查询Plan</span>
-        <UiIcon class="formal-output-chevron" name="chevron" />
+    <details class="disclosure-card formal-output-card">
+      <summary
+        class="disclosure-summary formal-output-summary"
+        title="查询Plan"
+      >
+        <UiIcon class="disclosure-icon formal-output-icon" name="plan" />
+        <span class="disclosure-title">查询Plan</span>
+        <UiIcon
+          class="disclosure-chevron formal-output-chevron"
+          name="chevron"
+        />
       </summary>
       <pre class="formal-output-code"><code class="language-json">{{ jsonPresentation.formattedJson }}</code></pre>
     </details>
@@ -36,63 +42,7 @@ const jsonPresentation = computed(() =>
 
 <style scoped>
 .formal-output-card {
-  overflow: hidden;
   margin: 14px 0 0;
-  border: 1px solid var(--line, #deded9);
-  border-radius: 11px;
-  background: #fbfbfa;
-}
-
-.formal-output-summary {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 13px;
-  color: var(--text-secondary, #5f5f5b);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 590;
-  list-style: none;
-  user-select: none;
-}
-
-.formal-output-summary::-webkit-details-marker {
-  display: none;
-}
-
-.formal-output-summary:focus-visible {
-  outline: 2px solid var(--accent, #3b6ee8);
-  outline-offset: -2px;
-}
-
-.formal-output-summary > span {
-  overflow: hidden;
-  min-width: 0;
-  flex: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.formal-output-icon,
-.formal-output-chevron {
-  width: 15px;
-  height: 15px;
-  flex: 0 0 auto;
-}
-
-.formal-output-icon {
-  color: var(--text-secondary, #5f5f5b);
-}
-
-.formal-output-chevron {
-  color: var(--text-muted, #8a8a84);
-  transform: rotate(-90deg);
-  transition: transform 130ms ease;
-}
-
-.formal-output-card[open] .formal-output-chevron {
-  transform: rotate(0);
 }
 
 .formal-output-card > .formal-output-code {

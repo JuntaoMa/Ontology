@@ -50,7 +50,7 @@ def test_oag_endpoint_returns_vector_hits_and_their_connecting_graph(
         }
     )
     fake_services = SimpleNamespace(
-        oag_retrieve=lambda keywords, top_k: (
+        oag_retrieve=lambda keywords, top_k, graph_algorithm: (
             [{"id": "TemperatureSensor", "distance": 0.01}],
             graph,
         )
@@ -62,9 +62,11 @@ def test_oag_endpoint_returns_vector_hits_and_their_connecting_graph(
             question="温度传感器在哪个建筑？",
             keywords=["温度传感器", "建筑"],
             top_k=5,
+            graph_algorithm="minimum_connected_subgraph",
         )
     )
 
     assert response["keywords"] == ["温度传感器", "建筑"]
+    assert response["graph_algorithm"] == "minimum_connected_subgraph"
     assert response["hits"][0]["id"] == "TemperatureSensor"
     assert response["graph"]["anchors"][0]["id"] == "TemperatureSensor"

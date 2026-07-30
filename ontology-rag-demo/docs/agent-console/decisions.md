@@ -402,3 +402,39 @@
 - ACP 内容决策：Tool UI 只展示明确的 Input、Output 和结构化 artifact，不再提供
   通用 `ACP content` 面板。Store 仍保留底层 `content`，artifact 提取可以在
   `rawOutput` 不含标记时从该字段读取，因而这是去重展示而不是协议数据丢弃。
+
+## ADR-037：Web-only 精简架构与 Git 版本化 Profile
+
+- 状态：2026-07-30 接受并实施
+- 背景：当前目标是快速复用的本体 Agent 测试 Demo，而不是通用 Agent 平台。已有实现
+  同时保留 Tauri/stdio 前端、浏览器主机抽象、Traffic Monitor、Profile
+  Publish/Lock、手写 `state_dir` 和环境白名单，增加了迁移和维护成本，却不改变
+  OpenCode 作为 Session 与执行事实源的核心能力。
+- 决策：Console 只保留同源 Web UI、HTTP Catalog/删除接口和 WebSocket ACP Bridge。
+  Profile 是服务端校验的固定测试方案配置；Session 始终属于 OpenCode。前端只保存
+  页面内 Conversation 投影，不持久化 Agent、Session 或 Trace。
+- 运行模型：每个已连接 Profile 最多一条 WebSocket 和一个 connection-scoped
+  `opencode acp` 进程，不同 Profile 可并行。状态目录统一由项目根和 Profile ID
+  派生为 `.runtime/opencode/<id>`；Loader 从所有合法 `{env: NAME}` 引用自动推导所需
+  环境变量。
+- 复现方式：删除 Profile 发布器、Release Bundle 和 lock 校验。Profile、OpenCode
+  配置、Prompt、共享 Skill 与参数直接由 Git 版本化，并结合 `pnpm-lock.yaml`、
+  `uv.lock`、OpenCode 版本、本体摘要和部署环境记录复现。可选 `ontology.sha256`
+  仍可让 Skill 在调用 OAG 前核对输入，但不依赖发布状态。
+- Probe：只接受一个 Catalog Profile，复用生产 Loader 和运行映射，仅执行
+  `initialize + session/list` 的只读 smoke；不再提供通用命令/cwd/env 模式或历史加载。
+- UI：删除 Tauri、stdio 前端、浏览器 Agent 设置、Traffic Monitor、遥测存储和静态
+  prototype。保留已验证的 Profile 项目侧栏、多 Profile/多 Session 投影、原生对话框、
+  Tool/Plan/JSON 折叠和轻量子图。
+- 接口边界：持久删除继续使用 ADR-035 的 OpenCode 扩展
+  `DELETE /agents/:profileId/sessions/:sessionId`，因为 ACP `0.13.1` 尚无等价方法。
+- 替代关系：本 ADR 只替代下列旧 ADR 中冲突的部分，未冲突的安全与行为结论继续有效：
+  - ADR-005 的“Profile 持久进程”改为 ADR-017 已验证的 WebSocket 同生命周期进程；
+  - ADR-007 的“不可变 Profile Revision”改为 Git 版本化的固定方案；
+  - ADR-021 的发布 Bundle/lock 决策全部取消；
+  - ADR-022、ADR-027 中由 YAML 声明 `state_dir` 的部分改为约定派生；
+  - ADR-025 中保留 Traffic Monitor 的部分取消，ACP 展示仍不构成审计日志；
+  - ADR-028 中绑定“不可变发布锁”的部分取消，可选本体摘要校验本身保留；
+  - ADR-030 中“发布为 Profile”和显式 `state_dir` 的措辞改为直接维护 Catalog Profile；
+  - ADR-035 中静态 prototype 作为持续验收资产的部分取消，已接受视觉设计直接由实际
+    WebUI 和组件测试维护。

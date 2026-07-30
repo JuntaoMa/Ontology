@@ -10,7 +10,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
-import type { BridgeProfile } from "./bridge.js";
+import type { LoadedProfile } from "./profile.js";
 import {
   deleteOpenCodeSession,
   isOpenCodeSessionId,
@@ -18,20 +18,22 @@ import {
   supportsSessionDelete,
 } from "./session-delete.js";
 
-function profileFixture(root: string): BridgeProfile {
+function profileFixture(root: string): LoadedProfile {
   const profileDirectory = path.join(root, "profile");
   return {
     id: "test-profile",
+    revision: "test",
     title: "Test Profile",
+    description: "Test profile",
     profilePath: path.join(profileDirectory, "profile.yaml"),
     configPath: path.join(profileDirectory, "opencode.jsonc"),
     configAssets: [],
+    skills: [],
     runtime: {
       command: path.join(root, "bin", "opencode"),
       args: ["acp"],
       cwd: path.join(root, "workspace"),
       stateDir: path.join(root, "state"),
-      configDir: profileDirectory,
       startupTimeoutMs: 15_000,
     },
     requiredEnv: ["CAPTURE_PATH"],

@@ -3,7 +3,6 @@ id: baseline-direct-context
 revision: dev
 title: Direct Ontology Context Baseline
 description: 在 Agent Prompt 中内嵌完整精简测试本体并直接生成数据查询任务。
-mutable: true
 
 runtime:
   command: opencode
@@ -12,8 +11,7 @@ runtime:
     - --print-logs
     - --pure
   cwd: ../..
-  state_dir: ../../.runtime/opencode/baseline-direct-context
-  startup_timeout_ms: 15000
+  startup_timeout_ms: 30000
 
 opencode:
   config: opencode/opencode.jsonc
@@ -30,6 +28,3 @@ skills: []
 
 ontology:
   id: smart-building-sample
-
-environment:
-  required: []

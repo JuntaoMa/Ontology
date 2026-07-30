@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, field_validator
@@ -11,6 +12,7 @@ from .services import RagServices
 from .settings import Settings
 
 app = FastAPI(title="Ontology RAG Demo", version="0.1.0")
+GraphAlgorithm = Literal["minimum_connected_subgraph"]
 
 
 class QuestionRequest(BaseModel):
@@ -19,10 +21,15 @@ class QuestionRequest(BaseModel):
     trace: bool = False
 
 
+class GraphQuestionRequest(QuestionRequest):
+    graph_algorithm: GraphAlgorithm = "minimum_connected_subgraph"
+
+
 class OagRequest(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
     keywords: list[str] = Field(min_length=1, max_length=10)
     top_k: int | None = Field(default=None, ge=1, le=20)
+    graph_algorithm: GraphAlgorithm = "minimum_connected_subgraph"
 
     @field_validator("keywords")
     @classmethod
@@ -76,10 +83,17 @@ def vector_retrieval(request: QuestionRequest) -> dict[str, object]:
 
 
 @app.post("/v1/retrieval/graph")
-def graph_retrieval(request: QuestionRequest) -> dict[str, object]:
+def graph_retrieval(request: GraphQuestionRequest) -> dict[str, object]:
     try:
-        result = get_services().graph_retrieve(request.question)
-        return {"question": request.question, **result.as_dict()}
+        result = get_services().graph_retrieve(
+            request.question,
+            request.graph_algorithm,
+        )
+        return {
+            "question": request.question,
+            "graph_algorithm": request.graph_algorithm,
+            **result.as_dict(),
+        }
     except Exception as exc:
         raise HTTPException(
             status_code=503,
@@ -90,10 +104,15 @@ def graph_retrieval(request: QuestionRequest) -> dict[str, object]:
 @app.post("/v1/retrieval/oag")
 def oag_retrieval(request: OagRequest) -> dict[str, object]:
     try:
-        hits, graph = get_services().oag_retrieve(request.keywords, request.top_k)
+        hits, graph = get_services().oag_retrieve(
+            request.keywords,
+            request.top_k,
+            request.graph_algorithm,
+        )
         return {
             "question": request.question,
             "keywords": request.keywords,
+            "graph_algorithm": request.graph_algorithm,
             "hits": hits,
             "graph": graph.as_dict(),
         }
@@ -105,9 +124,12 @@ def oag_retrieval(request: OagRequest) -> dict[str, object]:
 
 
 @app.post("/v1/answer")
-async def answer(request: QuestionRequest) -> dict[str, object]:
+async def answer(request: GraphQuestionRequest) -> dict[str, object]:
     try:
-        answer_text, vector_hits, graph_result = await get_services().answer(request.question)
+        answer_text, vector_hits, graph_result = await get_services().answer(
+            request.question,
+            request.graph_algorithm,
+        )
     except Exception as exc:
         raise HTTPException(
             status_code=503,
@@ -122,6 +144,7 @@ async def answer(request: QuestionRequest) -> dict[str, object]:
         response["trace"] = {
             "vector_hits": vector_hits,
             "graph": graph_result.as_dict(),
+            "graph_algorithm": request.graph_algorithm,
         }
     return response
 

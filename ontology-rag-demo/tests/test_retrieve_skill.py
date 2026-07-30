@@ -13,7 +13,7 @@ def load_retrieve_skill() -> ModuleType:
     script_path = (
         Path(__file__).parents[1]
         / "profiles"
-        / "dev"
+        / "_shared"
         / "skills"
         / "ontology-retrieval"
         / "scripts"
@@ -90,6 +90,73 @@ def test_oag_response_exposes_nested_graph_for_artifact(
     graph = {"anchors": [], "nodes": [], "edges": [], "disconnected": False}
 
     assert retrieve_skill.graph_from_response("oag", {"graph": graph}) is graph
+
+
+def test_oag_request_sends_and_confirms_the_configured_graph_algorithm(
+    retrieve_skill: ModuleType,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    requests: list[dict[str, object]] = []
+    monkeypatch.setenv("ONTOLOGY_RETRIEVAL_ENDPOINT", "http://127.0.0.1:8010")
+    monkeypatch.setenv("ONTOLOGY_GRAPH_ALGORITHM", "minimum_connected_subgraph")
+    monkeypatch.delenv("ONTOLOGY_EXPECTED_SHA256", raising=False)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "retrieve.py",
+            "--mode",
+            "oag",
+            "--question",
+            "温度传感器在哪个建筑？",
+            "--keyword",
+            "温度传感器",
+        ],
+    )
+
+    def fake_request_json(
+        _url: str,
+        payload: dict[str, object],
+        _timeout_seconds: float,
+    ) -> dict[str, object]:
+        requests.append(payload)
+        return {
+            "question": payload["question"],
+            "keywords": payload["keywords"],
+            "hits": [],
+            "graph_algorithm": "minimum_connected_subgraph",
+            "graph": {
+                "anchors": [],
+                "nodes": [],
+                "edges": [],
+                "disconnected": False,
+            },
+        }
+
+    monkeypatch.setattr(retrieve_skill, "request_json", fake_request_json)
+
+    assert retrieve_skill.main() == 0
+    assert requests == [
+        {
+            "question": "温度传感器在哪个建筑？",
+            "top_k": 5,
+            "keywords": ["温度传感器"],
+            "graph_algorithm": "minimum_connected_subgraph",
+        }
+    ]
+    assert "ONTOLOGY_ARTIFACT:" in capsys.readouterr().out
+
+
+def test_refuses_a_response_that_does_not_confirm_the_algorithm(
+    retrieve_skill: ModuleType,
+) -> None:
+    with pytest.raises(RuntimeError, match="did not confirm"):
+        retrieve_skill.confirm_graph_algorithm(
+            "oag",
+            {"graph_algorithm": "different_algorithm"},
+            "minimum_connected_subgraph",
+        )
 
 
 def test_artifact_records_the_profile_graph_algorithm(

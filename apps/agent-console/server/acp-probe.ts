@@ -3,69 +3,36 @@ import {
   type ChildProcessWithoutNullStreams,
   type SpawnOptionsWithoutStdio,
 } from "node:child_process";
-import path from "node:path";
+import {
+  PROTOCOL_VERSION,
+  type AgentCapabilities,
+} from "@agentclientprotocol/sdk";
+import type { LoadedProfile } from "./profile.js";
 
-const DEFAULT_TIMEOUT_MS = 15_000;
-const DEFAULT_MAX_FRAME_BYTES = 16 * 1024 * 1024;
-const DEFAULT_MAX_STDERR_CHARS = 8_000;
-const DEFAULT_SHUTDOWN_GRACE_MS = 750;
+const MAX_FRAME_BYTES = 16 * 1024 * 1024;
 const MAX_CAPTURED_STDERR_BYTES = 256 * 1024;
-const MAX_UPDATE_TYPES = 256;
+const MAX_STDERR_CHARS = 8_000;
+const SHUTDOWN_GRACE_MS = 750;
 
 type JsonObject = Record<string, unknown>;
 type ProbePhase =
   | "spawn"
   | "initialize"
   | "session-list"
-  | "session-load"
   | "protocol"
   | "timeout"
   | "cleanup";
 
-export interface AcpProbeOptions {
-  /** Executable to launch. Defaults to `opencode`. */
-  command?: string;
-  /** Executable arguments. Defaults to `["acp"]`. */
-  args?: readonly string[];
-  /** Child working directory and ACP session-list/load cwd. */
-  cwd?: string;
-  /** Environment overrides. `undefined` removes an inherited variable. */
-  env?: Readonly<Record<string, string | undefined>>;
-  /**
-   * Whether to inherit the probe host environment before applying `env`.
-   * Defaults to true for compatibility with the explicit command mode.
-   * Profile mode disables inheritance and supplies its validated runtime
-   * environment explicitly.
-   */
-  inheritEnvironment?: boolean;
-  /** Optional existing session to load read-only and inspect by event type. */
-  loadSessionId?: string;
-  /** Total request timeout for each ACP operation. */
-  timeoutMs?: number;
-  /** Maximum accepted NDJSON frame size. */
-  maxFrameBytes?: number;
-  /** Maximum sanitized stderr characters attached to an error. */
-  maxStderrChars?: number;
-  /** Time allowed for a clean stdin-EOF shutdown before signals are sent. */
-  shutdownGraceMs?: number;
-}
-
-export interface AcpProbeResult {
+export interface AcpSmokeResult {
   protocolVersion: unknown;
   agentInfo?: {
     name?: string;
     version?: string;
   };
-  agentCapabilities: JsonObject;
+  agentCapabilities: AgentCapabilities | JsonObject;
   sessions: {
     count: number;
     hasMore: boolean;
-  };
-  replay?: {
-    sessionId: string;
-    totalUpdates: number;
-    updateCounts: Record<string, number>;
-    configOptionIds: string[];
   };
 }
 
@@ -111,71 +78,28 @@ class ProbeFailure extends Error {
 }
 
 /**
- * Probe an ACP subprocess without creating sessions or prompting the agent.
- *
- * The only agent methods emitted are `initialize`, `session/list`, and, when
- * explicitly requested, `session/load` for an existing session. Loaded message
- * and tool bodies are discarded immediately; only `session/update` type counts
- * are retained.
+ * Smoke-test exactly one validated Profile. This command never creates,
+ * resumes, loads, prompts, or mutates a Session.
  */
-export async function probeAcpCapabilities(
-  options: AcpProbeOptions = {},
-): Promise<AcpProbeResult> {
-  const command = requireNonEmpty(options.command ?? "opencode", "command");
-  const args = [...(options.args ?? ["acp"])];
-  const cwd = path.resolve(options.cwd ?? process.cwd());
-  const timeoutMs = boundedInteger(
-    options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
-    "timeoutMs",
-    10,
-    300_000,
-  );
-  const maxFrameBytes = boundedInteger(
-    options.maxFrameBytes ?? DEFAULT_MAX_FRAME_BYTES,
-    "maxFrameBytes",
-    1_024,
-    64 * 1024 * 1024,
-  );
-  const maxStderrChars = boundedInteger(
-    options.maxStderrChars ?? DEFAULT_MAX_STDERR_CHARS,
-    "maxStderrChars",
-    0,
-    64_000,
-  );
-  const shutdownGraceMs = boundedInteger(
-    options.shutdownGraceMs ?? DEFAULT_SHUTDOWN_GRACE_MS,
-    "shutdownGraceMs",
-    10,
-    10_000,
-  );
-  const environment = mergeEnvironment(
-    options.inheritEnvironment === false ? {} : process.env,
-    options.env,
-  );
-  const secretValues = collectSecretValues(environment, args);
-
-  let peer: AcpPeer | undefined;
-  let result: AcpProbeResult | undefined;
+export async function smokeAcpProfile(
+  profile: LoadedProfile,
+  environment: NodeJS.ProcessEnv,
+): Promise<AcpSmokeResult> {
+  const secretValues = collectSecretValues(environment);
+  let peer: SmokePeer | undefined;
+  let result: AcpSmokeResult | undefined;
   let failure: unknown;
 
   try {
-    peer = new AcpPeer({
-      command,
-      args,
-      cwd,
-      environment,
-      timeoutMs,
-      maxFrameBytes,
-    });
-
+    peer = new SmokePeer(profile, environment);
     const initialized = asObject(
       await peer.request(
         "initialize",
         {
-          protocolVersion: 1,
+          protocolVersion: PROTOCOL_VERSION,
           clientCapabilities: {},
           clientInfo: {
-            name: "ontology-agent-console-acp-probe",
+            name: "ontology-agent-console-profile-smoke",
             version: "0.1.0",
           },
         },
@@ -184,8 +108,21 @@ export async function probeAcpCapabilities(
       "initialize response",
     );
 
-    const agentCapabilities =
-      asOptionalObject(initialized.agentCapabilities) ?? {};
+    const listed = asObject(
+      await peer.request(
+        "session/list",
+        { cwd: profile.runtime.cwd },
+        "session-list",
+      ),
+      "session/list response",
+    );
+    if (!Array.isArray(listed.sessions)) {
+      throw new ProbeFailure(
+        "ACP session/list response did not contain a sessions array",
+        "protocol",
+      );
+    }
+
     const agentInfoRecord = asOptionalObject(initialized.agentInfo);
     const agentInfo = agentInfoRecord
       ? {
@@ -197,77 +134,24 @@ export async function probeAcpCapabilities(
             : {}),
         }
       : undefined;
-
-    const listed = asObject(
-      await peer.request("session/list", { cwd }, "session-list"),
-      "session/list response",
-    );
-    if (!Array.isArray(listed.sessions)) {
-      throw new ProbeFailure(
-        "ACP session/list response did not contain a sessions array",
-        "protocol",
-      );
-    }
-
     result = {
       protocolVersion: initialized.protocolVersion ?? null,
       ...(agentInfo && Object.keys(agentInfo).length > 0 ? { agentInfo } : {}),
-      agentCapabilities,
+      agentCapabilities:
+        (asOptionalObject(initialized.agentCapabilities) as AgentCapabilities | undefined) ??
+        {},
       sessions: {
         count: listed.sessions.length,
         hasMore:
           typeof listed.nextCursor === "string" && listed.nextCursor.length > 0,
       },
     };
-
-    if (options.loadSessionId !== undefined) {
-      const sessionId = requireNonEmpty(
-        options.loadSessionId,
-        "loadSessionId",
-      );
-      peer.startReplayCount(sessionId);
-      let loaded: JsonObject;
-      try {
-        loaded = asObject(
-          await peer.request(
-            "session/load",
-            {
-              cwd,
-              sessionId,
-              mcpServers: [],
-            },
-            "session-load",
-          ),
-          "session/load response",
-        );
-        // OpenCode currently emits replay updates before the response. A short
-        // drain accommodates agents that flush already-enqueued notifications
-        // immediately after resolving session/load.
-        await delay(Math.min(50, timeoutMs));
-      } finally {
-        peer.stopReplayCount();
-      }
-
-      const configOptionIds = Array.isArray(loaded.configOptions)
-        ? loaded.configOptions.flatMap((entry): string[] => {
-            const record = asOptionalObject(entry);
-            return record && typeof record.id === "string"
-              ? [limitText(record.id)]
-              : [];
-          })
-        : [];
-      const replay = peer.replaySummary(sessionId);
-      result.replay = {
-        ...replay,
-        configOptionIds,
-      };
-    }
   } catch (error) {
     failure = error;
   } finally {
     if (peer) {
       try {
-        await peer.shutdown(shutdownGraceMs);
+        await peer.shutdown();
       } catch (error) {
         if (failure === undefined) failure = error;
       }
@@ -279,13 +163,13 @@ export async function probeAcpCapabilities(
     const stderr = sanitizeDiagnostic(
       peer?.stderrText() ?? "",
       secretValues,
-      maxStderrChars,
+      MAX_STDERR_CHARS,
     );
     const rawMessage =
-      failure instanceof Error ? failure.message : "ACP capability probe failed";
+      failure instanceof Error ? failure.message : "ACP Profile smoke test failed";
     throw new AcpProbeError(
       sanitizeDiagnostic(rawMessage, secretValues, 1_000) ||
-        "ACP capability probe failed",
+        "ACP Profile smoke test failed",
       {
         phase: known?.phase ?? "protocol",
         rpcCode: known?.rpcCode,
@@ -296,49 +180,37 @@ export async function probeAcpCapabilities(
   }
 
   if (!result) {
-    throw new AcpProbeError("ACP capability probe produced no result", {
+    throw new AcpProbeError("ACP Profile smoke test produced no result", {
       phase: "protocol",
     });
   }
   return result;
 }
 
-class AcpPeer {
+class SmokePeer {
   private readonly child: ChildProcessWithoutNullStreams;
   private readonly timeoutMs: number;
-  private readonly maxFrameBytes: number;
   private readonly pending = new Map<number, PendingRequest>();
   private readonly exitPromise: Promise<void>;
   private stdoutBuffer = Buffer.alloc(0);
   private stderrBuffer = Buffer.alloc(0);
   private stderrTruncated = false;
   private nextRequestId = 1;
-  private replaySessionId: string | undefined;
-  private replayCounts = new Map<string, number>();
-  private replayTotal = 0;
   private fatalError: ProbeFailure | undefined;
   private shuttingDown = false;
 
-  constructor(input: {
-    command: string;
-    args: string[];
-    cwd: string;
-    environment: NodeJS.ProcessEnv;
-    timeoutMs: number;
-    maxFrameBytes: number;
-  }) {
-    this.timeoutMs = input.timeoutMs;
-    this.maxFrameBytes = input.maxFrameBytes;
+  constructor(profile: LoadedProfile, environment: NodeJS.ProcessEnv) {
+    this.timeoutMs = profile.runtime.startupTimeoutMs;
     const spawnOptions: SpawnOptionsWithoutStdio = {
-      cwd: input.cwd,
-      env: input.environment,
+      cwd: profile.runtime.cwd,
+      env: environment,
       stdio: ["pipe", "pipe", "pipe"],
       windowsHide: true,
       detached: process.platform !== "win32",
     };
     this.child = spawn(
-      input.command,
-      input.args,
+      profile.runtime.command,
+      profile.runtime.args,
       spawnOptions,
     ) as ChildProcessWithoutNullStreams;
     this.exitPromise = new Promise((resolve) => {
@@ -380,7 +252,7 @@ class AcpPeer {
       if (this.shuttingDown || this.pending.size === 0) return;
       this.fail(
         new ProbeFailure(
-          `ACP subprocess exited before completing the probe (${formatExit(
+          `ACP subprocess exited before completing the smoke test (${formatExit(
             code,
             signal,
           )})`,
@@ -391,7 +263,7 @@ class AcpPeer {
   }
 
   async request(
-    method: string,
+    method: "initialize" | "session/list",
     params: JsonObject,
     phase: ProbePhase,
   ): Promise<unknown> {
@@ -411,6 +283,7 @@ class AcpPeer {
         new ProbeFailure(`ACP ${method} request timed out`, "timeout"),
       );
     }, this.timeoutMs);
+    timer.unref();
     this.pending.set(id, {
       phase,
       resolve: resolveRequest,
@@ -436,38 +309,12 @@ class AcpPeer {
     return response;
   }
 
-  startReplayCount(sessionId: string): void {
-    this.replaySessionId = sessionId;
-    this.replayCounts.clear();
-    this.replayTotal = 0;
-  }
-
-  stopReplayCount(): void {
-    this.replaySessionId = undefined;
-  }
-
-  replaySummary(sessionId: string): {
-    sessionId: string;
-    totalUpdates: number;
-    updateCounts: Record<string, number>;
-  } {
-    return {
-      sessionId,
-      totalUpdates: this.replayTotal,
-      updateCounts: Object.fromEntries(
-        [...this.replayCounts.entries()].sort(([left], [right]) =>
-          left.localeCompare(right),
-        ),
-      ),
-    };
-  }
-
   stderrText(): string {
     const text = this.stderrBuffer.toString("utf8");
     return this.stderrTruncated ? `${text}\n[stderr truncated]` : text;
   }
 
-  async shutdown(graceMs: number): Promise<void> {
+  async shutdown(): Promise<void> {
     this.shuttingDown = true;
     this.rejectPending(
       new ProbeFailure("ACP subprocess is shutting down", "cleanup"),
@@ -479,13 +326,13 @@ class AcpPeer {
     } catch {
       // Continue to the signal-based cleanup path.
     }
-    if (await this.waitForExit(graceMs)) return;
+    if (await this.waitForExit(SHUTDOWN_GRACE_MS)) return;
 
     this.signal("SIGTERM");
-    if (await this.waitForExit(Math.max(250, Math.floor(graceMs / 2)))) return;
+    if (await this.waitForExit(Math.max(250, SHUTDOWN_GRACE_MS / 2))) return;
 
     this.signal("SIGKILL");
-    if (await this.waitForExit(Math.max(250, Math.floor(graceMs / 2)))) return;
+    if (await this.waitForExit(Math.max(250, SHUTDOWN_GRACE_MS / 2))) return;
 
     throw new ProbeFailure("ACP subprocess did not terminate", "cleanup");
   }
@@ -497,7 +344,7 @@ class AcpPeer {
     while (true) {
       const newline = this.stdoutBuffer.indexOf(0x0a);
       if (newline < 0) {
-        if (this.stdoutBuffer.length > this.maxFrameBytes) {
+        if (this.stdoutBuffer.length > MAX_FRAME_BYTES) {
           this.fail(
             new ProbeFailure(
               "ACP stdout frame exceeded the configured size limit",
@@ -511,7 +358,7 @@ class AcpPeer {
       this.stdoutBuffer = this.stdoutBuffer.subarray(newline + 1);
       if (line.at(-1) === 0x0d) line = line.subarray(0, -1);
       if (line.length === 0) continue;
-      if (line.length > this.maxFrameBytes) {
+      if (line.length > MAX_FRAME_BYTES) {
         this.fail(
           new ProbeFailure(
             "ACP stdout frame exceeded the configured size limit",
@@ -544,10 +391,9 @@ class AcpPeer {
     }
 
     if (
-      (typeof frame.id === "number" || typeof frame.id === "string") &&
+      typeof frame.id === "number" &&
       typeof frame.method !== "string"
     ) {
-      if (typeof frame.id !== "number") return;
       const pending = this.pending.get(frame.id);
       if (!pending) return;
       clearTimeout(pending.timer);
@@ -577,37 +423,15 @@ class AcpPeer {
       (typeof frame.id === "number" || typeof frame.id === "string") &&
       typeof frame.method === "string"
     ) {
-      // The probe never grants permissions or implements client-side tools.
-      // Explicitly reject unexpected server requests so the agent cannot hang.
+      // The smoke client never grants permissions or implements tools.
       void this.writeFrame({
         jsonrpc: "2.0",
         id: frame.id,
         error: {
           code: -32601,
-          message: "Capability probe does not implement client requests",
+          message: "Profile smoke test does not implement client requests",
         },
       }).catch(() => undefined);
-      return;
-    }
-
-    if (typeof frame.method === "string") {
-      this.handleNotification(frame.method, frame.params);
-    }
-  }
-
-  private handleNotification(method: string, params: unknown): void {
-    if (method !== "session/update" || !this.replaySessionId) return;
-    const payload = asOptionalObject(params);
-    if (!payload || payload.sessionId !== this.replaySessionId) return;
-    const update = asOptionalObject(payload.update);
-    if (!update || typeof update.sessionUpdate !== "string") return;
-    const type = limitText(update.sessionUpdate, 128);
-    this.replayTotal += 1;
-    if (
-      this.replayCounts.has(type) ||
-      this.replayCounts.size < MAX_UPDATE_TYPES
-    ) {
-      this.replayCounts.set(type, (this.replayCounts.get(type) ?? 0) + 1);
     }
   }
 
@@ -687,7 +511,7 @@ class AcpPeer {
 export function sanitizeDiagnostic(
   text: string,
   secretValues: readonly string[] = [],
-  maxChars = DEFAULT_MAX_STDERR_CHARS,
+  maxChars = MAX_STDERR_CHARS,
 ): string {
   if (maxChars <= 0) return "";
   let safe = text.replace(
@@ -730,41 +554,13 @@ export function sanitizeDiagnostic(
   return `${safe.slice(0, Math.max(0, maxChars - 22))}\n[diagnostic truncated]`;
 }
 
-function mergeEnvironment(
-  inherited: NodeJS.ProcessEnv,
-  overrides: AcpProbeOptions["env"],
-): NodeJS.ProcessEnv {
-  const merged: NodeJS.ProcessEnv = { ...inherited };
-  for (const [name, value] of Object.entries(overrides ?? {})) {
-    if (value === undefined) delete merged[name];
-    else merged[name] = value;
-  }
-  return merged;
-}
-
-function collectSecretValues(
-  environment: NodeJS.ProcessEnv,
-  args: readonly string[],
-): string[] {
+function collectSecretValues(environment: NodeJS.ProcessEnv): string[] {
   const values = new Set<string>();
   const sensitiveName =
     /(?:KEY|TOKEN|SECRET|PASSWORD|PASSWD|AUTH|COOKIE|CREDENTIAL)/i;
   for (const [name, value] of Object.entries(environment)) {
     if (value && value.length >= 4 && sensitiveName.test(name)) {
       values.add(value);
-    }
-  }
-
-  for (let index = 0; index < args.length; index += 1) {
-    const argument = args[index] ?? "";
-    const assignment = /^--?([^=]+)=(.*)$/.exec(argument);
-    if (assignment && sensitiveName.test(assignment[1] ?? "")) {
-      if ((assignment[2] ?? "").length >= 4) values.add(assignment[2] ?? "");
-      continue;
-    }
-    if (sensitiveName.test(argument)) {
-      const next = args[index + 1];
-      if (next && next.length >= 4) values.add(next);
     }
   }
   return [...values];
@@ -782,30 +578,6 @@ function asOptionalObject(value: unknown): JsonObject | undefined {
   return typeof value === "object" && value !== null && !Array.isArray(value)
     ? (value as JsonObject)
     : undefined;
-}
-
-function boundedInteger(
-  value: number,
-  name: string,
-  minimum: number,
-  maximum: number,
-): number {
-  if (!Number.isInteger(value) || value < minimum || value > maximum) {
-    throw new AcpProbeError(
-      `${name} must be an integer between ${minimum} and ${maximum}`,
-      { phase: "protocol" },
-    );
-  }
-  return value;
-}
-
-function requireNonEmpty(value: string, name: string): string {
-  if (value.trim().length === 0) {
-    throw new AcpProbeError(`${name} must not be empty`, {
-      phase: "protocol",
-    });
-  }
-  return value;
 }
 
 function limitText(value: string, maximum = 512): string {

@@ -18,7 +18,6 @@ const configStore = useConfigStore();
 const sessionStore = useSessionStore();
 const showSidebar = ref(true);
 const isNarrowLayout = ref(false);
-const welcomeReveal = ref<HTMLButtonElement | null>(null);
 let narrowMql: MediaQueryList | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let drawerReturnFocus: HTMLElement | null = null;
@@ -172,9 +171,7 @@ onMounted(async () => {
     if (isNarrowLayout.value) showSidebar.value = false;
   }
 
-  await sessionStore.initStore();
   await configStore.loadConfig();
-  await configStore.setupHotReload();
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('keydown', handleWindowKeydown);
@@ -222,7 +219,7 @@ onBeforeUnmount(() => {
     >
       <div class="status-stack" aria-live="polite">
         <div v-if="isReconnecting" class="status-banner">
-          <span class="status-spinner" aria-hidden="true" />
+          <span class="spinner" aria-hidden="true" />
           <span>
             Reconnecting to <strong>{{ reconnectingAgentName }}</strong>…
           </span>
@@ -276,7 +273,6 @@ onBeforeUnmount(() => {
           <div class="workspace-heading-row">
             <button
               v-show="!showSidebar"
-              ref="welcomeReveal"
               class="icon-button sidebar-reveal"
               type="button"
               data-sidebar-reveal
@@ -306,7 +302,7 @@ onBeforeUnmount(() => {
             Create a conversation from a fixed Profile in the sidebar, or
             reopen an existing OpenCode Session.
           </p>
-          <p v-if="!hasAgents" class="welcome-hint">
+          <p v-if="!configStore.loading && !hasAgents" class="welcome-hint">
             No valid Agent Profiles were published by the ACP Bridge.
           </p>
         </div>
@@ -332,100 +328,6 @@ onBeforeUnmount(() => {
   </div>
 </template>
 
-<style>
-:root {
-  color-scheme: light;
-  --sidebar-width: 326px;
-  --bg: #ffffff;
-  --sidebar-bg: #f7f7f5;
-  --surface: #ffffff;
-  --surface-subtle: #f5f5f3;
-  --surface-hover: #eeeeeb;
-  --surface-active: #e5e5e2;
-  --text: #282826;
-  --text-primary: #282826;
-  --text-secondary: #5f5f5b;
-  --text-muted: #8a8a84;
-  --line: #deded9;
-  --line-soft: #e9e9e5;
-  --border-color: #deded9;
-  --accent: #3b6ee8;
-  --text-accent: #3b6ee8;
-  --danger: #c83f35;
-  --danger-soft: #fff1ef;
-  --success: #39835d;
-  --warning: #b47b20;
-  --bg-main: #ffffff;
-  --bg-hover: #eeeeeb;
-  --bg-code: #f4f4f2;
-  --text-code: #40403c;
-  --bg-warning: #fff7e8;
-  --shadow:
-    0 18px 50px rgba(32, 32, 28, 0.12),
-    0 2px 10px rgba(32, 32, 28, 0.08);
-  font-family:
-    Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    'PingFang SC', 'Microsoft YaHei', sans-serif;
-  color: var(--text);
-  background: var(--bg);
-  font-size: 14px;
-  font-synthesis: none;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html,
-body,
-#app {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-}
-
-body {
-  overflow: hidden;
-  background: var(--bg);
-}
-
-button,
-textarea {
-  color: inherit;
-  font: inherit;
-}
-
-button:focus-visible,
-textarea:focus-visible,
-summary:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent) 74%, white);
-  outline-offset: 2px;
-}
-
-svg {
-  display: block;
-}
-
-@media (max-width: 1040px) and (min-width: 801px) {
-  :root {
-    --sidebar-width: 304px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-</style>
-
 <style scoped>
 .app-shell {
   display: grid;
@@ -448,74 +350,6 @@ svg {
   flex-direction: column;
   overflow: hidden;
   background: var(--bg);
-}
-
-.workspace-header {
-  display: flex;
-  min-height: 64px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  border-bottom: 1px solid var(--line-soft);
-  padding: 11px 24px 11px 28px;
-}
-
-.workspace-heading-row {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 10px;
-}
-
-.icon-button {
-  display: grid;
-  width: 29px;
-  height: 29px;
-  flex: 0 0 auto;
-  place-items: center;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.icon-button:hover {
-  background: color-mix(in srgb, var(--text) 8%, transparent);
-  color: var(--text);
-}
-
-.icon-button :deep(svg) {
-  width: 16px;
-  height: 16px;
-}
-
-.conversation-heading {
-  min-width: 0;
-}
-
-.conversation-heading h1 {
-  overflow: hidden;
-  margin: 0;
-  font-size: 15px;
-  font-weight: 630;
-  letter-spacing: -0.01em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.conversation-profile {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 3px;
-  color: var(--text-muted);
-  font-size: 11px;
-}
-
-.conversation-profile :deep(svg) {
-  width: 12px;
-  height: 12px;
 }
 
 .welcome-screen {
@@ -604,21 +438,6 @@ svg {
   flex: 1;
 }
 
-.status-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid #c5c5bf;
-  border-top-color: var(--text-secondary);
-  border-radius: 50%;
-  animation: spin 900ms linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .banner-action {
   border: 0;
   border-radius: 7px;
@@ -672,17 +491,6 @@ svg {
     inset: 0;
     background: rgba(30, 30, 28, 0.24);
     backdrop-filter: blur(2px);
-  }
-
-  .workspace-header {
-    padding-top: calc(11px + env(safe-area-inset-top, 0px));
-    padding-right: 16px;
-    padding-left: 16px;
-  }
-
-  .sidebar-reveal {
-    width: 44px;
-    height: 44px;
   }
 }
 </style>

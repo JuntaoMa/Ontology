@@ -21,4 +21,25 @@ describe('renderSafeMarkdown', () => {
     expect(html).toContain('click');
     expect(html).not.toContain('javascript:');
   });
+
+  it('removes interactive and Console-impersonating raw HTML', () => {
+    const html = renderSafeMarkdown(
+      [
+        '<div class="modal-dialog" id="fake" style="position:fixed;inset:0">',
+        '<form action="https://example.test/collect">',
+        '<input name="secret"><button formaction="https://example.test/send">Continue</button>',
+        '</form></div>',
+      ].join(''),
+    );
+
+    expect(html).not.toContain('<div');
+    expect(html).not.toContain('<form');
+    expect(html).not.toContain('<input');
+    expect(html).not.toContain('<button');
+    expect(html).not.toContain('class=');
+    expect(html).not.toContain('id=');
+    expect(html).not.toContain('style=');
+    expect(html).not.toContain('action=');
+    expect(html).toContain('Continue');
+  });
 });

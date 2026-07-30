@@ -10,13 +10,15 @@ import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
 import {
   AcpBridge,
-  buildChildEnvironment,
   isAllowedClientMessage,
-  prepareRuntimeConfigOverlay,
   redactRuntimeSecrets,
   splitNdjson,
-  type BridgeProfile,
 } from "./bridge.js";
+import {
+  buildChildEnvironment,
+  prepareRuntimeConfigOverlay,
+} from "./opencode-runtime.js";
+import type { LoadedProfile } from "./profile.js";
 import { resolveInside } from "./static-files.js";
 
 describe("splitNdjson", () => {
@@ -42,9 +44,11 @@ describe("Agent Profile child environment", () => {
   it("maps Profile declarations and excludes undeclared host variables", () => {
     const profileDirectory = path.join("/srv", "profiles", "baseline-v1");
     const stateDirectory = path.join("/srv", "state", "baseline-v1");
-    const profile: BridgeProfile = {
+    const profile: LoadedProfile = {
       id: "baseline-v1",
+      revision: "test",
       title: "Baseline v1",
+      description: "Test profile",
       profilePath: path.join(profileDirectory, "profile.yaml"),
       configPath: path.join(profileDirectory, "opencode", "opencode.jsonc"),
       runtime: {
@@ -52,11 +56,11 @@ describe("Agent Profile child environment", () => {
         args: ["acp"],
         cwd: "/srv/project",
         stateDir: stateDirectory,
-        configDir: path.join(profileDirectory, "opencode"),
         startupTimeoutMs: 15_000,
       },
       requiredEnv: ["QWEN_BASE_URL", "QWEN_API_KEY", "OAG_BASE_URL"],
       configAssets: [],
+      skills: [],
       skillsRoot: path.join(profileDirectory, "skills"),
       model: {
         id: "qwen-compatible/qwen-model",
@@ -101,7 +105,6 @@ describe("Agent Profile child environment", () => {
       no_proxy: "localhost,127.0.0.1,::1",
       OPENCODE_DB: path.join(stateDirectory, "opencode.db"),
       OPENCODE_CONFIG_DIR: path.join(stateDirectory, "config"),
-      ONTOLOGY_PROFILE_DIR: profileDirectory,
       ONTOLOGY_SKILLS_ROOT: path.join(profileDirectory, "skills"),
       ONTOLOGY_MODEL_ID: "qwen-compatible/qwen-model",
       ONTOLOGY_MODEL_BASE_URL: "https://model.example.com/v1",
@@ -122,9 +125,11 @@ describe("Agent Profile child environment", () => {
       "state",
       "direct-context",
     );
-    const profile: BridgeProfile = {
+    const profile: LoadedProfile = {
       id: "direct-context",
+      revision: "test",
       title: "Direct context",
+      description: "Test profile",
       profilePath: path.join(profileDirectory, "profile.yaml"),
       configPath: path.join(
         profileDirectory,
@@ -132,12 +137,12 @@ describe("Agent Profile child environment", () => {
         "opencode.jsonc",
       ),
       configAssets: [],
+      skills: [],
       runtime: {
         command: "opencode",
         args: ["acp", "--pure"],
         cwd: "/srv/project",
         stateDir: stateDirectory,
-        configDir: path.join(profileDirectory, "opencode"),
         startupTimeoutMs: 15_000,
       },
       requiredEnv: [],
@@ -200,6 +205,24 @@ describe("Agent Profile runtime config overlay", () => {
       );
       await writeFile(configPath, '{"model":"test/model"}\n', "utf8");
       await writeFile(promptPath, "# Baseline\n", "utf8");
+      await mkdir(path.join(runtimeDirectory, "node_modules"), {
+        recursive: true,
+      });
+      await writeFile(
+        path.join(runtimeDirectory, "package.json"),
+        '{"dependencies":{}}\n',
+        "utf8",
+      );
+      await writeFile(
+        path.join(runtimeDirectory, "node_modules", "bootstrap.js"),
+        "export {};\n",
+        "utf8",
+      );
+      await writeFile(
+        path.join(runtimeDirectory, "stale-prompt.md"),
+        "# Must be removed\n",
+        "utf8",
+      );
 
       prepareRuntimeConfigOverlay(
         {
@@ -223,6 +246,18 @@ describe("Agent Profile runtime config overlay", () => {
           "utf8",
         ),
       ).resolves.toBe("# Baseline\n");
+      await expect(
+        readFile(path.join(runtimeDirectory, "package.json"), "utf8"),
+      ).resolves.toContain("dependencies");
+      await expect(
+        readFile(
+          path.join(runtimeDirectory, "node_modules", "bootstrap.js"),
+          "utf8",
+        ),
+      ).resolves.toContain("export");
+      await expect(
+        readFile(path.join(runtimeDirectory, "stale-prompt.md"), "utf8"),
+      ).rejects.toMatchObject({ code: "ENOENT" });
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -251,6 +286,45 @@ describe("Agent Profile runtime config overlay", () => {
           path.join(root, "runtime"),
         ),
       ).toThrow(/invalid.*destination/i);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("does not allow Profile assets to overwrite OpenCode bootstrap files", async () => {
+    const root = await mkdtemp(
+      path.join(tmpdir(), "agent-console-overlay-"),
+    );
+    const runtimeDirectory = path.join(root, "runtime");
+    const configPath = path.join(root, "opencode.jsonc");
+    const profilePackagePath = path.join(root, "profile-package.json");
+    try {
+      await mkdir(runtimeDirectory, { recursive: true });
+      await writeFile(configPath, "{}\n", "utf8");
+      await writeFile(profilePackagePath, '{"profile":true}\n', "utf8");
+      await writeFile(
+        path.join(runtimeDirectory, "package.json"),
+        '{"bootstrap":true}\n',
+        "utf8",
+      );
+
+      expect(() =>
+        prepareRuntimeConfigOverlay(
+          {
+            configPath,
+            configAssets: [
+              {
+                path: profilePackagePath,
+                relativePath: "package.json",
+              },
+            ],
+          },
+          runtimeDirectory,
+        ),
+      ).toThrow(/invalid.*destination/i);
+      await expect(
+        readFile(path.join(runtimeDirectory, "package.json"), "utf8"),
+      ).resolves.toBe('{"bootstrap":true}\n');
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -428,18 +502,20 @@ describe("Agent Profile request gate", () => {
 
 describe("Agent Profile maintenance gate", () => {
   it("serializes maintenance for one Profile", async () => {
-    const profile: BridgeProfile = {
+    const profile: LoadedProfile = {
       id: "baseline-v1",
+      revision: "test",
       title: "Baseline v1",
+      description: "Test profile",
       profilePath: "/srv/profiles/baseline-v1/profile.yaml",
       configPath: "/srv/profiles/baseline-v1/opencode.jsonc",
       configAssets: [],
+      skills: [],
       runtime: {
         command: "opencode",
         args: ["acp"],
         cwd: "/srv/project",
         stateDir: "/srv/state/baseline-v1",
-        configDir: "/srv/profiles/baseline-v1",
         startupTimeoutMs: 15_000,
       },
       requiredEnv: [],

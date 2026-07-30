@@ -1,8 +1,4 @@
-// AcpTransport: abstraction over how a single ACP JSON-RPC stream is carried.
-//
-// All concrete transports (stdio subprocess, WebSocket, Streamable HTTP) MUST
-// implement this interface so that `AcpClientBridge` does not need to care
-// about the underlying byte plumbing.
+// Narrow byte-stream boundary between the loopback WebSocket and ACP JSON-RPC.
 
 /** Unsubscribe function returned by `onMessage` / `onClose`. */
 export type Unsubscribe = () => void;
@@ -19,8 +15,8 @@ export interface AcpTransport {
 
   /**
    * Register a listener that fires once when the transport closes — either
-   * because the remote peer hung up, the local subprocess exited, or `close()`
-   * was called. The optional reason describes why.
+   * because the remote peer hung up or `close()` was called. The optional
+   * reason describes why.
    */
   onClose(cb: (reason?: string) => void): Unsubscribe;
 
@@ -29,10 +25,8 @@ export interface AcpTransport {
 }
 
 /**
- * Lightweight emitter helpers shared by transport implementations. Kept
- * here (instead of pulling in a dependency) because the per-transport state
- * is small and avoiding a third-party EventEmitter keeps tree-shaken bundles
- * small for mobile builds.
+ * Lightweight emitter used by the one WebSocket transport. Pulling in an
+ * EventEmitter dependency would be more code than this boundary.
  */
 export class TransportListeners<T> {
   private callbacks = new Set<(value: T) => void>();
@@ -49,8 +43,10 @@ export class TransportListeners<T> {
     for (const cb of [...this.callbacks]) {
       try {
         cb(value);
-      } catch (e) {
-        console.error('Transport listener threw:', e);
+      } catch {
+        // Listener errors may embed an ACP payload; do not duplicate them into
+        // the browser console.
+        console.error('Transport listener failed');
       }
     }
   }

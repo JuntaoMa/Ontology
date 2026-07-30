@@ -4,7 +4,12 @@ from functools import cached_property
 
 from .embedding import Embedder, build_embedder
 from .llm import QwenClient
-from .ontology import GraphRetrievalResult, OntologyGraph
+from .ontology import (
+    MINIMUM_CONNECTED_SUBGRAPH,
+    GraphRetrievalResult,
+    OntologyGraph,
+    validate_graph_algorithm,
+)
 from .settings import Settings
 from .vector_store import LanceDBVectorStore
 
@@ -39,18 +44,25 @@ class RagServices:
             top_k=top_k or self.settings.vector_top_k,
         )
 
-    def graph_retrieve(self, question: str) -> GraphRetrievalResult:
+    def graph_retrieve(
+        self,
+        question: str,
+        graph_algorithm: str = MINIMUM_CONNECTED_SUBGRAPH,
+    ) -> GraphRetrievalResult:
         return self.ontology.retrieve(
             question,
             max_anchors=self.settings.graph_max_anchors,
             max_nodes=self.settings.graph_max_nodes,
+            graph_algorithm=graph_algorithm,
         )
 
     def oag_retrieve(
         self,
         keywords: list[str],
         top_k: int | None = None,
+        graph_algorithm: str = MINIMUM_CONNECTED_SUBGRAPH,
     ) -> tuple[list[dict], GraphRetrievalResult]:
+        validate_graph_algorithm(graph_algorithm)
         embedding_query = "\n".join(keyword.strip() for keyword in keywords if keyword.strip())
         if not embedding_query:
             raise ValueError("At least one non-empty keyword is required")
@@ -64,11 +76,17 @@ class RagServices:
         graph_result = self.ontology.retrieve_by_anchor_ids(
             anchor_ids,
             max_nodes=self.settings.graph_max_nodes,
+            graph_algorithm=graph_algorithm,
         )
         return vector_hits, graph_result
 
-    async def answer(self, question: str) -> tuple[str, list[dict], GraphRetrievalResult]:
+    async def answer(
+        self,
+        question: str,
+        graph_algorithm: str = MINIMUM_CONNECTED_SUBGRAPH,
+    ) -> tuple[str, list[dict], GraphRetrievalResult]:
+        validate_graph_algorithm(graph_algorithm)
         vector_hits = self.vector_retrieve(question)
-        graph_result = self.graph_retrieve(question)
+        graph_result = self.graph_retrieve(question, graph_algorithm)
         answer = await self.qwen.answer(question, vector_hits, graph_result)
         return answer, vector_hits, graph_result

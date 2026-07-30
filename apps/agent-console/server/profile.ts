@@ -8,22 +8,16 @@ import {
   stat,
 } from "node:fs/promises";
 import path from "node:path";
-import { createHash } from "node:crypto";
 import {
   Ajv2020,
   type ErrorObject,
   type ValidateFunction,
 } from "ajv/dist/2020.js";
 import { parseDocument } from "yaml";
-import {
-  PROFILE_LOCK_V1_SCHEMA,
-  PROFILE_V1_SCHEMA,
-} from "./profile-schema.js";
+import { PROFILE_V1_SCHEMA } from "./profile-schema.js";
 
 const MAX_PROFILE_BYTES = 64 * 1024;
-const MAX_LOCK_BYTES = 128 * 1024;
 const MAX_CATALOG_PROFILES = 256;
-const MAX_BUNDLE_FILES = 256;
 const PROFILE_FILENAMES = new Set(["profile.yaml", "profile.yml"]);
 const ENV_REF_KEY = "env";
 
@@ -59,12 +53,10 @@ export interface ProfileV1 {
   revision: string;
   title: string;
   description: string;
-  mutable: boolean;
   runtime: {
     command: string;
     args: string[];
     cwd: string;
-    state_dir: string;
     startup_timeout_ms: number;
   };
   opencode: {
@@ -79,50 +71,25 @@ export interface ProfileV1 {
   retrieval?: {
     endpoint: EnvReference;
     vector_top_k: number;
-    graph_algorithm: string;
+    graph_algorithm: "minimum_connected_subgraph";
   };
   ontology: {
     id: string;
     sha256?: string;
   };
-  environment: {
-    required: string[];
-  };
-}
-
-export interface ProfileLockV1 {
-  schema_version: 1;
-  profile_id: string;
-  profile_revision: string;
-  created_at: string;
-  files: Array<{
-    path: string;
-    sha256: string;
-    size: number;
-  }>;
-  external_inputs: {
-    ontology: {
-      id: string;
-      sha256: string;
-    };
-  };
 }
 
 export interface LoadedProfile {
-  schemaVersion: 1;
   id: string;
   revision: string;
   title: string;
   description: string;
-  mutable: boolean;
   profilePath: string;
-  profilesRoot: string;
   runtime: {
     command: string;
     args: string[];
     cwd: string;
     stateDir: string;
-    configDir: string;
     startupTimeoutMs: number;
   };
   configPath: string;
@@ -140,13 +107,12 @@ export interface LoadedProfile {
   retrieval?: {
     endpointEnv: string;
     vectorTopK: number;
-    graphAlgorithm: string;
+    graphAlgorithm: "minimum_connected_subgraph";
   };
   ontology: {
     id: string;
     sha256?: string;
   };
-  source: ProfileV1;
 }
 
 export type LoadedProfileModelAuthentication =
@@ -176,7 +142,6 @@ export interface PublicAgent {
   revision: string;
   title: string;
   description: string;
-  mutable: boolean;
   status: string;
   ws_url: string;
   cwd: string;
@@ -210,15 +175,13 @@ const ajv = new Ajv2020({
 });
 ajv.addSchema(PROFILE_V1_SCHEMA);
 const validateProfile = ajv.getSchema(PROFILE_V1_SCHEMA.$id) as ValidateFunction;
-const validateLock = ajv.compile(PROFILE_LOCK_V1_SCHEMA);
 
 /**
  * Load every profile below a trusted server-side catalog root.
  *
- * This function validates declarations but deliberately does not require the
- * referenced environment variables to be populated. The Bridge performs that
- * check when a client connects, which keeps an unavailable profile from
- * preventing the rest of the catalog from loading.
+ * Declarations are validated here, while environment values are checked when
+ * a profile is started. One unavailable profile therefore does not prevent the
+ * rest of the catalog from loading.
  */
 export async function loadProfileCatalog(profilesRoot: string): Promise<LoadedProfile[]> {
   const root = await realpath(path.resolve(profilesRoot));
@@ -233,7 +196,6 @@ export async function loadProfileCatalog(profilesRoot: string): Promise<LoadedPr
   );
 
   const ids = new Map<string, string>();
-  const stateDirectories = new Map<string, string>();
   for (const profile of profiles) {
     const duplicateId = ids.get(profile.id);
     if (duplicateId) {
@@ -243,16 +205,6 @@ export async function loadProfileCatalog(profilesRoot: string): Promise<LoadedPr
       );
     }
     ids.set(profile.id, profile.profilePath);
-
-    const stateKey = normalizedPathKey(profile.runtime.stateDir);
-    const duplicateState = stateDirectories.get(stateKey);
-    if (duplicateState) {
-      throw new ProfileValidationError(
-        `Runtime state directory is shared with profile "${duplicateState}"`,
-        profile.profilePath,
-      );
-    }
-    stateDirectories.set(stateKey, profile.id);
   }
 
   return profiles.sort((left, right) => left.id.localeCompare(right.id));
@@ -263,6 +215,11 @@ export async function loadProfile(
   profilesRoot: string,
 ): Promise<LoadedProfile> {
   const root = await realpath(path.resolve(profilesRoot));
+  const rootStats = await stat(root);
+  if (!rootStats.isDirectory()) {
+    throw new ProfileValidationError("Profile catalog root is not a directory", root);
+  }
+
   const requestedProfilePath = path.resolve(profilePath);
   await assertRegularFileWithoutSymlink(requestedProfilePath, "Profile");
   const absoluteProfilePath = await realpath(requestedProfilePath);
@@ -279,7 +236,6 @@ export async function loadProfile(
 
   const profileDirectory = await realpath(path.dirname(absoluteProfilePath));
   const projectRoot = await realpath(path.dirname(root));
-  const stateRoot = path.join(projectRoot, ".runtime", "opencode");
 
   const cwd = await resolveExistingDirectory(
     profileDirectory,
@@ -287,14 +243,25 @@ export async function loadProfile(
     "runtime.cwd",
     absoluteProfilePath,
   );
+  assertPathInside(
+    projectRoot,
+    cwd,
+    "runtime.cwd must remain inside the Profile project root",
+  );
+
   const configPath = await resolveExistingFile(
     profileDirectory,
     source.opencode.config,
     "opencode.config",
     absoluteProfilePath,
   );
+  assertPathInside(
+    root,
+    configPath,
+    "opencode.config must remain inside the Profile catalog",
+  );
   const configDir = await realpath(path.dirname(configPath));
-  const configAssets = [];
+  const configAssets: LoadedProfile["configAssets"] = [];
   const configAssetPaths = new Set<string>();
   for (const asset of source.opencode.assets ?? []) {
     const assetPath = await resolveExistingFile(
@@ -317,10 +284,7 @@ export async function loadProfile(
         absoluteProfilePath,
       );
     }
-    if (
-      normalizedPathKey(path.basename(configPath)) ===
-      normalizedRelativePath
-    ) {
+    if (normalizedPathKey(path.basename(configPath)) === normalizedRelativePath) {
       throw new ProfileValidationError(
         "opencode.assets must not repeat the declared config file",
         absoluteProfilePath,
@@ -332,27 +296,24 @@ export async function loadProfile(
   configAssets.sort((left, right) =>
     left.relativePath.localeCompare(right.relativePath),
   );
+
   const command = await resolveCommand(
     source.runtime.command,
     profileDirectory,
     absoluteProfilePath,
   );
 
-  const stateDir = resolveRelativePath(
-    profileDirectory,
-    source.runtime.state_dir,
-    "runtime.state_dir",
-    absoluteProfilePath,
-  );
+  const stateRoot = path.join(projectRoot, ".runtime", "opencode");
+  const stateDir = path.join(stateRoot, source.id);
   assertPathInside(
     stateRoot,
     stateDir,
-    `runtime.state_dir must be a child of ${stateRoot}`,
+    `Derived runtime state directory must be a child of ${stateRoot}`,
     true,
   );
   await rejectExistingSymlinkSegments(projectRoot, stateDir, absoluteProfilePath);
 
-  const skills = [];
+  const skills: LoadedProfile["skills"] = [];
   let skillsRoot: string | undefined;
   for (const skill of source.skills) {
     const skillPath = await resolveExistingDirectory(
@@ -384,32 +345,24 @@ export async function loadProfile(
     skills.push({ id: skill.id, path: skillPath });
   }
 
-  if (!source.mutable) {
-    await verifyPublishedProfileLock(absoluteProfilePath, source);
-  }
-
   return {
-    schemaVersion: 1,
     id: source.id,
     revision: source.revision,
     title: source.title,
     description: source.description,
-    mutable: source.mutable,
     profilePath: absoluteProfilePath,
-    profilesRoot: root,
     runtime: {
       command,
       args: [...source.runtime.args],
       cwd,
       stateDir,
-      configDir,
       startupTimeoutMs: source.runtime.startup_timeout_ms,
     },
     configPath,
     configAssets,
     skills,
     ...(skillsRoot !== undefined ? { skillsRoot } : {}),
-    requiredEnv: [...source.environment.required].sort(),
+    requiredEnv: [...collectEnvironmentReferences(source)].sort(),
     model: loadProfileModel(source.model),
     ...(source.retrieval
       ? {
@@ -424,7 +377,6 @@ export async function loadProfile(
       id: source.ontology.id,
       sha256: source.ontology.sha256,
     },
-    source,
   };
 }
 
@@ -457,7 +409,6 @@ export function toPublicAgent(profile: LoadedProfile, status: string): PublicAge
     revision: profile.revision,
     title: profile.title,
     description: profile.description,
-    mutable: profile.mutable,
     status,
     ws_url: `/agents/${profile.id}/acp`,
     cwd: profile.runtime.cwd,
@@ -499,108 +450,6 @@ export function assertRequiredEnvironment(
       `Profile "${profile.id}" is missing required environment variables: ${missing.join(", ")}`,
     );
   }
-}
-
-export async function verifyPublishedProfileLock(
-  profilePath: string,
-  profile: ProfileV1,
-): Promise<ProfileLockV1> {
-  const bundleRoot = path.dirname(profilePath);
-  const lockPath = path.join(bundleRoot, "profile.lock.json");
-  await assertRegularFileWithoutSymlink(lockPath, "Immutable profile lock");
-  const lockText = await readTextFileLimited(lockPath, MAX_LOCK_BYTES, "Profile lock");
-
-  let lock: unknown;
-  try {
-    lock = JSON.parse(lockText);
-  } catch (error) {
-    throw new ProfileValidationError("Profile lock is not valid JSON", lockPath, {
-      cause: error,
-    });
-  }
-  if (!validateLock(lock)) {
-    throw new ProfileValidationError(
-      `Profile lock schema validation failed: ${formatAjvErrors(validateLock.errors)}`,
-      lockPath,
-    );
-  }
-
-  const typedLock = lock as ProfileLockV1;
-  if (typedLock.profile_id !== profile.id) {
-    throw new ProfileValidationError("Profile lock id does not match profile id", lockPath);
-  }
-  if (typedLock.profile_revision !== profile.revision) {
-    throw new ProfileValidationError(
-      "Profile lock revision does not match profile revision",
-      lockPath,
-    );
-  }
-  if (
-    typedLock.external_inputs.ontology.id !== profile.ontology.id ||
-    typedLock.external_inputs.ontology.sha256 !== profile.ontology.sha256
-  ) {
-    throw new ProfileValidationError(
-      "Profile lock ontology input does not match the immutable profile",
-      lockPath,
-    );
-  }
-
-  const declared = new Map<string, { sha256: string; size: number }>();
-  for (const entry of typedLock.files) {
-    if (declared.has(entry.path)) {
-      throw new ProfileValidationError(
-        `Profile lock contains duplicate file entry "${entry.path}"`,
-        lockPath,
-      );
-    }
-    declared.set(entry.path, entry);
-  }
-
-  const actualPaths = await listBundleFiles(bundleRoot);
-  const actualRelativePaths = actualPaths
-    .filter((filePath) => path.resolve(filePath) !== path.resolve(lockPath))
-    .map((filePath) => toPortableRelativePath(bundleRoot, filePath))
-    .sort();
-  const declaredRelativePaths = [...declared.keys()].sort();
-  if (JSON.stringify(actualRelativePaths) !== JSON.stringify(declaredRelativePaths)) {
-    throw new ProfileValidationError(
-      "Profile bundle files do not exactly match profile.lock.json",
-      lockPath,
-    );
-  }
-
-  for (const filePath of actualPaths) {
-    if (path.resolve(filePath) === path.resolve(lockPath)) continue;
-    const relativePath = toPortableRelativePath(bundleRoot, filePath);
-    const expected = declared.get(relativePath);
-    if (!expected) {
-      throw new ProfileValidationError(
-        `Profile bundle file is missing from lock: ${relativePath}`,
-        lockPath,
-      );
-    }
-    const fileStats = await stat(filePath);
-    if (fileStats.size !== expected.size) {
-      throw new ProfileValidationError(
-        `Profile bundle file size mismatch: ${relativePath}`,
-        lockPath,
-      );
-    }
-    const digest = await sha256File(filePath);
-    if (digest !== expected.sha256) {
-      throw new ProfileValidationError(
-        `Profile bundle file checksum mismatch: ${relativePath}`,
-        lockPath,
-      );
-    }
-  }
-
-  return typedLock;
-}
-
-export async function sha256File(filePath: string): Promise<string> {
-  const contents = await readFile(filePath);
-  return createHash("sha256").update(contents).digest("hex");
 }
 
 function parseProfileYaml(profileText: string, profilePath: string): unknown {
@@ -655,18 +504,6 @@ function validateProfileSemantics(profile: ProfileV1, profilePath: string): void
     skillIds.add(skill.id);
   }
 
-  const declaredEnvironment = new Set(profile.environment.required);
-  const referencedEnvironment = collectEnvironmentReferences(profile);
-  const undeclared = [...referencedEnvironment]
-    .filter((name) => !declaredEnvironment.has(name))
-    .sort();
-  if (undeclared.length > 0) {
-    throw new ProfileValidationError(
-      `Environment references are missing from environment.required: ${undeclared.join(", ")}`,
-      profilePath,
-    );
-  }
-
   for (const argument of profile.runtime.args) {
     if (
       /^--?(?:api[-_]?key|access[-_]?token|token|secret|password|passwd|authorization|credential)(?:$|[=:])/i.test(
@@ -685,7 +522,6 @@ function validateProfileSemantics(profile: ProfileV1, profilePath: string): void
 
   for (const [field, value] of [
     ["runtime.cwd", profile.runtime.cwd],
-    ["runtime.state_dir", profile.runtime.state_dir],
     ["opencode.config", profile.opencode.config],
     ...(profile.opencode.assets ?? []).map((asset) => [
       `opencode.assets.${asset}`,
@@ -695,16 +531,12 @@ function validateProfileSemantics(profile: ProfileV1, profilePath: string): void
   ]) {
     ensureRelativePath(value, field, profilePath);
   }
-
-  if (!profile.mutable && !profile.ontology.sha256) {
-    throw new ProfileValidationError(
-      "Immutable profiles must pin ontology.sha256",
-      profilePath,
-    );
-  }
 }
 
-function collectEnvironmentReferences(value: unknown, result = new Set<string>()): Set<string> {
+export function collectEnvironmentReferences(
+  value: unknown,
+  result = new Set<string>(),
+): Set<string> {
   if (Array.isArray(value)) {
     for (const item of value) collectEnvironmentReferences(item, result);
     return result;
@@ -861,7 +693,10 @@ async function discoverProfileFiles(root: string): Promise<string[]> {
     }
 
     for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
-      if (entry.name.startsWith(".")) continue;
+      // Underscore-prefixed directories hold shared catalog resources (for
+      // example `_shared/skills`) and can contain arbitrary implementation
+      // depth. Profile ids cannot begin with an underscore.
+      if (entry.name.startsWith(".") || entry.name.startsWith("_")) continue;
       if (entry.isSymbolicLink()) {
         throw new ProfileValidationError(
           "Profile catalog must not contain symbolic links",
@@ -892,7 +727,7 @@ async function rejectExistingSymlinkSegments(
       const entryStats = await lstat(current);
       if (entryStats.isSymbolicLink()) {
         throw new ProfileValidationError(
-          `runtime.state_dir crosses symbolic link ${current}`,
+          `Derived runtime state directory crosses symbolic link ${current}`,
           profilePath,
         );
       }
@@ -955,45 +790,9 @@ async function readTextFileLimited(
   }
 }
 
-async function listBundleFiles(bundleRoot: string): Promise<string[]> {
-  const files: string[] = [];
-
-  async function visit(directory: string): Promise<void> {
-    const entries = await readdir(directory, { withFileTypes: true });
-    for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
-      const entryPath = path.join(directory, entry.name);
-      if (entry.isSymbolicLink()) {
-        throw new ProfileValidationError(
-          "Immutable profile bundles must not contain symbolic links",
-          entryPath,
-        );
-      }
-      if (entry.isDirectory()) {
-        await visit(entryPath);
-      } else if (entry.isFile()) {
-        files.push(entryPath);
-        if (files.length > MAX_BUNDLE_FILES + 1) {
-          throw new ProfileValidationError(
-            `Immutable profile bundle exceeds ${MAX_BUNDLE_FILES} files`,
-            bundleRoot,
-          );
-        }
-      } else {
-        throw new ProfileValidationError(
-          "Immutable profile bundles may only contain directories and regular files",
-          entryPath,
-        );
-      }
-    }
-  }
-
-  await visit(bundleRoot);
-  return files;
-}
-
 function toPortableRelativePath(root: string, filePath: string): string {
   const relative = path.relative(root, filePath);
-  assertPathInside(root, filePath, "Bundle file escapes bundle root");
+  assertPathInside(root, filePath, "Profile file escapes its declared root");
   return relative.split(path.sep).join("/");
 }
 

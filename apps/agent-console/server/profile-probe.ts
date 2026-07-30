@@ -6,14 +6,13 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import {
-  probeAcpCapabilities,
-  type AcpProbeOptions,
-  type AcpProbeResult,
+  smokeAcpProfile,
+  type AcpSmokeResult,
 } from "./acp-probe.js";
 import {
   buildChildEnvironment,
   prepareRuntimeConfigOverlay,
-} from "./bridge.js";
+} from "./opencode-runtime.js";
 import {
   assertRequiredEnvironment,
   loadProfile,
@@ -21,35 +20,26 @@ import {
   type LoadedProfile,
 } from "./profile.js";
 
-export interface ProfileProbeOptions {
-  loadSessionId?: string;
-  timeoutMs?: number;
-  maxFrameBytes?: number;
-  maxStderrChars?: number;
-  shutdownGraceMs?: number;
-}
-
 export interface ProfileProbeDependencies {
   environment?: NodeJS.ProcessEnv;
-  probe?: (options: AcpProbeOptions) => Promise<AcpProbeResult>;
+  smoke?: (
+    profile: LoadedProfile,
+    environment: NodeJS.ProcessEnv,
+  ) => Promise<AcpSmokeResult>;
 }
 
 /**
- * Probe the exact runtime declared by an Agent Profile without making its
- * version-controlled bundle writable.
- *
- * The OpenCode database remains the Profile database so session/list and
- * session/load observe the same durable sessions as the Console. Only the
- * OpenCode configuration directory is unique and temporary.
+ * Smoke-test the exact runtime declared by one Agent Profile. The command only
+ * initializes ACP and lists Session metadata; it never creates, loads, resumes,
+ * prompts, or mutates a Session.
  */
 export async function probeAcpProfile(
   profilePath: string,
-  options: ProfileProbeOptions = {},
   dependencies: ProfileProbeDependencies = {},
-): Promise<AcpProbeResult> {
-  const environment = dependencies.environment ?? process.env;
+): Promise<AcpSmokeResult> {
+  const sourceEnvironment = dependencies.environment ?? process.env;
   const profile = await loadProbeProfile(profilePath);
-  assertRequiredEnvironment(profile, environment);
+  assertRequiredEnvironment(profile, sourceEnvironment);
 
   await mkdir(profile.runtime.stateDir, { recursive: true, mode: 0o700 });
   const probeRuntimeDir = await mkdtemp(
@@ -59,35 +49,15 @@ export async function probeAcpProfile(
   try {
     const runtimeConfigDir = path.join(probeRuntimeDir, "config");
     prepareRuntimeConfigOverlay(profile, runtimeConfigDir);
-
     const runtimeEnvironment = buildChildEnvironment(
       profile,
       runtimeConfigDir,
-      environment,
+      sourceEnvironment,
     );
-    const runProbe = dependencies.probe ?? probeAcpCapabilities;
-    return await runProbe({
-      command: profile.runtime.command,
-      args: profile.runtime.args,
-      cwd: profile.runtime.cwd,
-      env: runtimeEnvironment,
-      inheritEnvironment: false,
-      ...(options.loadSessionId !== undefined
-        ? { loadSessionId: options.loadSessionId }
-        : {}),
-      ...(options.timeoutMs !== undefined
-        ? { timeoutMs: options.timeoutMs }
-        : {}),
-      ...(options.maxFrameBytes !== undefined
-        ? { maxFrameBytes: options.maxFrameBytes }
-        : {}),
-      ...(options.maxStderrChars !== undefined
-        ? { maxStderrChars: options.maxStderrChars }
-        : {}),
-      ...(options.shutdownGraceMs !== undefined
-        ? { shutdownGraceMs: options.shutdownGraceMs }
-        : {}),
-    });
+    return await (dependencies.smoke ?? smokeAcpProfile)(
+      profile,
+      runtimeEnvironment,
+    );
   } finally {
     await rm(probeRuntimeDir, { recursive: true, force: true });
   }
@@ -102,9 +72,8 @@ export async function loadProbeProfile(
 }
 
 /**
- * Profile-only CLI mode intentionally has no second catalog-root argument.
- * Published and development bundles therefore have to live below the
- * repository's conventional `profiles/` catalog.
+ * The Profile-only CLI intentionally has no catalog-root override. Profiles
+ * must live below the repository's conventional `profiles/` catalog.
  */
 export async function inferProfilesRoot(profilePath: string): Promise<string> {
   let current = path.dirname(path.resolve(profilePath));

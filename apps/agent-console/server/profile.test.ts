@@ -18,10 +18,7 @@ import {
   toPublicAgent,
   type ProfileV1,
 } from "./profile.js";
-import {
-  PROFILE_LOCK_V1_SCHEMA,
-  PROFILE_V1_SCHEMA,
-} from "./profile-schema.js";
+import { PROFILE_V1_SCHEMA } from "./profile-schema.js";
 
 interface ProfileFixture {
   projectRoot: string;
@@ -33,18 +30,11 @@ interface ProfileFixture {
 
 describe("Agent Profile v1", () => {
   it("keeps the exported JSON Schema artifact in sync", async () => {
-    const [profileSchemaText, lockSchemaText] = await Promise.all([
-      readFile(
-        new URL("./schemas/profile-v1.schema.json", import.meta.url),
-        "utf8",
-      ),
-      readFile(
-        new URL("./schemas/profile-lock-v1.schema.json", import.meta.url),
-        "utf8",
-      ),
-    ]);
+    const profileSchemaText = await readFile(
+      new URL("./schemas/profile-v1.schema.json", import.meta.url),
+      "utf8",
+    );
     expect(JSON.parse(profileSchemaText)).toEqual(PROFILE_V1_SCHEMA);
-    expect(JSON.parse(lockSchemaText)).toEqual(PROFILE_LOCK_V1_SCHEMA);
   });
 
   it("loads relative paths and exposes only a redacted public catalog entry", async () => {
@@ -58,14 +48,6 @@ describe("Agent Profile v1", () => {
       expect(loaded.runtime.cwd).toBe(canonicalProjectRoot);
       expect(loaded.runtime.stateDir).toBe(
         path.join(canonicalProjectRoot, ".runtime", "opencode", "dev"),
-      );
-      expect(loaded.runtime.configDir).toBe(
-        path.join(
-          canonicalProjectRoot,
-          "profiles",
-          "dev",
-          "opencode",
-        ),
       );
       expect(loaded.configAssets).toEqual([
         {
@@ -116,8 +98,7 @@ describe("Agent Profile v1", () => {
         id: "dev",
         revision: "dev",
         title: "Ontology RAG Development",
-        description: "Mutable local test profile",
-        mutable: true,
+        description: "Local test profile",
         status: "stopped",
         ws_url: "/agents/dev/acp",
         cwd: canonicalProjectRoot,
@@ -154,16 +135,18 @@ describe("Agent Profile v1", () => {
     }
   });
 
-  it("rejects environment references omitted from environment.required", async () => {
-    const fixture = await createProfileFixture((profile) => {
-      profile.environment.required = profile.environment.required.filter(
-        (name) => name !== "QWEN_API_KEY",
-      );
-    });
+  it("derives the environment allow-list from typed env references", async () => {
+    const fixture = await createProfileFixture();
     try {
-      await expect(
-        loadProfile(fixture.profilePath, fixture.profilesRoot),
-      ).rejects.toThrow(/QWEN_API_KEY/);
+      const loaded = await loadProfile(
+        fixture.profilePath,
+        fixture.profilesRoot,
+      );
+      expect(loaded.requiredEnv).toEqual([
+        "OAG_BASE_URL",
+        "QWEN_API_KEY",
+        "QWEN_BASE_URL",
+      ]);
     } finally {
       await rm(fixture.projectRoot, { recursive: true, force: true });
     }
@@ -178,7 +161,6 @@ describe("Agent Profile v1", () => {
       };
       profile.skills = [];
       delete profile.retrieval;
-      profile.environment.required = [];
     });
     try {
       const loaded = await loadProfile(
@@ -260,6 +242,52 @@ describe("Agent Profile v1", () => {
     }
   });
 
+  it("rejects an OpenCode config outside the Profile catalog", async () => {
+    const fixture = await createProfileFixture();
+    try {
+      await writeFile(
+        path.join(fixture.projectRoot, "outside-opencode.jsonc"),
+        "{}\n",
+        "utf8",
+      );
+      fixture.profile.opencode.config = "../../outside-opencode.jsonc";
+      await writeFile(
+        fixture.profilePath,
+        await profileYaml(fixture.profile),
+        "utf8",
+      );
+      await expect(
+        loadProfile(fixture.profilePath, fixture.profilesRoot),
+      ).rejects.toThrow(/config must remain inside the Profile catalog/i);
+    } finally {
+      await rm(fixture.projectRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a Skill directory outside the Profile catalog", async () => {
+    const fixture = await createProfileFixture();
+    const outsideSkill = path.join(fixture.projectRoot, "outside-skill");
+    try {
+      await mkdir(outsideSkill, { recursive: true });
+      await writeFile(
+        path.join(outsideSkill, "SKILL.md"),
+        "---\nname: outside-skill\ndescription: Test\n---\n",
+        "utf8",
+      );
+      fixture.profile.skills[0].path = "../../outside-skill";
+      await writeFile(
+        fixture.profilePath,
+        await profileYaml(fixture.profile),
+        "utf8",
+      );
+      await expect(
+        loadProfile(fixture.profilePath, fixture.profilesRoot),
+      ).rejects.toThrow(/must be inside the Profile catalog/i);
+    } finally {
+      await rm(fixture.projectRoot, { recursive: true, force: true });
+    }
+  });
+
   it("requires all declared Skill directories to share one parent", async () => {
     const fixture = await createProfileFixture();
     const secondSkillDirectory = path.join(
@@ -307,14 +335,14 @@ describe("Agent Profile v1", () => {
     }
   });
 
-  it("rejects runtime state outside the project state root", async () => {
+  it("rejects a working directory outside the project root", async () => {
     const fixture = await createProfileFixture((profile) => {
-      profile.runtime.state_dir = "../../../escaped-state";
+      profile.runtime.cwd = "../../..";
     });
     try {
       await expect(
         loadProfile(fixture.profilePath, fixture.profilesRoot),
-      ).rejects.toThrow(/runtime\.state_dir must be a child/i);
+      ).rejects.toThrow(/runtime\.cwd must remain inside/i);
     } finally {
       await rm(fixture.projectRoot, { recursive: true, force: true });
     }
@@ -353,15 +381,49 @@ describe("Agent Profile v1", () => {
     }
   });
 
-  it("requires a publication lock for immutable profiles", async () => {
+  it("ignores underscore-prefixed shared resource trees during discovery", async () => {
+    const fixture = await createProfileFixture();
+    try {
+      await mkdir(
+        path.join(
+          fixture.profilesRoot,
+          "_shared",
+          "skills",
+          "ontology-retrieval",
+          "scripts",
+          "__pycache__",
+        ),
+        { recursive: true },
+      );
+      const profiles = await loadProfileCatalog(fixture.profilesRoot);
+      expect(profiles.map((profile) => profile.id)).toEqual(["dev"]);
+    } finally {
+      await rm(fixture.projectRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects graph algorithms not implemented by the OAG service", async () => {
     const fixture = await createProfileFixture((profile) => {
-      profile.mutable = false;
-      profile.ontology.sha256 = "a".repeat(64);
+      profile.retrieval!.graph_algorithm =
+        "shortest_path_union" as "minimum_connected_subgraph";
     });
     try {
       await expect(
         loadProfile(fixture.profilePath, fixture.profilesRoot),
-      ).rejects.toThrow(/profile lock|does not exist/i);
+      ).rejects.toThrow(/graph_algorithm|schema validation/i);
+    } finally {
+      await rm(fixture.projectRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects vector top-k values outside the OAG request contract", async () => {
+    const fixture = await createProfileFixture((profile) => {
+      profile.retrieval!.vector_top_k = 21;
+    });
+    try {
+      await expect(
+        loadProfile(fixture.profilePath, fixture.profilesRoot),
+      ).rejects.toThrow(/vector_top_k|schema validation/i);
     } finally {
       await rm(fixture.projectRoot, { recursive: true, force: true });
     }
@@ -407,13 +469,11 @@ async function createProfileFixture(
     id: "dev",
     revision: "dev",
     title: "Ontology RAG Development",
-    description: "Mutable local test profile",
-    mutable: true,
+    description: "Local test profile",
     runtime: {
       command: process.execPath,
       args: ["--version"],
       cwd: "../..",
-      state_dir: `../../.runtime/opencode/${directoryName}`,
       startup_timeout_ms: 15_000,
     },
     opencode: {
@@ -442,13 +502,6 @@ async function createProfileFixture(
     },
     ontology: {
       id: "smart-building-sample",
-    },
-    environment: {
-      required: [
-        "QWEN_BASE_URL",
-        "QWEN_API_KEY",
-        "OAG_BASE_URL",
-      ],
     },
   };
   mutate?.(profile);

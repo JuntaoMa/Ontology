@@ -89,9 +89,9 @@ const durationLabel = computed(() => {
 </script>
 
 <template>
-  <details class="tool-call-card" :class="statusClass">
-    <summary class="tool-header">
-      <UiIcon class="kind-icon" :name="kindIcon" />
+  <details class="disclosure-card tool-call-card" :class="statusClass">
+    <summary class="disclosure-summary tool-header">
+      <UiIcon class="disclosure-icon kind-icon" :name="kindIcon" />
       <span class="tool-heading">
         <strong class="tool-title" :title="toolCall.title">
           {{ toolCall.title }}
@@ -120,7 +120,7 @@ const durationLabel = computed(() => {
         ·
       </span>
       <span v-if="durationLabel" class="tool-duration">{{ durationLabel }}</span>
-      <UiIcon class="tool-chevron" name="chevron" />
+      <UiIcon class="disclosure-chevron tool-chevron" name="chevron" />
     </summary>
 
     <div v-if="toolCall.locations && toolCall.locations.length > 1" class="tool-locations">
@@ -151,37 +151,7 @@ const durationLabel = computed(() => {
 </template>
 
 <style scoped>
-.tool-call-card {
-  overflow: hidden;
-  border: 1px solid var(--line, #deded9);
-  border-radius: 11px;
-  background: #fbfbfa;
-}
-
 .tool-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  padding: 11px 13px;
-  cursor: pointer;
-  list-style: none;
-  user-select: none;
-}
-
-.tool-header::-webkit-details-marker {
-  display: none;
-}
-
-.tool-header:focus-visible {
-  outline: 2px solid var(--accent, #3b6ee8);
-  outline-offset: -2px;
-}
-
-.kind-icon {
-  width: 15px;
-  height: 15px;
-  flex: 0 0 auto;
   color: var(--text-secondary, #5f5f5b);
 }
 
@@ -242,19 +212,6 @@ const durationLabel = computed(() => {
   white-space: nowrap;
 }
 
-.tool-chevron {
-  width: 14px;
-  height: 14px;
-  flex: 0 0 auto;
-  color: var(--text-muted, #8a8a84);
-  transform: rotate(-90deg);
-  transition: transform 130ms ease;
-}
-
-.tool-call-card[open] .tool-chevron {
-  transform: rotate(0);
-}
-
 .status-pending .tool-status,
 .status-in_progress .tool-status {
   color: var(--warning, #b47b20);
@@ -274,16 +231,7 @@ const durationLabel = computed(() => {
 .status-marker.spinner {
   width: 12px;
   height: 12px;
-  border: 2px solid #d1d1cb;
   border-top-color: currentColor;
-  background: transparent;
-  animation: spin 900ms linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .tool-locations {

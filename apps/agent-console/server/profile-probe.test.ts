@@ -1,24 +1,24 @@
 import {
+  mkdir,
+  mkdtemp,
   readFile,
   readdir,
   realpath,
+  rm,
+  writeFile,
 } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
+import { stringify } from "yaml";
 import { describe, expect, it } from "vitest";
-import type {
-  AcpProbeOptions,
-  AcpProbeResult,
-} from "./acp-probe.js";
+import type { AcpSmokeResult } from "./acp-probe.js";
 import {
   inferProfilesRoot,
   probeAcpProfile,
 } from "./profile-probe.js";
-import {
-  createPublishFixture,
-  removePublishFixture,
-} from "./profile-publish.test-fixture.js";
+import type { LoadedProfile, ProfileV1 } from "./profile.js";
 
-const PROBE_RESULT: AcpProbeResult = {
+const SMOKE_RESULT: AcpSmokeResult = {
   protocolVersion: 1,
   agentCapabilities: {
     loadSession: true,
@@ -30,9 +30,16 @@ const PROBE_RESULT: AcpProbeResult = {
   },
 };
 
-describe("Agent Profile ACP probe", () => {
+interface ProbeFixture {
+  projectRoot: string;
+  profilesRoot: string;
+  profileDirectory: string;
+  profilePath: string;
+}
+
+describe("Agent Profile ACP smoke test", () => {
   it("uses the fixed Profile runtime and a disposable config overlay", async () => {
-    const fixture = await createPublishFixture();
+    const fixture = await createProbeFixture();
     const canonicalProjectRoot = await realpath(fixture.projectRoot);
     const canonicalProfileDirectory = await realpath(
       fixture.profileDirectory,
@@ -45,24 +52,19 @@ describe("Agent Profile ACP probe", () => {
       OAG_BASE_URL: "http://127.0.0.1:8010",
       HOST_ONLY_VALUE: "must-not-be-inherited",
     };
-    let captured: AcpProbeOptions | undefined;
+    let capturedProfile: LoadedProfile | undefined;
+    let capturedEnvironment: NodeJS.ProcessEnv | undefined;
     let overlayDirectory = "";
 
     try {
       const result = await probeAcpProfile(
         fixture.profilePath,
         {
-          loadSessionId: "session-existing",
-          timeoutMs: 2_500,
-        },
-        {
           environment: sourceEnvironment,
-          probe: async (options) => {
-            captured = options;
-            overlayDirectory = options.env?.OPENCODE_CONFIG_DIR ?? "";
-            expect(overlayDirectory).not.toBe(
-              path.join(fixture.profileDirectory, "opencode"),
-            );
+          smoke: async (profile, environment) => {
+            capturedProfile = profile;
+            capturedEnvironment = environment;
+            overlayDirectory = environment.OPENCODE_CONFIG_DIR ?? "";
             expect(
               await readFile(
                 path.join(overlayDirectory, "opencode.jsonc"),
@@ -75,27 +77,23 @@ describe("Agent Profile ACP probe", () => {
                 "utf8",
               ),
             ).toContain("Test Agent");
-            return PROBE_RESULT;
+            return SMOKE_RESULT;
           },
         },
       );
 
-      expect(result).toEqual(PROBE_RESULT);
-      expect(captured).toBeDefined();
-      expect(captured?.command).toBe(await realpath(process.execPath));
-      expect(captured?.args).toEqual(["--version"]);
-      expect(captured?.cwd).toBe(canonicalProjectRoot);
-      expect(captured?.loadSessionId).toBe("session-existing");
-      expect(captured?.timeoutMs).toBe(2_500);
-      expect(captured?.inheritEnvironment).toBe(false);
+      expect(result).toEqual(SMOKE_RESULT);
+      expect(capturedProfile?.runtime.command).toBe(
+        await realpath(process.execPath),
+      );
+      expect(capturedProfile?.runtime.args).toEqual(["--version"]);
+      expect(capturedProfile?.runtime.cwd).toBe(canonicalProjectRoot);
 
-      const environment = captured?.env;
-      expect(environment).toMatchObject({
+      expect(capturedEnvironment).toMatchObject({
         HOME: "/tmp/profile-probe-home",
         QWEN_BASE_URL: "https://model.example.com/v1",
         QWEN_API_KEY: "profile-secret-key",
         OAG_BASE_URL: "http://127.0.0.1:8010",
-        ONTOLOGY_PROFILE_DIR: canonicalProfileDirectory,
         ONTOLOGY_SKILLS_ROOT: path.join(
           canonicalProfileDirectory,
           "skills",
@@ -115,9 +113,9 @@ describe("Agent Profile ACP probe", () => {
           "opencode.db",
         ),
       });
-      expect(environment?.HOST_ONLY_VALUE).toBeUndefined();
-      expect(environment?.ONTOLOGY_EXPECTED_SHA256).toBeUndefined();
-      expect(environment?.OPENCODE_CONFIG_DIR).toBe(overlayDirectory);
+      expect(capturedEnvironment?.HOST_ONLY_VALUE).toBeUndefined();
+      expect(capturedEnvironment?.ONTOLOGY_EXPECTED_SHA256).toBeUndefined();
+      expect(capturedEnvironment?.OPENCODE_CONFIG_DIR).toBe(overlayDirectory);
 
       await expect(realpath(overlayDirectory)).rejects.toMatchObject({
         code: "ENOENT",
@@ -131,45 +129,124 @@ describe("Agent Profile ACP probe", () => {
         ),
       ).toEqual([]);
     } finally {
-      await removePublishFixture(fixture);
+      await rm(fixture.projectRoot, { recursive: true, force: true });
     }
   });
 
-  it("fails before launching when a required Profile variable is missing", async () => {
-    const fixture = await createPublishFixture();
+  it("fails before launching when a derived Profile variable is missing", async () => {
+    const fixture = await createProbeFixture();
     let launched = false;
 
     try {
       await expect(
         probeAcpProfile(
           fixture.profilePath,
-          {},
           {
             environment: {
               QWEN_BASE_URL: "https://model.example.com/v1",
               OAG_BASE_URL: "http://127.0.0.1:8010",
             },
-            probe: async () => {
+            smoke: async () => {
               launched = true;
-              return PROBE_RESULT;
+              return SMOKE_RESULT;
             },
           },
         ),
       ).rejects.toThrow(/QWEN_API_KEY/);
       expect(launched).toBe(false);
     } finally {
-      await removePublishFixture(fixture);
+      await rm(fixture.projectRoot, { recursive: true, force: true });
     }
   });
 
-  it("infers the conventional profiles catalog for nested releases", async () => {
-    const fixture = await createPublishFixture();
+  it("infers the conventional profiles catalog", async () => {
+    const fixture = await createProbeFixture();
     try {
       expect(await inferProfilesRoot(fixture.profilePath)).toBe(
         await realpath(fixture.profilesRoot),
       );
     } finally {
-      await removePublishFixture(fixture);
+      await rm(fixture.projectRoot, { recursive: true, force: true });
     }
   });
 });
+
+async function createProbeFixture(): Promise<ProbeFixture> {
+  const projectRoot = await mkdtemp(path.join(tmpdir(), "profile-probe-"));
+  const profilesRoot = path.join(projectRoot, "profiles");
+  const profileDirectory = path.join(profilesRoot, "dev");
+  const configDirectory = path.join(profileDirectory, "opencode");
+  const skillDirectory = path.join(
+    profileDirectory,
+    "skills",
+    "ontology-retrieval",
+  );
+  await mkdir(configDirectory, { recursive: true });
+  await mkdir(skillDirectory, { recursive: true });
+  await writeFile(
+    path.join(configDirectory, "opencode.jsonc"),
+    '{ "$schema": "https://opencode.ai/config.json" }\n',
+    "utf8",
+  );
+  await writeFile(
+    path.join(configDirectory, "prompt.md"),
+    "# Test Agent\n",
+    "utf8",
+  );
+  await writeFile(
+    path.join(skillDirectory, "SKILL.md"),
+    "---\nname: ontology-retrieval\ndescription: Test\n---\n",
+    "utf8",
+  );
+
+  const profile: ProfileV1 = {
+    schema_version: 1,
+    id: "dev",
+    revision: "dev",
+    title: "Development",
+    description: "Profile smoke test fixture",
+    runtime: {
+      command: process.execPath,
+      args: ["--version"],
+      cwd: "../..",
+      startup_timeout_ms: 15_000,
+    },
+    opencode: {
+      config: "opencode/opencode.jsonc",
+      assets: ["opencode/prompt.md"],
+    },
+    model: {
+      id: "qwen-compatible",
+      source: "profile",
+      api_base: { env: "QWEN_BASE_URL" },
+      auth: {
+        source: "environment",
+        api_key: { env: "QWEN_API_KEY" },
+      },
+    },
+    skills: [
+      {
+        id: "ontology-retrieval",
+        path: "skills/ontology-retrieval",
+      },
+    ],
+    retrieval: {
+      endpoint: { env: "OAG_BASE_URL" },
+      vector_top_k: 5,
+      graph_algorithm: "minimum_connected_subgraph",
+    },
+    ontology: { id: "smart-building-sample" },
+  };
+  const profilePath = path.join(profileDirectory, "profile.yaml");
+  await writeFile(
+    profilePath,
+    stringify(profile, { lineWidth: 0, sortMapEntries: false }),
+    "utf8",
+  );
+  return {
+    projectRoot,
+    profilesRoot,
+    profileDirectory,
+    profilePath,
+  };
+}

@@ -12,6 +12,7 @@ from rdflib import OWL, RDF, RDFS, SKOS, Graph, Literal, URIRef
 from .ingestion import Chunk
 
 ABBREVIATION_LOCAL_NAME = "abbreviation"
+MINIMUM_CONNECTED_SUBGRAPH = "minimum_connected_subgraph"
 ENTITY_TYPES = {
     OWL.Class,
     OWL.ObjectProperty,
@@ -27,6 +28,11 @@ DIRECT_RELATIONS = {
     OWL.equivalentProperty,
     OWL.inverseOf,
 }
+
+
+def validate_graph_algorithm(graph_algorithm: str) -> None:
+    if graph_algorithm != MINIMUM_CONNECTED_SUBGRAPH:
+        raise ValueError(f"Unsupported graph retrieval algorithm: {graph_algorithm}")
 
 
 @dataclass(frozen=True)
@@ -95,17 +101,24 @@ class OntologyGraph:
         *,
         max_anchors: int,
         max_nodes: int,
+        graph_algorithm: str = MINIMUM_CONNECTED_SUBGRAPH,
     ) -> GraphRetrievalResult:
         anchor_ids = self.extract_anchors(question, max_anchors=max_anchors)
-        return self.retrieve_by_anchor_ids(anchor_ids, max_nodes=max_nodes)
+        return self.retrieve_by_anchor_ids(
+            anchor_ids,
+            max_nodes=max_nodes,
+            graph_algorithm=graph_algorithm,
+        )
 
     def retrieve_by_anchor_ids(
         self,
         anchor_ids: list[str],
         *,
         max_nodes: int,
+        graph_algorithm: str = MINIMUM_CONNECTED_SUBGRAPH,
     ) -> GraphRetrievalResult:
         """Return the minimum connecting subgraph for explicit ontology anchors."""
+        validate_graph_algorithm(graph_algorithm)
 
         validated_anchor_ids: list[str] = []
         for node_id in anchor_ids:

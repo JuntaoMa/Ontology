@@ -6,7 +6,7 @@
   "autoupdate": false,
   "skills": {
     "paths": [
-      "{env:ONTOLOGY_PROFILE_DIR}/skills"
+      "{env:ONTOLOGY_SKILLS_ROOT}"
     ]
   },
   "permission": {

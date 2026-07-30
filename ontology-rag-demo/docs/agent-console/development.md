@@ -1,31 +1,37 @@
-# Agent Console 开发与验证
+# Agent Console 开发、迁移与验证
 
-状态：双基线 WebUI 已打通，继续迭代
+状态：双基线 WebUI 已打通
 
 ## 1. 前置条件
 
 - macOS 或 WSL；
-- Node.js `22.13` 或更高版本；
-- 仓库声明的 pnpm 版本；
-- OpenCode，当前开发机验证版本为 `1.17.16`；
+- Node.js `22.13` 或更高版本，以及仓库声明的 pnpm；
+- OpenCode；当前验证版本为 `1.17.16`；
 - uv；
-- Python `3.13.7`；
-- 8010 OAG 所需的本地数据和环境变量。
+- Python `3.13.7`。
 
-Python 命令始终在项目目录使用 uv：
+Python 环境只使用 `ontology-rag-demo` 根目录的 uv 项目：
 
 ```bash
 cd ontology-rag-demo
-UV_CACHE_DIR=.uv-cache uv sync --locked
-UV_CACHE_DIR=.uv-cache uv run --locked pytest
+uv python install 3.13.7
+uv sync --locked
 ```
 
-## 2. 开发阶段
+不要在服务或 Job 子目录创建第二套虚拟环境。
 
-### 阶段 A：ACP 能力探针
+## 2. 配置
 
-先把 Demo Profile 所需变量注入当前 shell。`.env` 已被 Git 忽略，`source` 后只对当前
-终端及其子进程生效：
+复制只含公开默认值的模板：
+
+```bash
+cd ontology-rag-demo
+cp .env.example .env
+chmod 600 .env
+```
+
+`.env` 已被 Git 忽略。OAG 命令用 `uv --env-file` 显式读取它；Console 启动时需要把
+Profile 引用的变量放入当前 shell：
 
 ```bash
 set -a
@@ -33,119 +39,105 @@ source ontology-rag-demo/.env
 set +a
 ```
 
-在接入 UI 前执行只读探针。推荐直接传入 Agent Profile；探针会使用 Profile 已校验的
-命令、参数和固定 cwd，并从当前 shell 读取 Profile 声明的必需变量：
+Profile 所需变量无需另列清单。服务端会从 Model 和 Retrieval 等字段中的
+`{env: NAME}` 自动推导需求；例如 `baseline-oag` 只引用 `OAG_BASE_URL`。
+
+双基线使用已配置在当前系统用户 OpenCode 中的模型和认证：
 
 ```bash
-pnpm --filter ontology-agent-console probe:acp -- \
-  --profile ontology-rag-demo/profiles/dev/profile.yaml
+opencode models deepseek
 ```
 
-若要验证一个已经存在的 Session 的历史投影，可额外传入：
+输出必须包含 `deepseek/deepseek-v4-flash`。项目不会复制 OpenCode provider、API 地址
+或密钥，也不会在模型缺失时静默替换。
 
-```bash
---load-session EXISTING_SESSION_ID
+## 3. 启动 8010 OAG
+
+### 3.1 准备数据与索引
+
+全新 clone 默认使用可提交的虚构楼宇本体。进行 BGE-M3 基线验证前，在忽略的 `.env`
+中确认：
+
+```dotenv
+SOURCE_ONTOLOGY_PATH=examples/smart-building/ontology.ttl
+SOURCE_DOCUMENT_PATHS=examples/smart-building/documents/operations-guide.txt
+ONTOLOGY_PATH=data/source/smart-building/ontology.ttl
+DOCUMENTS_DIR=data/source/smart-building/documents
+EMBEDDING_BACKEND=bge-m3
+EMBEDDING_MODEL=BAAI/bge-m3
+EMBEDDING_DEVICE=cpu
+EMBEDDING_BATCH_SIZE=2
+EMBEDDING_NORMALIZE=true
+LANCEDB_URI=state/baseline-oag-bge-m3/lancedb
+LANCEDB_TABLE=ontology_entities_v1
+VECTOR_TOP_K=5
+API_HOST=127.0.0.1
+API_PORT=8010
+OAG_BASE_URL=http://127.0.0.1:8010
 ```
 
-Profile 模式与 Bridge 使用同一组运行映射：
-
-- `runtime.command`、`runtime.args` 和 `runtime.cwd` 不能被 CLI 覆盖；
-- 缺少 `environment.required` 中的任意变量时，在启动 OpenCode 前失败；
-- 模型、检索和本体声明转换为规范的 `ONTOLOGY_MODEL_*`、
-  `ONTOLOGY_RETRIEVAL_ENDPOINT`、`ONTOLOGY_VECTOR_TOP_K`、
-  `ONTOLOGY_GRAPH_ALGORITHM` 和 `ONTOLOGY_ID`；
-- `OPENCODE_DB` 仍指向该 Profile 的独立状态数据库，使 `session/list` 和
-  `session/load` 能看到 Console 使用的同一批 Session；
-- 每次探针把受版本控制的 OpenCode 配置复制到 `state_dir` 下的唯一临时
-  `config/` overlay。OpenCode 的 bootstrap 文件只能写入该 overlay，探针退出后删除，
-  不得修改 `dev` 或不可变 Release Bundle。
-
-`--profile` 不能和 `--command`、`--arg`、`--cwd`、`--env` 混用。原有显式命令模式
-继续保留，主要用于测试其他 ACP 实现：
-
-```bash
-pnpm --filter ontology-agent-console probe:acp -- \
-  --command opencode \
-  --arg acp \
-  --cwd /absolute/path/to/project
-```
-
-这一步只统计 `session/update` 类型，不输出消息、命令或 Tool 结果。端到端验收仍需验证：
-
-- `initialize`；
-- `session/new`；
-- `session/prompt`；
-- `session/cancel`；
-- Tool Call 和 Tool Call Update；
-- `session/list`；
-- `session/load`；
-- Permission 请求与回复。
-
-探针输出只保存能力名称和成功/失败，不保存 Prompt、工具输出、API 地址或密钥。
-本机实测基线见 [OpenCode ACP 能力矩阵](acp-capability-matrix.md)。
-
-### 阶段 B：8010 OAG
-
-双基线验收固定使用仓库中的简短示例本体、BGE-M3、LanceDB 和 CPU。首次迁移到新
-机器时，在终端 1 从项目目录执行：
+然后执行：
 
 ```bash
 cd ontology-rag-demo
-UV_CACHE_DIR=.uv-cache uv sync --locked
-
-export SOURCE_ONTOLOGY_PATH=examples/smart-building/ontology.ttl
-export SOURCE_DOCUMENT_PATHS=examples/smart-building/documents/operations-guide.txt
-export ONTOLOGY_PATH=data/source/smart-building/ontology.ttl
-export DOCUMENTS_DIR=data/source/smart-building/documents
-export EMBEDDING_BACKEND=bge-m3
-export EMBEDDING_MODEL=BAAI/bge-m3
-export EMBEDDING_DEVICE=cpu
-export EMBEDDING_BATCH_SIZE=2
-export EMBEDDING_NORMALIZE=true
-export LANCEDB_URI=state/baseline-oag-bge-m3/lancedb
-export LANCEDB_TABLE=ontology_entities_v1
-export VECTOR_TOP_K=5
-export API_HOST=127.0.0.1
-export API_PORT=8010
-export HF_HUB_DISABLE_XET=1
-export TOKENIZERS_PARALLELISM=false
-
-UV_CACHE_DIR=.uv-cache uv run --locked ontology-rag prepare
-UV_CACHE_DIR=.uv-cache uv run --locked ontology-rag build-index
-UV_CACHE_DIR=.uv-cache uv run --locked ontology-rag serve
+uv sync --locked
+uv run --locked --env-file .env ontology-rag prepare
+uv run --locked --env-file .env ontology-rag build-index
 ```
 
-`build-index` 第一次会下载 `BAAI/bge-m3`。不要在新机器首次构建时设置
-`HF_HUB_OFFLINE=1`；已有完整缓存后才可自行启用离线模式。后续复用同一索引时，只需
-重新导出这些非敏感配置并执行最后一条 `serve` 命令。
+`build-index` 首次会下载 `BAAI/bge-m3`。已经有完整缓存后才能自行启用离线模式。
+无模型 smoke check 可临时使用 `EMBEDDING_BACKEND=deterministic`，但它不能用于检索
+质量评估。
 
-验证：
+### 3.2 启动与检查
+
+```bash
+cd ontology-rag-demo
+uv run --locked --env-file .env ontology-rag serve
+```
+
+在另一个终端验证：
 
 ```bash
 curl -fsS http://127.0.0.1:8010/health
 ```
 
-至少确认 `embedding_backend` 为 `bge-m3`，并且 `ontology_ready`、
-`lancedb_ready`、`vector_index_ready` 均为 `true`。响应中的
-`ontology_sha256` 是当前 `ONTOLOGY_PATH` 文件摘要，不包含源路径。不可变 Profile
-的 Skill wrapper 会在检索前用它核对发布锁；可变 Profile 没有固定摘要，适合快速
-迭代。
+应确认 `embedding_backend=bge-m3`，并且 `ontology_ready`、`lancedb_ready`、
+`vector_index_ready` 都为 `true`。`ontology_sha256` 是当前本体文件摘要，不包含路径。
 
-### 阶段 C：Agent Console
+## 4. Profile smoke
 
-开发模式将使用 Vite，并把 `/agents`、`/health` 和 WebSocket 代理到 ACP Bridge。构建模式
-由 Bridge 直接托管静态文件。
+Probe 只接受一个位于 `profiles/` Catalog 下的 Profile：
 
-安装并锁定 Node 依赖：
+```bash
+pnpm --filter ontology-agent-console probe:acp -- \
+  --profile ontology-rag-demo/profiles/baseline-direct-context/profile.yaml
+```
+
+要检查 OAG Profile，先按第 2 节 source 环境，再执行：
+
+```bash
+pnpm --filter ontology-agent-console probe:acp -- \
+  --profile ontology-rag-demo/profiles/baseline-oag/profile.yaml
+```
+
+Probe 复用生产 Loader、环境映射和配置 overlay，只调用 ACP `initialize` 与
+`session/list`，输出能力和 Session 数量。它不会创建、加载、恢复、发送 Prompt 或修改
+Session，也不支持命令/cwd/env 覆盖。
+
+## 5. 启动 Agent Console
+
+### 5.1 开发模式
+
+从仓库根目录：
 
 ```bash
 pnpm install --frozen-lockfile
-```
 
-开发 `dev` Profile 时，在已经 `source ontology-rag-demo/.env` 的同一个终端启动
-Bridge 和 Vite：
+set -a
+source ontology-rag-demo/.env
+set +a
 
-```bash
 pnpm --filter ontology-agent-console dev
 ```
 
@@ -156,153 +148,95 @@ Vite UI:    http://127.0.0.1:5173
 ACP Bridge: http://127.0.0.1:4310
 ```
 
-生产构建与本地启动：
+Vite 将 `/health`、`/agents` 和相应 WebSocket 代理到 Bridge。
+
+### 5.2 构建模式
 
 ```bash
 pnpm --filter ontology-agent-console build
-OAG_BASE_URL=http://127.0.0.1:8010 \
-  pnpm --filter ontology-agent-console start
+
+set -a
+source ontology-rag-demo/.env
+set +a
+
+pnpm --filter ontology-agent-console start
 ```
 
-双基线复用当前系统用户已经配置的 OpenCode provider 和认证，不需要项目内的 Qwen
-密钥。启动前必须确认模型可见：
+打开 `http://127.0.0.1:4310`。Bridge 直接托管 `dist-web`。
 
-```bash
-opencode models deepseek
-```
+可用部署变量：
 
-输出必须包含 `deepseek/deepseek-v4-flash`。只有 `baseline-oag` 使用
-`OAG_BASE_URL`；`baseline-direct-context` 不需要检索服务。
+| 变量 | 默认值/约束 |
+| --- | --- |
+| `AGENT_PROFILES_DIR` | `ontology-rag-demo/profiles` |
+| `AGENT_CONSOLE_STATIC_DIR` | `apps/agent-console/dist-web` |
+| `AGENT_CONSOLE_PORT` | `4310` |
+| `AGENT_CONSOLE_HOST` | `127.0.0.1`，只允许 loopback |
+| `AGENT_CONSOLE_ALLOWED_ORIGINS` | 同源 4310 与本地 Vite 5173 |
 
-生产依赖审计：
+Catalog 只加载名为 `profile.yaml` 或 `profile.yml` 的文件。
+`profiles/dev/profile.example.yaml` 只是自定义兼容模型 Profile 的模板，不会默认出现在
+页面中。
 
-```bash
-pnpm --filter ontology-agent-console audit --prod
-```
+## 6. WebUI 验收
 
-pnpm 的 audit 结果按整个 Workspace lockfile 汇总；判断本应用是否受影响时必须检查
-finding 的依赖路径。当前审计中没有指向 `apps__agent-console` 的 finding；报告的
-Vite/esbuild/ECharts 项均来自既有 `apps__ontology-validation`，不在本任务中顺带升级。
-
-Bridge 默认读取 `ontology-rag-demo/profiles/`。可用非敏感环境变量
-`AGENT_PROFILES_DIR`、`AGENT_CONSOLE_PORT` 和 `AGENT_CONSOLE_ALLOWED_ORIGINS`
-覆盖部署位置。`AGENT_CONSOLE_HOST` 在首版只能取 loopback 地址；非回环地址会拒绝启动。
-
-### 阶段 D：权威双基线 WebUI 验收
-
-CLI 运行器和 ACP 探针只做预检，不能替代浏览器验收。在终端 1 保持 8010 运行、终端 2
-保持 4310 运行，然后打开 `http://127.0.0.1:4310`，使用同一个问题：
+CLI 或 Probe 成功不能替代浏览器验收。保持 8010 和 Console 运行，在
+`http://127.0.0.1:4310` 对两个 Profile 使用同一问题：
 
 ```text
 温度传感器所在的房间属于哪个建筑？
 ```
 
-依次检查：
+至少检查：
 
-1. 在 `baseline-direct-context` Profile 分组点击新建对话图标并原样发送问题。页面没有
-   Tool Call 卡，最终消息包含 `data-query-plan.v1`、`baseline=direct-context` 和
-   原始问题；整条裸 JSON，或前置说明后位于消息末尾的合法 `json`/`application-json`
-   fenced object/array，应把 JSON 显示在标题为“查询Plan”的可折叠缩进代码块中。
-   前置 Markdown 继续显示，ACP/OpenCode 保存的最终消息仍是模型原始输出。
-2. Direct-context 尚在生成时，在 `baseline-oag` 分组点击新建对话图标。单个对话窗口
-   切到新会话，但 Direct-context 必须继续在后台
-   执行；不需要先 Disconnect。
-3. OAG 页面至少出现成功完成的 `ontology-retrieval` Skill 和 wrapper Bash 调用。
-   Bash 原始输出包含 5 条 `hits`、`graph`，并出现
-   `minimum_connected_subgraph` 轻量子图卡；当前示例预期为 5 节点、4 边。Skill
-   加载与 Execute/Bash 必须使用不同图标，且均不同于 Thinking 和普通 Tool。
-4. OAG 最终消息包含 `data-query-plan.v1`、`baseline=oag` 和原始问题。当前阶段验证
-   流程连通性；若最终消息整体是合法 JSON，或在前置说明后以合法 JSON fence 收尾，
-   JSON 部分都应显示为可折叠“查询Plan”代码块，前置说明不能被吞掉。不把查询计划的
-   业务正确性或模型是否附带过渡语作为接线失败。
-5. 本机 Demo 的 OAG Profile 开放 Bash，不用固定 `steps` 或 wrapper-only 白名单阻断
-   Agent 的观察、反思和后续调用。Agent 自主提出的额外工具调用不得隐藏；UI 必须
-   如实显示成功、失败或权限拒绝。只要必需的 Skill、OAG wrapper 和最终计划成功，
-   额外的非关键调用不否定首版流程验收。
-6. 在两个固定 Profile 分组中来回切换会话；两边的消息、Tool Call 和 loading 状态
-   不得串流，切回 Direct-context 时应看到它的后台增量或最终结果。
-7. 当前会话运行只禁用自身输入；另一个 Profile 仍可发送。Cancel 只取消当前可见
-   Session。同一 Profile 已有一轮执行时，第二条 Session 的发送入口应说明该 Profile
-   正忙，而不是影响其他 Profile。
-8. 刷新页面并从所属 Profile 分组再次点击刚才的 Session；`session/load` 后应恢复
-   用户消息、Agent 消息、工具状态、原始输出、子图和最终结果。历史仍在加载时重复
-   选择同一 Session 不应发出第二次 `session/load`，也不能提前开放 Prompt 输入。
-9. 折叠/恢复整个侧栏和单个 Profile 分组；信息图标应显示真实的 Status、Profile ID、
-   Model 和 Retrieval。Session 的状态点与垃圾桶按钮不能重叠。桌面 Session 行上下
-   留白约为此前布局的一半；窄屏下行高与行内操作仍不得小于 44 px。
-10. 新建一条无运行任务的测试会话，使用垃圾桶按钮打开确认框；Cancel 应恢复到触发
-    按钮。确认删除后行消失、显示成功提示，页面刷新后不能重新出现。任何正在运行的
-    同 Profile 会话存在时，删除按钮必须禁用。删除同 Profile 的另一条历史会话后，
-    当前可见会话应自动恢复连接；删除期间同 Profile 的重连和第二次删除应被拒绝。
-11. 展开和折叠 Thinking、Tool Call 整卡、ACP Plan 与“查询Plan”，确认操作只改变
-    可见性，不丢失内容。Tool 卡只能出现 Input、Output 与 artifact，不能再显示通用
-    `ACP content` 面板；仅存在于底层 `content` 的 artifact 仍应能够渲染。
-12. 使用长 Bash 命令检查 Tool 等形式化卡片：标题只能占一行并以省略号结束，悬停时
-    浏览器原生提示显示全文，展开 Input 后仍能查看完整命令。
+1. `baseline-direct-context` 能创建 Session、发送问题并得到
+   `data-query-plan.v1`；页面不出现 Tool Call。
+2. Direct-context 运行时切到 `baseline-oag` 并创建对话；前一 Profile 应继续后台执行。
+3. OAG 轨迹包含 Skill/Bash、5 条向量命中、`minimum_connected_subgraph` 子图和最终
+   `data-query-plan.v1`。
+4. Profile 之间的消息、Tool、Permission、loading 和错误不会串流；同一 Profile 的
+   第二轮 Prompt 在第一轮完成前被串行门控。
+5. Thinking、Skill、Execute/Bash 和普通 Tool 图标不同；Tool、ACP Plan 与最终
+   “查询Plan”均可展开/折叠，折叠不会丢失原始输入输出。
+6. 完整 JSON 或消息末尾合法 JSON fence 显示为格式化“查询Plan”，但 Agent 原文不被
+   修改。
+7. 实时成功回答显示当地完成时间和客户端观测全轮耗时；取消或历史重放不伪造该信息。
+8. 页面刷新后，从相应 Profile 选择 Session，`session/load` 能恢复消息、Tool 输出和
+   子图。
+9. 新建一个空闲测试 Session，确认删除后刷新页面不再出现；有在途请求的 Profile
+   不允许删除。
+10. 折叠侧栏和 Profile 分组、查看 Profile 信息、切换不同 Session；唯一可见对话窗口
+    与后台运行状态保持一致。
 
-在线执行时 Tool 卡显示 UI 观测到的耗时；成功的实时 Agent 回答末尾还应显示浏览器
-当地完成时间和全轮耗时。OpenCode `1.17.16` 在
-`session/load` 重放时不投影 Tool 的原生时间戳，所以恢复后的卡片显示
-`Timing unavailable`，且恢复后的回答没有完成时间页脚；这是已知信息损失，不是验收
-失败。
+OAG Profile 允许 Agent 自主 Bash。若轨迹显示 Agent 直接读取本体文件，接线仍然可见，
+但该 Session 应标记为“基线语义污染”，不能用于两条路径的效果比较。
 
-开放 Bash 时，Prompt 中的“OAG 是唯一Ontology来源”只是软约束。若轨迹显示 Agent
-直接读取 TTL、LanceDB 或其他本体实现文件，WebUI 接线仍可判为通过，但该 Session
-必须标记为“基线语义污染”，不能用于两条路径的效果比较。要硬保证黑盒边界，必须另行
-引入 wrapper-only Tool、进程沙箱或文件系统隔离；首版按已接受的 Agent 自主性暂不做。
-
-### 阶段 E：发布不可变 Profile
-
-`dev` Profile 用于快速迭代。固定测试基线时，把它发布成包含 SHA-256 lock 的新 Bundle：
+## 7. 测试与代码检查
 
 ```bash
-pnpm --filter ontology-agent-console profile:publish -- \
-  --profile ontology-rag-demo/profiles/dev/profile.yaml \
-  --release-id baseline-v1 \
-  --revision v1 \
-  --ontology-sha256 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+pnpm --filter ontology-agent-console typecheck
+pnpm --filter ontology-agent-console test
+pnpm --filter ontology-agent-console build
+
+cd ontology-rag-demo
+uv run --locked pytest
+uv run --locked ruff check .
 ```
 
-最后一个参数必须替换为实际删减本体文件的 SHA-256；发布器不会复制本体源材料，也不会
-覆盖已有 Release。
+修改 Profile、Prompt、Skill、Bridge 或 UI 行为时，先更新本文、系统设计、协议或 ADR，
+再修改代码和测试。
 
-## 3. MVP 验收
+## 8. 迁移到另一台机器
 
-双基线是否合格以“阶段 D”的浏览器实测为准。通用能力还必须满足：
+1. clone 同一个 Git commit，安装 Node.js、pnpm、uv、Python 3.13.7、OpenCode。
+2. 在 `ontology-rag-demo` 执行 `uv sync --locked`，在仓库根执行
+   `pnpm install --frozen-lockfile`。
+3. 从 `.env.example` 创建被忽略的 `.env`，只在目标机器填写 endpoint 和密钥。
+4. 执行 `prepare`、`build-index`、`serve`，确认 8010 `/health`。
+5. 在目标系统用户中配置 OpenCode 模型/认证，并用 `opencode models` 确认模型可见。
+6. source `.env`，执行 Profile Probe、Console build 和 start。
+7. 按第 6 节做真实 WebUI 验收。
 
-1. `/agents` 只返回服务端 Profile 白名单和脱敏信息。
-2. UI 能为指定 Profile 创建 OpenCode Session。
-3. Agent 能自主加载 ontology retrieval Skill。
-4. Agent 能调用 Bash 脚本访问 8010。
-5. UI 展示 Bash 命令、状态、原始输出和错误。
-6. `ONTOLOGY_ARTIFACT:` 子图能够显示为轻量 SVG 卡片。
-7. Agent 可以根据 Tool 结果继续调用工具或生成最终回答。
-8. Cancel 能停止当前 Prompt。
-9. 页面重载后通过 `session/list` 和 `session/load` 恢复历史。
-10. WebSocket 断开或 Profile 进程异常退出后能够报告故障；重新连接会创建新进程，
-    并可从 OpenCode 恢复已有 Session。
-11. 日志、HTTP 响应和前端状态不包含密钥或真实内网地址。
-12. 同一页面可以保持多个 Profile 连接；每个 Profile 复用一条 ACP 连接，当前窗口
-    只显示一条 Session，切换后其他 Profile 的执行继续且事件不串流。
-13. 同一 Profile 的多个 Session 可以保留和切换，但首版同时只执行一轮 Prompt。
-14. 同一 Session 的并发恢复请求会合并为一次 `session/load`；主动 Disconnect 不留下
-    `transport closed` 错误横幅。
-15. 固定 Profile 分组、直接删除图标、Profile 信息卡、确认对话框和侧栏折叠符合
-    `apps/agent-console/prototypes/profile-sidebar.html` 的已接受设计。
-16. 实时成功回答显示当地完成时间和全轮耗时；历史恢复不伪造这两个字段。
-17. Conversation 删除写入所属 Profile 的 OpenCode 数据库，刷新页面后不复现；运行中
-    的 Profile 不能删除。
-18. 桌面 Session 列表使用紧凑行距，移动端 Session 行和行内操作保持至少 44 px。
-19. Thinking、Skill、Execute/Bash 和普通 Tool 使用不同语义图标；Tool Call、ACP Plan
-    和完整 JSON 都可折叠，完整 JSON 标题为“查询Plan”。
-20. 形式化卡片标题单行截断并可悬停查看全文；Tool UI 不显示通用 `ACP content` 面板，
-    但底层 `content` 仍可供 artifact 提取。
-
-## 4. 上游偏差记录
-
-实现中若发现已固定的开源上游与本设计不一致，必须：
-
-1. 在 `decisions.md` 中记录事实和影响；
-2. 更新 `system-design.md` 或 `protocols.md`；
-3. 再修改代码和测试；
-4. 在上游版本升级时重新核对这些偏差。
+以下内容不迁移：`.env`、`.runtime/`、LanceDB `state/`、模型缓存和真实业务源材料。
+它们应在目标环境重新注入或构建。需要复现实验时记录 Git commit、OpenCode 版本、
+Profile revision、本体摘要和运行环境；无需维护第二套方案元数据。

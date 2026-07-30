@@ -20,6 +20,7 @@ ENDPOINTS = {
     "answer": "/v1/answer",
 }
 SHA256_HEX_LENGTH = 64
+SUPPORTED_GRAPH_ALGORITHMS = {"minimum_connected_subgraph"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -48,8 +49,18 @@ def parse_args() -> argparse.Namespace:
         parser.error("--mode oag requires at least one --keyword")
     if any(not keyword or len(keyword) > 200 for keyword in keywords):
         parser.error("--keyword must contain between 1 and 200 characters")
+    graph_algorithm = (
+        os.environ.get(
+            "ONTOLOGY_GRAPH_ALGORITHM",
+            "minimum_connected_subgraph",
+        ).strip()
+        or "minimum_connected_subgraph"
+    )
+    if graph_algorithm not in SUPPORTED_GRAPH_ALGORITHMS:
+        parser.error("ONTOLOGY_GRAPH_ALGORITHM is not supported")
     args.question = question
     args.keyword = keywords
+    args.graph_algorithm = graph_algorithm
     return args
 
 
@@ -145,6 +156,23 @@ def graph_from_response(mode: str, response: dict[str, Any]) -> dict[str, Any] |
     return graph if isinstance(graph, dict) else None
 
 
+def confirm_graph_algorithm(
+    mode: str,
+    response: dict[str, Any],
+    expected: str,
+) -> str:
+    if mode == "answer":
+        trace = response.get("trace")
+        reported = trace.get("graph_algorithm") if isinstance(trace, dict) else None
+    else:
+        reported = response.get("graph_algorithm")
+    if reported != expected:
+        raise RuntimeError(
+            "Ontology RAG service did not confirm the requested graph algorithm"
+        )
+    return expected
+
+
 def to_artifact(
     question: str,
     graph: dict[str, Any],
@@ -227,6 +255,8 @@ def main() -> int:
         payload["trace"] = True
     if args.mode == "oag":
         payload["keywords"] = args.keyword
+    if args.mode in {"graph", "oag", "answer"}:
+        payload["graph_algorithm"] = args.graph_algorithm
     started = time.monotonic()
     response = request_json(
         service_url(args.mode),
@@ -236,12 +266,10 @@ def main() -> int:
     duration_ms = round((time.monotonic() - started) * 1000)
     graph = graph_from_response(args.mode, response)
     if graph is not None:
-        graph_algorithm = (
-            os.environ.get(
-                "ONTOLOGY_GRAPH_ALGORITHM",
-                "minimum_connected_subgraph",
-            ).strip()
-            or "minimum_connected_subgraph"
+        graph_algorithm = confirm_graph_algorithm(
+            args.mode,
+            response,
+            args.graph_algorithm,
         )
         artifact = to_artifact(
             args.question,

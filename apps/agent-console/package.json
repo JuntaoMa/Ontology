@@ -9,20 +9,15 @@
   "scripts": {
     "dev": "concurrently -k -n bridge,ui -c cyan,magenta \"pnpm dev:bridge\" \"pnpm dev:ui\"",
     "dev:bridge": "tsx watch server/index.ts",
-    "dev:ui": "vite --mode web",
-    "build": "pnpm typecheck && vite build --mode web && tsc -p tsconfig.server.json",
+    "dev:ui": "vite",
+    "build": "vue-tsc --noEmit && tsc -p tsconfig.server-typecheck.json && vite build && tsc -p tsconfig.server.json",
     "start": "node dist-server/index.js",
     "typecheck": "vue-tsc --noEmit && tsc -p tsconfig.server-typecheck.json",
     "test": "vitest run",
-    "probe:acp": "tsx server/probe-cli.ts",
-    "profile:publish": "tsx server/profile-publish-cli.ts"
+    "probe:acp": "tsx server/probe-cli.ts"
   },
   "dependencies": {
     "@agentclientprotocol/sdk": "0.13.1",
-    "@tauri-apps/api": "2.9.1",
-    "@tauri-apps/plugin-dialog": "2.6.0",
-    "@tauri-apps/plugin-fs": "2.4.5",
-    "@tauri-apps/plugin-store": "2.4.2",
     "ajv": "8.20.0",
     "d3-force": "3.0.0",
     "d3-selection": "3.0.0",
@@ -31,7 +26,6 @@
     "marked": "17.0.1",
     "pinia": "3.0.4",
     "vue": "3.5.27",
-    "vue-router": "5.0.1",
     "ws": "8.21.1",
     "yaml": "2.9.0"
   },
@@ -45,7 +39,6 @@
     "@vue/test-utils": "2.4.6",
     "concurrently": "9.2.1",
     "jsdom": "27.0.1",
-    "postcss": "8.5.23",
     "tsx": "4.21.0",
     "typescript": "5.6.3",
     "vite": "6.4.3",

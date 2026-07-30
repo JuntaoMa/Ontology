@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { AcpBridge, type BridgeProfile } from "./bridge.js";
+import { AcpBridge } from "./bridge.js";
 import {
   getMissingRequiredEnvironment,
   loadProfileCatalog,
@@ -29,7 +29,7 @@ const allowedOrigins = parseAllowedOrigins(
 );
 
 const profiles = await loadProfileCatalog(profilesRoot);
-const bridge = new AcpBridge(profiles as BridgeProfile[]);
+const bridge = new AcpBridge(profiles);
 const activeDeletions = new Set<Promise<void>>();
 
 const server = createServer(async (request, response) => {
@@ -64,7 +64,8 @@ server.on("upgrade", (request, socket, head) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`Ontology Agent Console listening on http://${host}:${port}`);
+  const displayHost = host === "::1" ? `[${host}]` : host;
+  console.log(`Ontology Agent Console listening on http://${displayHost}:${port}`);
   console.log(`Loaded ${profiles.length} Agent Profile(s) from ${profilesRoot}`);
 });
 
@@ -236,7 +237,7 @@ function applySecurityHeaders(response: ServerResponse): void {
     "Content-Security-Policy",
     "default-src 'self'; connect-src 'self' ws: wss:; img-src 'self' data:; " +
       "style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; " +
-      "base-uri 'self'; frame-ancestors 'none'",
+      "base-uri 'self'; form-action 'none'; frame-ancestors 'none'",
   );
   response.setHeader("Referrer-Policy", "no-referrer");
   response.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
@@ -272,7 +273,9 @@ function parseAllowedOrigins(raw: string | undefined, listenPort: number): Set<s
   return new Set([
     `http://127.0.0.1:${listenPort}`,
     `http://localhost:${listenPort}`,
+    `http://[::1]:${listenPort}`,
     "http://127.0.0.1:5173",
     "http://localhost:5173",
+    "http://[::1]:5173",
   ]);
 }

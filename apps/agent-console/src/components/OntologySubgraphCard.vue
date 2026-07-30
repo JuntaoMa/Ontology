@@ -238,10 +238,10 @@ function shortLabel(label: string): string {
 <style scoped>
 .subgraph-card {
   margin: 0.75rem 0 0;
-  border: 1px solid var(--border-color, #d7dce3);
+  border: 1px solid var(--line, #d7dce3);
   border-radius: 8px;
   overflow: hidden;
-  background: var(--bg-main, #fff);
+  background: var(--surface, #fff);
 }
 
 .subgraph-header {
@@ -250,7 +250,7 @@ function shortLabel(label: string): string {
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.6rem 0.75rem;
-  border-bottom: 1px solid var(--border-color, #d7dce3);
+  border-bottom: 1px solid var(--line, #d7dce3);
   font-size: 0.8rem;
   cursor: pointer;
   list-style-position: inside;
@@ -320,7 +320,7 @@ function shortLabel(label: string): string {
 }
 
 .node circle {
-  stroke: var(--bg-main, #fff);
+  stroke: var(--surface, #fff);
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }
@@ -331,10 +331,10 @@ function shortLabel(label: string): string {
 }
 
 .node text {
-  fill: var(--text-primary, #1f2937);
+  fill: var(--text, #1f2937);
   font: 10px ui-sans-serif, system-ui, sans-serif;
   paint-order: stroke;
-  stroke: var(--bg-main, #fff);
+  stroke: var(--surface, #fff);
   stroke-width: 3px;
   stroke-linejoin: round;
 }

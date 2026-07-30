@@ -1,10 +1,14 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
-import { copyFileSync, mkdirSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import path from "node:path";
 import type { IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
 import { WebSocket, WebSocketServer } from "ws";
 import type { LoadedProfile } from "./profile.js";
+import {
+  buildChildEnvironment,
+  prepareRuntimeConfigOverlay,
+} from "./opencode-runtime.js";
 
 const MAX_STDOUT_BUFFER_BYTES = 16 * 1024 * 1024;
 const MAX_STDERR_BUFFER_BYTES = 64 * 1024;
@@ -12,30 +16,6 @@ const MAX_STDERR_LINE_LENGTH = 4_000;
 const CLOSE_INTERNAL_ERROR = 1011;
 const CLOSE_UNSUPPORTED_DATA = 1003;
 const CLOSE_POLICY_VIOLATION = 1008;
-
-export interface BridgeProfile {
-  id: string;
-  title: string;
-  profilePath: string;
-  configPath: string;
-  runtime: {
-    command: string;
-    args: string[];
-    cwd: string;
-    stateDir: string;
-    configDir: string;
-    startupTimeoutMs: number;
-  };
-  requiredEnv: string[];
-  configAssets: LoadedProfile["configAssets"];
-  skillsRoot?: string;
-  model: LoadedProfile["model"];
-  retrieval?: LoadedProfile["retrieval"];
-  ontology: {
-    id: string;
-    sha256?: string;
-  };
-}
 
 export interface ProfileConnectionStatus {
   active: boolean;
@@ -47,8 +27,6 @@ interface ActiveConnection {
   socket: WebSocket;
   startedAt: string;
   pendingRequests: Set<string>;
-  pendingSessionRequests: Map<string, string>;
-  busySessionCounts: Map<string, number>;
   close: (reason: "socket" | "child" | "protocol") => Promise<void>;
 }
 
@@ -56,13 +34,13 @@ type SpawnChild = typeof spawn;
 
 export class AcpBridge {
   readonly webSocketServer: WebSocketServer;
-  private readonly profiles: Map<string, BridgeProfile>;
+  private readonly profiles: Map<string, LoadedProfile>;
   private readonly active = new Map<string, ActiveConnection>();
   private readonly reserved = new Set<string>();
   private readonly maintenance = new Set<string>();
   private readonly spawnChild: SpawnChild;
 
-  constructor(profiles: BridgeProfile[], options?: { spawnChild?: SpawnChild }) {
+  constructor(profiles: LoadedProfile[], options?: { spawnChild?: SpawnChild }) {
     this.profiles = new Map(profiles.map((profile) => [profile.id, profile]));
     this.spawnChild = options?.spawnChild ?? spawn;
     this.webSocketServer = new WebSocketServer({
@@ -79,19 +57,9 @@ export class AcpBridge {
       : { active: false };
   }
 
-  isSessionBusy(profileId: string, sessionId: string): boolean {
-    return (this.active.get(profileId)?.busySessionCounts.get(sessionId) ?? 0) > 0;
-  }
-
   isProfileBusy(profileId: string): boolean {
     const connection = this.active.get(profileId);
-    if (!connection) return false;
-    return (
-      connection.pendingRequests.size > 0 ||
-      Array.from(connection.busySessionCounts.values()).some(
-        (count) => count > 0,
-      )
-    );
+    return connection !== undefined && connection.pendingRequests.size > 0;
   }
 
   /**
@@ -178,7 +146,7 @@ export class AcpBridge {
     this.webSocketServer.close();
   }
 
-  private async attach(profile: BridgeProfile, socket: WebSocket): Promise<void> {
+  private async attach(profile: LoadedProfile, socket: WebSocket): Promise<void> {
     let runtimeConfigDir: string;
     try {
       // WebSocket clients commonly send `initialize` immediately after open.
@@ -220,8 +188,6 @@ export class AcpBridge {
       socket,
       startedAt,
       pendingRequests: new Set(),
-      pendingSessionRequests: new Map(),
-      busySessionCounts: new Map(),
       close: async () => undefined,
     };
     this.active.set(profile.id, connection);
@@ -378,36 +344,13 @@ export class AcpBridge {
   private trackClientRequest(profileId: string, line: string): void {
     const connection = this.active.get(profileId);
     if (!connection) return;
-    const message = JSON.parse(line) as {
-      id?: unknown;
-      method?: unknown;
-      params?: { sessionId?: unknown };
-    };
+    const message = JSON.parse(line) as { id?: unknown; method?: unknown };
     if (
       (typeof message.id === "string" || typeof message.id === "number") &&
       typeof message.method === "string"
     ) {
       connection.pendingRequests.add(jsonRpcIdKey(message.id));
     }
-    if (
-      !(
-        message.method === "session/prompt" ||
-        message.method === "session/load" ||
-        message.method === "session/resume" ||
-        message.method === "session/fork"
-      ) ||
-      (typeof message.id !== "string" && typeof message.id !== "number") ||
-      typeof message.params?.sessionId !== "string"
-    ) {
-      return;
-    }
-    const requestKey = jsonRpcIdKey(message.id);
-    const sessionId = message.params.sessionId;
-    connection.pendingSessionRequests.set(requestKey, sessionId);
-    connection.busySessionCounts.set(
-      sessionId,
-      (connection.busySessionCounts.get(sessionId) ?? 0) + 1,
-    );
   }
 
   private trackAgentResponse(profileId: string, line: string): void {
@@ -422,154 +365,11 @@ export class AcpBridge {
     }
     const requestKey = jsonRpcIdKey(message.id);
     connection.pendingRequests.delete(requestKey);
-    const sessionId = connection.pendingSessionRequests.get(requestKey);
-    if (!sessionId) return;
-    connection.pendingSessionRequests.delete(requestKey);
-    const remaining = (connection.busySessionCounts.get(sessionId) ?? 1) - 1;
-    if (remaining > 0) {
-      connection.busySessionCounts.set(sessionId, remaining);
-    } else {
-      connection.busySessionCounts.delete(sessionId);
-    }
   }
 }
 
 function jsonRpcIdKey(value: string | number): string {
   return `${typeof value}:${String(value)}`;
-}
-
-const SAFE_INHERITED_ENVIRONMENT = [
-  "PATH",
-  "HOME",
-  "USER",
-  "LOGNAME",
-  "SHELL",
-  "TMPDIR",
-  "TMP",
-  "TEMP",
-  "LANG",
-  "LC_ALL",
-  "LC_CTYPE",
-  "TERM",
-  "COLORTERM",
-  "NO_COLOR",
-  "XDG_CACHE_HOME",
-  "XDG_DATA_HOME",
-  "XDG_STATE_HOME",
-] as const;
-
-export function buildChildEnvironment(
-  profile: BridgeProfile,
-  runtimeConfigDir: string,
-  source: NodeJS.ProcessEnv,
-): NodeJS.ProcessEnv {
-  const environment: NodeJS.ProcessEnv = {};
-  for (const name of SAFE_INHERITED_ENVIRONMENT) {
-    const value = source[name];
-    if (value !== undefined) environment[name] = value;
-  }
-  for (const name of profile.requiredEnv) {
-    const value = source[name];
-    if (value !== undefined) environment[name] = value;
-  }
-
-  environment.OPENCODE_DB = path.join(
-    profile.runtime.stateDir,
-    "opencode.db",
-  );
-  environment.OPENCODE_CONFIG_DIR = runtimeConfigDir;
-  environment.ONTOLOGY_PROFILE_DIR = path.dirname(profile.profilePath);
-  if (profile.skillsRoot) {
-    environment.ONTOLOGY_SKILLS_ROOT = profile.skillsRoot;
-  }
-  environment.ONTOLOGY_MODEL_ID = profile.model.id;
-  if (profile.model.source === "profile") {
-    environment.ONTOLOGY_MODEL_BASE_URL =
-      source[profile.model.apiBaseEnv] ?? "";
-  }
-  if (profile.model.auth.source === "environment") {
-    environment.ONTOLOGY_MODEL_API_KEY =
-      source[profile.model.auth.apiKeyEnv] ?? "";
-  }
-  if (profile.retrieval) {
-    const retrievalEndpoint =
-      source[profile.retrieval.endpointEnv] ?? "";
-    environment.ONTOLOGY_RETRIEVAL_ENDPOINT = retrievalEndpoint;
-    environment.ONTOLOGY_VECTOR_TOP_K = String(
-      profile.retrieval.vectorTopK,
-    );
-    environment.ONTOLOGY_GRAPH_ALGORITHM =
-      profile.retrieval.graphAlgorithm;
-    if (isLoopbackHttpUrl(retrievalEndpoint)) {
-      // urllib on macOS can consult system proxy settings even when proxy
-      // variables are absent. Keep the fixed local OAG path off that proxy
-      // without exposing the host's broader NO_PROXY configuration.
-      environment.NO_PROXY = "localhost,127.0.0.1,::1";
-      environment.no_proxy = "localhost,127.0.0.1,::1";
-    }
-  }
-  environment.ONTOLOGY_ID = profile.ontology.id;
-  if (profile.ontology.sha256) {
-    environment.ONTOLOGY_EXPECTED_SHA256 = profile.ontology.sha256;
-  }
-  return environment;
-}
-
-function isLoopbackHttpUrl(value: string): boolean {
-  try {
-    const parsed = new URL(value);
-    const hostname = parsed.hostname.replace(/^\[|\]$/g, "").toLowerCase();
-    return (
-      (parsed.protocol === "http:" || parsed.protocol === "https:") &&
-      (hostname === "localhost" ||
-        hostname === "127.0.0.1" ||
-        hostname === "::1")
-    );
-  } catch {
-    return false;
-  }
-}
-
-export function prepareRuntimeConfigOverlay(
-  profile: Pick<BridgeProfile, "configPath" | "configAssets">,
-  runtimeConfigDir: string,
-): void {
-  mkdirSync(runtimeConfigDir, { recursive: true, mode: 0o700 });
-  copyFileSync(
-    profile.configPath,
-    path.join(runtimeConfigDir, "opencode.jsonc"),
-  );
-  for (const asset of profile.configAssets) {
-    const destination = resolveRuntimeAssetDestination(
-      runtimeConfigDir,
-      asset.relativePath,
-    );
-    mkdirSync(path.dirname(destination), { recursive: true, mode: 0o700 });
-    copyFileSync(asset.path, destination);
-  }
-}
-
-function resolveRuntimeAssetDestination(
-  runtimeConfigDir: string,
-  relativePath: string,
-): string {
-  const root = path.resolve(runtimeConfigDir);
-  const destination = path.resolve(root, relativePath);
-  const relative = path.relative(root, destination);
-  if (
-    !relative ||
-    relative === ".." ||
-    relative.startsWith(`..${path.sep}`) ||
-    path.isAbsolute(relative) ||
-    normalizedPathKey(relative) === normalizedPathKey("opencode.jsonc")
-  ) {
-    throw new Error("Invalid OpenCode runtime asset destination");
-  }
-  return destination;
-}
-
-function normalizedPathKey(value: string): string {
-  return process.platform === "win32" ? value.toLocaleLowerCase() : value;
 }
 
 export function splitNdjson(buffer: string): { lines: string[]; remainder: string } {

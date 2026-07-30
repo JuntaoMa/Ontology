@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from ontology_rag_demo.services import RagServices
 from ontology_rag_demo.settings import Settings
 
@@ -21,3 +23,19 @@ def test_oag_uses_top_five_vector_hits_as_graph_anchors(tmp_path: Path) -> None:
 
     assert len(hits) == 5
     assert [anchor["id"] for anchor in graph.anchors] == [hit["id"] for hit in hits]
+
+
+def test_oag_rejects_an_unimplemented_graph_algorithm(tmp_path: Path) -> None:
+    services = RagServices(
+        Settings(
+            ontology_path=Path("examples/smart-building/ontology.ttl"),
+            lancedb_uri=tmp_path / "lancedb",
+            embedding_backend="deterministic",
+        )
+    )
+
+    with pytest.raises(ValueError, match="Unsupported graph retrieval algorithm"):
+        services.oag_retrieve(
+            ["温度传感器"],
+            graph_algorithm="shortest_path_union",
+        )

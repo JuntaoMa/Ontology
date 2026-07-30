@@ -25,6 +25,8 @@ defineProps<{
     class="ui-icon"
     :data-icon="name"
     :viewBox="name === 'chevron' ? '0 0 20 20' : '0 0 24 24'"
+    width="1em"
+    height="1em"
     aria-hidden="true"
   >
     <template v-if="name === 'logo'">
@@ -130,7 +132,5 @@ defineProps<{
 <style scoped>
 .ui-icon {
   display: block;
-  width: 100%;
-  height: 100%;
 }
 </style>

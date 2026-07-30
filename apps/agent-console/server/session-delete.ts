@@ -6,8 +6,8 @@ import path from "node:path";
 import {
   buildChildEnvironment,
   prepareRuntimeConfigOverlay,
-  type BridgeProfile,
-} from "./bridge.js";
+} from "./opencode-runtime.js";
+import type { LoadedProfile } from "./profile.js";
 
 const DELETE_TIMEOUT_MS = 15_000;
 const DELETE_KILL_GRACE_MS = 500;
@@ -38,7 +38,7 @@ export function isOpenCodeSessionId(value: string): boolean {
   return /^ses_[A-Za-z0-9]{1,96}$/.test(value);
 }
 
-export function supportsSessionDelete(profile: BridgeProfile): boolean {
+export function supportsSessionDelete(profile: LoadedProfile): boolean {
   const executable = path.basename(profile.runtime.command).toLowerCase();
   return executable === "opencode" || executable === "opencode.exe";
 }
@@ -51,7 +51,7 @@ export function supportsSessionDelete(profile: BridgeProfile): boolean {
  * OPENCODE_DB path.
  */
 export async function deleteOpenCodeSession(
-  profile: BridgeProfile,
+  profile: LoadedProfile,
   sessionId: string,
   sourceEnvironment: NodeJS.ProcessEnv = process.env,
   options: SessionDeleteOptions = {},

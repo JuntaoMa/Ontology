@@ -1,27 +1,26 @@
-# Agent Console 配置与 Artifact 协议
+# Agent Console 配置与数据协议
 
-状态：实施中
-Schema 版本：`1`
+状态：首版已实现
 
-## 1. Agent Profile
+Profile Schema：`1`
 
-Profile YAML 既是人类可读说明，也是 ACP Bridge 的实际运行入口。它只声明可用能力和
-参数，不声明工具调用顺序。
+## 1. Agent Profile v1
+
+Profile 是服务端可执行配置，也是人类可读的固定测试方案说明。它声明 Agent 运行方式、
+模型、Skill 和检索参数，但不声明 Agent 必须遵循的步骤。
 
 ```yaml
 schema_version: 1
-id: dev
+id: baseline-oag
 revision: dev
-title: Ontology RAG Development
-description: 可变的本地开发 Profile
-mutable: true
+title: OAG Retrieval Baseline
+description: 使用 BGE-M3 Top 5 与最小连通子图生成数据查询任务。
 
 runtime:
   command: opencode
   args: [acp, --print-logs, --pure]
   cwd: ../..
-  state_dir: ../../.runtime/opencode/dev
-  startup_timeout_ms: 15000
+  startup_timeout_ms: 30000
 
 opencode:
   config: opencode/opencode.jsonc
@@ -34,44 +33,9 @@ model:
   auth:
     source: opencode
 
-skills: []
-
-ontology:
-  id: smart-building-sample
-
-environment:
-  required: []
-```
-
-### 1.1 规则
-
-- `id` 只允许小写字母、数字和连字符。
-- `runtime.command` 和 `runtime.args` 来自服务端文件，绝不接受浏览器覆盖。
-- `runtime.cwd`、配置路径和 Skill 路径相对于 Profile 文件所在目录解析。
-- `state_dir` 必须位于允许的运行状态根目录内。
-- `env` 对象只能保存环境变量名，不保存值。
-- `environment.required` 中的变量才会从宿主传给 OpenCode；本体文件位置只注入 8010。
-- 当声明的 Retrieval endpoint 是 loopback HTTP(S) 地址时，Bridge 只为 Agent 子进程
-  设置固定的 `NO_PROXY/no_proxy=localhost,127.0.0.1,::1`，避免 macOS 系统代理截获
-  本机 OAG 请求；不继承宿主更广泛、可能含内网信息的代理绕行列表。
-- `model.source: opencode` 固定模型 ID，但复用同一系统用户的 OpenCode provider
-  catalog；`model.auth.source: opencode` 复用其凭证，不继承“上次选择的模型”。
-- 自定义兼容 API 使用 `model.source: profile`、`model.api_base.env` 和
-  `model.auth: {source: environment, api_key: {env: ...}}`；所引用变量必须列入
-  `environment.required`。
-- `skills` 可以为空；只在 Agent 实际具备 Retriever 时声明 `retrieval`。
-- `mutable: false` 的正式 Profile 必须有发布锁文件。
-- Profile 文件变化只在下次进程启动时生效。
-- `opencode.config` 和显式列出的 `opencode.assets` 是只读配置源；Bridge 会保持相对
-  路径复制到 `state_dir/config/` 后再启动 OpenCode。资产必须是配置目录内的普通文件，
-  不能是目录、符号链接或路径穿越。
-
-OAG Profile 在上例基础上增加：
-
-```yaml
 skills:
   - id: ontology-retrieval
-    path: skills/ontology-retrieval
+    path: ../_shared/skills/ontology-retrieval
 
 retrieval:
   endpoint:
@@ -79,77 +43,192 @@ retrieval:
   vector_top_k: 5
   graph_algorithm: minimum_connected_subgraph
 
-environment:
-  required: [OAG_BASE_URL]
+ontology:
+  id: smart-building-sample
 ```
 
-## 2. 正式 Profile Bundle
+### 1.1 字段与校验
 
-```text
-profiles/
-├── dev/
-│   ├── profile.yaml
-│   ├── opencode/
-│   │   ├── opencode.jsonc
-│   │   └── prompt.md
-│   └── skills/
-├── baseline-oag/
-├── baseline-direct-context/
-└── releases/
-    └── baseline-v1/
-        ├── profile.yaml
-        ├── profile.lock.json
-        ├── opencode/
-        └── skills/
+| 字段 | 作用 |
+| --- | --- |
+| `id` | Catalog 唯一 ID；只允许小写字母、数字和连字符 |
+| `revision` | Git 中的方案版本标签 |
+| `runtime` | 固定命令、参数、相对 cwd 和启动超时 |
+| `opencode.config` | 受版本控制的 OpenCode 配置源 |
+| `opencode.assets` | 与配置一起复制的普通 sidecar 文件 |
+| `model` | OpenCode 已知模型或环境变量驱动的兼容 API |
+| `skills` | 零个或多个包含 `SKILL.md` 的目录 |
+| `retrieval` | 可选的 OAG endpoint、Top-K 与图算法 |
+| `ontology` | 逻辑本体 ID；可选 `sha256` |
+
+服务端使用
+`apps/agent-console/server/schemas/profile-v1.schema.json` 和语义校验加载 Profile。
+Schema 禁止未知字段；路径必须相对 `profile.yaml`，不能逃出允许的项目/Catalog 范围，
+且关键文件不能是符号链接。
+
+Profile 中不配置运行状态目录或显式环境白名单：
+
+- `<project>/.runtime/opencode/<id>` 是由 Catalog 项目根和 `id` 派生的 `stateDir`；
+- `<stateDir>/opencode.db` 是该 Profile 的 OpenCode Session 数据库；
+- `<stateDir>/config/` 是 Bridge 刷新的可写 OpenCode overlay；
+- Loader 会递归收集合法 `{env: NAME}` 引用，自动得到所需环境变量集合；
+- 缺少引用值时 `/agents` 把 Profile 标为 `unavailable`，但不返回变量名或值。
+
+自定义 OpenAI-compatible 模型使用：
+
+```yaml
+model:
+  id: qwen-compatible/qwen-model
+  source: profile
+  api_base:
+    env: QWEN_BASE_URL
+  auth:
+    source: environment
+    api_key:
+      env: QWEN_API_KEY
 ```
 
-`profile.lock.json` 不保存密钥或本体原始材料，至少记录：
+Bridge 将 Profile 声明转换为 `ONTOLOGY_MODEL_*`、
+`ONTOLOGY_RETRIEVAL_ENDPOINT`、`ONTOLOGY_VECTOR_TOP_K`、
+`ONTOLOGY_GRAPH_ALGORITHM`、`ONTOLOGY_ID` 和可选
+`ONTOLOGY_EXPECTED_SHA256`。当 Retrieval endpoint 是 loopback HTTP(S) 时，还固定
+设置 `NO_PROXY/no_proxy=localhost,127.0.0.1,::1`。
+
+Profile、Prompt、Skill 和 OpenCode 配置直接由 Git 版本化；运行时不生成第二套方案
+元数据。
+
+## 2. Bridge HTTP/WS 协议
+
+### 2.1 `GET /health`
 
 ```json
 {
-  "schema_version": 1,
-  "profile_id": "baseline-v1",
-  "profile_revision": "v1",
-  "created_at": "2026-07-27T00:00:00Z",
-  "files": [
+  "status": "ok",
+  "profiles": [
     {
-      "path": "profile.yaml",
-      "sha256": "...",
-      "size": 1024
+      "id": "baseline-oag",
+      "active": true,
+      "startedAt": "2026-07-30T08:00:00.000Z"
     }
-  ],
-  "external_inputs": {
-    "ontology": {
-      "id": "smart-building-sample",
-      "sha256": "..."
-    }
-  }
+  ]
 }
 ```
 
-发布过程复制小型配置、Prompt、Skill 和调用脚本；本体源材料、模型权重、LanceDB 状态
-和密钥不进入 Bundle，只记录逻辑标识、摘要及环境变量引用。
+未连接的 Profile 只有 `id` 和 `active: false`。
 
-Bundle lock 在 Catalog 加载时校验控制文件。不可变 Profile 调用检索时还会把
-`external_inputs.ontology.sha256` 与 8010 `/health` 返回的 `ontology_sha256` 比对；
-不一致或服务未提供摘要时停止调用。该校验不覆盖 LanceDB 与黑盒实例数据。
+### 2.2 `GET /agents`
 
-同一用户在 Bridge 启动后直接修改 Bundle 属于不支持的本地篡改场景；修改 `dev` 或
-替换 Release 后必须重启 Console。正式复现实验还应在部署清单中固定 OpenCode
-`1.17.16`，因为 Runtime 二进制不复制进 Profile Bundle。
+返回脱敏 Catalog：
 
-## 3. `ontology-artifact.v1`
+```json
+{
+  "agents": [
+    {
+      "id": "baseline-oag",
+      "revision": "dev",
+      "title": "OAG Retrieval Baseline",
+      "description": "使用 BGE-M3 Top 5 与最小连通子图上下文生成数据查询任务。",
+      "status": "stopped",
+      "ws_url": "/agents/baseline-oag/acp",
+      "cwd": "/absolute/path/to/ontology-rag-demo",
+      "model": {
+        "id": "deepseek/deepseek-v4-flash",
+        "source": "opencode"
+      },
+      "retrieval": {
+        "vector_top_k": 5,
+        "graph_algorithm": "minimum_connected_subgraph"
+      },
+      "ontology": {
+        "id": "smart-building-sample"
+      }
+    }
+  ]
+}
+```
 
-ACP 负责传输 Agent 和 Tool Call 事件，但不定义本体图。检索脚本可以在 stdout 中输出
-一行带固定前缀的 JSON：
+`status` 为 `stopped`、`active` 或 `unavailable`。响应不含命令、配置路径、stateDir、
+环境变量名/值、endpoint 或密钥。`cwd` 是 ACP `session/new`、`session/load` 和
+`session/list` 的协议必需值，因此只适用于当前 loopback 模式。
+
+### 2.3 `WS /agents/:profileId/acp`
+
+- 文本帧承载一个或多个换行分隔的 JSON-RPC 2.0 对象；二进制帧不支持。
+- Bridge 保持 JSON-RPC `id`、`method`、`params` 和结果不变，在 WebSocket 与
+  `opencode acp` stdin/stdout NDJSON 之间转发。
+- 同一 Profile 的第二条连接、maintenance 期间连接或缺少环境变量的连接会被拒绝。
+- `session/new`、`session/load`、`session/list`、`session/resume` 和
+  `session/fork` 必须使用固定 cwd；非空 `mcpServers` 被拒绝。
+- `session/set_model`、`session/set_mode` 和 `session/set_config_option` 被拒绝。
+- WebSocket 断开会终止对应进程树；后续连接通过 OpenCode 历史恢复。
+
+UI 当前使用的 ACP 方法：
+
+| 方向 | 方法 | 用途 |
+| --- | --- | --- |
+| UI → Agent | `initialize` | 协议与能力协商 |
+| UI → Agent | `session/list` | 获取 Session 元数据 |
+| UI → Agent | `session/new` | 创建 Session |
+| UI → Agent | `session/load` | 重放持久历史 |
+| UI → Agent | `session/prompt` | 发送一轮 Prompt |
+| UI → Agent | `session/cancel` | 取消当前轮 |
+| UI → Agent | `authenticate` | 执行 Agent 提供的认证方法 |
+| Agent → UI | `session/update` | 消息、Thinking、Plan、Tool 和元数据更新 |
+| Agent → UI | `session/request_permission` | Permission 选择 |
+
+### 2.4 `DELETE /agents/:profileId/sessions/:sessionId`
+
+这是 OpenCode 专用的同源扩展，不属于 ACP：
+
+- 请求不能带 body；
+- `sessionId` 必须匹配 `ses_[A-Za-z0-9]{1,96}`；
+- Profile 有在途 ACP 请求、正在连接或正在 maintenance 时返回 `409 profile_busy`；
+- 成功返回 `204`；
+- 不支持 OpenCode 删除、CLI 失败和超时分别返回 `501`、`502`、`504`。
+
+## 3. OAG HTTP 协议
+
+8010 FastAPI 服务提供：
+
+| 方法与路径 | 请求要点 | 响应要点 |
+| --- | --- | --- |
+| `GET /health` | 无 | 安全配置摘要、本体/索引就绪状态、可选 `ontology_sha256` |
+| `POST /v1/retrieval/vector` | `question`、可选 `top_k` | `question`、`hits` |
+| `POST /v1/retrieval/graph` | `question`、`graph_algorithm` | `anchors`、`nodes`、`edges`、`disconnected` |
+| `POST /v1/retrieval/oag` | `question`、1–10 个 `keywords`、可选 `top_k`、算法 | `hits` 与 `graph` |
+| `POST /v1/answer` | `question`、算法、可选 `trace` | `answer`，可选向量与图 trace |
+
+`top_k` 的请求范围是 1–20；当前唯一合法算法是
+`minimum_connected_subgraph`。OAG 基线请求示例：
+
+```json
+{
+  "question": "温度传感器所在的房间属于哪个建筑？",
+  "keywords": ["温度传感器", "房间", "建筑"],
+  "top_k": 5,
+  "graph_algorithm": "minimum_connected_subgraph"
+}
+```
+
+LanceDB 每条本体实体向量的文本固定为：
+
+```text
+{name}
+{label}
+{comment}
+```
+
+检索采用 cosine distance。OAG 模式将关键词用换行连接后做向量查询，把 Top-K 中
+`content_type=ontology_entity` 的实体 ID 作为图锚点，再计算 Steiner 近似最小连通
+子图。
+
+## 4. 本体子图 artifact
+
+Skill wrapper 在 stdout 中输出固定前缀和一个 JSON 对象：
 
 ```text
 ONTOLOGY_ARTIFACT:{"schema_version":1,"kind":"ontology.subgraph",...}
 ```
-
-普通日志可以位于其他行。UI 只解析固定前缀后的 JSON，不扫描或猜测任意输出。
-
-### 3.1 子图结构
 
 ```json
 {
@@ -160,7 +239,7 @@ ONTOLOGY_ARTIFACT:{"schema_version":1,"kind":"ontology.subgraph",...}
     {
       "id": "TemperatureSensor",
       "label": "温度传感器",
-      "type": "Class",
+      "type": "OntologyEntity",
       "anchor": true
     }
   ],
@@ -174,81 +253,22 @@ ONTOLOGY_ARTIFACT:{"schema_version":1,"kind":"ontology.subgraph",...}
   ],
   "metadata": {
     "algorithm": "minimum_connected_subgraph",
-    "anchor_nodes": ["TemperatureSensor", "Building"],
-    "node_count": 2,
-    "edge_count": 1,
-    "duration_ms": 18
+    "anchor_nodes": ["TemperatureSensor"],
+    "node_count": 1,
+    "edge_count": 0,
+    "duration_ms": 18,
+    "disconnected": false
   }
 }
 ```
 
-### 3.2 渲染约束
+UI 从 Tool `rawOutput` 或 ACP `content` 中查找首个合法 marker。最多内联 80 个节点、
+160 条边；超过限制时不绘图，但保留 Tool 原始输出。字符串按文本处理，解析或渲染失败
+不能影响对话。
 
-- UI 只接受 `schema_version: 1` 和已登记的 `kind`。
-- 字符串作为纯文本处理。
-- 首版最多内联渲染 80 个节点和 160 条边。
-- 超过限制时只显示元数据和原始 Tool 输出。
-- 支持缩放、画布平移、悬停和锚点高亮。
-- 不支持编辑、图查询、复杂筛选或属性工作台。
-- artifact 解析或渲染失败不得影响对话和原始 Tool Call 展示。
-- artifact 提取可以读取 `rawOutput` 或底层 ACP Tool Call `content`。通用
-  `ACP content` 不作为独立 UI 面板展示，但不得因展示去重而提前丢弃该协议字段。
+## 5. `data-query-plan.v1`
 
-## 4. ACP Bridge HTTP/WS 接口
-
-### `GET /health`
-
-返回 Bridge 和已启动 Profile 进程的非敏感状态。
-
-### `GET /agents`
-
-返回脱敏后的 Profile Catalog：
-
-```json
-{
-  "agents": [
-    {
-      "id": "dev",
-      "revision": "dev",
-      "title": "Ontology RAG Development",
-      "description": "可变的本地开发 Profile",
-      "mutable": true,
-      "status": "stopped",
-      "cwd": "/absolute/path/on/agent-host/ontology-rag-demo",
-      "ws_url": "/agents/dev/acp"
-    }
-  ]
-}
-```
-
-`status` 取值为 `stopped`、`active` 或 `unavailable`；最后一种表示 Profile 所需的
-环境变量尚未完整注入，但接口不会返回变量值。
-
-不得返回命令、配置目录、状态目录、环境变量值、内网 API 地址或模型密钥。ACP
-`session/new` 和 `session/load` 要求客户端提交 Agent 主机上的绝对 cwd，因此首版
-Catalog 会返回 Profile 的 cwd。该信息只允许出现在已经限定为 loopback/可信网络的
-部署中；未来公网部署必须由认证后的服务端策略替代。
-
-### `WS /agents/:profileId/acp`
-
-- 每个 WebSocket 文本帧包含一个或多个换行分隔的 ACP JSON-RPC 对象。
-- 发送给 OpenCode stdin 的每条消息以换行结尾。
-- OpenCode stdout 只允许协议消息；stderr 单独记录。
-- 第二个客户端连接同一 Profile 时返回明确冲突并关闭，不做多路复用。
-- 浏览器 `Origin` 不在 `AGENT_CONSOLE_ALLOWED_ORIGINS` 白名单时拒绝升级。
-- `session/new`、`session/load`、`session/resume`、`session/fork` 和
-  `session/list` 必须使用 Profile 固定 cwd；可携带 `mcpServers` 的请求不得注入
-  非空列表。
-- `session/set_model`、`session/set_mode` 和 `session/set_config_option` 被拒绝；
-  模型与默认 Agent 配置只能通过发布新的 Profile Revision 调整。
-- Bridge 不改写 JSON-RPC ID、method、params 或 result。
-- WebSocket 关闭时终止对应 ACP 进程树；重新连接后通过 `session/list` 和
-  `session/load` 恢复，而不是复用旧 JSON-RPC 连接。
-
-## 5. 数据查询任务协议
-
-两条本体上下文基线都只输出 `data-query-plan.v1`，便于确认结构一致并保留原始结果。
-首轮不对内容作自动评分或对齐。
+两条基线约定最终消息输出同一种查询计划：
 
 ```json
 {
@@ -266,11 +286,6 @@ Catalog 会返回 Profile 的 cwd。该信息只允许出现在已经限定为 l
           "from": "TemperatureSensor",
           "relation": "locatedIn",
           "to": "Room"
-        },
-        {
-          "from": "Room",
-          "relation": "partOfBuilding",
-          "to": "Building"
         }
       ],
       "ontology_evidence": [
@@ -286,10 +301,6 @@ Catalog 会返回 Profile 的 cwd。该信息只允许出现在已经限定为 l
 }
 ```
 
-- `baseline` 当前取 `oag` 或 `direct-context`。
-- 所有数组字段必须保留；无内容时使用空数组。
-- `targets` 使用本体类名，`joins.relation` 使用本体对象属性名。
-- `filters` 和 `projections` 描述未来黑盒数据查询引擎所需的实例字段，不代表已经得到
-  数据。
-- `ontology_evidence` 只说明查询任务的本体依据，不保存完整本体或 OAG 原始响应。
-- OpenCode 原始事件和 OAG 响应保存在独立 trace 中，最终 JSON 不承担无损审计职责。
+`baseline` 当前为 `oag` 或 `direct-context`。这是 Agent 输出约定，不是 Bridge 强制的
+工作流协议；UI 只在最终消息是完整 object/array，或以合法 JSON fence 收尾时，将其
+格式化为可折叠“查询Plan”，不会改写 ACP 消息或 OpenCode 历史。

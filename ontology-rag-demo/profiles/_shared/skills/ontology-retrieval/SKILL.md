@@ -16,7 +16,7 @@ useful. There is no mandatory tool-call order.
 Run the wrapper through the project environment:
 
 ```bash
-uv run --project . --locked --no-sync python "$ONTOLOGY_PROFILE_DIR/skills/ontology-retrieval/scripts/retrieve.py" --mode graph --question "<question or candidate ontology terms>"
+uv run --project . --locked --no-sync python "$ONTOLOGY_SKILLS_ROOT/ontology-retrieval/scripts/retrieve.py" --mode graph --question "<question or candidate ontology terms>"
 ```
 
 Available modes:
@@ -32,7 +32,7 @@ For the OAG planning baseline, first extract a small set of ontology terms and
 make one combined call:
 
 ```bash
-uv run --project . --locked --no-sync python "$ONTOLOGY_PROFILE_DIR/skills/ontology-retrieval/scripts/retrieve.py" \
+uv run --project . --locked --no-sync python "$ONTOLOGY_SKILLS_ROOT/ontology-retrieval/scripts/retrieve.py" \
   --mode oag \
   --question "<original user question>" \
   --keyword "<term 1>" \

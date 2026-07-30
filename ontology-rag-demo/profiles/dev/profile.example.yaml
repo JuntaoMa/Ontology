@@ -2,8 +2,7 @@ schema_version: 1
 id: dev
 revision: dev
 title: Ontology RAG Development
-description: 可变的本地 Agent Profile，用于验证本体层检索与端到端问答流程。
-mutable: true
+description: 本地 Agent Profile 示例，用于验证本体层检索与端到端问答流程。
 
 runtime:
   command: opencode
@@ -11,8 +10,7 @@ runtime:
     - acp
     - --print-logs
   cwd: ../..
-  state_dir: ../../.runtime/opencode/dev
-  startup_timeout_ms: 15000
+  startup_timeout_ms: 30000
 
 opencode:
   config: opencode/opencode.jsonc
@@ -30,7 +28,7 @@ model:
 
 skills:
   - id: ontology-retrieval
-    path: skills/ontology-retrieval
+    path: ../_shared/skills/ontology-retrieval
 
 retrieval:
   endpoint:
@@ -40,9 +38,3 @@ retrieval:
 
 ontology:
   id: smart-building-sample
-
-environment:
-  required:
-    - QWEN_BASE_URL
-    - QWEN_API_KEY
-    - OAG_BASE_URL

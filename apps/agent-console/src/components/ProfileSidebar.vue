@@ -65,13 +65,14 @@ let toastTimer: ReturnType<typeof setTimeout> | null = null;
 const groups = computed(() =>
   configStore.agentNames.map((agentName) => {
     const config = configStore.getAgent(agentName);
+    const sessions = sessionsForProfile(agentName);
     return {
       agentName,
       config,
-      sessions: sessionsForProfile(agentName),
+      sessions,
       isCurrent: sessionStore.currentSession?.agentName === agentName,
       isUnavailable: config?.status === 'unavailable',
-      activeCount: sessionsForProfile(agentName).filter((row) =>
+      activeCount: sessions.filter((row) =>
         ['running', 'connecting', 'reconnecting', 'needs_attention'].includes(
           row.status,
         ),
@@ -329,8 +330,9 @@ async function toggleInfo(
   }
   infoProfileId.value = agentName;
   infoAnchor.value = anchor;
-  positionInfoCard(anchor);
   await nextTick();
+  const card = infoCard.value;
+  if (card && typeof card.showPopover === 'function') card.showPopover();
   positionInfoCard(anchor);
   infoCloseButton.value?.focus();
 }
@@ -356,27 +358,24 @@ function positionInfoCard(anchor = infoAnchor.value): void {
 
 function closeInfo(restoreFocus = false): void {
   const anchor = infoAnchor.value;
+  const card = infoCard.value;
+  if (
+    card &&
+    typeof card.hidePopover === 'function' &&
+    card.matches(':popover-open')
+  ) {
+    card.hidePopover();
+  }
   infoProfileId.value = null;
   infoAnchor.value = null;
   if (restoreFocus) void nextTick(() => anchor?.focus());
 }
 
-function handleDocumentPointerDown(event: PointerEvent): void {
-  if (!infoProfileId.value) return;
-  const target = event.target as Node;
-  if (
-    infoCard.value?.contains(target) ||
-    infoAnchor.value?.contains(target)
-  ) {
-    return;
-  }
-  closeInfo();
-}
-
-function handleWindowKeydown(event: KeyboardEvent): void {
-  if (event.key === 'Escape' && infoProfileId.value) {
-    event.preventDefault();
-    closeInfo(true);
+function handleInfoToggle(event: Event): void {
+  const state = (event as Event & { newState?: string }).newState;
+  if (state === 'closed') {
+    infoProfileId.value = null;
+    infoAnchor.value = null;
   }
 }
 
@@ -403,14 +402,10 @@ watch(
 );
 
 onMounted(() => {
-  document.addEventListener('pointerdown', handleDocumentPointerDown);
-  window.addEventListener('keydown', handleWindowKeydown);
   window.addEventListener('resize', handleViewportChange);
 });
 
 onBeforeUnmount(() => {
-  document.removeEventListener('pointerdown', handleDocumentPointerDown);
-  window.removeEventListener('keydown', handleWindowKeydown);
   window.removeEventListener('resize', handleViewportChange);
   if (toastTimer) clearTimeout(toastTimer);
 });
@@ -489,6 +484,8 @@ onBeforeUnmount(() => {
               class="icon-button profile-info"
               type="button"
               :aria-label="`${profileTitle(group.agentName, group.config)} information`"
+              aria-controls="profile-info-card"
+              :aria-expanded="infoProfileId === group.agentName"
               title="Profile information"
               @click="toggleInfo($event, group.agentName)"
             >
@@ -574,11 +571,14 @@ onBeforeUnmount(() => {
     <Teleport to="body">
       <section
         v-if="infoProfileId && infoConfig"
+        id="profile-info-card"
         ref="infoCard"
         class="floating-card profile-card"
         :style="infoPosition"
+        popover="auto"
         role="dialog"
         :aria-label="`${profileTitle(infoProfileId, infoConfig)} Profile information`"
+        @toggle="handleInfoToggle"
       >
         <div class="profile-card-head">
           <div class="profile-card-title">
@@ -824,34 +824,6 @@ onBeforeUnmount(() => {
   opacity: 1;
 }
 
-.icon-button {
-  display: grid;
-  width: 29px;
-  height: 29px;
-  flex: 0 0 auto;
-  place-items: center;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.icon-button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--text) 8%, transparent);
-  color: var(--text);
-}
-
-.icon-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.33;
-}
-
-.icon-button :deep(svg) {
-  width: 16px;
-  height: 16px;
-}
-
 .session-list {
   margin: 2px 0 0;
   padding: 0;
@@ -940,12 +912,6 @@ onBeforeUnmount(() => {
   background: var(--warning);
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .session-delete {
   width: 28px;
   height: 28px;
@@ -1012,7 +978,9 @@ onBeforeUnmount(() => {
 
 .floating-card {
   position: fixed;
+  inset: auto;
   z-index: 30;
+  margin: 0;
   border: 1px solid var(--line);
   border-radius: 13px;
   background: rgba(255, 255, 255, 0.98);

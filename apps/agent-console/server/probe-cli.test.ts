@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { AcpProbeResult } from "./acp-probe.js";
+import type { AcpSmokeResult } from "./acp-probe.js";
 import { parseProbeCliArgs, runProbeCli } from "./probe-cli.js";
 import { ProfileValidationError } from "./profile.js";
 
-const RESULT: AcpProbeResult = {
+const RESULT: AcpSmokeResult = {
   protocolVersion: 1,
   agentCapabilities: {},
   sessions: { count: 0, hasMore: false },
@@ -23,94 +23,52 @@ function captureStream() {
 }
 
 describe("parseProbeCliArgs", () => {
-  it("parses command, repeated args, cwd, env, load and timeout", () => {
-    expect(
-      parseProbeCliArgs([
-        "--command",
-        "/usr/local/bin/opencode",
-        "--arg",
-        "acp",
-        "--arg",
-        "--pure",
-        "--cwd",
-        "/tmp/project",
-        "--env",
-        "PROFILE_ID=baseline",
-        "--load-session",
-        "session-1",
-        "--timeout-ms",
-        "2500",
-      ]),
-    ).toEqual({
-      help: false,
-      options: {
-        command: "/usr/local/bin/opencode",
-        args: ["acp", "--pure"],
-        cwd: "/tmp/project",
-        env: { PROFILE_ID: "baseline" },
-        loadSessionId: "session-1",
-        timeoutMs: 2500,
-      },
-    });
-  });
-
-  it("rejects malformed environment overrides without echoing a value", () => {
-    expect(() =>
-      parseProbeCliArgs(["--env", "not-an-assignment"]),
-    ).toThrow("--env must use NAME=VALUE");
-  });
-
-  it("parses Profile mode with read-only load and timeout options", () => {
+  it("accepts only one Profile path", () => {
     expect(
       parseProbeCliArgs([
         "--profile",
-        "ontology-rag-demo/profiles/dev/profile.yaml",
-        "--load-session",
-        "session-1",
-        "--timeout-ms",
-        "2500",
+        "ontology-rag-demo/profiles/baseline-oag/profile.yaml",
       ]),
     ).toEqual({
       help: false,
-      profilePath: "ontology-rag-demo/profiles/dev/profile.yaml",
-      options: {
-        loadSessionId: "session-1",
-        timeoutMs: 2500,
-      },
+      profilePath: "ontology-rag-demo/profiles/baseline-oag/profile.yaml",
     });
   });
 
-  it("does not allow Profile runtime fields to be overridden", () => {
+  it.each([
+    ["--command", "/usr/local/bin/opencode"],
+    ["--cwd", "/tmp/project"],
+    ["--env", "QWEN_API_KEY=must-not-leak"],
+    ["--load-session", "session-1"],
+    ["--timeout-ms", "2500"],
+  ])("rejects the removed %s override", (option, value) => {
     expect(() =>
       parseProbeCliArgs([
         "--profile",
-        "profiles/dev/profile.yaml",
-        "--cwd",
-        "/tmp/other",
+        "profiles/baseline-oag/profile.yaml",
+        option,
+        value,
       ]),
-    ).toThrow("--profile cannot be combined");
-    expect(() =>
-      parseProbeCliArgs([
-        "--profile",
-        "profiles/dev/profile.yaml",
-        "--env",
-        "QWEN_API_KEY=override",
-      ]),
-    ).toThrow("--profile cannot be combined");
+    ).toThrow(/unknown option/i);
+  });
+
+  it("requires Profile mode", () => {
+    expect(() => parseProbeCliArgs([])).toThrow("--profile is required");
   });
 });
 
 describe("runProbeCli", () => {
-  it("returns structured argument errors", async () => {
+  it("returns structured argument errors without echoing unknown values", async () => {
     const stdout = captureStream();
     const stderr = captureStream();
-    const code = await runProbeCli(["--unknown"], {
+    const code = await runProbeCli(["--token=must-not-leak"], {
       stdout: stdout.stream,
       stderr: stderr.stream,
     });
 
     expect(code).toBe(2);
     expect(stdout.value()).toBe("");
+    expect(stderr.value()).not.toContain("must-not-leak");
     expect(JSON.parse(stderr.value())).toEqual({
       ok: false,
       error: {
@@ -120,52 +78,26 @@ describe("runProbeCli", () => {
     });
   });
 
-  it("does not echo an unknown argument that may contain a secret", async () => {
+  it("dispatches only the declared Profile", async () => {
     const stdout = captureStream();
     const stderr = captureStream();
-    await runProbeCli(["--token=must-not-leak"], {
-      stdout: stdout.stream,
-      stderr: stderr.stream,
-    });
-
-    expect(stderr.value()).not.toContain("must-not-leak");
-  });
-
-  it("dispatches Profile mode without exposing command overrides", async () => {
-    const stdout = captureStream();
-    const stderr = captureStream();
-    const calls: unknown[] = [];
+    const calls: string[] = [];
     const code = await runProbeCli(
-      [
-        "--profile",
-        "profiles/dev/profile.yaml",
-        "--load-session",
-        "session-1",
-        "--timeout-ms",
-        "2500",
-      ],
+      ["--profile", "profiles/baseline-oag/profile.yaml"],
       {
         stdout: stdout.stream,
         stderr: stderr.stream,
       },
       {
-        probeProfile: async (profilePath, options) => {
-          calls.push({ profilePath, options });
+        probeProfile: async (profilePath) => {
+          calls.push(profilePath);
           return RESULT;
         },
       },
     );
 
     expect(code).toBe(0);
-    expect(calls).toEqual([
-      {
-        profilePath: "profiles/dev/profile.yaml",
-        options: {
-          loadSessionId: "session-1",
-          timeoutMs: 2500,
-        },
-      },
-    ]);
+    expect(calls).toEqual(["profiles/baseline-oag/profile.yaml"]);
     expect(JSON.parse(stdout.value())).toEqual({ ok: true, ...RESULT });
     expect(stderr.value()).toBe("");
   });
@@ -174,7 +106,7 @@ describe("runProbeCli", () => {
     const stdout = captureStream();
     const stderr = captureStream();
     const code = await runProbeCli(
-      ["--profile", "profiles/dev/profile.yaml"],
+      ["--profile", "profiles/baseline-oag/profile.yaml"],
       {
         stdout: stdout.stream,
         stderr: stderr.stream,
@@ -182,7 +114,7 @@ describe("runProbeCli", () => {
       {
         probeProfile: async () => {
           throw new ProfileValidationError(
-            "Profile is missing required environment variables: QWEN_API_KEY",
+            "Profile is missing required environment variables: OAG_BASE_URL",
           );
         },
       },
@@ -195,7 +127,7 @@ describe("runProbeCli", () => {
       error: {
         phase: "profile",
         message:
-          "Profile is missing required environment variables: QWEN_API_KEY",
+          "Profile is missing required environment variables: OAG_BASE_URL",
       },
     });
   });

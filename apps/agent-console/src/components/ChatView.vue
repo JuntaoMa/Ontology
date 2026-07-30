@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
-import { isMobile } from '../lib/platform';
-import { renderSafeMarkdown } from '../lib/markdown';
 import { useConfigStore } from '../stores/config';
 import { useSessionStore } from '../stores/session';
-import type { ChatMessage, SlashCommand } from '../lib/types';
-import CommandPalette from './CommandPalette.vue';
+import type { ChatMessage } from '../lib/types';
 import MessageContent from './MessageContent.vue';
 import ToolCallCard from './ToolCallCard.vue';
 import UiIcon from './UiIcon.vue';
@@ -23,9 +20,7 @@ const sessionStore = useSessionStore();
 const inputText = ref('');
 const textarea = ref<HTMLTextAreaElement | null>(null);
 const messagesContainer = ref<HTMLElement | null>(null);
-const commandPaletteRef = ref<InstanceType<typeof CommandPalette> | null>(null);
-const expandedThoughts = ref<Set<string>>(new Set());
-const submitOnEnter = !isMobile();
+let followsLatestMessage = true;
 
 const messages = computed(() => sessionStore.messageList);
 const isLoading = computed(() => sessionStore.isLoading);
@@ -41,7 +36,6 @@ const currentProfile = computed(() =>
     ? configStore.getAgent(currentSession.value.agentName)
     : undefined,
 );
-const availableCommands = computed(() => sessionStore.availableCommands);
 const profileDisplayName = computed(
   () =>
     currentProfile.value?.title?.trim() ||
@@ -55,24 +49,11 @@ const connectionLabel = computed(() => {
   return 'Disconnected';
 });
 
-const showCommandPalette = computed(() => {
-  if (availableCommands.value.length === 0) return false;
-  const text = inputText.value;
-  return text.startsWith('/') && !text.includes(' ');
-});
-
-const commandFilter = computed(() =>
-  inputText.value.startsWith('/') ? inputText.value.slice(1) : '',
-);
-
 watch(
   messages,
   async () => {
     await nextTick();
-    if (messagesContainer.value) {
-      messagesContainer.value.scrollTop =
-        messagesContainer.value.scrollHeight;
-    }
+    if (followsLatestMessage) scrollToLatestMessage();
   },
   { deep: true },
 );
@@ -81,10 +62,28 @@ watch(
   () => currentSession.value?.id,
   () => {
     inputText.value = '';
-    expandedThoughts.value = new Set();
-    void nextTick(resizeTextarea);
+    followsLatestMessage = true;
+    void nextTick(() => {
+      resizeTextarea();
+      scrollToLatestMessage();
+    });
   },
 );
+
+function scrollToLatestMessage(): void {
+  const element = messagesContainer.value;
+  if (!element) return;
+  element.scrollTop = element.scrollHeight;
+  followsLatestMessage = true;
+}
+
+function handleThreadScroll(): void {
+  const element = messagesContainer.value;
+  if (!element) return;
+  const distanceFromBottom =
+    element.scrollHeight - element.scrollTop - element.clientHeight;
+  followsLatestMessage = distanceFromBottom <= 96;
+}
 
 function resizeTextarea(): void {
   const element = textarea.value;
@@ -114,41 +113,17 @@ async function handleSend(): Promise<void> {
 
 function handleKeyDown(event: KeyboardEvent): void {
   if (
-    showCommandPalette.value &&
-    commandPaletteRef.value &&
-    ['ArrowDown', 'ArrowUp', 'Enter', 'Tab', 'Escape'].includes(event.key)
+    event.key === 'Enter' &&
+    !event.shiftKey &&
+    !event.isComposing
   ) {
-    commandPaletteRef.value.handleKeyDown(event);
-    return;
-  }
-  if (submitOnEnter && event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
     void handleSend();
   }
 }
 
-function handleCommandSelect(command: SlashCommand): void {
-  inputText.value = `/${command.name} `;
-  void nextTick(() => {
-    resizeTextarea();
-    textarea.value?.focus();
-  });
-}
-
 function handleCancel(): void {
   void sessionStore.cancelOperation();
-}
-
-function isThoughtExpanded(messageId: string): boolean {
-  return expandedThoughts.value.has(messageId);
-}
-
-function toggleThought(messageId: string): void {
-  if (expandedThoughts.value.has(messageId)) {
-    expandedThoughts.value.delete(messageId);
-  } else {
-    expandedThoughts.value.add(messageId);
-  }
 }
 
 function completionVerb(message: ChatMessage): string {
@@ -229,7 +204,11 @@ function durationLabel(durationMs: number): string {
     </div>
 
     <section class="conversation">
-      <div ref="messagesContainer" class="thread">
+      <div
+        ref="messagesContainer"
+        class="thread"
+        @scroll.passive="handleThreadScroll"
+      >
         <div class="thread-inner">
           <article
             v-for="message in messages"
@@ -246,11 +225,20 @@ function durationLabel(durationMs: number): string {
             </div>
 
             <div v-else class="assistant-message">
-              <details v-if="message.plan?.length" class="plan-section">
-                <summary class="plan-heading" title="Agent plan">
-                  <UiIcon class="plan-icon" name="plan" />
-                  <span>Agent plan</span>
-                  <UiIcon class="plan-chevron" name="chevron" />
+              <details
+                v-if="message.plan?.length"
+                class="disclosure-card plan-section"
+              >
+                <summary
+                  class="disclosure-summary plan-heading"
+                  title="Agent plan"
+                >
+                  <UiIcon class="disclosure-icon" name="plan" />
+                  <span class="disclosure-title">Agent plan</span>
+                  <UiIcon
+                    class="disclosure-chevron"
+                    name="chevron"
+                  />
                 </summary>
                 <ol>
                   <li
@@ -274,31 +262,25 @@ function durationLabel(durationMs: number): string {
                 </ol>
               </details>
 
-              <section
+              <details
                 v-if="message.thought && message.role === 'assistant'"
-                class="thought-section"
+                class="disclosure-card thought-section"
               >
-                <button
-                  class="thought-toggle"
-                  type="button"
-                  :aria-expanded="isThoughtExpanded(message.id)"
-                  @click="toggleThought(message.id)"
+                <summary
+                  class="disclosure-summary"
+                  title="Thinking"
                 >
-                  <UiIcon name="thought" />
-                  <span>
-                    {{ isThoughtExpanded(message.id) ? 'Hide thinking' : 'Show thinking' }}
-                  </span>
+                  <UiIcon class="disclosure-icon" name="thought" />
+                  <span class="disclosure-title">Thinking</span>
                   <UiIcon
-                    class="thought-chevron"
+                    class="disclosure-chevron"
                     name="chevron"
                   />
-                </button>
-                <div
-                  v-if="isThoughtExpanded(message.id)"
-                  class="thought-content"
-                  v-html="renderSafeMarkdown(message.thought)"
-                />
-              </section>
+                </summary>
+                <div class="thought-content">
+                  <MessageContent :content="message.thought" />
+                </div>
+              </details>
 
               <div
                 v-if="message.toolCalls?.length"
@@ -357,14 +339,6 @@ function durationLabel(durationMs: number): string {
 
       <div class="composer-wrap">
         <div class="composer-shell">
-          <CommandPalette
-            ref="commandPaletteRef"
-            :commands="availableCommands"
-            :filter="commandFilter"
-            :visible="showCommandPalette"
-            @select="handleCommandSelect"
-            @close="textarea?.focus()"
-          />
           <div class="composer">
             <textarea
               ref="textarea"
@@ -377,9 +351,7 @@ function durationLabel(durationMs: number): string {
                     ? 'Reconnect this conversation to continue'
                     : isProfileBusyElsewhere
                       ? 'This Profile is busy in another conversation'
-                      : availableCommands.length > 0
-                        ? 'Ask this Profile… (/ for commands)'
-                        : 'Ask this Profile…'
+                      : 'Ask this Profile…'
               "
               :disabled="
                 isLoading ||
@@ -420,74 +392,6 @@ function durationLabel(durationMs: number): string {
   min-height: 0;
   flex: 1;
   flex-direction: column;
-}
-
-.workspace-header {
-  display: flex;
-  min-height: 64px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  border-bottom: 1px solid var(--line-soft);
-  padding: 11px 24px 11px 28px;
-}
-
-.workspace-heading-row {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 10px;
-}
-
-.icon-button {
-  display: grid;
-  width: 29px;
-  height: 29px;
-  flex: 0 0 auto;
-  place-items: center;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.icon-button:hover {
-  background: color-mix(in srgb, var(--text) 8%, transparent);
-  color: var(--text);
-}
-
-.icon-button :deep(svg) {
-  width: 16px;
-  height: 16px;
-}
-
-.conversation-heading {
-  min-width: 0;
-}
-
-.conversation-heading h1 {
-  overflow: hidden;
-  margin: 0;
-  font-size: 15px;
-  font-weight: 630;
-  letter-spacing: -0.01em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.conversation-profile {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 3px;
-  color: var(--text-muted);
-  font-size: 11px;
-}
-
-.conversation-profile :deep(svg) {
-  width: 12px;
-  height: 12px;
 }
 
 .header-meta {
@@ -632,68 +536,13 @@ function durationLabel(durationMs: number): string {
 
 .plan-section {
   margin: 0 0 18px;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 11px;
-  background: #fbfbfa;
-}
-
-.plan-heading {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 13px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 590;
-  list-style: none;
-  user-select: none;
-}
-
-.plan-heading::-webkit-details-marker {
-  display: none;
-}
-
-.plan-heading:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
-.plan-heading > span {
-  overflow: hidden;
-  min-width: 0;
-  flex: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.plan-icon,
-.plan-chevron {
-  width: 15px;
-  height: 15px;
-  flex: 0 0 auto;
-}
-
-.plan-chevron {
-  color: var(--text-muted);
-  transform: rotate(-90deg);
-  transition: transform 130ms ease;
-}
-
-.plan-section[open] .plan-heading {
-  border-bottom: 1px solid var(--line-soft);
-}
-
-.plan-section[open] .plan-chevron {
-  transform: rotate(0);
 }
 
 .plan-section ol {
   display: grid;
   gap: 6px;
   margin: 0;
+  border-top: 1px solid var(--line-soft);
   padding: 10px 13px 12px;
   list-style: none;
   color: var(--text-secondary);
@@ -733,47 +582,6 @@ function durationLabel(durationMs: number): string {
 
 .thought-section {
   margin: 18px 0;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 11px;
-  background: #fbfbfa;
-}
-
-.thought-toggle {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 8px;
-  border: 0;
-  padding: 11px 13px;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 590;
-  text-align: left;
-}
-
-.thought-toggle > :deep(svg) {
-  width: 15px;
-  height: 15px;
-}
-
-.thought-toggle span {
-  overflow: hidden;
-  min-width: 0;
-  flex: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.thought-chevron {
-  transform: rotate(-90deg);
-  transition: transform 130ms ease;
-}
-
-.thought-toggle[aria-expanded='true'] .thought-chevron {
-  transform: rotate(0);
 }
 
 .thought-content {
@@ -818,21 +626,6 @@ function durationLabel(durationMs: number): string {
   margin-bottom: 32px;
   color: var(--text-muted);
   font-size: 12px;
-}
-
-.spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid #c5c5bf;
-  border-top-color: var(--text-secondary);
-  border-radius: 50%;
-  animation: spin 900ms linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .cancel-button {
@@ -931,21 +724,6 @@ function durationLabel(durationMs: number): string {
 }
 
 @media (max-width: 800px) {
-  .workspace-header {
-    padding-top: calc(11px + env(safe-area-inset-top, 0px));
-    padding-right: 16px;
-    padding-left: 16px;
-  }
-
-  .sidebar-reveal {
-    width: 44px;
-    height: 44px;
-  }
-
-  .conversation-heading h1 {
-    max-width: 52vw;
-  }
-
   .thread {
     padding: 28px 16px 132px;
   }
