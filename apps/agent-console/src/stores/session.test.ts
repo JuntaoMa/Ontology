@@ -10,21 +10,19 @@ const bridgeMocks = vi.hoisted(() => ({
 }));
 
 const apiMocks = vi.hoisted(() => ({
-  deleteProfileSession: vi.fn(async () => undefined),
-  getProfiles: vi.fn(async () => ({ agents: {} })),
+  deleteRuntimeSession: vi.fn(async () => undefined),
 }));
 
 vi.mock('../lib/acp-bridge', () => ({
   createAcpClient: bridgeMocks.createAcpClient,
 }));
 
-vi.mock('../lib/bridge-api', () => ({
+vi.mock('../lib/runtime-api', () => ({
   getAppVersion: vi.fn(() => 'test'),
-  getProfiles: apiMocks.getProfiles,
-  deleteProfileSession: apiMocks.deleteProfileSession,
+  deleteRuntimeSession: apiMocks.deleteRuntimeSession,
 }));
 
-import { useConfigStore } from './config';
+import { useRuntimeStore } from './runtime';
 import { useSessionStore } from './session';
 
 interface Deferred<T> {
@@ -111,7 +109,7 @@ function emitText(
   });
 }
 
-describe('multi-Profile ACP session store', () => {
+describe('multi-Runtime ACP session store', () => {
   const clients = new Map<string, FakeClient>();
   const promptMaps = new Map<string, Map<string, Deferred<unknown>>>();
 
@@ -120,16 +118,16 @@ describe('multi-Profile ACP session store', () => {
     clients.clear();
     promptMaps.clear();
     bridgeMocks.createAcpClient.mockReset();
-    apiMocks.deleteProfileSession.mockReset();
-    apiMocks.deleteProfileSession.mockResolvedValue(undefined);
+    apiMocks.deleteRuntimeSession.mockReset();
+    apiMocks.deleteRuntimeSession.mockResolvedValue(undefined);
     bridgeMocks.createAcpClient.mockImplementation(
       async (arg: unknown): Promise<AcpClientBridge> => {
         const name =
           typeof arg === 'object' &&
           arg !== null &&
-          'name' in arg &&
-          typeof arg.name === 'string'
-            ? arg.name
+          'runtimeId' in arg &&
+          typeof arg.runtimeId === 'string'
+            ? arg.runtimeId
             : '';
         const client = clients.get(name);
         if (!client) throw new Error(`missing fake client: ${name}`);
@@ -137,18 +135,28 @@ describe('multi-Profile ACP session store', () => {
       },
     );
 
-    useConfigStore().updateFromEvent({
-      agents: {
-        direct: {
-          url: 'ws://127.0.0.1/direct',
-          cwd: '/demo',
-        },
-        oag: {
-          url: 'ws://127.0.0.1/oag',
-          cwd: '/demo',
-        },
+    useRuntimeStore().updateFromEvent([
+      {
+        id: 'direct',
+        displayName: 'Direct',
+        status: 'ready',
+        profile: { id: 'direct', revision: 'v1' },
+        dataset: { id: 'sample', ontologySha256: 'a'.repeat(64) },
+        stale: false,
+        url: 'ws://127.0.0.1/direct',
+        cwd: '.',
       },
-    });
+      {
+        id: 'oag',
+        displayName: 'OAG',
+        status: 'ready',
+        profile: { id: 'oag', revision: 'v1' },
+        dataset: { id: 'sample', ontologySha256: 'a'.repeat(64) },
+        stale: false,
+        url: 'ws://127.0.0.1/oag',
+        cwd: '.',
+      },
+    ]);
   });
 
   function register(name: string, sessionIds: string[]): FakeClient {
@@ -158,15 +166,15 @@ describe('multi-Profile ACP session store', () => {
     return client;
   }
 
-  it('keeps a hidden Profile running and routes interleaved updates by sessionId', async () => {
+  it('keeps a hidden Runtime running and routes interleaved updates by sessionId', async () => {
     const direct = register('direct', ['direct-1']);
     const oag = register('oag', ['oag-1']);
     const store = useSessionStore();
 
-    const directKey = await store.createSession('direct', '/demo');
+    const directKey = await store.createSession('direct', '.');
     const directRun = store.sendPrompt('direct question');
 
-    const oagKey = await store.createSession('oag', '/demo');
+    const oagKey = await store.createSession('oag', '.');
     const oagRun = store.sendPrompt('oag question');
 
     emitText(direct, 'direct-1', 'direct answer');
@@ -202,7 +210,7 @@ describe('multi-Profile ACP session store', () => {
     const direct = register('direct', ['direct-1']);
     const store = useSessionStore();
 
-    await store.createSession('direct', '/demo');
+    await store.createSession('direct', '.');
     const run = store.sendPrompt('question');
     emitText(direct, 'direct-1', 'answer');
     const assistant = store.messageList.find(
@@ -226,7 +234,7 @@ describe('multi-Profile ACP session store', () => {
     });
     const store = useSessionStore();
 
-    const creation = store.createSession('direct', '/demo');
+    const creation = store.createSession('direct', '.');
     await vi.waitFor(() => {
       expect(direct.newSession).toHaveBeenCalledTimes(1);
     });
@@ -255,7 +263,7 @@ describe('multi-Profile ACP session store', () => {
     );
     const store = useSessionStore();
 
-    const creation = store.createSession('direct', '/demo');
+    const creation = store.createSession('direct', '.');
     await vi.waitFor(() => {
       expect(store.pendingAuthMethods).toEqual([
         { id: 'login', name: 'Sign in' },
@@ -272,7 +280,7 @@ describe('multi-Profile ACP session store', () => {
     const direct = register('direct', ['direct-1']);
     const store = useSessionStore();
 
-    await store.createSession('direct', '/demo');
+    await store.createSession('direct', '.');
     const run = store.sendPrompt('question');
     emitText(direct, 'direct-1', 'partial answer');
     promptMaps.get('direct')?.get('direct-1')?.resolve({
@@ -291,13 +299,13 @@ describe('multi-Profile ACP session store', () => {
     register('direct', ['direct-1', 'direct-2']);
     const store = useSessionStore();
 
-    const firstKey = await store.createSession('direct', '/demo');
-    const secondKey = await store.createSession('direct', '/demo');
+    const firstKey = await store.createSession('direct', '.');
+    const secondKey = await store.createSession('direct', '.');
     expect(store.activeConversationKey).toBe(secondKey);
 
     await store.deleteConversation('direct', 'direct-2');
 
-    expect(apiMocks.deleteProfileSession).toHaveBeenCalledWith(
+    expect(apiMocks.deleteRuntimeSession).toHaveBeenCalledWith(
       'direct',
       'direct-2',
     );
@@ -307,12 +315,12 @@ describe('multi-Profile ACP session store', () => {
     expect(store.activeConversationKey).toBe(firstKey);
   });
 
-  it('reconnects the visible conversation after deleting another Session in its Profile', async () => {
+  it('reconnects the visible conversation after deleting another Session in its Runtime', async () => {
     const direct = register('direct', ['direct-1', 'direct-2']);
     const store = useSessionStore();
 
-    const firstKey = await store.createSession('direct', '/demo');
-    await store.createSession('direct', '/demo');
+    const firstKey = await store.createSession('direct', '.');
+    await store.createSession('direct', '.');
     store.selectConversation(firstKey);
 
     await store.deleteConversation('direct', 'direct-2');
@@ -322,7 +330,7 @@ describe('multi-Profile ACP session store', () => {
     expect(direct.disconnect).toHaveBeenCalled();
     expect(direct.loadSession).toHaveBeenCalledWith({
       sessionId: 'direct-1',
-      cwd: '/demo',
+      cwd: '.',
       mcpServers: [],
     });
   });
@@ -330,14 +338,14 @@ describe('multi-Profile ACP session store', () => {
   it('does not hide a deleted Session if a later authoritative list reports it again', async () => {
     const direct = register('direct', ['direct-1']);
     const store = useSessionStore();
-    await store.createSession('direct', '/demo');
+    await store.createSession('direct', '.');
     await store.deleteConversation('direct', 'direct-1');
 
     direct.unstable_listSessions.mockResolvedValueOnce({
       sessions: [
         {
           sessionId: 'direct-1',
-          cwd: '/demo',
+          cwd: '.',
           title: 'Authoritatively returned',
           updatedAt: new Date().toISOString(),
         },
@@ -358,14 +366,25 @@ describe('multi-Profile ACP session store', () => {
         sessions: [
           {
             sessionId: 'direct-existing',
-            cwd: '/demo',
+            cwd: '.',
             title: 'Existing session',
             updatedAt: new Date().toISOString(),
           },
         ],
         nextCursor: null,
       })
-      .mockRejectedValueOnce(new Error('temporary network failure'));
+      .mockRejectedValueOnce(new Error('temporary network failure'))
+      .mockResolvedValueOnce({
+        sessions: [
+          {
+            sessionId: 'direct-recovered',
+            cwd: '.',
+            title: 'Recovered session',
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+        nextCursor: null,
+      });
     const store = useSessionStore();
 
     await store.refreshSessions('direct');
@@ -374,16 +393,23 @@ describe('multi-Profile ACP session store', () => {
     expect(
       store.resumableSessions.map((session) => session.sessionId),
     ).toContain('direct-existing');
-    expect(store.profileErrorFor('direct')).toBe(
+    expect(store.runtimeErrorFor('direct')).toBe(
       'temporary network failure',
     );
+
+    await store.refreshSessions('direct');
+
+    expect(store.runtimeErrorFor('direct')).toBeNull();
+    expect(
+      store.resumableSessions.map((session) => session.sessionId),
+    ).toEqual(['direct-recovered']);
   });
 
   it('keeps local state when permanent Session deletion fails', async () => {
     register('direct', ['direct-1']);
     const store = useSessionStore();
-    const key = await store.createSession('direct', '/demo');
-    apiMocks.deleteProfileSession.mockRejectedValueOnce(
+    const key = await store.createSession('direct', '.');
+    apiMocks.deleteRuntimeSession.mockRejectedValueOnce(
       new Error('delete failed'),
     );
 
@@ -394,29 +420,29 @@ describe('multi-Profile ACP session store', () => {
     expect(store.activeConversationKey).toBe(key);
   });
 
-  it('refuses deletion anywhere in a Profile while that Profile is running', async () => {
+  it('refuses deletion anywhere in a Runtime while that Runtime is running', async () => {
     register('direct', ['direct-1', 'direct-2']);
     const store = useSessionStore();
-    await store.createSession('direct', '/demo');
+    await store.createSession('direct', '.');
     const running = store.sendPrompt('question');
-    await store.createSession('direct', '/demo');
+    await store.createSession('direct', '.');
 
     await expect(
       store.deleteConversation('direct', 'direct-2'),
     ).rejects.toThrow('still running');
-    expect(apiMocks.deleteProfileSession).not.toHaveBeenCalled();
+    expect(apiMocks.deleteRuntimeSession).not.toHaveBeenCalled();
 
     promptMaps.get('direct')?.get('direct-1')?.resolve({});
     await running;
   });
 
-  it('reuses one ACP client for multiple Sessions and serializes prompts within a Profile', async () => {
+  it('reuses one ACP client for multiple Sessions and serializes prompts within a Runtime', async () => {
     const direct = register('direct', ['direct-1', 'direct-2']);
     const store = useSessionStore();
 
-    const firstKey = await store.createSession('direct', '/demo');
+    const firstKey = await store.createSession('direct', '.');
     const firstRun = store.sendPrompt('first');
-    const secondKey = await store.createSession('direct', '/demo');
+    const secondKey = await store.createSession('direct', '.');
 
     expect(secondKey).not.toBe(firstKey);
     expect(bridgeMocks.createAcpClient).toHaveBeenCalledTimes(1);
@@ -435,13 +461,13 @@ describe('multi-Profile ACP session store', () => {
     await firstRun;
   });
 
-  it('routes a background permission response to its owning Profile', async () => {
+  it('routes a background permission response to its owning Runtime', async () => {
     const direct = register('direct', ['direct-1']);
     register('oag', ['oag-1']);
     const store = useSessionStore();
 
-    await store.createSession('direct', '/demo');
-    await store.createSession('oag', '/demo');
+    await store.createSession('direct', '.');
+    await store.createSession('oag', '.');
     direct.pendingPermissionRequest.value = {
       sessionId: 'direct-1',
       toolCall: {
@@ -460,20 +486,20 @@ describe('multi-Profile ACP session store', () => {
     };
     await nextTick();
 
-    expect(store.pendingPermissionAgentName).toBe('direct');
+    expect(store.pendingPermissionRuntimeId).toBe('direct');
     expect(store.pendingPermissionSessionTitle).toContain('Session');
     store.resolvePermission('allow');
     expect(direct.resolvePermission).toHaveBeenCalledWith('allow');
   });
 
-  it('disconnects only the selected Profile and preserves other conversations', async () => {
+  it('disconnects only the selected Runtime and preserves other conversations', async () => {
     register('direct', ['direct-1']);
     register('oag', ['oag-1']);
     const store = useSessionStore();
 
-    const directKey = await store.createSession('direct', '/demo');
-    const oagKey = await store.createSession('oag', '/demo');
-    await store.disconnectProfile('direct');
+    const directKey = await store.createSession('direct', '.');
+    const oagKey = await store.createSession('oag', '.');
+    await store.disconnectRuntime('direct');
 
     store.selectConversation(oagKey);
     expect(store.isConnected).toBe(true);
@@ -500,7 +526,7 @@ describe('multi-Profile ACP session store', () => {
 
     const observed: boolean[] = [];
     const stop = watch(
-      () => store.isRefreshingAgent('direct'),
+      () => store.isRefreshingRuntime('direct'),
       (value) => observed.push(value),
       { immediate: true, flush: 'sync' },
     );
@@ -511,7 +537,7 @@ describe('multi-Profile ACP session store', () => {
     expect(observed).toEqual([true, false]);
   });
 
-  it('finishes discovery before opening the persistent Profile connection', async () => {
+  it('finishes discovery before opening the persistent Runtime connection', async () => {
     const direct = register('direct', ['direct-1']);
     const listResult = deferred<{
       sessions: [];
@@ -527,7 +553,7 @@ describe('multi-Profile ACP session store', () => {
       expect(direct.unstable_listSessions).toHaveBeenCalledTimes(1);
     });
 
-    const creation = store.createSession('direct', '/demo');
+    const creation = store.createSession('direct', '.');
     await Promise.resolve();
     expect(bridgeMocks.createAcpClient).toHaveBeenCalledTimes(1);
     expect(direct.newSession).not.toHaveBeenCalled();
@@ -554,20 +580,20 @@ describe('multi-Profile ACP session store', () => {
 
     const refresh = store.refreshSessions('direct');
     await vi.waitFor(() => {
-      expect(store.isProfileBusy('direct')).toBe(true);
+      expect(store.isRuntimeBusy('direct')).toBe(true);
     });
 
     await expect(
       store.deleteConversation('direct', 'session-1'),
     ).rejects.toThrow('still running');
-    expect(apiMocks.deleteProfileSession).not.toHaveBeenCalled();
+    expect(apiMocks.deleteRuntimeSession).not.toHaveBeenCalled();
 
     listResult.resolve({ sessions: [], nextCursor: null });
     await refresh;
-    expect(store.isProfileBusy('direct')).toBe(false);
+    expect(store.isRuntimeBusy('direct')).toBe(false);
   });
 
-  it('rejects deletion while a Profile connection is opening', async () => {
+  it('rejects deletion while a Runtime connection is opening', async () => {
     const direct = register('direct', ['direct-1']);
     const connection = deferred<AcpClientBridge>();
     bridgeMocks.createAcpClient.mockImplementationOnce(
@@ -575,16 +601,16 @@ describe('multi-Profile ACP session store', () => {
     );
     const store = useSessionStore();
 
-    const creation = store.createSession('direct', '/demo');
+    const creation = store.createSession('direct', '.');
     await vi.waitFor(() => {
-      expect(store.isProfileConnecting('direct')).toBe(true);
-      expect(store.isProfileBusy('direct')).toBe(true);
+      expect(store.isRuntimeConnecting('direct')).toBe(true);
+      expect(store.isRuntimeBusy('direct')).toBe(true);
     });
 
     await expect(
       store.deleteConversation('direct', 'session-1'),
     ).rejects.toThrow('still running');
-    expect(apiMocks.deleteProfileSession).not.toHaveBeenCalled();
+    expect(apiMocks.deleteRuntimeSession).not.toHaveBeenCalled();
 
     connection.resolve(direct as unknown as AcpClientBridge);
     await expect(creation).resolves.toBe('direct:direct-1');
@@ -593,22 +619,22 @@ describe('multi-Profile ACP session store', () => {
   it('blocks new discovery and connections during durable deletion', async () => {
     register('direct', ['direct-1', 'direct-2']);
     const deletion = deferred<undefined>();
-    apiMocks.deleteProfileSession.mockImplementationOnce(
+    apiMocks.deleteRuntimeSession.mockImplementationOnce(
       () => deletion.promise,
     );
     const store = useSessionStore();
-    await store.createSession('direct', '/demo');
+    await store.createSession('direct', '.');
 
     const remove = store.deleteConversation('direct', 'direct-1');
     await vi.waitFor(() => {
-      expect(apiMocks.deleteProfileSession).toHaveBeenCalledTimes(1);
+      expect(apiMocks.deleteRuntimeSession).toHaveBeenCalledTimes(1);
     });
     const bridgeCallsBeforeMaintenanceChecks =
       bridgeMocks.createAcpClient.mock.calls.length;
 
     await expect(store.refreshSessions('direct')).resolves.toBeUndefined();
     await expect(
-      store.createSession('direct', '/demo'),
+      store.createSession('direct', '.'),
     ).rejects.toThrow('undergoing maintenance');
     expect(bridgeMocks.createAcpClient).toHaveBeenCalledTimes(
       bridgeCallsBeforeMaintenanceChecks,
@@ -623,8 +649,8 @@ describe('multi-Profile ACP session store', () => {
     register('oag', ['oag-1']);
     const store = useSessionStore();
 
-    const directKey = await store.createSession('direct', '/demo');
-    const oagKey = await store.createSession('oag', '/demo', {
+    const directKey = await store.createSession('direct', '.');
+    const oagKey = await store.createSession('oag', '.', {
       activate: false,
     });
 
@@ -638,7 +664,7 @@ describe('multi-Profile ACP session store', () => {
     const direct = register('direct', ['direct-1']);
     const store = useSessionStore();
 
-    await store.createSession('direct', '/demo');
+    await store.createSession('direct', '.');
     const run = store.sendPrompt('question');
     emitText(direct, 'direct-1', 'answer to keep');
     promptMaps.get('direct')?.get('direct-1')?.resolve({});
@@ -646,7 +672,7 @@ describe('multi-Profile ACP session store', () => {
     const saved = store.currentSession;
     expect(saved).not.toBeNull();
 
-    await store.disconnectProfile('direct');
+    await store.disconnectRuntime('direct');
     direct.loadSession.mockRejectedValueOnce(new Error('load failed'));
     await expect(store.resumeSession(saved!)).rejects.toThrow('load failed');
 
@@ -660,9 +686,9 @@ describe('multi-Profile ACP session store', () => {
     const direct = register('direct', ['direct-1']);
     const store = useSessionStore();
 
-    await store.createSession('direct', '/demo');
+    await store.createSession('direct', '.');
     const saved = { ...store.currentSession! };
-    await store.disconnectProfile('direct');
+    await store.disconnectRuntime('direct');
 
     const loadResult = deferred<Record<string, never>>();
     direct.loadSession.mockImplementation(() => loadResult.promise);
@@ -681,7 +707,7 @@ describe('multi-Profile ACP session store', () => {
     expect(store.isConnected).toBe(true);
     expect(store.isLoading).toBe(false);
 
-    await store.disconnectProfile('direct');
+    await store.disconnectRuntime('direct');
     await store.resumeSession(saved);
     expect(direct.loadSession).toHaveBeenCalledTimes(2);
     expect(store.isConnected).toBe(true);
@@ -691,7 +717,7 @@ describe('multi-Profile ACP session store', () => {
     const direct = register('direct', ['direct-1']);
     const store = useSessionStore();
 
-    await store.createSession('direct', '/demo');
+    await store.createSession('direct', '.');
     const promptResult = store.sendPrompt('question').then(
       () => null,
       (cause: unknown) => cause,
@@ -703,7 +729,7 @@ describe('multi-Profile ACP session store', () => {
       await Promise.resolve();
     });
 
-    await store.disconnectProfile('direct');
+    await store.disconnectRuntime('direct');
     expect(await promptResult).toBeInstanceOf(Error);
     expect(store.error).toBeNull();
     expect(store.isConnected).toBe(false);

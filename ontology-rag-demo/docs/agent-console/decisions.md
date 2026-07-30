@@ -1,5 +1,20 @@
 # Agent Console 实现决策记录
 
+## 当前决策基线
+
+本文件保留实现演进的历史事实，不应把较早 ADR 中的路径、接口或组件名称直接当作当前
+操作手册。发生冲突时以编号更大的明确替代关系为准；当前架构基线是 ADR-037 与
+ADR-038：
+
+- HTTP/ACP 资源键统一为 Runtime，接口前缀为 `/runtimes`，不再使用 `/agents`；
+- OpenCode cwd、Session DB、配置、索引和日志都位于
+  `.runtime/projects/<profile-id>--<dataset-id>/`；
+- 检索实现属于 `ontology-retrieval` Profile，不再存在根级 8010/OAG sidecar；
+- WebUI 项目是 Profile × Dataset 的 Runtime，Session 是其 OpenCode 子资源。
+
+README、`system-design.md`、`protocols.md` 和 `module-reference.md` 描述当前操作方式；
+下列旧 ADR 仅用于解释为什么方案曾经变化。
+
 ## ADR-001：OpenCode 是唯一 Agent Runtime
 
 - 状态：接受
@@ -438,3 +453,57 @@
   - ADR-030 中“发布为 Profile”和显式 `state_dir` 的措辞改为直接维护 Catalog Profile；
   - ADR-035 中静态 prototype 作为持续验收资产的部分取消，已接受视觉设计直接由实际
     WebUI 和组件测试维护。
+
+## ADR-038：Profile/Dataset 物化为 Runtime，Session 作为其子资源
+
+- 状态：2026-07-30 接受并实施
+- 背景：Profile 需要成为可以单独打包分享的完整测试流实现，同时不能绑定具体业务
+  本体。若继续把 Profile 直接显示为 WebUI 项目并以 Profile ID 隔离 OpenCode 状态，
+  同一实现切换 Dataset 时会混合 Session、索引和历史；单独增加 Project 与 Binding 又
+  会产生两个含义相近的中间概念。
+- 概念决策：保留 Profile、Dataset、Runtime、Session 四层。Project 与 Binding 合并为
+  Runtime manifest；WebUI 中的项目名称只是 Runtime `display_name`。Profile 是可分享
+  实现，Dataset 是独立输入，Runtime 是两者本机快照，Session 仍完全属于 OpenCode。
+- 物化决策：Runtime ID 固定为 `<profile-id>--<dataset-id>`，目录为
+  `.runtime/projects/<runtime-id>`。创建时先在同文件系统 staging 中复制 Profile 和
+  Dataset 普通文件快照，再运行 Profile Initializer，成功后原子 rename。禁止 symlink。
+  OpenCode cwd 固定为 Runtime 的 `workspace/`，数据库、config、生成状态和日志均位于
+  Runtime 根内。
+- Dataset 决策：Catalog 只有 `datasets/<dataset-id>/` 两级发现结构；本体是 Dataset
+  目录的直接文件，复杂来源材料约定组织在可选 `raw_data/`。Loader 会把 Dataset 内其余
+  安全普通文件一并纳入快照，但不允许 symlink、设备文件或路径越界。不以
+  public/private 目录表达敏感性，敏感材料使用精确 Git ignore/exclude。
+- UI 决策：侧栏只列已创建 Runtime 及其 Session。Profile/Dataset Catalog 只用于创建
+  Runtime 的选择器；创建请求调用 Profile Initializer。初始化未完成或失败的 Runtime
+  显示明确状态，不能创建 Session。
+- 检索决策：首个 `ontology-retrieval` Profile 把 LanceDB、Embedding 和最小连通子图
+  实现完整放在自身目录；Initializer 本地构建索引，Skill 通过 Bash 直接调用
+  Profile 内检索脚本，不再依赖根级 8010 常驻服务。根 uv 项目只统一依赖版本，不保存
+  测试流算法。
+- 删除决策：Runtime 删除先取得独占锁，拒绝新连接和任务，按有界顺序停止 Initializer、
+  ACP 进程树及受管的 Session 删除子进程。服务端随后重新校验 canonical 目录、manifest
+  ID、父目录、symlink 和唯一 trash 目标，再将整个 Runtime 原子 rename 到
+  `.runtime/trash/`。rename 是逻辑删除提交点，之后只清理已校验的 trash 直接子目录。
+- 恢复决策：提交前失败保留 Runtime 并标记 `delete_failed`；遗留 staging 标记
+  `initialization_failed`。提交后物理清理失败不自动恢复 Runtime，而是标记
+  `cleanup_failed` 并由维护流程重试。任何删除路径都不得读取 manifest 中的源路径去
+  删除 `profiles/`、`datasets/`、其他 Runtime、根 uv 环境或仓库文件。
+- 查询计划决策：合法 `data-query-plan.v1` 的“查询Plan”卡片增加 JSON/Graph 切换。
+  Graph 只从 `query_tasks`、`targets`、`joins`、`filters`、`projections` 和
+  `ontology_evidence` 生成组件内展示投影；不调用检索工具、不做本体推断、不与 Tool 子图
+  合并，也不改写 Agent 原文、Store 或 OpenCode 历史。
+- 替代关系：
+  - 替代 ADR-034、ADR-035 中“Profile 是侧栏项目分组”的 UI 语义；多连接与
+    `runtimeId + sessionId` 路由原则保留。
+  - 替代 ADR-013、ADR-016、ADR-018、ADR-020、ADR-023、ADR-034、ADR-035 中
+    `/agents`、Profile cwd、Profile 状态目录和 Profile-aware Session 删除端点；当前
+    一律以 Runtime cwd、Runtime DB 和 `/runtimes/:runtimeId/...` 表达。
+  - 替代 ADR-024、ADR-028、ADR-029、ADR-030、ADR-031、ADR-032 中根级
+    8010/OAG、sidecar 和旧 `baseline-*` Profile 的实现；其中“展示真实执行轨迹、开放
+    Bash 不等于强实验隔离”的结论继续有效。
+  - 修正 ADR-026 的平台表述：当前仅支持 macOS、Linux 与 WSL，并把 Profile/Skill
+    视为可信本机代码；POSIX 进程组负责常规资源回收，不构成 cgroup/容器沙箱。
+  - 替代 ADR-037 中 `.runtime/opencode/<profile-id>` 的状态约定，改为完整 Runtime 根。
+  - 替代 ADR-037 中继续沿用 ADR-035 `/agents` 删除端点的表述。
+  - ADR-001、ADR-002 的 OpenCode/ACP 核心、ADR-017 的连接生命周期、ADR-033 的展示层
+    JSON 格式化和 ADR-036 的折叠信息层级继续有效。

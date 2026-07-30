@@ -11,7 +11,7 @@ import { TransportListeners, type AcpTransport, type Unsubscribe } from './types
 
 /** Options accepted by `WebSocketTransport.connect`. */
 export interface WebSocketTransportOptions {
-  /** Full same-origin ws:// or wss:// Profile endpoint. */
+  /** Full same-origin ws:// or wss:// Runtime endpoint. */
   url: string;
   /** Override the connection timeout (ms). Defaults to 15 seconds. */
   connectTimeoutMs?: number;

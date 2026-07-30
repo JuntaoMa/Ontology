@@ -17,10 +17,14 @@
 ## 有意偏离
 
 - 只保留 Web 传输；删除桌面/本地前端传输、主机存储抽象和浏览器自定义 Agent 入口。
-- Agent Catalog 只来自同源 Bridge 的 `GET /agents`。
+- Profile、Dataset 和 Runtime Catalog 只来自同源 Bridge；浏览器不能提供命令、cwd、
+  模型或环境变量。
 - OpenCode 的 `session/list` 是 Session Catalog 事实源；浏览器不持久化 Session、
   Agent 地址、凭据或运行历史。
-- 每个 Profile 复用一条 ACP 连接，并按 `profileId + sessionId` 投影多个会话。
+- 每个 Runtime 复用一条 ACP 连接，并按 `runtimeId + sessionId` 投影多个会话。
+- Profile 与 Dataset 先复制为 Runtime 普通文件快照；OpenCode cwd 固定为 Runtime 的
+  `workspace/`，对浏览器只投影成逻辑值 `.`。
+- Runtime 的创建、状态、信息和安全删除是本项目的薄管理层，不改变 ACP 消息协议。
 - 保留 ACP Tool Call 的 `rawInput`、`rawOutput` 和 `content`，用于检查与 artifact
   提取；UI 不重复显示通用 `ACP content` 面板。
 - 支持 `ONTOLOGY_ARTIFACT:` 子图的轻量 SVG 预览。
@@ -31,4 +35,4 @@
 - 使用简单的原生对话框、`details` 与 CSS；不引入额外 UI 框架。
 
 上游升级必须是显式工作。更新 pinned commit 前，应重新核对上述偏离、运行 ACP
-能力测试，并在真实 WebUI 中完成双 Profile 回归。
+能力测试，并在真实 WebUI 中完成多 Runtime 回归。

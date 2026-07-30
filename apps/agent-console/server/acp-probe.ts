@@ -7,7 +7,10 @@ import {
   PROTOCOL_VERSION,
   type AgentCapabilities,
 } from "@agentclientprotocol/sdk";
-import type { LoadedProfile } from "./profile.js";
+import { buildRuntimeVariables } from "./opencode-runtime.js";
+import { expandRuntimeArguments } from "./profile.js";
+import type { LoadedRuntime } from "./runtime-manifest.js";
+import { terminateProcessTree } from "./runtime-supervisor.js";
 
 const MAX_FRAME_BYTES = 16 * 1024 * 1024;
 const MAX_CAPTURED_STDERR_BYTES = 256 * 1024;
@@ -81,8 +84,8 @@ class ProbeFailure extends Error {
  * Smoke-test exactly one validated Profile. This command never creates,
  * resumes, loads, prompts, or mutates a Session.
  */
-export async function smokeAcpProfile(
-  profile: LoadedProfile,
+export async function smokeAcpRuntime(
+  runtime: LoadedRuntime,
   environment: NodeJS.ProcessEnv,
 ): Promise<AcpSmokeResult> {
   const secretValues = collectSecretValues(environment);
@@ -91,7 +94,7 @@ export async function smokeAcpProfile(
   let failure: unknown;
 
   try {
-    peer = new SmokePeer(profile, environment);
+    peer = new SmokePeer(runtime, environment);
     const initialized = asObject(
       await peer.request(
         "initialize",
@@ -111,7 +114,7 @@ export async function smokeAcpProfile(
     const listed = asObject(
       await peer.request(
         "session/list",
-        { cwd: profile.runtime.cwd },
+        { cwd: runtime.paths.workspace },
         "session-list",
       ),
       "session/list response",
@@ -199,18 +202,21 @@ class SmokePeer {
   private fatalError: ProbeFailure | undefined;
   private shuttingDown = false;
 
-  constructor(profile: LoadedProfile, environment: NodeJS.ProcessEnv) {
-    this.timeoutMs = profile.runtime.startupTimeoutMs;
+  constructor(runtime: LoadedRuntime, environment: NodeJS.ProcessEnv) {
+    this.timeoutMs = runtime.profile.agent.startupTimeoutMs;
     const spawnOptions: SpawnOptionsWithoutStdio = {
-      cwd: profile.runtime.cwd,
+      cwd: runtime.paths.workspace,
       env: environment,
       stdio: ["pipe", "pipe", "pipe"],
       windowsHide: true,
       detached: process.platform !== "win32",
     };
     this.child = spawn(
-      profile.runtime.command,
-      profile.runtime.args,
+      runtime.profile.agent.command,
+      expandRuntimeArguments(
+        runtime.profile.agent.args,
+        buildRuntimeVariables(runtime),
+      ),
       spawnOptions,
     ) as ChildProcessWithoutNullStreams;
     this.exitPromise = new Promise((resolve) => {
@@ -320,21 +326,25 @@ class SmokePeer {
       new ProbeFailure("ACP subprocess is shutting down", "cleanup"),
     );
 
-    if (hasExited(this.child)) return;
-    try {
-      this.child.stdin.end();
-    } catch {
-      // Continue to the signal-based cleanup path.
+    if (!hasExited(this.child)) {
+      try {
+        this.child.stdin.end();
+      } catch {
+        // Continue to the process-group cleanup path.
+      }
+      await this.waitForExit(SHUTDOWN_GRACE_MS);
     }
-    if (await this.waitForExit(SHUTDOWN_GRACE_MS)) return;
-
-    this.signal("SIGTERM");
-    if (await this.waitForExit(Math.max(250, SHUTDOWN_GRACE_MS / 2))) return;
-
-    this.signal("SIGKILL");
-    if (await this.waitForExit(Math.max(250, SHUTDOWN_GRACE_MS / 2))) return;
-
-    throw new ProbeFailure("ACP subprocess did not terminate", "cleanup");
+    try {
+      await terminateProcessTree(this.child, {
+        terminateGraceMs: Math.max(250, SHUTDOWN_GRACE_MS / 2),
+        forceSettleMs: Math.max(250, SHUTDOWN_GRACE_MS / 2),
+      });
+    } catch (error) {
+      throw new ProbeFailure(
+        `ACP subprocess did not terminate: ${safeSystemError(error)}`,
+        "cleanup",
+      );
+    }
   }
 
   private consumeStdout(chunk: Buffer): void {
@@ -493,19 +503,6 @@ class SmokePeer {
     ]);
   }
 
-  private signal(signal: NodeJS.Signals): void {
-    if (hasExited(this.child)) return;
-    try {
-      if (process.platform !== "win32" && this.child.pid) {
-        process.kill(-this.child.pid, signal);
-      } else {
-        this.child.kill(signal);
-      }
-    } catch (error) {
-      const code = asOptionalObject(error)?.code;
-      if (code !== "ESRCH") throw error;
-    }
-  }
 }
 
 export function sanitizeDiagnostic(

@@ -17,7 +17,7 @@ import type {
 } from '@agentclientprotocol/sdk';
 import { ref, type Ref } from 'vue';
 import type {
-  AgentConfig,
+  RuntimeProject,
   PermissionRequest as LocalPermissionRequest,
 } from './types';
 import { createToolCallInfo } from './tool-call';
@@ -261,7 +261,7 @@ export class AcpClientBridge {
   }
 
   initialize(params: InitializeRequest): Promise<InitializeResponse> {
-    // Profile startup is bounded at 120 seconds by the Bridge. Keep the
+    // Runtime startup is bounded at 120 seconds by the Bridge. Keep the
     // browser deadline slightly longer so the server owns startup failure.
     return this.sendRequest('initialize', params, INITIALIZE_TIMEOUT_MS);
   }
@@ -336,9 +336,9 @@ export class AcpClientBridge {
 }
 
 export async function createAcpClient(
-  profile: { name: string; config: AgentConfig },
+  runtime: { runtimeId: string; project: RuntimeProject },
 ): Promise<AcpClientBridge> {
-  const transport = await createTransport(profile.name, profile.config);
+  const transport = await createTransport(runtime.runtimeId, runtime.project);
   return new AcpClientBridge(transport);
 }
 

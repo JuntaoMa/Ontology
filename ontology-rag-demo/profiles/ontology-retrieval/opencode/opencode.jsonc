@@ -1,0 +1,37 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "{env:ONTOLOGY_MODEL_ID}",
+  "default_agent": "ontology-retrieval-planner",
+  "share": "disabled",
+  "autoupdate": false,
+  "skills": {
+    "paths": [
+      "{env:ONTOLOGY_SKILLS_ROOT}"
+    ]
+  },
+  "permission": {
+    "*": "deny",
+    "bash": "allow",
+    "skill": {
+      "*": "deny",
+      "ontology-retrieval": "allow"
+    }
+  },
+  "agent": {
+    "ontology-retrieval-planner": {
+      "description": "Extract ontology keywords, retrieve ontology context, and plan data queries",
+      "mode": "primary",
+      "model": "{env:ONTOLOGY_MODEL_ID}",
+      "prompt": "{file:./prompt.md}",
+      "temperature": 0,
+      "permission": {
+        "*": "deny",
+        "bash": "allow",
+        "skill": {
+          "*": "deny",
+          "ontology-retrieval": "allow"
+        }
+      }
+    }
+  }
+}

@@ -5,7 +5,7 @@ import UiIcon from './UiIcon.vue';
 
 defineProps<{
   authMethods: AuthMethod[];
-  agentName: string;
+  runtimeName: string;
 }>();
 
 const emit = defineEmits<{
@@ -38,7 +38,7 @@ function handleSelect(methodId: string) {
 
     <div class="dialog-content">
       <p class="description">
-        <strong>{{ agentName }}</strong> requires authentication to continue.
+        <strong>{{ runtimeName }}</strong> requires authentication to continue.
         Select an authentication method:
       </p>
 

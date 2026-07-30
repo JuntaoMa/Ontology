@@ -1,19 +1,21 @@
 // The Console ships only as a browser client for the same-origin ACP Bridge.
-import type { AgentConfig } from '../types';
+import type { RuntimeProject } from '../types';
 import type { AcpTransport } from './types';
 import { WebSocketTransport } from './websocket';
 
 /**
- * Create the sole supported transport for a server-published Profile.
+ * Create the sole supported transport for a server-published Runtime Project.
  */
 export async function createTransport(
-  agentName: string,
-  config: AgentConfig,
+  runtimeId: string,
+  project: RuntimeProject,
 ): Promise<AcpTransport> {
-  if (!config.url) {
-    throw new Error(`Agent '${agentName}' is missing its Bridge WebSocket URL`);
+  if (!project.url) {
+    throw new Error(
+      `Runtime Project '${runtimeId}' is missing its Bridge WebSocket URL`,
+    );
   }
-  return WebSocketTransport.connect({ url: config.url });
+  return WebSocketTransport.connect({ url: project.url });
 }
 
 export type { AcpTransport, Unsubscribe } from './types';

@@ -1,175 +1,218 @@
-# Ontology RAG Demo
+# Ontology Agent Test Console
 
-这是一个单进程、单项目级虚拟环境的本体 RAG 验证工程：
+这是一个以 OpenCode Agent 为核心、通过 ACP 接入 WebUI 的本体测试环境。测试方案以
+Profile 打包，本体输入以 Dataset 管理；用户在页面上选择两者创建 Runtime 项目，再在
+项目内创建多个 OpenCode Session。
 
 ```text
-问题
-  ├─ Embedding（快速示例或 BGE-M3）→ LanceDB cosine Top 5
-  ├─ 本体锚点 → NetworkX 近似最小连通子图
-  └─ 合并证据 → Qwen/OpenAI-compatible API
+Profile × Dataset
+       │ 创建并初始化
+       ▼
+Runtime project
+├── Profile / Dataset 普通文件快照
+├── OpenCode 独立 cwd、配置和 Session DB
+├── LanceDB 等 Profile 私有状态
+└── 多个 Session
+       │ ACP
+       ▼
+Agent Console WebUI
 ```
 
-第一阶段不启动 NebulaGraph。图检索接口与存储实现解耦，端到端基线通过后再增加
-NebulaGraph 适配器。
+当前包含两条可直接运行的测试流：
 
-Agent 测试控制台采用 OpenCode + ACP 的 Agent-centric 架构，设计和实现状态见：
+- `direct-context`：初始化时把具名 TBox 投影精简为 YAML 并注入 Prompt；
+- `ontology-retrieval`：初始化时建立实体向量索引，Agent 通过 Skill 获取 Top-5 和
+  NetworkX 近似 Steiner 连通子图，再生成查询 Plan。
 
-- [Agent Console 系统设计](docs/agent-console/system-design.md)
-- [Profile 与 Artifact 协议](docs/agent-console/protocols.md)
-- [开发与验证](docs/agent-console/development.md)
-- [OpenCode ACP 能力矩阵](docs/agent-console/acp-capability-matrix.md)
-- [实现决策记录](docs/agent-console/decisions.md)
-- [两条查询规划基线](baselines/README.md)
+检索 Profile 默认使用无需下载模型的 deterministic embedding 打通流程。切换到
+BGE-M3 后仍使用同一个 Profile；差异记录在每个 Runtime 的索引元数据中。
 
 ## 目录
 
 ```text
 ontology-rag-demo/
-├── .env.example              # 只含变量名和非敏感默认值
-├── .python-version           # Python 3.13.7
+├── profiles/
+│   ├── direct-context/
+│   └── ontology-retrieval/
+├── datasets/
+│   └── smart-building/
+│       ├── dataset.yaml
+│       ├── building.ttl
+│       └── raw_data/
+├── docs/agent-console/
+├── tests/
 ├── pyproject.toml
 ├── uv.lock
-├── examples/smart-building/ # 可提交的虚构楼宇本体与示例文档
-├── src/ontology_rag_demo/
-├── tests/
-├── data/source/              # 按数据集隔离的运行时副本，不提交
-├── state/                    # 按数据集隔离的 LanceDB 数据，不提交
-└── artifacts/                # 评估产物，不提交
+└── .runtime/                 # 本机物化项目，忽略提交
 ```
 
-## 1. 创建环境
+Profile 自带 Prompt、Skill、Tool、检索实现和初始化入口，但共享根 uv 环境，不创建嵌套
+`.venv`。Dataset 固定为 `datasets/<dataset-id>/` 两级结构，本体文件直接放在 Dataset
+根目录，复杂来源材料可放入 `raw_data/`。
 
-所有 Python 依赖都由当前目录下的 uv 项目管理：
+## 安装
+
+要求 macOS、Linux 或 WSL，Python `3.13.7`、uv、Node.js `22.13+`、pnpm，以及支持
+ACP 的 OpenCode。原生 Windows 暂不启动 Console：当前删除安全依赖 POSIX 进程组，
+Windows 用户应在 WSL 中运行。
+当前能力矩阵已核验 OpenCode `1.17.16`；内部改版需提供相同的 ACP 与 Runtime 隔离能力。
 
 ```bash
 cd ontology-rag-demo
-
 uv python install 3.13.7
 uv sync --locked
+
+cd ..
+pnpm install --frozen-lockfile
+
+opencode --version
+opencode models | grep 'deepseek/deepseek-v4-flash'
 ```
 
-禁止在子模块中再次执行 `uv init`，也不要使用 `pip install` 修改 `.venv`。
+整个 Demo 只有 `ontology-rag-demo/.venv` 一个 Python 环境。不要在 Profile、Dataset
+或 `.runtime/` 内执行 `uv init`、`uv venv` 或 `pip install`。
 
-## 2. 配置环境变量
+两个内置 Profile 都声明模型 `deepseek/deepseek-v4-flash`，但不复制 API Key：
+模型注册和凭据继续由本机 OpenCode 配置管理。上面的模型检查无结果时，应先按所用
+OpenCode 版本完成模型配置，再启动 Console；不能只迁移本仓库来替代凭据配置。
+
+## 启动 WebUI
+
+默认无需 `.env`：
 
 ```bash
+cd /path/to/repository
+pnpm dev:agent-console
+```
+
+开发模式打开 `http://127.0.0.1:5173/`；构建后由 Bridge 直接托管时使用
+`http://127.0.0.1:4310/`。页面左侧只显示已经创建的 Runtime：
+
+1. 点击“新建项目”；
+2. 选择一个 Profile 和一个 Dataset；
+3. 等待 Runtime 从“初始化中”变为“就绪”；
+4. 在该项目中创建对话并提问。
+
+创建入口每次打开都会刷新两个源 Catalog，并隐藏已经存在的 Profile × Dataset 组合；
+源目录新增测试流或 Dataset 后不需要重启 Console。
+
+生产式本地启动：
+
+```bash
+pnpm build:agent-console
+pnpm --filter ontology-agent-console start
+```
+
+Runtime ID 固定为 `<profile-id>--<dataset-id>`。同一组合只创建一个 Runtime，但其中
+可以有多个 Session；不同 Runtime 可在后台独立执行。
+
+删除 Session 只删除该 Runtime 内的 OpenCode Session。删除项目会先停止其 ACP/初始化
+进程，再将 Runtime 原子移动到 `.runtime/trash/` 后清理；不会删除源 Profile、源
+Dataset、根 uv 环境或其他 Runtime。若 Session 删除维护正在运行，项目删除会返回忙，
+不会越过尚未登记完成的子进程。
+
+## 使用 BGE-M3
+
+复制可选环境示例并在启动 Console 前 source：
+
+```bash
+cd ontology-rag-demo
 cp .env.example .env
 chmod 600 .env
+
+set -a
+source .env
+set +a
+
+cd ..
+pnpm dev:agent-console
 ```
 
-在 `.env` 中填写真实的 `QWEN_BASE_URL`、`QWEN_API_KEY` 和 `QWEN_MODEL`。
-`.env` 已被 Git 忽略；应用不会自动读取仓库内的任何密钥文件，运行时由 uv 显式注入：
-
-```bash
-uv run --locked --env-file .env ontology-rag smoke
-```
-
-也可以由部署系统直接注入环境变量，不创建 `.env`。
-
-## 3. 准备内置示例数据
-
-准备命令读取 `SOURCE_ONTOLOGY_PATH` 和 `SOURCE_DOCUMENT_PATHS`，将源文件复制到被
-忽略的 `data/source/smart-building/`。默认输入是仓库内可提交的虚构智能楼宇本体与运维说明，因此
-全新 clone 不依赖 3GPP 或其他外部业务材料：
-
-```bash
-uv run --locked --env-file .env ontology-rag prepare
-```
-
-默认选择：
-
-- `examples/smart-building/ontology.ttl`
-- `examples/smart-building/documents/operations-guide.txt`
-
-测试真实或私有本体时，只在被忽略的 `.env` 中覆盖 `SOURCE_ONTOLOGY_PATH`、
-`SOURCE_DOCUMENT_PATHS`、`ONTOLOGY_PATH`、`DOCUMENTS_DIR` 和 `LANCEDB_URI`，
-为不同数据集使用独立运行目录；不要提交这些运行时副本。
-
-## 4. 构建 LanceDB 本体实体索引
-
-默认 `deterministic` embedding 只用于快速打通流程，不下载模型权重：
-
-```bash
-uv run --locked --env-file .env ontology-rag build-index
-```
-
-每个本体实体使用以下三行文本构建向量，不混入文档块或边文本：
-
-```text
-{name}
-{label}
-{comment}
-```
-
-进行检索质量评估时，在 `.env` 中切换到 BGE-M3；首次运行会从 Hugging Face 下载
-`BAAI/bge-m3`：
+把 `.env` 中的 `EMBEDDING_BACKEND` 改为：
 
 ```dotenv
 EMBEDDING_BACKEND=bge-m3
 EMBEDDING_MODEL=BAAI/bge-m3
+EMBEDDING_DEVICE=cpu
 ```
 
-Mac M1 可在 `.env` 中设置：
+Mac 可在 PyTorch MPS 可用时设置 `EMBEDDING_DEVICE=mps`。创建 Runtime 时会把
+backend、model、max length 和 normalize 固化进索引元数据；之后修改这些语义配置不会
+静默改变已建索引，需要从 UI 删除并重建。`EMBEDDING_DEVICE` 与
+`EMBEDDING_BATCH_SIZE` 仍是每次查询读取的执行参数。
 
-```dotenv
-EMBEDDING_DEVICE=mps
-```
+当前索引元数据记录 Embedding Model ID，但尚未锁定 Hugging Face revision/commit。
+质量对比应使用受控模型缓存或不可变本地快照，并在权重变化后删除、重建 Runtime。
 
-先检查当前 PyTorch 运行环境：
-
-```bash
-uv run --locked python -c \
-  'import torch; print(torch.backends.mps.is_built(), torch.backends.mps.is_available())'
-```
-
-只有第二项为 `True` 时才启用 MPS。如果 MPS 不可用或遇到不支持的算子，先使用
-`cpu` 完成基线验证。`deterministic` 后端只用于单元测试和无模型 smoke check，
-不能用于评估 RAG 质量。
-
-## 5. 启动 API
-
-```bash
-uv run --locked --env-file .env ontology-rag serve
-```
-
-接口：
+## 添加 Dataset
 
 ```text
-GET  /health
-POST /v1/retrieval/vector
-POST /v1/retrieval/graph
-POST /v1/retrieval/oag
-POST /v1/answer
+datasets/<dataset-id>/
+├── dataset.yaml
+├── <ontology-file>.ttl
+└── raw_data/                 # 可选
 ```
 
-`/health` 在本体文件存在时返回 `ontology_sha256`，供不可变 Agent Profile 校验实际
-加载的本体输入；响应不返回文件路径。
+示例 manifest：
 
-示例：
+```yaml
+schema_version: 1
+id: my-dataset
+title: My Dataset
+description: 用于某项测试的本体。
+ontology_file: ontology.ttl
+raw_data_dir: raw_data
+```
+
+`id` 必须与目录名一致。本体必须是 Dataset 根下的普通文件；不使用
+`datasets/public/` 或 `datasets/private/`。真实业务材料应对具体 Dataset 目录设置精确
+Git ignore/exclude，并用 `git status --ignored` 核验。
+
+## 添加 Profile
+
+Profile v2 的最小结构：
+
+```text
+profiles/<profile-id>/
+├── profile.yaml
+├── opencode/
+├── tools/
+├── skills/                   # 可选
+├── retrieval/                # 可选
+└── tests/                    # 推荐
+```
+
+Profile 不能声明具体 Dataset、本体路径、Runtime 路径、密钥或状态目录。需要的路径由
+Runtime Manager 通过受控环境变量注入；所有命令均以 argv 启动，不经过 shell。
+
+完整字段和初始化协议见
+[配置与数据协议](docs/agent-console/protocols.md)。
+
+## 验证
 
 ```bash
-curl -fsS http://127.0.0.1:8010/health
+cd ontology-rag-demo
+uv run --locked --no-sync pytest
+uv run --locked --no-sync ruff check .
 
-curl -fsS \
-  -H 'Content-Type: application/json' \
-  -d '{"question":"温度传感器所在的房间属于哪个建筑？","trace":true}' \
-  http://127.0.0.1:8010/v1/answer
+cd ..
+pnpm test:agent-console
+pnpm build:agent-console
 ```
 
-## 6. 验证
+详细设计与运维入口：
 
-```bash
-uv run --locked pytest
-uv run --locked ruff check .
-uv run --locked --env-file .env ontology-rag smoke
-```
+- [系统设计](docs/agent-console/system-design.md)
+- [配置与数据协议](docs/agent-console/protocols.md)
+- [开发与验证](docs/agent-console/development.md)
+- [模块与接口](docs/agent-console/module-reference.md)
+- [OpenCode ACP 能力矩阵](docs/agent-console/acp-capability-matrix.md)
+- [决策记录](docs/agent-console/decisions.md)
 
-`/health` 和 `smoke` 只返回“是否已配置”，不会输出 API 地址、模型名或密钥。
+## 安全边界
 
-## 配置安全边界
-
-- API 地址、密钥和内网模型名只从环境变量读取。
-- 内置虚构示例可以提交；真实源材料、`.env`、模型权重、LanceDB 状态和评估产物均不提交。
-- `.env.example` 不包含真实内网地址、令牌或内部模型标识。
-- HTTP 请求异常不会把 Authorization header 写入日志。
-- 公开提交前可执行 `git status --ignored` 确认运行材料处于 ignored 状态。
+- OpenCode 模型和凭据沿用本机 OpenCode 配置，不写入 Profile。
+- Runtime API 和浏览器不返回绝对路径、命令、环境变量或密钥。
+- `.env`、`.runtime/`、模型权重和 Python/Node 缓存均不提交。
+- Profile/Dataset 创建快照时拒绝 symlink、路径穿越和特殊文件。
+- Runtime 的 OpenCode cwd、Session DB、配置、索引和状态彼此隔离。

@@ -1,163 +1,277 @@
 # Ontology Agent Console 系统设计
 
-状态：首版已实现
+状态：已按 Runtime 架构实现
 
 边界：可信单用户、本机 loopback、OpenCode 为唯一 Agent Runtime
 
-## 1. 目标与非目标
+## 1. 核心概念
 
-Console 用一个浏览器页面运行和观察多种本体 RAG 测试方案：
-
-1. 用户从固定 Profile 分组创建或恢复 OpenCode Session。
-2. OpenCode 自主管理上下文、加载 Skill、调用 Bash，并根据观测继续调用工具或回答。
-3. OAG Skill 可访问 8010 服务，完成本体实体向量召回和最小连通子图检索。
-4. UI 展示 ACP 能看到的消息、Thinking、Plan、Tool Call、Permission 和子图 artifact。
-
-Profile 描述 Agent 设置、工具参数和 Skill，不定义固定 Workflow 或步骤顺序。首版也不
-实现测试结果自动比较、前端历史数据库、事件总线、插件注册系统、复杂图工作台或多用户
-权限系统。
-
-## 2. 事实源与职责
-
-| 模块 | 权威职责 | 明确不负责 |
+| 概念 | 含义 | 是否可分享 |
 | --- | --- | --- |
-| OpenCode | Session、历史、Agent 循环、模型、Skill、工具和权限 | 浏览器接入、OAG 实现 |
-| Agent Profile | 固定测试方案的运行配置和非敏感参数 | Session 数据、工具调用顺序 |
-| ACP Bridge | Profile 校验、进程生命周期、WebSocket/stdio 转发、安全门控、静态 UI | 消息语义编排、检索实现、历史存储 |
-| Web UI | Prompt/Cancel/Permission 与 ACP 事件展示 | 权威历史、Agent 配置、长期持久化 |
-| 8010 OAG | Embedding、LanceDB Top-K、本体锚点和连接子图、检索 API | Agent 会话和答案策略 |
+| Profile | 一套完整测试流实现，可包含 Agent 配置、Prompt、Skill、Tool、Retrieval、Initializer 和测试 | 是 |
+| Dataset | 与测试流独立的数据输入，包含一个本体文件和可选 `raw_data/` | 可独立决定 |
+| Runtime | Profile 与 Dataset 在本机物化后的可运行实例；同时承担 WebUI 中“项目”的显示语义 | 否 |
+| Session | Runtime 下由 OpenCode 持久化的对话和 Agent 历史 | 否 |
 
-Session 属于 OpenCode，并绑定创建它的 Profile。浏览器内存中的 Conversation 只是当前
-页面的展示投影，刷新后必须从 `session/list` 和 `session/load` 恢复。
+不再单独定义 Project 或 Binding。二者的用途合并进 Runtime manifest。Profile 不绑定
+具体本体；Dataset 不绑定测试流。
 
-## 3. 运行拓扑
-
-```text
-Browser
-   │ same-origin HTTP / WebSocket
-   ▼
-Agent Console (127.0.0.1:4310)
-├── Vue Web UI
-└── ACP Bridge
-       │ stdio NDJSON / JSON-RPC
-       ▼
-   opencode acp
-       │ Agent 自主 Bash
-       ▼
-共享 ontology-retrieval Skill
-       │ HTTP
-       ▼
-8010 OAG
-├── BGE-M3
-├── LanceDB cosine Top-K
-└── NetworkX 最小连通子图
-```
-
-浏览器不直接访问 8010、LanceDB 或本体文件。Console 与 OpenCode 在同一可信主机运行；
-8010 可以作为独立本机进程运行。
-
-## 4. Profile 与运行时
-
-Bridge 启动时递归发现 Catalog 中名为 `profile.yaml` 或 `profile.yml` 的文件，由服务端
-JSON Schema 和语义校验统一加载。浏览器只收到脱敏后的 Catalog。
-
-Profile 的关键约定：
-
-- `runtime.cwd`、OpenCode 配置、附属资产和 Skill 路径均相对于 Profile 文件解析，并
-  必须留在允许的项目/Catalog 边界内。
-- 运行状态目录不写入 YAML，而是由 Catalog 项目根和 Profile ID 确定：
-  `ontology-rag-demo/.runtime/opencode/<id>`。
-- `{env: VARIABLE_NAME}` 是有类型的环境引用。Bridge 从 Profile 自动收集这些引用；
-  启动时缺值则把 Profile 标记为 `unavailable`，值本身不返回浏览器。
-- OpenCode 配置源保存在 Git 中。启动前 Bridge 将 `opencode.jsonc` 和显式 sidecar
-  同步到 `<stateDir>/config/`，再设置 `OPENCODE_CONFIG_DIR`。
-- 每个 Profile 的 `OPENCODE_DB` 固定为 `<stateDir>/opencode.db`，从而隔离 Session。
-- Model、Retrieval、Ontology 声明会映射为规范化的 `ONTOLOGY_*` 运行变量；Agent
-  子进程只继承最小系统变量和 Profile 实际引用的环境变量。
-
-Profile 是固定测试方案配置。可复现性直接来自 Git commit、`pnpm-lock.yaml`、
-`uv.lock`、Profile/Prompt/Skill 文件及部署环境记录。`revision` 是方案版本标签。
-
-## 5. 连接、并发与恢复
-
-- `WS /agents/:profileId/acp` 是一个 Profile 的唯一 ACP 入口。
-- 一条活跃 WebSocket 对应一个 `opencode acp` 子进程；连接断开后终止进程树。
-- 同一 Profile 同时只允许一个 WebSocket 客户端；第二条连接返回冲突。
-- 一个 Profile 连接可以管理多个 OpenCode Session。UI 按
-  `profileId + sessionId` 路由 `session/update`。
-- 不同 Profile 可以同时连接和执行；切换唯一可见的对话窗口不会取消后台 Profile。
-- 首版同一 Profile 同时只运行一轮 `session/prompt`，避免同一 ACP 连接上的 Permission
-  归属不明确。
-- 未建立长期连接时，UI 可用短生命周期连接执行 `initialize + session/list`，随后
-  关闭；加载或创建对话时建立该 Profile 的工作连接。
-- 同一 Session 的并发 `session/load` 合并为一个请求；历史回放完成前不能发送 Prompt。
-- Bridge 不缓冲断线期间事件，也不重放旧 JSON-RPC。重连后由 OpenCode 持久历史恢复。
-
-## 6. 删除会话
-
-ACP `0.13.1` 没有持久 Session 删除方法。UI 的垃圾桶调用同源扩展：
+Runtime ID 固定为：
 
 ```text
-DELETE /agents/:profileId/sessions/:sessionId
+<profile-id>--<dataset-id>
 ```
 
-Bridge 校验 Profile 和 OpenCode Session ID，并在该 Profile 无在途请求时取得 maintenance
-锁；随后关闭空闲连接，以参数数组、无 shell 方式执行：
+同一对 Profile/Dataset 在一台主机上最多有一个 Runtime。Profile 或 Dataset 源发生
+变化时，现有 Runtime 仍使用创建时快照；需要显式删除并重新创建。若要同时保留不同
+实现版本，应使用不同 Profile ID。
+
+## 2. 目标与非目标
+
+首版目标：
+
+1. 用户从 Profile Catalog 和 Dataset Catalog 选择一对输入。
+2. 服务端调用 Profile Initializer，在 `.runtime/projects/` 中创建 Runtime。
+3. WebUI 只显示已经创建的 Runtime，以及各 Runtime 下的 OpenCode Session。
+4. OpenCode 自主管理上下文、Skill、Tool、Permission 和多轮执行。
+5. Profile 可以通过 Skill/Tool 调用自身携带的有限任务实现。
+6. UI 展示 ACP 事件、子图 artifact，以及查询计划的 JSON/Graph 两种视图。
+
+首版不实现测试结果自动评分、多用户权限、前端历史数据库、任意插件安装、跨主机调度或
+复杂图编辑工作台。Profile v2 也不管理常驻 sidecar；若以后需要服务型检索器，应新增
+带明确 endpoint 与 readiness 协议的版本，而不是把“进程未立即退出”当成健康状态。
+
+## 3. 事实源与职责
+
+| 模块 | 权威职责 |
+| --- | --- |
+| Profile Catalog | 可分享测试流源文件 |
+| Dataset Catalog | 本体和原始数据源文件 |
+| Runtime Manager | Profile/Dataset 快照、Initializer 生命周期、Runtime manifest、删除 |
+| OpenCode | Runtime 下的 Session、历史、Agent 循环、模型、工具和 Permission |
+| ACP Bridge | Runtime 白名单、WebSocket/stdio 转发、请求门控、进程回收 |
+| Web UI | Runtime 创建入口、Session 交互和 ACP 展示投影 |
+
+WebUI 不把 Profile 当成项目，也不显示尚未创建的 Profile 分组。侧栏顶层分组是 Runtime
+的显示名，Session 是其 OpenCode 子资源。
+
+## 4. 源目录与 Runtime 快照
+
+源目录：
 
 ```text
-opencode session delete <sessionId> --pure
+ontology-rag-demo/
+├── profiles/
+│   └── <profile-id>/
+│       ├── profile.yaml
+│       ├── opencode/
+│       ├── skills/
+│       ├── tools/
+│       ├── retrieval/
+│       └── tests/
+└── datasets/
+    └── <dataset-id>/
+        ├── dataset.yaml
+        ├── <ontology-file>.ttl
+        └── raw_data/          # 可选
 ```
 
-命令使用所属 Profile 的 cwd、配置 overlay 和 `OPENCODE_DB`。删除完成后 UI 刷新
-`session/list` 并按需要恢复原可见会话。前端不使用 tombstone 或本地伪删除掩盖
-OpenCode 的事实源。
+Dataset 只有 `datasets/<dataset-id>/` 两级结构，不按 public/private 分目录。本体文件
+直接位于 Dataset 目录；`dataset.yaml` 显式声明其文件名。敏感 Dataset 通过具体目录的
+Git ignore/exclude 策略保护，目录结构本身不表达敏感级别。
 
-## 7. 安全边界
+物化结果：
 
-Agent 可以执行 Bash，因此入口接近本机远程终端能力：
+```text
+ontology-rag-demo/.runtime/
+├── projects/
+│   └── <profile-id>--<dataset-id>/
+│       ├── runtime.yaml
+│       ├── workspace/                # OpenCode cwd
+│       │   ├── profile/              # Profile 创建时复制快照
+│       │   ├── dataset/              # Dataset 创建时复制快照
+│       │   └── generated/            # Initializer 生成物
+│       ├── opencode/
+│       │   ├── opencode.db
+│       │   └── config/
+│       ├── state/                    # LanceDB 等 Profile 私有状态
+│       └── logs/
+├── staging/                          # 初始化中的候选 Runtime
+└── trash/                            # 已逻辑删除、待物理清理
+```
 
-- 服务端只允许 `127.0.0.1`、`::1` 或 `localhost` 监听。
-- WebSocket 校验 `Origin`；浏览器只能选择服务端 Catalog 中的 Profile ID。
-- Bridge 校验 Session cwd，拒绝非空 `mcpServers` 注入，并拒绝客户端修改 Profile
-  固定的 Model、Mode 和配置选项。
-- Profile 只保存环境变量名，密钥值只在服务端子进程环境中存在。
-- Agent stdout 专用于 ACP NDJSON；日志写 stderr，错误响应不回显敏感输出。
-- Markdown 经 DOMPurify 处理，artifact 字符串按文本渲染。
-- Permission 是 Agent 交互机制，不是主机沙箱。
+约束：
 
-本设计不适用于公网、共享服务器或不可信用户。要扩大边界，必须先增加认证、授权和进程/
-文件系统隔离。
+- OpenCode cwd 必须是 Runtime 的 `workspace/`，不能是仓库根或 Profile 源目录。
+- Profile 和 Dataset 都复制为普通文件快照；不创建 symlink，也不保留指向源目录的
+  可写引用。
+- Loader 拒绝源目录中的符号链接、路径穿越、设备文件、嵌套环境，以及
+  `__pycache__`、`*.pyc`、测试缓存、`node_modules` 等生成物。
+- OpenCode 配置从 `workspace/profile/opencode/` 复制到
+  `<runtime>/opencode/config/`，`OPENCODE_DB` 固定在 Runtime 内。
+- Profile Tool 使用 `ONTOLOGY_PROFILE_DIR=workspace/profile`，
+  Dataset 使用 `ONTOLOGY_DATASET_DIR=workspace/dataset`，运行状态使用
+  `ONTOLOGY_RUNTIME_STATE_DIR=<runtime>/state`。
+- Runtime manifest 记录创建时的 Profile/Dataset 标题、Profile revision、两份快照摘要、
+  创建时间和状态；侧栏标题不依赖当前源 Catalog。描述从 Runtime 内已校验快照投影，
+  对浏览器只返回脱敏字段。
 
-## 8. UI 与可观察性
+## 5. Runtime 初始化
 
-UI 以 `acp-ui 0.1.16` 为源码基线，仅保留 Web 能力。页面固定按 Profile 分组，每组只
-提供脱敏信息、新建对话和 Session 列表；单页只有一个可见 `ChatView`。
+WebUI 的“创建项目”入口从两个只读 Catalog 中选择 Profile 与 Dataset。每次打开入口都会
+重新读取 Catalog 与 Runtime 列表，并过滤已经存在的确定性组合；服务端仍以 `409`
+作为并发和绕过 UI 时的最终防线。随后调用：
 
-展示规则：
+```text
+POST /runtimes
+```
 
-- Thinking、Skill、Execute/Bash 与普通 Tool 使用不同语义图标。
-- Tool Call、ACP Plan 和最终 JSON 都是“单行摘要 + 可折叠正文”；完整 JSON 标题为
-  “查询Plan”。
-- Tool 展示 Input、Output 和 artifact，不重复显示通用 `ACP content`；底层字段仍
-  保留用于 artifact 提取。
-- `ONTOLOGY_ARTIFACT:` 中的合法小型子图可显示轻量 SVG；失败时保留原始 Tool 输出。
-- 实时成功回答显示浏览器当地完成时间与客户端观测的全轮耗时。
-- `session/load` 无法恢复权威的回答完成时间或 Tool 原生时序，因此历史页不伪造这些
-  字段。
+服务端流程：
 
-前端不使用 localStorage 持久化 Agent 地址、凭据、Session 或 Trace，也不建立第二套
-事件协议或传输诊断页。它只呈现 ACP 可观察执行；OpenCode 私有但未投影的事件不属于
-可恢复范围。
+1. 只接受 Catalog 中已校验的 `profile_id` 和 `dataset_id`，计算确定性 Runtime ID。
+2. 对该 ID 取得独占 initialization lock；已有 Runtime 返回冲突，不静默覆盖。
+3. 在 `.runtime/staging/<runtime-id>--<nonce>/` 创建候选目录。
+4. 将 Profile 和 Dataset 逐文件复制到 `workspace/`；复制过程拒绝 symlink 和越界。
+5. 写入 pending `runtime.yaml`，状态为 `initializing`。
+6. 以无 shell、固定参数、最小环境运行 Profile 声明的 Initializer。Initializer 只能
+   写候选 Runtime；例如 Direct-context 可把 Dataset 本体转换为 Prompt context，
+   Retrieval Profile 可准备索引。
+7. 验证生成文件和 manifest 后，将 staging 目录原子 rename 到
+   `.runtime/projects/<runtime-id>`，状态切换为 `ready`。
 
-## 9. 双基线
+创建是异步操作。初始化中的 Runtime 可在 UI 显示进度，但不能创建 Session。初始化失败
+保留脱敏错误状态，不返回 stdout、内部路径或密钥；用户可以删除失败实例后重试。服务
+重启时，遗留 staging manifest 从 `initializing` 转为 `initialization_failed`，不能
+自动提升为 ready。
 
-| Profile | 本体上下文来源 | 预期轨迹 |
-| --- | --- | --- |
-| `baseline-direct-context` | Prompt 内嵌完整精简 YAML 本体 | 不调用 Tool，直接输出查询计划 |
-| `baseline-oag` | Agent 提取关键词后调用共享 Skill | BGE-M3 Top 5 → 命中实体为锚点 → 最小连通子图 → 查询计划 |
+## 6. ACP 与 Session
 
-两条路径使用同一模型和同一问题，最终输出约定为 `data-query-plan.v1`。当前目标是验证
-从问题到查询计划的接线与可观察性，不把实例数据查询或自动优劣比较纳入首版。
+- `WS /runtimes/:runtimeId/acp` 是 Runtime 的 ACP 入口。
+- 一个 Runtime 最多有一条活跃 WebSocket 和一个 `opencode acp` 进程。
+- OpenCode 的 cwd 固定为该 Runtime 的 `workspace/`。
+- 不同 Runtime 可以并行；同一 Runtime 的 Prompt 首版串行。
+- Session 由 OpenCode 写入该 Runtime 的 `opencode.db`，不能跨 Runtime 移动。
+- WebUI 按 `runtimeId + sessionId` 路由 `session/update`；当前可见窗口只影响展示。
+- 页面刷新后通过 Runtime 的 `session/list` 和 `session/load` 恢复。
+- ACP 没有持久 Session 删除方法，因此 Session 垃圾桶继续使用 Runtime-aware
+  OpenCode CLI 扩展。
 
-最终合格标准是真实 WebUI 中完成创建、Prompt、后台并行、Tool/artifact 展示、刷新恢复
-和删除；Profile Probe 只做 `initialize + session/list` 的只读 smoke check。
+## 7. Runtime 删除
+
+Runtime 删除是高风险操作，必须以 Runtime 为唯一删除边界：
+
+```text
+DELETE /runtimes/:runtimeId
+```
+
+### 7.1 锁与停止顺序
+
+1. 取得 Runtime exclusive deletion lock；拒绝新 ACP、Session 删除和 Initializer。
+2. 状态切换为 `deleting`。
+3. 若 Initializer 仍在运行，先 Cancel，再按 TERM → grace → KILL 有界终止进程组。
+4. 取消或终止该 Runtime 的 ACP 进程及其子进程，拒绝待处理 Permission。
+5. 只有确认所有受管进程组停止后，才进入文件系统提交阶段。
+
+若 Session 删除维护已经取得该 Runtime 的锁，Runtime 删除返回 `runtime_busy`，不能越过
+尚未完成注册的 Session CLI 子进程；若服务端发现上次中断后仍登记的 Session 删除进程，
+则先完成回收再重试删除。服务关闭时先拒绝新的 POST/DELETE，并排空已经接受的 mutation，
+再关闭进程管理器，避免关闭阶段产生未受管的新任务。
+
+### 7.2 删除目标校验
+
+服务端不能直接信任 URL、manifest 或环境变量中的路径。rename 前必须同时确认：
+
+- Runtime ID 满足规范格式，且等于目录名和 manifest ID；
+- 目标是 canonical `.runtime/projects/<runtime-id>` 或受管 staging 目录的直接子项；
+- 从 `.runtime` 到目标不存在 symlink；
+- 目标不是 `.runtime`、`projects/`、`staging/`、`trash/` 或其他 Runtime；
+- `profile_id`、`dataset_id` 与 Runtime ID 一致；
+- trash 目标是同一 `.runtime` 文件系统内、唯一且不存在的直接子项。
+
+任何检查失败都必须停止删除，不能尝试“修正”或扩大路径。
+
+### 7.3 原子提交与清理
+
+已有文件系统 Runtime 目标时，逻辑删除的提交点是：
+
+```text
+rename(
+  .runtime/projects/<runtime-id>,
+  .runtime/trash/<runtime-id>--<timestamp>--<nonce>
+)
+```
+
+rename 成功后 Runtime 立即从 Catalog/侧栏消失，原 ID 在本次清理完成前仍保留 reservation。
+物理递归清理只允许针对刚刚生成并再次校验的 trash 直接子目录；不得按照 manifest 中的
+源路径删除。初始化刚被取消且 staging 目录尚未创建时没有文件系统目标，服务端只释放
+该 Runtime 的内存 reservation，不执行伪造的 rename。
+
+### 7.4 失败与恢复
+
+- 停止进程、路径校验或 rename 之前失败：Runtime 保留在原位置，状态写为
+  `delete_failed`，保存脱敏错误码；用户可检查后重试。
+- staging Runtime 删除失败：保留 `initialization_failed`/`delete_failed`，不得提升为
+  ready。
+- rename 已成功但物理清理失败：逻辑删除仍成立，不自动恢复 Runtime；trash 项标记为
+  `cleanup_failed`，由服务下次启动时的清理器重试；当前没有单独的 maintenance API。
+- 进程状态不确定时宁可保留 Runtime，也不能先删文件。
+- 服务重启时扫描 staging/trash，只处理满足同样路径约束并带合法 manifest 的目录。
+
+Runtime 删除永远不能删除：
+
+- `profiles/<profile-id>/**`；
+- `datasets/<dataset-id>/**`；
+- 其他 Runtime；
+- 根 `.venv`、`uv.lock`、`pyproject.toml`；
+- Agent Console、共享运行库、模型缓存和 Git 文件；
+- manifest 中记录的任何仓库外路径。
+
+## 8. WebUI
+
+侧栏只显示已创建 Runtime：
+
+```text
+Runtime display name
+  ├── New conversation
+  ├── Session A
+  └── Session B
+```
+
+Profile/Dataset Catalog 只出现在创建 Runtime 对话框。打开对话框会刷新两个源 Catalog
+和 Runtime 列表；已存在的 Profile × Dataset 组合不再作为可创建选项。Runtime 信息卡
+显示创建时快照中的 Profile/Dataset 标题与描述、revision、快照摘要和状态；不显示
+源路径、endpoint、命令或密钥。
+
+唯一 ChatView 支持不同 Runtime 后台执行。删除 Session 与删除 Runtime 是两个不同
+操作和确认文案，不能共用按钮或误导用户。
+
+## 9. 查询 Plan JSON/Graph
+
+当 Agent 最终消息包含合法 `data-query-plan.v1` object 时，“查询Plan”卡片提供
+`JSON` 与 `Graph` 切换：
+
+- JSON 视图格式化显示 Agent 原始 JSON。
+- Graph 视图只从 `query_tasks`、`targets`、`joins`、`filters`、`projections` 和
+  `ontology_evidence` 生成临时展示投影。
+- Store、ACP chunk 和 OpenCode 历史始终保留 Agent 原文；切换、布局和图坐标不写回。
+- Graph 不调用检索工具、不补充本体关系、不推断缺失字段，也不替代
+  `ontology.subgraph` Tool artifact。
+- 结构无效或超过安全上限时禁用 Graph，JSON 仍完整可用。
+
+详细映射见 [配置与数据协议](protocols.md)。
+
+## 10. 安全与复现
+
+- Profile 可公开分享，但不包含 Dataset、密钥、模型权重或 Runtime。
+- Dataset 是否敏感由部署者决定，不通过目录层级推断。
+- Profile/Dataset 源由 Git commit、revision 和摘要复现；Runtime manifest 固定创建时
+  快照。
+- 浏览器不保存 Session、Runtime 源路径、Agent endpoint 或凭据。
+- Runtime Manager 启动的进程使用固定 argv、无管理层 shell 和最小环境；Agent 仍可按
+  Profile 权限自主使用 Bash。
+- Profile、Skill 和 Initializer 是可信本机代码。Supervisor 能确认自己创建的 POSIX
+  进程组及其普通后代退出，但不能约束恶意代码通过 `setsid`/detached grandchild 逃离
+  原进程组。因此 Profile 不得启动脱管后台进程；若要运行不可信 Profile，必须在本设计
+  之外增加容器、cgroup/subreaper 或等价 OS 级 containment，不能把当前回收逻辑称为
+  安全沙箱。
+- 当前仍是 loopback 单用户 Demo；公网或多租户部署必须重新设计认证和隔离。

@@ -17,8 +17,9 @@ build/
 # Local scratch space and downloaded working files
 /tmp/
 
-# Local benchmark datasets and downloaded archives
-datasets/
+# Local benchmark datasets and downloaded archives at the repository root.
+# Demo-owned Dataset packages live under ontology-rag-demo/datasets/ and are tracked.
+/datasets/
 
 # TypeScript incremental build metadata
 *.tsbuildinfo

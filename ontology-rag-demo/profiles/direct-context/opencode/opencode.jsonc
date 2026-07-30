@@ -1,0 +1,23 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "{env:ONTOLOGY_MODEL_ID}",
+  "default_agent": "direct-context-planner",
+  "share": "disabled",
+  "autoupdate": false,
+  "snapshot": false,
+  "permission": {
+    "*": "deny"
+  },
+  "agent": {
+    "direct-context-planner": {
+      "description": "Plan data queries from an ontology embedded directly in the prompt",
+      "mode": "primary",
+      "model": "{env:ONTOLOGY_MODEL_ID}",
+      "prompt": "{file:./prompt.md}",
+      "temperature": 0,
+      "permission": {
+        "*": "deny"
+      }
+    }
+  }
+}

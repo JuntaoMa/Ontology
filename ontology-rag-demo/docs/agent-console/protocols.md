@@ -1,31 +1,59 @@
 # Agent Console 配置与数据协议
 
-状态：首版已实现
+状态：Runtime 协议已实现
 
-Profile Schema：`1`
+## 1. Profile Package
 
-## 1. Agent Profile v1
+Profile 是可打包分享的完整测试流实现，不能绑定具体 Dataset。一个 Profile 目录可以
+按需包含：
 
-Profile 是服务端可执行配置，也是人类可读的固定测试方案说明。它声明 Agent 运行方式、
-模型、Skill 和检索参数，但不声明 Agent 必须遵循的步骤。
+```text
+profiles/<profile-id>/
+├── profile.yaml
+├── README.md
+├── opencode/
+├── skills/
+├── tools/
+├── retrieval/
+├── schemas/
+└── tests/
+```
+
+所有运行路径必须留在 Profile 根内，不允许 `../_shared`、symlink 或仓库外绝对路径。
+Profile 可以依赖根 uv 项目提供的通用库，但不能携带第二个虚拟环境。
+Profile v2 不声明常驻 sidecar；Initializer 必须是有限任务，长期服务需要未来的显式
+endpoint/readiness 协议。
+
+目标 Profile manifest 示例：
 
 ```yaml
-schema_version: 1
-id: baseline-oag
+schema_version: 2
+id: ontology-retrieval
 revision: dev
-title: OAG Retrieval Baseline
-description: 使用 BGE-M3 Top 5 与最小连通子图生成数据查询任务。
+title: 检索增强本体上下文
+description: 使用实体 Top-K 与近似 Steiner 连通子图生成查询计划。
 
-runtime:
+agent:
   command: opencode
   args: [acp, --print-logs, --pure]
-  cwd: ../..
-  startup_timeout_ms: 30000
+  startup_timeout_ms: 15000
 
 opencode:
   config: opencode/opencode.jsonc
   assets:
     - opencode/prompt.md
+
+initializer:
+  command: uv
+  args:
+    - run
+    - --project
+    - ${ONTOLOGY_DEMO_ROOT}
+    - --locked
+    - --no-sync
+    - python
+    - ${ONTOLOGY_PROFILE_DIR}/tools/initialize.py
+  timeout_ms: 900000
 
 model:
   id: deepseek/deepseek-v4-flash
@@ -35,251 +63,357 @@ model:
 
 skills:
   - id: ontology-retrieval
-    path: ../_shared/skills/ontology-retrieval
+    path: skills/ontology-retrieval
 
 retrieval:
-  endpoint:
-    env: OAG_BASE_URL
   vector_top_k: 5
   graph_algorithm: minimum_connected_subgraph
 
-ontology:
-  id: smart-building-sample
+dataset_contract:
+  ontology: required
+  raw_data: optional
 ```
 
-### 1.1 字段与校验
+`${...}` 只允许服务端登记的运行变量；不是 shell 插值。命令始终以参数数组启动。
 
-| 字段 | 作用 |
-| --- | --- |
-| `id` | Catalog 唯一 ID；只允许小写字母、数字和连字符 |
-| `revision` | Git 中的方案版本标签 |
-| `runtime` | 固定命令、参数、相对 cwd 和启动超时 |
-| `opencode.config` | 受版本控制的 OpenCode 配置源 |
-| `opencode.assets` | 与配置一起复制的普通 sidecar 文件 |
-| `model` | OpenCode 已知模型或环境变量驱动的兼容 API |
-| `skills` | 零个或多个包含 `SKILL.md` 的目录 |
-| `retrieval` | 可选的 OAG endpoint、Top-K 与图算法 |
-| `ontology` | 逻辑本体 ID；可选 `sha256` |
+Profile 不声明：
 
-服务端使用
-`apps/agent-console/server/schemas/profile-v1.schema.json` 和语义校验加载 Profile。
-Schema 禁止未知字段；路径必须相对 `profile.yaml`，不能逃出允许的项目/Catalog 范围，
-且关键文件不能是符号链接。
+- 具体本体 ID、文件名或路径；
+- Dataset ID；
+- Runtime 路径；
+- 密钥值；
+- LanceDB 实例路径；
+- OpenCode Session 数据库路径。
 
-Profile 中不配置运行状态目录或显式环境白名单：
+## 2. Dataset
 
-- `<project>/.runtime/opencode/<id>` 是由 Catalog 项目根和 `id` 派生的 `stateDir`；
-- `<stateDir>/opencode.db` 是该 Profile 的 OpenCode Session 数据库；
-- `<stateDir>/config/` 是 Bridge 刷新的可写 OpenCode overlay；
-- Loader 会递归收集合法 `{env: NAME}` 引用，自动得到所需环境变量集合；
-- 缺少引用值时 `/agents` 把 Profile 标为 `unavailable`，但不返回变量名或值。
-
-自定义 OpenAI-compatible 模型使用：
-
-```yaml
-model:
-  id: qwen-compatible/qwen-model
-  source: profile
-  api_base:
-    env: QWEN_BASE_URL
-  auth:
-    source: environment
-    api_key:
-      env: QWEN_API_KEY
-```
-
-Bridge 将 Profile 声明转换为 `ONTOLOGY_MODEL_*`、
-`ONTOLOGY_RETRIEVAL_ENDPOINT`、`ONTOLOGY_VECTOR_TOP_K`、
-`ONTOLOGY_GRAPH_ALGORITHM`、`ONTOLOGY_ID` 和可选
-`ONTOLOGY_EXPECTED_SHA256`。当 Retrieval endpoint 是 loopback HTTP(S) 时，还固定
-设置 `NO_PROXY/no_proxy=localhost,127.0.0.1,::1`。
-
-Profile、Prompt、Skill 和 OpenCode 配置直接由 Git 版本化；运行时不生成第二套方案
-元数据。
-
-## 2. Bridge HTTP/WS 协议
-
-### 2.1 `GET /health`
-
-```json
-{
-  "status": "ok",
-  "profiles": [
-    {
-      "id": "baseline-oag",
-      "active": true,
-      "startedAt": "2026-07-30T08:00:00.000Z"
-    }
-  ]
-}
-```
-
-未连接的 Profile 只有 `id` 和 `active: false`。
-
-### 2.2 `GET /agents`
-
-返回脱敏 Catalog：
-
-```json
-{
-  "agents": [
-    {
-      "id": "baseline-oag",
-      "revision": "dev",
-      "title": "OAG Retrieval Baseline",
-      "description": "使用 BGE-M3 Top 5 与最小连通子图上下文生成数据查询任务。",
-      "status": "stopped",
-      "ws_url": "/agents/baseline-oag/acp",
-      "cwd": "/absolute/path/to/ontology-rag-demo",
-      "model": {
-        "id": "deepseek/deepseek-v4-flash",
-        "source": "opencode"
-      },
-      "retrieval": {
-        "vector_top_k": 5,
-        "graph_algorithm": "minimum_connected_subgraph"
-      },
-      "ontology": {
-        "id": "smart-building-sample"
-      }
-    }
-  ]
-}
-```
-
-`status` 为 `stopped`、`active` 或 `unavailable`。响应不含命令、配置路径、stateDir、
-环境变量名/值、endpoint 或密钥。`cwd` 是 ACP `session/new`、`session/load` 和
-`session/list` 的协议必需值，因此只适用于当前 loopback 模式。
-
-### 2.3 `WS /agents/:profileId/acp`
-
-- 文本帧承载一个或多个换行分隔的 JSON-RPC 2.0 对象；二进制帧不支持。
-- Bridge 保持 JSON-RPC `id`、`method`、`params` 和结果不变，在 WebSocket 与
-  `opencode acp` stdin/stdout NDJSON 之间转发。
-- 同一 Profile 的第二条连接、maintenance 期间连接或缺少环境变量的连接会被拒绝。
-- `session/new`、`session/load`、`session/list`、`session/resume` 和
-  `session/fork` 必须使用固定 cwd；非空 `mcpServers` 被拒绝。
-- `session/set_model`、`session/set_mode` 和 `session/set_config_option` 被拒绝。
-- WebSocket 断开会终止对应进程树；后续连接通过 OpenCode 历史恢复。
-
-UI 当前使用的 ACP 方法：
-
-| 方向 | 方法 | 用途 |
-| --- | --- | --- |
-| UI → Agent | `initialize` | 协议与能力协商 |
-| UI → Agent | `session/list` | 获取 Session 元数据 |
-| UI → Agent | `session/new` | 创建 Session |
-| UI → Agent | `session/load` | 重放持久历史 |
-| UI → Agent | `session/prompt` | 发送一轮 Prompt |
-| UI → Agent | `session/cancel` | 取消当前轮 |
-| UI → Agent | `authenticate` | 执行 Agent 提供的认证方法 |
-| Agent → UI | `session/update` | 消息、Thinking、Plan、Tool 和元数据更新 |
-| Agent → UI | `session/request_permission` | Permission 选择 |
-
-### 2.4 `DELETE /agents/:profileId/sessions/:sessionId`
-
-这是 OpenCode 专用的同源扩展，不属于 ACP：
-
-- 请求不能带 body；
-- `sessionId` 必须匹配 `ses_[A-Za-z0-9]{1,96}`；
-- Profile 有在途 ACP 请求、正在连接或正在 maintenance 时返回 `409 profile_busy`；
-- 成功返回 `204`；
-- 不支持 OpenCode 删除、CLI 失败和超时分别返回 `501`、`502`、`504`。
-
-## 3. OAG HTTP 协议
-
-8010 FastAPI 服务提供：
-
-| 方法与路径 | 请求要点 | 响应要点 |
-| --- | --- | --- |
-| `GET /health` | 无 | 安全配置摘要、本体/索引就绪状态、可选 `ontology_sha256` |
-| `POST /v1/retrieval/vector` | `question`、可选 `top_k` | `question`、`hits` |
-| `POST /v1/retrieval/graph` | `question`、`graph_algorithm` | `anchors`、`nodes`、`edges`、`disconnected` |
-| `POST /v1/retrieval/oag` | `question`、1–10 个 `keywords`、可选 `top_k`、算法 | `hits` 与 `graph` |
-| `POST /v1/answer` | `question`、算法、可选 `trace` | `answer`，可选向量与图 trace |
-
-`top_k` 的请求范围是 1–20；当前唯一合法算法是
-`minimum_connected_subgraph`。OAG 基线请求示例：
-
-```json
-{
-  "question": "温度传感器所在的房间属于哪个建筑？",
-  "keywords": ["温度传感器", "房间", "建筑"],
-  "top_k": 5,
-  "graph_algorithm": "minimum_connected_subgraph"
-}
-```
-
-LanceDB 每条本体实体向量的文本固定为：
+Dataset 只有两级目录：
 
 ```text
-{name}
-{label}
-{comment}
+datasets/<dataset-id>/
+├── dataset.yaml
+├── building.ttl
+└── raw_data/       # 可选
 ```
 
-检索采用 cosine distance。OAG 模式将关键词用换行连接后做向量查询，把 Top-K 中
-`content_type=ontology_entity` 的实体 ID 作为图锚点，再计算 Steiner 近似最小连通
-子图。
+不使用 `datasets/public` 或 `datasets/private`。Catalog 只发现
+`datasets/<dataset-id>/dataset.yaml`。
 
-## 4. 本体子图 artifact
+```yaml
+schema_version: 1
+id: smart-building
+title: Smart Building Sample
+description: 可提交的虚构楼宇本体。
+ontology_file: building.ttl
+raw_data_dir: raw_data
+```
 
-Skill wrapper 在 stdout 中输出固定前缀和一个 JSON 对象：
+规则：
+
+- `id` 必须与目录名一致，只允许小写字母、数字和连字符。
+- `ontology_file` 必须是 Dataset 目录直接子文件，不能位于子目录。
+- `raw_data_dir` 若存在，只能是 Dataset 目录下的 `raw_data/`。
+- Dataset 目录内不允许 symlink、设备文件或路径穿越。
+- Catalog 返回 ID、标题、描述和安全摘要，不返回绝对路径。
+- 敏感 Dataset 通过精确 Git ignore/exclude 管理，不由目录类型推断。
+
+## 3. Runtime Manifest
+
+Runtime 是 Profile/Dataset 创建时的本地快照，目录名和 ID 固定为：
+
+```text
+<profile-id>--<dataset-id>
+```
+
+Runtime manifest 位于：
+
+```text
+.runtime/projects/<runtime-id>/runtime.yaml
+```
+
+```yaml
+schema_version: 1
+id: ontology-retrieval--smart-building
+display_name: 检索增强本体上下文 · Smart Building Sample
+status: ready
+created_at: 2026-07-30T10:00:00Z
+
+profile:
+  id: ontology-retrieval
+  title: 检索增强本体上下文
+  revision: dev
+  snapshot_sha256: "<64 hex>"
+
+dataset:
+  id: smart-building
+  title: Smart Building Sample
+  ontology_file: building.ttl
+  snapshot_sha256: "<64 hex>"
+  ontology_sha256: "<64 hex>"
+
+paths:
+  workspace: workspace
+  profile: workspace/profile
+  dataset: workspace/dataset
+  generated: workspace/generated
+  opencode_db: opencode/opencode.db
+  opencode_config: opencode/config
+  state: state
+
+last_error: null
+```
+
+Manifest 中的路径全部是 Runtime 根下的规范相对路径。删除逻辑不能把这些字段当成任意
+文件系统目标。
+
+`profile.title` 与 `dataset.title` 固化创建时的显示标题，新建 Runtime 必须写入；旧版
+manifest 可缺少它们，读取时依次回退到 Runtime 内快照标题和 ID。公开 Runtime 描述也
+来自 Runtime 内已校验快照，而不是当前源 Catalog。
+
+`profile.snapshot_sha256` 与 `dataset.snapshot_sha256` 表示创建时的源目录快照摘要。
+Profile Initializer 可以在 Runtime 副本内生成 Prompt 等派生文件，因此运行后的
+`workspace/profile/` 不要求继续等于源 Profile 摘要；Dataset 快照和本体摘要在
+Initializer 前后都必须保持一致。
+
+### 3.1 Runtime 状态
+
+| 状态 | 含义 | 可创建 Session |
+| --- | --- | --- |
+| `initializing` | 正在复制快照或运行 Initializer | 否 |
+| `ready` | 已物化，未连接 ACP | 是 |
+| `active` | ACP 正在运行 | 是 |
+| `initialization_failed` | Initializer 失败或启动时发现中断的 staging | 否 |
+| `deleting` | 已取得删除锁，正在停止进程/提交 rename | 否 |
+| `delete_failed` | 删除提交前失败，Runtime 仍保留 | 否，先处理或重试删除 |
+
+`cleanup_failed` 属于 trash 清理状态，不是可恢复 Runtime 状态。
+
+### 3.2 运行变量
+
+Runtime Manager 注入：
+
+```text
+ONTOLOGY_DEMO_ROOT
+ONTOLOGY_RUNTIME_ID
+ONTOLOGY_RUNTIME_ROOT
+ONTOLOGY_WORKSPACE_DIR
+ONTOLOGY_PROFILE_DIR
+ONTOLOGY_DATASET_DIR
+ONTOLOGY_GENERATED_DIR
+ONTOLOGY_RUNTIME_STATE_DIR
+ONTOLOGY_PATH
+ONTOLOGY_ID
+ONTOLOGY_EXPECTED_SHA256
+OPENCODE_DB
+OPENCODE_CONFIG_DIR
+```
+
+值来自已校验的 Runtime 快照，不接受浏览器覆盖。
+
+## 4. Catalog 与 Runtime HTTP 接口
+
+### `GET /profiles`
+
+返回可用于创建 Runtime 的 Profile Catalog：
+
+```json
+{
+  "profiles": [
+    {
+      "id": "ontology-retrieval",
+      "revision": "dev",
+      "title": "检索增强本体上下文",
+      "description": "使用实体 Top-K 与近似 Steiner 连通子图生成查询计划。"
+    }
+  ]
+}
+```
+
+每次请求都会重新发现并完整校验 `profiles/`。只有新 Catalog 全部校验成功才原子替换
+进程内 Catalog；失败请求返回错误，之前的有效 Catalog 保持不变。并发重载合并为同一
+次读取。Profile 与 Dataset 分别提交，不构成跨 Catalog 事务。
+
+### `GET /datasets`
+
+```json
+{
+  "datasets": [
+    {
+      "id": "smart-building",
+      "title": "Smart Building Sample",
+      "description": "可提交的虚构楼宇本体。",
+      "ontology_sha256": "<64 hex>"
+    }
+  ]
+}
+```
+
+与 Profile 一样，每次请求都会原子重载完整 `datasets/`；任何条目失败都不会发布半套
+Catalog。Catalog 替换后，现有 Runtime 的 `stale` 会按新源摘要重新计算。服务端不做
+文件监听，`GET /runtimes` 和 `POST /runtimes` 本身也不触发源 Catalog 重载；直接调用
+HTTP API 新建组合前，应先请求相应的 `/profiles` 与 `/datasets`。WebUI 首次加载和打开
+创建对话框时会自动完成这一步。
+
+### `GET /runtimes`
+
+只返回已经创建或有可见失败状态的 Runtime：
+
+```json
+{
+  "runtimes": [
+    {
+      "id": "ontology-retrieval--smart-building",
+      "display_name": "检索增强本体上下文 · Smart Building Sample",
+      "status": "ready",
+      "stale": false,
+      "profile": {
+        "id": "ontology-retrieval",
+        "title": "检索增强本体上下文",
+        "description": "使用实体 Top-K 与近似 Steiner 连通子图生成查询计划。",
+        "revision": "dev"
+      },
+      "dataset": {
+        "id": "smart-building",
+        "title": "Smart Building Sample",
+        "description": "可提交的虚构楼宇本体。",
+        "ontology_sha256": "<64 hex>"
+      },
+      "ws_url": "/runtimes/ontology-retrieval--smart-building/acp",
+      "last_error": null
+    }
+  ]
+}
+```
+
+Profile/Dataset 标题与描述来自 Runtime 自身的 manifest/已校验快照，不与当前源 Catalog
+联表，因此源条目被改名或移除后历史项目仍可辨识。不返回命令、绝对 cwd、源路径、
+state 路径、环境变量名/值或 endpoint。
+
+### `POST /runtimes`
+
+```json
+{
+  "profile_id": "ontology-retrieval",
+  "dataset_id": "smart-building"
+}
+```
+
+- 只接受 Catalog ID，不接受路径、命令、环境或自定义 Runtime ID。
+- 成功接受返回 `202` 和 `status=initializing`。
+- 同一 Profile/Dataset 已存在返回 `409 runtime_exists`。
+- Profile/Dataset 无效返回 `404`；不兼容返回 `422`。
+- UI 通过 `GET /runtimes` 观察到 `ready` 或失败状态。
+- UI 会先过滤已存在的 `<profile-id>--<dataset-id>`，但 `409` 仍是服务端并发控制边界。
+- `initializing`、`initialization_failed`、`deleting` 和 `delete_failed` 也占用确定性
+  Runtime ID；需要重建时先安全删除，不用创建请求覆盖。
+
+### `DELETE /runtimes/:runtimeId`
+
+- 取得 Runtime 独占锁后停止 Initializer 和 ACP 进程树。
+- 提交前执行 canonical path、manifest 和 symlink 校验。
+- 原子 rename 到 `.runtime/trash/` 是逻辑删除提交点。
+- 提交成功返回 `204`；trash 物理清理由后台完成。
+- 提交前失败返回错误，Runtime 状态为 `delete_failed`。
+- Runtime 正忙或进程未能安全停止返回 `409`，不能先删除文件；`504` 只用于单独的
+  Session 删除超时。
+- 正在执行 Session 删除维护时返回 `409 runtime_busy`；Runtime 删除不得越过尚未登记
+  完整的 Session CLI 子进程。
+
+源 Profile、Dataset、其他 Runtime、根 uv 环境和仓库文件不属于该接口的删除范围。
+
+### `DELETE /runtimes/:runtimeId/sessions/:sessionId`
+
+OpenCode 专用扩展，只删除该 Runtime `OPENCODE_DB` 中的 Session。它与 Runtime 删除是
+不同操作。
+
+## 5. ACP WebSocket
+
+### `WS /runtimes/:runtimeId/acp`
+
+- 仅 `ready`/`active` Runtime 可以升级。
+- 浏览器侧 Session 请求的逻辑 cwd 固定为 `"."`；Bridge 校验后重写为
+  `<runtime>/workspace/`，绝对路径不返回浏览器。
+- 每个 Runtime 同时只允许一条 WebSocket。
+- 文本帧承载 ACP JSON-RPC/NDJSON；二进制帧拒绝。
+- Bridge 重写 Session cwd，拒绝非空 `mcpServers` 和客户端切换 Profile-owned
+  Model/Mode/config。
+- WebSocket 断开终止 ACP 进程树；历史从该 Runtime 的 OpenCode DB 恢复。
+- `stale` 是 Catalog 对比产生的派生布尔值，不是持久状态。stale Runtime 可读取和继续
+  已有 Session，但拒绝 `session/new`；需要按当前源重建时删除 Runtime 后重新创建。
+
+WebUI 使用：
+
+```text
+initialize
+session/list
+session/new
+session/load
+session/prompt
+session/cancel
+authenticate
+session/update
+session/request_permission
+```
+
+## 6. Runtime 初始化与删除文件协议
+
+### 6.1 staging
+
+候选目录：
+
+```text
+.runtime/staging/<runtime-id>--<nonce>/
+```
+
+pending manifest 必须包含 Runtime ID、Profile/Dataset ID、状态和快照摘要。初始化成功后
+只能通过同文件系统 rename 进入 `projects/<runtime-id>`。不得把 staging symlink 到
+Profile、Dataset 或临时系统目录。
+
+### 6.2 trash
+
+删除目标：
+
+```text
+.runtime/trash/<runtime-id>--<timestamp>--<nonce>/
+```
+
+递归清理函数只接受服务端刚生成、位于 canonical `trash/` 下的直接子目录。即使
+`runtime.yaml` 被篡改，也不能据其中路径删除 Profile/Dataset 源。
+
+失败规则：
+
+- rename 前失败：保留原 Runtime，写 `delete_failed`。
+- rename 后清理失败：保持逻辑删除，trash 写 `cleanup_failed`，启动时重试。
+- 无合法 manifest 的 staging/trash 不自动递归删除，只记录需要人工检查的安全错误。
+
+## 7. `ontology.subgraph` Artifact
+
+Profile Skill 可输出：
 
 ```text
 ONTOLOGY_ARTIFACT:{"schema_version":1,"kind":"ontology.subgraph",...}
 ```
 
-```json
-{
-  "schema_version": 1,
-  "kind": "ontology.subgraph",
-  "query_id": "q_123",
-  "nodes": [
-    {
-      "id": "TemperatureSensor",
-      "label": "温度传感器",
-      "type": "OntologyEntity",
-      "anchor": true
-    }
-  ],
-  "edges": [
-    {
-      "source": "TemperatureSensor",
-      "target": "Sensor",
-      "type": "subClassOf",
-      "label": "subClassOf"
-    }
-  ],
-  "metadata": {
-    "algorithm": "minimum_connected_subgraph",
-    "anchor_nodes": ["TemperatureSensor"],
-    "node_count": 1,
-    "edge_count": 0,
-    "duration_ms": 18,
-    "disconnected": false
-  }
-}
-```
+该图表示 Tool 实际返回的本体子图。它与查询计划 Graph 是两个独立展示协议。
+内置检索 Profile 的概念算法名为 `minimum_connected_subgraph`，实际实现标识为
+`networkx.approximation.steiner_tree:mehlhorn`；后者是近似 Steiner tree，二者均写入
+Runtime 索引/Tool 输出，不能把结果表述为精确最小解。边的 `source`/`target` 保留本体
+statement 方向，无向图仅用于选路。
 
-UI 从 Tool `rawOutput` 或 ACP `content` 中查找首个合法 marker。最多内联 80 个节点、
-160 条边；超过限制时不绘图，但保留 Tool 原始输出。字符串按文本处理，解析或渲染失败
-不能影响对话。
+## 8. `data-query-plan.v1` 与展示投影
 
-## 5. `data-query-plan.v1`
-
-两条基线约定最终消息输出同一种查询计划：
+Agent 原始结果示例：
 
 ```json
 {
   "schema_version": "data-query-plan.v1",
-  "baseline": "oag",
-  "question": "原始问题",
+  "profile": "ontology-retrieval",
+  "question": "温度传感器所在的房间属于哪个建筑？",
   "keywords": ["温度传感器", "房间", "建筑"],
   "query_tasks": [
     {
       "targets": ["TemperatureSensor"],
-      "filters": [],
+      "filters": ["status = active"],
       "projections": ["Building"],
       "joins": [
         {
@@ -301,6 +435,34 @@ UI 从 Tool `rawOutput` 或 ACP `content` 中查找首个合法 marker。最多�
 }
 ```
 
-`baseline` 当前为 `oag` 或 `direct-context`。这是 Agent 输出约定，不是 Bridge 强制的
-工作流协议；UI 只在最终消息是完整 object/array，或以合法 JSON fence 收尾时，将其
-格式化为可折叠“查询Plan”，不会改写 ACP 消息或 OpenCode 历史。
+“查询Plan”卡片包含 `JSON` 和 `Graph` 切换。Graph 是纯展示投影：
+
+### 8.1 节点
+
+- 每个 `query_tasks[i]` 生成一个虚拟 Task 节点 `task:<i>`。
+- `targets`、`projections`、`joins.from/to` 和
+  `ontology_evidence.subject/object` 中相同的非空字符串合并为同一 Entity 节点。
+- 节点保留角色集合，例如 `target`、`projection`、`join`、`evidence`。
+- 每个 `filters[j]` 生成一个只读 Filter note；字符串直接显示，对象/数组使用有界
+  JSON 摘要。
+
+### 8.2 边
+
+| 来源 | Graph 边 |
+| --- | --- |
+| `targets` | Task → Entity，标签 `target` |
+| `projections` | Task → Entity，标签 `projection` |
+| `filters` | Task → Filter，标签 `filter` |
+| `joins` | `from` → `to`，标签为 `relation` |
+| `ontology_evidence` | `subject` → `object`，标签为 `predicate`，使用 evidence 样式 |
+
+Graph 不把 `keywords` 或 `assumptions` 推断为实体关系；它们继续在 JSON 中查看。
+
+### 8.3 保真与失败
+
+- 解析和投影只发生在组件内存中，不改变消息字符串、Store、ACP 或 OpenCode Session。
+- JSON 视图保留原始键顺序和数值词法，只调整展示空白。
+- Graph 不查询本体、不验证实体是否存在、不补边、不改正模型结果。
+- 缺少合法 `query_tasks`、字段类型不支持或超过 120 节点/240 边时，Graph 按钮禁用并
+  显示原因；JSON 始终可用。
+- JSON/Graph 当前选择和 D3 布局不持久化。

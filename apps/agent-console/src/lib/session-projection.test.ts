@@ -12,11 +12,11 @@ function projection(
 ): SessionProjection {
   const session: SavedSession = {
     id: 'direct:session-1',
-    agentName: 'direct',
+    runtimeId: 'direct',
     sessionId: 'session-1',
     title: 'Original',
     lastUpdated: 1,
-    cwd: '/demo',
+    cwd: '.',
     supportsLoadSession: true,
   };
   return {

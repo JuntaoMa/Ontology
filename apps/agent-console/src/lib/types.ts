@@ -1,4 +1,4 @@
-// Types for ACP UI application
+// Types for the Runtime Project ACP UI.
 import type {
   PlanEntry,
   ToolCallContent,
@@ -8,36 +8,63 @@ import type {
   StopReason,
 } from '@agentclientprotocol/sdk';
 
-export interface AgentConfig {
-  /** Same-origin WebSocket URL published by the loopback ACP Bridge. */
-  url?: string;
-  id?: string;
-  title?: string;
-  description?: string;
-  revision?: string;
-  status?: string;
-  cwd?: string;
-  /** Sanitized Profile metadata exposed by the loopback Bridge. */
-  model?: {
-    id: string;
-    source: 'opencode' | 'profile';
-  };
-  retrieval?: {
-    vectorTopK: number;
-    graphAlgorithm: string;
-  };
-  ontology?: {
-    id: string;
-  };
+export type RuntimeStatus =
+  | 'initializing'
+  | 'ready'
+  | 'active'
+  | 'initialization_failed'
+  | 'deleting'
+  | 'delete_failed';
+
+export interface ProfileCatalogEntry {
+  id: string;
+  revision: string;
+  title: string;
+  description: string;
 }
 
-export interface AgentsConfig {
-  agents: Record<string, AgentConfig>;
+export interface DatasetCatalogEntry {
+  id: string;
+  title: string;
+  description: string;
+  ontologySha256: string;
+}
+
+export interface RuntimeProject {
+  id: string;
+  displayName: string;
+  createdAt?: string;
+  status: RuntimeStatus;
+  profile: {
+    id: string;
+    revision: string;
+    title?: string;
+    description?: string;
+  };
+  dataset: {
+    id: string;
+    title?: string;
+    description?: string;
+    ontologySha256: string;
+  };
+  /** Derived by the server from the current source catalogs; never persisted. */
+  stale: boolean;
+  lastError?: {
+    code?: string;
+    message: string;
+  };
+  /** Same-origin WebSocket URL published by the loopback Runtime Bridge. */
+  url: string;
+  /**
+   * ACP requires a cwd field. Runtime v1 owns the real workspace path, so the
+   * browser sends only this fixed logical value and never receives a host path.
+   */
+  cwd: '.';
 }
 
 export interface SavedSession {
   id: string;
-  agentName: string;
+  runtimeId: string;
   sessionId: string;
   title: string;
   lastUpdated: number;

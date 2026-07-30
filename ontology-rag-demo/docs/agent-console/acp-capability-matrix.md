@@ -62,9 +62,9 @@ OpenCode 通过 `session/request_permission` 提供 `once`、`always` 或 `rejec
 - 普通请求有界超时；
 - `session/prompt` 不使用普通短超时，依靠 Cancel 或连接关闭终止；
 - WebSocket 关闭时拒绝全部待处理请求并取消 Permission；
-- 首版同一 Profile 同时只运行一轮 Prompt，避免单连接 Permission 归属冲突。
+- 首版同一 Runtime 同时只运行一轮 Prompt，避免单连接 Permission 归属冲突。
 
-## 4. Profile 状态隔离
+## 4. Runtime 状态隔离
 
 本机 OpenCode 支持：
 
@@ -72,34 +72,37 @@ OpenCode 通过 `session/request_permission` 提供 `once`、`always` 或 `rejec
 - `OPENCODE_CONFIG_DIR`：指定配置 overlay；
 - `OPENCODE_AUTH_CONTENT`：通过环境变量注入认证内容。
 
-Console 不要求 Profile 手写这些路径。服务端为 Profile `<id>` 派生：
+Console 不要求 Profile 手写这些路径。服务端为 Runtime `<profile-id>--<dataset-id>`
+派生：
 
 ```text
-ontology-rag-demo/.runtime/opencode/<id>/
-├── opencode.db
-└── config/
+ontology-rag-demo/.runtime/projects/<runtime-id>/
+├── workspace/              # OpenCode cwd
+└── opencode/
+    ├── opencode.db
+    └── config/
 ```
 
-每次启动前，Bridge 将 Git 中的 `opencode.jsonc` 和显式资产同步到 `config/`，并保留
-OpenCode 自己的 dependency bootstrap 文件。不同 Profile 使用不同 `OPENCODE_DB`，
-否则同一 cwd 下的 `session/list` 会混合会话。
+Runtime 初始化后，Bridge 将 Profile 快照中的 `opencode.jsonc` 和显式资产同步到
+`config/`，并保留 OpenCode 自己的 dependency bootstrap 文件。不同 Runtime 使用不同 cwd 和
+`OPENCODE_DB`，不会混合 Session。
 
 `OPENCODE_CONFIG_DIR` 是覆盖层，不是阻止全局或项目配置加载的安全沙箱。Profile、
 Prompt、Skill 与配置通过 Git 版本化；运行目录被忽略。
 
 ## 5. 连接与删除
 
-- 稳定的浏览器入口是 Bridge 的 `WS /agents/:profileId/acp`。
+- 稳定的浏览器入口是 Bridge 的 `WS /runtimes/:runtimeId/acp`。
 - `opencode acp --port` 的端口属于 Adapter 内部 OpenCode HTTP server，不是浏览器
   ACP 服务端口。
 - 一条 WebSocket 对应一个 `opencode acp` 进程；断线后终止进程，下次连接通过
   `session/list`/`session/load` 恢复。
 - ACP `0.13.1` 没有持久 Session 删除方法。Console 的垃圾桶使用明确的 OpenCode
-  扩展端点，由 Bridge 在所属 Profile 状态中执行
+  扩展端点，由 Bridge 在所属 Runtime 状态中执行
   `opencode session delete <sessionId> --pure`，不伪装成 ACP 方法。
 
-Profile Probe 只执行 `initialize` 和 `session/list`，用于检查实际 Profile 命令、
-overlay、环境和能力，不创建或修改 Session。
+Probe 只执行 `initialize` 和 `session/list`，用于检查实际 Runtime 命令、overlay、
+环境和能力，不创建或修改 Session。
 
 ## 6. 参考源码
 

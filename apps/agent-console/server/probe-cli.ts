@@ -1,15 +1,15 @@
 import { pathToFileURL } from "node:url";
 import { AcpProbeError, type AcpSmokeResult } from "./acp-probe.js";
-import { probeAcpProfile } from "./profile-probe.js";
-import { ProfileValidationError } from "./profile.js";
+import { probeAcpRuntime } from "./profile-probe.js";
+import { RuntimeManifestError } from "./runtime-manifest.js";
 
-const HELP = `Usage: pnpm probe:acp --profile <path>
+const HELP = `Usage: pnpm probe:acp --runtime <path>
 
-Smoke-tests one validated Agent Profile with ACP initialize and session/list.
+Smoke-tests one created Runtime with ACP initialize and session/list.
 It never creates, loads, resumes, prompts, or mutates a Session.
 
 Options:
-  --profile <path>  Profile declaration below a profiles/ catalog
+  --runtime <path>  Runtime manifest below .runtime/projects/
   -h, --help        Show this help
 `;
 
@@ -20,14 +20,14 @@ export interface ProbeCliIo {
 
 export type ParsedProbeCli =
   | { help: true }
-  | { help: false; profilePath: string };
+  | { help: false; runtimePath: string };
 
 export interface ProbeCliDependencies {
-  probeProfile?: (profilePath: string) => Promise<AcpSmokeResult>;
+  probeRuntime?: (runtimePath: string) => Promise<AcpSmokeResult>;
 }
 
 export function parseProbeCliArgs(argv: readonly string[]): ParsedProbeCli {
-  let profilePath: string | undefined;
+  let runtimePath: string | undefined;
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
@@ -35,13 +35,13 @@ export function parseProbeCliArgs(argv: readonly string[]): ParsedProbeCli {
       case "-h":
       case "--help":
         return { help: true };
-      case "--profile":
-        if (profilePath !== undefined) {
-          throw new Error("--profile may only be provided once");
+      case "--runtime":
+        if (runtimePath !== undefined) {
+          throw new Error("--runtime may only be provided once");
         }
-        profilePath = nextValue(argv, ++index, "--profile");
-        if (profilePath.length === 0) {
-          throw new Error("--profile requires a non-empty path");
+        runtimePath = nextValue(argv, ++index, "--runtime");
+        if (runtimePath.length === 0) {
+          throw new Error("--runtime requires a non-empty path");
         }
         break;
       default:
@@ -49,10 +49,10 @@ export function parseProbeCliArgs(argv: readonly string[]): ParsedProbeCli {
     }
   }
 
-  if (profilePath === undefined) {
-    throw new Error("--profile is required");
+  if (runtimePath === undefined) {
+    throw new Error("--runtime is required");
   }
-  return { help: false, profilePath };
+  return { help: false, runtimePath };
 }
 
 export async function runProbeCli(
@@ -83,8 +83,8 @@ export async function runProbeCli(
   }
 
   try {
-    const result = await (dependencies.probeProfile ?? probeAcpProfile)(
-      parsed.profilePath,
+    const result = await (dependencies.probeRuntime ?? probeAcpRuntime)(
+      parsed.runtimePath,
     );
     writeJson(io.stdout, { ok: true, ...result });
     return 0;
@@ -99,11 +99,11 @@ export async function runProbeCli(
           ...(error.stderr ? { stderr: error.stderr } : {}),
         },
       });
-    } else if (error instanceof ProfileValidationError) {
+    } else if (error instanceof RuntimeManifestError) {
       writeJson(io.stderr, {
         ok: false,
         error: {
-          phase: "profile",
+          phase: "runtime",
           message: error.message,
         },
       });

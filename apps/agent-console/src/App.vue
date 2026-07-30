@@ -6,15 +6,17 @@ import {
   onMounted,
   ref,
 } from 'vue';
-import { useConfigStore } from './stores/config';
+import { useCatalogStore } from './stores/catalog';
+import { useRuntimeStore } from './stores/runtime';
 import { useSessionStore } from './stores/session';
 import AuthMethodDialog from './components/AuthMethodDialog.vue';
 import ChatView from './components/ChatView.vue';
 import PermissionDialog from './components/PermissionDialog.vue';
-import ProfileSidebar from './components/ProfileSidebar.vue';
+import RuntimeSidebar from './components/RuntimeSidebar.vue';
 import UiIcon from './components/UiIcon.vue';
 
-const configStore = useConfigStore();
+const catalogStore = useCatalogStore();
+const runtimeStore = useRuntimeStore();
 const sessionStore = useSessionStore();
 const showSidebar = ref(true);
 const isNarrowLayout = ref(false);
@@ -23,16 +25,17 @@ let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let drawerReturnFocus: HTMLElement | null = null;
 
 const hasActiveSession = computed(() => sessionStore.hasActiveSession);
-const hasAgents = computed(() => configStore.hasAgents);
+const hasProjects = computed(() => runtimeStore.hasProjects);
 const isConnecting = computed(() => sessionStore.isConnecting);
 const isReconnecting = computed(() => sessionStore.isReconnecting);
 const isConnected = computed(() => sessionStore.isConnected);
 const error = computed(
-  () => sessionStore.error || configStore.error,
+  () => sessionStore.error || runtimeStore.error || catalogStore.error,
 );
-const reconnectingAgentName = computed(
-  () => sessionStore.currentSession?.agentName ?? 'Agent',
-);
+const reconnectingRuntimeName = computed(() => {
+  const runtimeId = sessionStore.currentSession?.runtimeId;
+  return runtimeId ? runtimeName(runtimeId) : 'Runtime Project';
+});
 const canManuallyReconnect = computed(
   () =>
     !isConnected.value &&
@@ -42,9 +45,23 @@ const canManuallyReconnect = computed(
 );
 const pendingPermission = computed(() => sessionStore.pendingPermission);
 const pendingAuthMethods = computed(() => sessionStore.pendingAuthMethods);
-const pendingAuthAgentName = computed(
-  () => sessionStore.pendingAuthAgentName,
+const pendingAuthRuntimeId = computed(
+  () => sessionStore.pendingAuthRuntimeId,
 );
+const pendingPermissionRuntimeName = computed(() =>
+  runtimeName(sessionStore.pendingPermissionRuntimeId),
+);
+const pendingAuthRuntimeName = computed(() =>
+  runtimeName(pendingAuthRuntimeId.value),
+);
+
+function runtimeName(runtimeId: string): string {
+  if (!runtimeId) return 'Runtime Project';
+  const project = runtimeStore.getProject(runtimeId);
+  return project
+    ? project.profile.title ?? project.displayName
+    : runtimeId;
+}
 
 function syncNarrowLayout(): void {
   if (narrowMql) isNarrowLayout.value = narrowMql.matches;
@@ -94,7 +111,7 @@ async function expandSidebar(): Promise<void> {
   await nextTick();
   document
     .querySelector<HTMLButtonElement>(
-      '#profile-sidebar [aria-label="Collapse sidebar"]',
+      '#runtime-sidebar [aria-label="Collapse sidebar"]',
     )
     ?.focus();
 }
@@ -108,7 +125,7 @@ async function handleBackdropClick(): Promise<void> {
 }
 
 function drawerFocusableElements(): HTMLElement[] {
-  const sidebar = document.querySelector<HTMLElement>('#profile-sidebar');
+  const sidebar = document.querySelector<HTMLElement>('#runtime-sidebar');
   if (!sidebar) return [];
   return Array.from(
     sidebar.querySelectorAll<HTMLElement>(
@@ -143,8 +160,9 @@ async function handleManualReconnect(): Promise<void> {
 }
 
 function clearError(): void {
-  sessionStore.clearError(sessionStore.currentSession?.agentName);
-  configStore.clearError();
+  sessionStore.clearError(sessionStore.currentSession?.runtimeId);
+  runtimeStore.clearError();
+  catalogStore.clearError();
 }
 
 function handlePermissionSelect(optionId: string): void {
@@ -171,7 +189,10 @@ onMounted(async () => {
     if (isNarrowLayout.value) showSidebar.value = false;
   }
 
-  await configStore.loadConfig();
+  // Runtime stale status is computed against the freshly reloaded source
+  // Catalogs, so load them before requesting the Runtime projection.
+  await catalogStore.loadCatalogs();
+  await runtimeStore.refreshProjects();
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('keydown', handleWindowKeydown);
@@ -187,6 +208,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('pageshow', scheduleReconnect);
   window.removeEventListener('online', handleOnline);
   if (reconnectTimer) clearTimeout(reconnectTimer);
+  runtimeStore.stopPolling();
 });
 </script>
 
@@ -198,7 +220,7 @@ onBeforeUnmount(() => {
       'narrow-layout': isNarrowLayout,
     }"
   >
-    <ProfileSidebar
+    <RuntimeSidebar
       :collapsed="!showSidebar"
       :drawer="isNarrowLayout"
       @collapse="collapseSidebar"
@@ -221,7 +243,7 @@ onBeforeUnmount(() => {
         <div v-if="isReconnecting" class="status-banner">
           <span class="spinner" aria-hidden="true" />
           <span>
-            Reconnecting to <strong>{{ reconnectingAgentName }}</strong>…
+            Reconnecting to <strong>{{ reconnectingRuntimeName }}</strong>…
           </span>
         </div>
         <div v-else-if="error" class="status-banner is-error">
@@ -250,7 +272,7 @@ onBeforeUnmount(() => {
           class="status-banner"
         >
           <span class="status-copy">
-            <strong>{{ reconnectingAgentName }}</strong> is disconnected.
+            <strong>{{ reconnectingRuntimeName }}</strong> is disconnected.
           </span>
           <button
             class="banner-action"
@@ -277,7 +299,7 @@ onBeforeUnmount(() => {
               type="button"
               data-sidebar-reveal
               aria-label="Expand sidebar"
-              aria-controls="profile-sidebar"
+              aria-controls="runtime-sidebar"
               :aria-expanded="showSidebar"
               title="Expand sidebar"
               @click="expandSidebar"
@@ -288,7 +310,7 @@ onBeforeUnmount(() => {
               <h1>Ontology Agent Console</h1>
               <div class="conversation-profile">
                 <UiIcon name="folder" />
-                <span>Choose a Profile conversation</span>
+                <span>Choose a Runtime Project conversation</span>
               </div>
             </div>
           </div>
@@ -297,13 +319,16 @@ onBeforeUnmount(() => {
           <div class="welcome-mark" aria-hidden="true">
             <UiIcon name="logo" />
           </div>
-          <h2>Start with an Agent Profile</h2>
+          <h2>Start with a Runtime Project</h2>
           <p>
-            Create a conversation from a fixed Profile in the sidebar, or
-            reopen an existing OpenCode Session.
+            Create a Project from a Profile and Dataset, then start or reopen
+            an OpenCode Session from the sidebar.
           </p>
-          <p v-if="!configStore.loading && !hasAgents" class="welcome-hint">
-            No valid Agent Profiles were published by the ACP Bridge.
+          <p
+            v-if="!runtimeStore.loading && !hasProjects"
+            class="welcome-hint"
+          >
+            No Runtime Projects yet. Use “Create Project” in the sidebar.
           </p>
         </div>
       </template>
@@ -312,7 +337,7 @@ onBeforeUnmount(() => {
     <PermissionDialog
       v-if="pendingPermission"
       :request="pendingPermission"
-      :agent-name="sessionStore.pendingPermissionAgentName"
+      :runtime-name="pendingPermissionRuntimeName"
       :session-title="sessionStore.pendingPermissionSessionTitle"
       @select="handlePermissionSelect"
       @cancel="handlePermissionCancel"
@@ -321,7 +346,7 @@ onBeforeUnmount(() => {
     <AuthMethodDialog
       v-if="pendingAuthMethods.length > 0"
       :auth-methods="pendingAuthMethods"
-      :agent-name="pendingAuthAgentName"
+      :runtime-name="pendingAuthRuntimeName"
       @select="handleAuthMethodSelect"
       @cancel="handleAuthMethodCancel"
     />

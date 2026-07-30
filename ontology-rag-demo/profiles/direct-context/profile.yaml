@@ -1,0 +1,42 @@
+schema_version: 2
+id: direct-context
+revision: dev
+title: 具名本体上下文
+description: 在 Runtime 初始化时将所选 Dataset 的具名 TBox 投影注入 Agent Prompt。
+
+agent:
+  command: opencode
+  args:
+    - acp
+    - --print-logs
+    - --pure
+  startup_timeout_ms: 15000
+
+opencode:
+  config: opencode/opencode.jsonc
+  assets:
+    - opencode/prompt.md
+
+initializer:
+  command: uv
+  args:
+    - run
+    - --project
+    - ${ONTOLOGY_DEMO_ROOT}
+    - --locked
+    - --no-sync
+    - python
+    - ${ONTOLOGY_PROFILE_DIR}/tools/initialize.py
+  timeout_ms: 120000
+
+model:
+  id: deepseek/deepseek-v4-flash
+  source: opencode
+  auth:
+    source: opencode
+
+skills: []
+
+dataset_contract:
+  ontology: required
+  raw_data: optional

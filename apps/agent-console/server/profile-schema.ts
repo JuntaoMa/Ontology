@@ -1,7 +1,20 @@
-export const PROFILE_V1_SCHEMA = {
+const commandSpec = {
+  type: "object",
+  additionalProperties: false,
+  required: ["command", "args"],
+  properties: {
+    command: { $ref: "#/$defs/nonEmptySingleLine" },
+    args: {
+      type: "array",
+      maxItems: 64,
+      items: { $ref: "#/$defs/singleLine" },
+    },
+  },
+} as const;
+export const PROFILE_V2_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
-  $id: "https://ontology.local/schemas/agent-profile-v1.schema.json",
-  title: "Ontology Agent Profile v1",
+  $id: "https://ontology.local/schemas/agent-profile-v2.schema.json",
+  title: "Ontology Agent Profile v2",
   type: "object",
   additionalProperties: false,
   required: [
@@ -10,15 +23,15 @@ export const PROFILE_V1_SCHEMA = {
     "revision",
     "title",
     "description",
-    "runtime",
+    "agent",
     "opencode",
     "model",
     "skills",
-    "ontology",
+    "dataset_contract",
   ],
   properties: {
-    schema_version: { const: 1 },
-    id: { $ref: "#/$defs/profileId" },
+    schema_version: { const: 2 },
+    id: { $ref: "#/$defs/id" },
     revision: {
       type: "string",
       minLength: 1,
@@ -27,18 +40,11 @@ export const PROFILE_V1_SCHEMA = {
     },
     title: { type: "string", minLength: 1, maxLength: 160 },
     description: { type: "string", minLength: 1, maxLength: 2_000 },
-    runtime: {
-      type: "object",
-      additionalProperties: false,
-      required: ["command", "args", "cwd", "startup_timeout_ms"],
+    agent: {
+      ...commandSpec,
+      required: [...commandSpec.required, "startup_timeout_ms"],
       properties: {
-        command: { $ref: "#/$defs/nonEmptySingleLine" },
-        args: {
-          type: "array",
-          maxItems: 32,
-          items: { $ref: "#/$defs/singleLine" },
-        },
-        cwd: { $ref: "#/$defs/relativePath" },
+        ...commandSpec.properties,
         startup_timeout_ms: {
           type: "integer",
           minimum: 1_000,
@@ -58,6 +64,18 @@ export const PROFILE_V1_SCHEMA = {
           maxItems: 32,
           uniqueItems: true,
           items: { $ref: "#/$defs/relativePath" },
+        },
+      },
+    },
+    initializer: {
+      ...commandSpec,
+      required: [...commandSpec.required, "timeout_ms"],
+      properties: {
+        ...commandSpec.properties,
+        timeout_ms: {
+          type: "integer",
+          minimum: 1_000,
+          maximum: 3_600_000,
         },
       },
     },
@@ -88,14 +106,13 @@ export const PROFILE_V1_SCHEMA = {
     },
     skills: {
       type: "array",
-      minItems: 0,
       maxItems: 64,
       items: {
         type: "object",
         additionalProperties: false,
         required: ["id", "path"],
         properties: {
-          id: { $ref: "#/$defs/profileId" },
+          id: { $ref: "#/$defs/id" },
           path: { $ref: "#/$defs/relativePath" },
         },
       },
@@ -103,30 +120,24 @@ export const PROFILE_V1_SCHEMA = {
     retrieval: {
       type: "object",
       additionalProperties: false,
-      required: ["endpoint", "vector_top_k", "graph_algorithm"],
+      required: ["vector_top_k", "graph_algorithm"],
       properties: {
-        endpoint: { $ref: "#/$defs/envRef" },
         vector_top_k: { type: "integer", minimum: 1, maximum: 20 },
         graph_algorithm: { const: "minimum_connected_subgraph" },
       },
     },
-    ontology: {
+    dataset_contract: {
       type: "object",
       additionalProperties: false,
-      required: ["id"],
+      required: ["ontology", "raw_data"],
       properties: {
-        id: {
-          type: "string",
-          minLength: 1,
-          maxLength: 160,
-          pattern: "^[A-Za-z0-9][A-Za-z0-9._-]*$",
-        },
-        sha256: { $ref: "#/$defs/sha256" },
+        ontology: { const: "required" },
+        raw_data: { enum: ["required", "optional"] },
       },
     },
   },
   $defs: {
-    profileId: {
+    id: {
       type: "string",
       minLength: 1,
       maxLength: 64,
@@ -189,10 +200,6 @@ export const PROFILE_V1_SCHEMA = {
       minLength: 1,
       maxLength: 1_024,
       pattern: "^[^\\u0000\\r\\n]+$",
-    },
-    sha256: {
-      type: "string",
-      pattern: "^[a-f0-9]{64}$",
     },
   },
 } as const;

@@ -5,7 +5,7 @@ import UiIcon from './UiIcon.vue';
 
 defineProps<{
   request: PermissionRequest;
-  agentName?: string;
+  runtimeName?: string;
   sessionTitle?: string;
 }>();
 
@@ -35,8 +35,8 @@ function handleCancel() {
     </div>
 
     <div class="dialog-content">
-      <p v-if="agentName || sessionTitle" class="request-context">
-        <strong>{{ agentName || 'Agent Profile' }}</strong>
+      <p v-if="runtimeName || sessionTitle" class="request-context">
+        <strong>{{ runtimeName || 'Runtime Project' }}</strong>
         <span v-if="sessionTitle"> · {{ sessionTitle }}</span>
       </p>
 

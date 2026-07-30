@@ -7,7 +7,8 @@ import {
   buildChildEnvironment,
   prepareRuntimeConfigOverlay,
 } from "./opencode-runtime.js";
-import type { LoadedProfile } from "./profile.js";
+import type { LoadedRuntime } from "./runtime-manifest.js";
+import { terminateProcessTree } from "./runtime-supervisor.js";
 
 const DELETE_TIMEOUT_MS = 15_000;
 const DELETE_KILL_GRACE_MS = 500;
@@ -18,10 +19,21 @@ export interface SessionDeleteOptions {
   killGraceMs?: number;
 }
 
+interface ActiveSessionDelete {
+  child: ChildProcessWithoutNullStreams;
+  completion: Promise<void>;
+  killGraceMs: number;
+  stopFailed: boolean;
+  termination?: Promise<void>;
+}
+
 export class SessionDeleteError extends Error {
   readonly kind: "unsupported" | "failed" | "timeout";
 
-  constructor(kind: SessionDeleteError["kind"]) {
+  constructor(
+    kind: SessionDeleteError["kind"],
+    readonly processTreeStopped = true,
+  ) {
     super(
       kind === "unsupported"
         ? "This Agent Profile does not support permanent Session deletion"
@@ -38,49 +50,113 @@ export function isOpenCodeSessionId(value: string): boolean {
   return /^ses_[A-Za-z0-9]{1,96}$/.test(value);
 }
 
-export function supportsSessionDelete(profile: LoadedProfile): boolean {
-  const executable = path.basename(profile.runtime.command).toLowerCase();
-  return executable === "opencode" || executable === "opencode.exe";
+export function supportsSessionDelete(runtime: LoadedRuntime): boolean {
+  if (process.platform === "win32") return false;
+  const executable = path.basename(runtime.profile.agent.command).toLowerCase();
+  return executable === "opencode";
 }
 
 /**
- * Delete one durable OpenCode Session from its owning Profile state.
- *
- * The subprocess never uses a shell. Its environment is rebuilt from the
- * same allow-list as the ACP runtime, including the Profile-isolated
- * OPENCODE_DB path.
+ * Owns all finite OpenCode Session-delete subprocesses so Runtime deletion and
+ * server shutdown can reap or retry them before releasing filesystem state.
  */
-export async function deleteOpenCodeSession(
-  profile: LoadedProfile,
-  sessionId: string,
-  sourceEnvironment: NodeJS.ProcessEnv = process.env,
-  options: SessionDeleteOptions = {},
-): Promise<void> {
-  if (!supportsSessionDelete(profile)) {
-    throw new SessionDeleteError("unsupported");
-  }
-  if (!isOpenCodeSessionId(sessionId)) {
-    throw new TypeError("Invalid OpenCode Session id");
+export class SessionDeleteManager {
+  private readonly active = new Map<string, ActiveSessionDelete>();
+
+  has(runtimeId: string): boolean {
+    return this.active.has(runtimeId);
   }
 
-  const runtimeConfigDir = path.join(profile.runtime.stateDir, "config");
-  prepareRuntimeConfigOverlay(profile, runtimeConfigDir);
-  const environment = buildChildEnvironment(
-    profile,
-    runtimeConfigDir,
-    sourceEnvironment,
-  );
+  needsReap(runtimeId: string): boolean {
+    return this.active.get(runtimeId)?.stopFailed === true;
+  }
 
-  await runDeleteProcess(
-    profile.runtime.command,
-    ["session", "delete", sessionId, "--pure"],
-    {
-      cwd: profile.runtime.cwd,
-      environment,
-      timeoutMs: options.timeoutMs ?? DELETE_TIMEOUT_MS,
-      killGraceMs: options.killGraceMs ?? DELETE_KILL_GRACE_MS,
-    },
-  );
+  /**
+   * Delete one durable OpenCode Session from its owning Runtime state.
+   *
+   * The subprocess never uses a shell. Its environment is rebuilt from the
+   * same allow-list as the ACP runtime, including the Profile-isolated
+   * OPENCODE_DB path.
+   */
+  async delete(
+    runtime: LoadedRuntime,
+    sessionId: string,
+    sourceEnvironment: NodeJS.ProcessEnv = process.env,
+    options: SessionDeleteOptions = {},
+  ): Promise<void> {
+    if (!supportsSessionDelete(runtime)) {
+      throw new SessionDeleteError("unsupported");
+    }
+    if (!isOpenCodeSessionId(sessionId)) {
+      throw new TypeError("Invalid OpenCode Session id");
+    }
+    if (this.active.has(runtime.manifest.id)) {
+      await this.stopRuntime(runtime.manifest.id);
+    }
+
+    prepareRuntimeConfigOverlay(
+      runtime.profile,
+      runtime.paths.opencodeConfig,
+    );
+    const environment = buildChildEnvironment(runtime, sourceEnvironment);
+    const active = startDeleteProcess(
+      runtime.profile.agent.command,
+      ["session", "delete", sessionId, "--pure"],
+      {
+        cwd: runtime.paths.workspace,
+        environment,
+        timeoutMs: options.timeoutMs ?? DELETE_TIMEOUT_MS,
+        killGraceMs: options.killGraceMs ?? DELETE_KILL_GRACE_MS,
+      },
+    );
+    this.active.set(runtime.manifest.id, active);
+    try {
+      await active.completion;
+      this.deleteIfCurrent(runtime.manifest.id, active);
+    } catch (error) {
+      if (
+        !(error instanceof SessionDeleteError) ||
+        error.processTreeStopped
+      ) {
+        this.deleteIfCurrent(runtime.manifest.id, active);
+      }
+      throw error;
+    }
+  }
+
+  async stopRuntime(runtimeId: string): Promise<void> {
+    const active = this.active.get(runtimeId);
+    if (!active) return;
+    try {
+      await stopActiveProcess(active);
+    } catch {
+      active.stopFailed = true;
+      throw new SessionDeleteError("failed", false);
+    }
+    active.stopFailed = false;
+    await active.completion.catch(() => undefined);
+    this.deleteIfCurrent(runtimeId, active);
+  }
+
+  async close(): Promise<void> {
+    const results = await Promise.allSettled(
+      [...this.active.keys()].map((runtimeId) =>
+        this.stopRuntime(runtimeId),
+      ),
+    );
+    if (results.some((result) => result.status === "rejected")) {
+      throw new SessionDeleteError("failed", false);
+    }
+  }
+
+  private deleteIfCurrent(
+    runtimeId: string,
+    active: ActiveSessionDelete,
+  ): void {
+    if (this.active.get(runtimeId) === active) {
+      this.active.delete(runtimeId);
+    }
+  }
 }
 
 interface DeleteProcessOptions {
@@ -90,89 +166,89 @@ interface DeleteProcessOptions {
   killGraceMs: number;
 }
 
-function runDeleteProcess(
+function startDeleteProcess(
   command: string,
   args: string[],
   options: DeleteProcessOptions,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    let child: ChildProcessWithoutNullStreams;
-    try {
-      child = spawn(command, args, {
-        cwd: options.cwd,
-        env: options.environment,
-        stdio: ["pipe", "pipe", "pipe"],
-        detached: process.platform !== "win32",
-        windowsHide: true,
-      });
-    } catch {
-      reject(new SessionDeleteError("failed"));
-      return;
-    }
+): ActiveSessionDelete {
+  let child: ChildProcessWithoutNullStreams;
+  try {
+    child = spawn(command, args, {
+      cwd: options.cwd,
+      env: options.environment,
+      stdio: ["pipe", "pipe", "pipe"],
+      detached: process.platform !== "win32",
+      windowsHide: true,
+    });
+  } catch {
+    throw new SessionDeleteError("failed");
+  }
 
-    child.stdin.end();
+  const active: ActiveSessionDelete = {
+    child,
+    completion: Promise.resolve(),
+    killGraceMs: options.killGraceMs,
+    stopFailed: false,
+  };
+  active.completion = new Promise((resolve, reject) => {
     let outputBytes = 0;
-    let finished = false;
-    let timedOut = false;
-    let forceKillTimer: NodeJS.Timeout | null = null;
+    let settlement: Promise<void> | undefined;
+    let timeoutTimer: NodeJS.Timeout | undefined;
 
-    const finish = (error?: SessionDeleteError): void => {
-      if (finished) return;
-      finished = true;
-      clearTimeout(timeoutTimer);
-      if (forceKillTimer) clearTimeout(forceKillTimer);
-      if (error) reject(error);
-      else resolve();
-    };
-
-    const terminate = (signal: NodeJS.Signals): void => {
-      if (child.pid && process.platform !== "win32") {
+    const finishAfterProcessTreeStops = (
+      error?: SessionDeleteError,
+    ): void => {
+      if (settlement) return;
+      if (timeoutTimer) clearTimeout(timeoutTimer);
+      settlement = (async () => {
         try {
-          process.kill(-child.pid, signal);
-          return;
+          await stopActiveProcess(active);
         } catch {
-          // Fall back to the direct child handle below.
+          active.stopFailed = true;
+          throw new SessionDeleteError(error?.kind ?? "failed", false);
         }
-      }
-      try {
-        child.kill(signal);
-      } catch {
-        // The exit handler or hard deadline still settles the Promise.
-      }
+        active.stopFailed = false;
+        if (error) throw error;
+      })();
+      void settlement.then(resolve, reject);
     };
 
     const trackOutput = (chunk: Buffer | string): void => {
       outputBytes += Buffer.byteLength(chunk);
-      if (outputBytes > MAX_OUTPUT_BYTES && !timedOut) {
-        terminate("SIGKILL");
-        finish(new SessionDeleteError("failed"));
+      if (outputBytes > MAX_OUTPUT_BYTES) {
+        finishAfterProcessTreeStops(new SessionDeleteError("failed"));
       }
     };
 
     child.stdout.on("data", trackOutput);
     child.stderr.on("data", trackOutput);
-    child.once("error", () => finish(new SessionDeleteError("failed")));
+    child.once("error", () => {
+      // A spawn error has no pid and therefore no process tree to reap.
+      finishAfterProcessTreeStops(new SessionDeleteError("failed"));
+    });
     child.once("exit", (code) => {
-      if (timedOut) {
-        finish(new SessionDeleteError("timeout"));
-      } else if (code === 0) {
-        finish();
-      } else {
-        finish(new SessionDeleteError("failed"));
-      }
+      finishAfterProcessTreeStops(
+        code === 0 ? undefined : new SessionDeleteError("failed"),
+      );
     });
 
-    const timeoutTimer = setTimeout(() => {
-      timedOut = true;
-      terminate("SIGTERM");
-      forceKillTimer = setTimeout(() => {
-        terminate("SIGKILL");
-        // SIGKILL cannot be handled on POSIX. Settle independently of the
-        // child event so request and shutdown latency remain strictly bounded.
-        finish(new SessionDeleteError("timeout"));
-      }, Math.max(0, options.killGraceMs));
-      forceKillTimer.unref();
+    timeoutTimer = setTimeout(() => {
+      finishAfterProcessTreeStops(new SessionDeleteError("timeout"));
     }, Math.max(1, options.timeoutMs));
     timeoutTimer.unref();
+    child.stdin.on("error", () => undefined);
+    child.stdin.end();
   });
+  return active;
+}
+
+function stopActiveProcess(active: ActiveSessionDelete): Promise<void> {
+  if (active.termination) return active.termination;
+  const attempt = terminateProcessTree(active.child, {
+    terminateGraceMs: Math.max(0, active.killGraceMs),
+  }).finally(() => {
+    if (active.termination === attempt) active.termination = undefined;
+  });
+  active.termination = attempt;
+  return attempt;
 }

@@ -22,7 +22,9 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       "/health": "http://127.0.0.1:4310",
-      "/agents": {
+      "/profiles": "http://127.0.0.1:4310",
+      "/datasets": "http://127.0.0.1:4310",
+      "/runtimes": {
         target: "http://127.0.0.1:4310",
         ws: true,
       },

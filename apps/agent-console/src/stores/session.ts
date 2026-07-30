@@ -2,7 +2,7 @@
 //
 // OpenCode owns durable sessions and history. This store only keeps the
 // conversations that are open in the current page, with one ACP connection
-// per Agent Profile and one independent projection per ACP session.
+// per Runtime Project and one independent projection per ACP session.
 import { defineStore } from 'pinia';
 import { computed, reactive, ref, shallowRef, watch } from 'vue';
 import type {
@@ -10,9 +10,9 @@ import type {
   InitializeResponse,
   SessionNotification,
 } from '@agentclientprotocol/sdk';
-import { deleteProfileSession, getAppVersion } from '../lib/bridge-api';
+import { deleteRuntimeSession, getAppVersion } from '../lib/runtime-api';
 import {
-  type AgentConfig,
+  type RuntimeProject,
   type PermissionRequest,
   type SavedSession,
 } from '../lib/types';
@@ -23,11 +23,11 @@ import {
   snapshotProjection,
   type SessionProjection,
 } from '../lib/session-projection';
-import { useConfigStore } from './config';
+import { useRuntimeStore } from './runtime';
 
 const PROTOCOL_VERSION = 1;
 
-type ProfileConnectionStatus =
+type RuntimeConnectionStatus =
   | 'disconnected'
   | 'connecting'
   | 'connected'
@@ -45,7 +45,7 @@ export type OpenConversationStatus =
 
 export interface OpenConversationSummary {
   key: string;
-  agentName: string;
+  runtimeId: string;
   sessionId: string;
   title: string;
   lastUpdated: number;
@@ -54,8 +54,8 @@ export interface OpenConversationSummary {
   isActive: boolean;
 }
 
-interface ProfileState {
-  status: ProfileConnectionStatus;
+interface RuntimeConnectionState {
+  status: RuntimeConnectionStatus;
   error: string | null;
   supportsSessionList: boolean;
   supportsLoadSession: boolean;
@@ -74,7 +74,7 @@ interface ConversationState extends SessionProjection {
   openedAt: number;
 }
 
-interface ProfileRuntime {
+interface RuntimeConnection {
   client: AcpClientBridge | null;
   connectPromise: Promise<AcpClientBridge> | null;
   discoveryPromise: Promise<void> | null;
@@ -87,15 +87,15 @@ interface ProfileRuntime {
 
 interface AuthPrompt {
   id: string;
-  agentName: string;
+  runtimeId: string;
   methods: AuthMethod[];
   resolve: (methodId: string | null) => void;
 }
 
 const appVersion = getAppVersion();
 
-function keyOf(agentName: string, sessionId: string): string {
-  return `${agentName}:${sessionId}`;
+function keyOf(runtimeId: string, sessionId: string): string {
+  return `${runtimeId}:${sessionId}`;
 }
 
 function monotonicNow(): number {
@@ -121,19 +121,19 @@ function isAuthRequired(cause: unknown): boolean {
 export const useSessionStore = defineStore('session', () => {
   const savedSessions = ref<SavedSession[]>([]);
   const conversations = reactive(new Map<string, ConversationState>());
-  const profileStates = reactive(new Map<string, ProfileState>());
+  const runtimeStates = reactive(new Map<string, RuntimeConnectionState>());
   const activeConversationKey = ref<string | null>(null);
   const pendingPermissions = reactive(new Map<string, PermissionRequest>());
   const authPrompts = shallowRef<AuthPrompt[]>([]);
-  const maintenanceProfiles = new Set<string>();
+  const maintenanceRuntimes = new Set<string>();
 
   // ACP clients, promises, timers and unwatch functions must not be wrapped
   // in Vue proxies.
-  const runtimes = new Map<string, ProfileRuntime>();
+  const runtimes = new Map<string, RuntimeConnection>();
   let openedSequence = 0;
 
-  function getProfileState(agentName: string): ProfileState {
-    let state = profileStates.get(agentName);
+  function getRuntimeState(runtimeId: string): RuntimeConnectionState {
+    let state = runtimeStates.get(runtimeId);
     if (!state) {
       state = {
         status: 'disconnected',
@@ -145,17 +145,17 @@ export const useSessionStore = defineStore('session', () => {
         sessionListError: null,
         listGeneration: 0,
       };
-      profileStates.set(agentName, state);
+      runtimeStates.set(runtimeId, state);
       // Return the Map's reactive proxy, not the raw object that was just
       // inserted. Async mutations on the raw object would otherwise update
       // data without notifying Vue.
-      return profileStates.get(agentName) as ProfileState;
+      return runtimeStates.get(runtimeId) as RuntimeConnectionState;
     }
     return state;
   }
 
-  function getRuntime(agentName: string): ProfileRuntime {
-    let runtime = runtimes.get(agentName);
+  function getRuntime(runtimeId: string): RuntimeConnection {
+    let runtime = runtimes.get(runtimeId);
     if (!runtime) {
       runtime = {
         client: null,
@@ -167,7 +167,7 @@ export const useSessionStore = defineStore('session', () => {
         pendingSessionCreations: 0,
         pendingUpdates: new Map(),
       };
-      runtimes.set(agentName, runtime);
+      runtimes.set(runtimeId, runtime);
     }
     return runtime;
   }
@@ -177,10 +177,10 @@ export const useSessionStore = defineStore('session', () => {
     return key ? conversations.get(key) ?? null : null;
   });
 
-  const activeProfileState = computed(() => {
+  const activeRuntimeState = computed(() => {
     const conversation = activeConversation.value;
     return conversation
-      ? getProfileState(conversation.session.agentName)
+      ? getRuntimeState(conversation.session.runtimeId)
       : null;
   });
 
@@ -193,11 +193,11 @@ export const useSessionStore = defineStore('session', () => {
   const hasActiveSession = computed(() => activeConversation.value !== null);
   const isConnected = computed(() => {
     const conversation = activeConversation.value;
-    const profile = activeProfileState.value;
+    const runtimeState = activeRuntimeState.value;
     return (
       conversation !== null &&
       conversation.hydrated &&
-      profile?.status === 'connected'
+      runtimeState?.status === 'connected'
     );
   });
   const isLoading = computed(() => {
@@ -208,46 +208,46 @@ export const useSessionStore = defineStore('session', () => {
     () => activeConversation.value?.isLoading ?? false,
   );
   const isConnecting = computed(
-    () => activeProfileState.value?.status === 'connecting',
+    () => activeRuntimeState.value?.status === 'connecting',
   );
   const isReconnecting = computed(() => {
     const conversation = activeConversation.value;
     return Boolean(
       conversation?.isHydrating ||
-      activeProfileState.value?.status === 'reconnecting',
+      activeRuntimeState.value?.status === 'reconnecting',
     );
   });
   const error = computed(
     () =>
       activeConversation.value?.error ??
-      activeProfileState.value?.error ??
+      activeRuntimeState.value?.error ??
       null,
   );
   const resumableSessions = computed(() =>
     savedSessions.value.filter((session) => session.supportsLoadSession === true),
   );
-  const isCurrentProfileBusyElsewhere = computed(() => {
+  const isCurrentRuntimeBusyElsewhere = computed(() => {
     const conversation = activeConversation.value;
-    const owner = activeProfileState.value?.activePromptKey;
+    const owner = activeRuntimeState.value?.activePromptKey;
     return Boolean(conversation && owner && owner !== conversation.key);
   });
 
   function getPendingPermissionEntry():
-    | { agentName: string; request: PermissionRequest }
+    | { runtimeId: string; request: PermissionRequest }
     | null {
     const conversation = activeConversation.value;
     if (conversation) {
-      const request = pendingPermissions.get(conversation.session.agentName);
+      const request = pendingPermissions.get(conversation.session.runtimeId);
       if (request?.sessionId === conversation.session.sessionId) {
         return {
-          agentName: conversation.session.agentName,
+          runtimeId: conversation.session.runtimeId,
           request,
         };
       }
     }
 
-    for (const [agentName, request] of pendingPermissions) {
-      return { agentName, request };
+    for (const [runtimeId, request] of pendingPermissions) {
+      return { runtimeId, request };
     }
     return null;
   }
@@ -255,28 +255,28 @@ export const useSessionStore = defineStore('session', () => {
   const pendingPermission = computed(
     () => getPendingPermissionEntry()?.request ?? null,
   );
-  const pendingPermissionAgentName = computed(
-    () => getPendingPermissionEntry()?.agentName ?? '',
+  const pendingPermissionRuntimeId = computed(
+    () => getPendingPermissionEntry()?.runtimeId ?? '',
   );
   const pendingPermissionSessionTitle = computed(() => {
     const entry = getPendingPermissionEntry();
     if (!entry) return '';
     return (
-      conversations.get(keyOf(entry.agentName, entry.request.sessionId))
+      conversations.get(keyOf(entry.runtimeId, entry.request.sessionId))
         ?.session.title ?? entry.request.sessionId
     );
   });
   const pendingAuthMethods = computed(
     () => authPrompts.value[0]?.methods ?? [],
   );
-  const pendingAuthAgentName = computed(
-    () => authPrompts.value[0]?.agentName ?? '',
+  const pendingAuthRuntimeId = computed(
+    () => authPrompts.value[0]?.runtimeId ?? '',
   );
 
   function conversationStatus(
     conversation: ConversationState,
   ): Pick<OpenConversationSummary, 'status' | 'statusLabel'> {
-    const permission = pendingPermissions.get(conversation.session.agentName);
+    const permission = pendingPermissions.get(conversation.session.runtimeId);
     if (permission?.sessionId === conversation.session.sessionId) {
       return { status: 'needs_attention', statusLabel: 'Needs attention' };
     }
@@ -287,17 +287,17 @@ export const useSessionStore = defineStore('session', () => {
       return { status: 'connecting', statusLabel: 'Loading' };
     }
 
-    const profile = getProfileState(conversation.session.agentName);
-    if (profile.status === 'connecting') {
+    const runtimeState = getRuntimeState(conversation.session.runtimeId);
+    if (runtimeState.status === 'connecting') {
       return { status: 'connecting', statusLabel: 'Connecting' };
     }
-    if (profile.status === 'reconnecting') {
+    if (runtimeState.status === 'reconnecting') {
       return { status: 'reconnecting', statusLabel: 'Reconnecting' };
     }
-    if (conversation.error || profile.status === 'error') {
+    if (conversation.error || runtimeState.status === 'error') {
       return { status: 'error', statusLabel: 'Error' };
     }
-    if (profile.status === 'connected' && conversation.hydrated) {
+    if (runtimeState.status === 'connected' && conversation.hydrated) {
       return { status: 'connected', statusLabel: 'Connected' };
     }
     return { status: 'disconnected', statusLabel: 'Disconnected' };
@@ -308,7 +308,7 @@ export const useSessionStore = defineStore('session', () => {
       .sort((left, right) => right.openedAt - left.openedAt)
       .map((conversation) => ({
         key: conversation.key,
-        agentName: conversation.session.agentName,
+        runtimeId: conversation.session.runtimeId,
         sessionId: conversation.session.sessionId,
         title: conversation.session.title,
         lastUpdated: conversation.session.lastUpdated,
@@ -337,7 +337,7 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   function createConversation(session: SavedSession): ConversationState {
-    const key = keyOf(session.agentName, session.sessionId);
+    const key = keyOf(session.runtimeId, session.sessionId);
     const existing = conversations.get(key);
     if (existing) {
       existing.session = session;
@@ -363,7 +363,7 @@ export const useSessionStore = defineStore('session', () => {
   function saveSession(session: SavedSession): void {
     const normalized: SavedSession = {
       ...session,
-      id: keyOf(session.agentName, session.sessionId),
+      id: keyOf(session.runtimeId, session.sessionId),
     };
     const conversation = conversations.get(normalized.id);
     if (conversation) {
@@ -373,19 +373,19 @@ export const useSessionStore = defineStore('session', () => {
       normalized,
       ...savedSessions.value.filter(
         (saved) =>
-          saved.agentName !== normalized.agentName ||
+          saved.runtimeId !== normalized.runtimeId ||
           saved.sessionId !== normalized.sessionId,
       ),
     ];
   }
 
-  function replaceSessionsForAgent(
-    agentName: string,
+  function replaceSessionsForRuntime(
+    runtimeId: string,
     listedSessions: SavedSession[],
   ): void {
     const sessions = listedSessions
       .map((listed) => {
-        const key = keyOf(agentName, listed.sessionId);
+        const key = keyOf(runtimeId, listed.sessionId);
         const open = conversations.get(key);
         if (!open) return { ...listed, id: key };
         open.session.title = listed.title;
@@ -395,21 +395,21 @@ export const useSessionStore = defineStore('session', () => {
       });
     savedSessions.value = [
       ...savedSessions.value.filter(
-        (session) => session.agentName !== agentName,
+        (session) => session.runtimeId !== runtimeId,
       ),
       ...sessions,
     ];
   }
 
   function applySessionUpdate(
-    agentName: string,
+    runtimeId: string,
     conversation: ConversationState,
     notification: SessionNotification,
   ): void {
     if (!applyProjectionUpdate(conversation, notification)) return;
     const saved = savedSessions.value.find(
       (session) =>
-        session.agentName === agentName &&
+        session.runtimeId === runtimeId &&
         session.sessionId === notification.sessionId,
     );
     if (saved && saved !== conversation.session) {
@@ -419,20 +419,20 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   function handleSessionUpdate(
-    agentName: string,
+    runtimeId: string,
     notification: SessionNotification,
   ): void {
     const conversation = conversations.get(
-      keyOf(agentName, notification.sessionId),
+      keyOf(runtimeId, notification.sessionId),
     );
     if (conversation) {
-      applySessionUpdate(agentName, conversation, notification);
+      applySessionUpdate(runtimeId, conversation, notification);
       return;
     }
 
     // session/new may emit initial updates before its response reveals the
     // new sessionId. Buffer only while a creation request is active.
-    const runtime = getRuntime(agentName);
+    const runtime = getRuntime(runtimeId);
     if (runtime.pendingSessionCreations > 0) {
       const queued = runtime.pendingUpdates.get(notification.sessionId) ?? [];
       if (queued.length < 100) queued.push(notification);
@@ -441,33 +441,33 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   function drainPendingUpdates(
-    agentName: string,
+    runtimeId: string,
     conversation: ConversationState,
   ): void {
-    const runtime = getRuntime(agentName);
+    const runtime = getRuntime(runtimeId);
     const queued = runtime.pendingUpdates.get(conversation.session.sessionId);
     runtime.pendingUpdates.delete(conversation.session.sessionId);
     if (!queued) return;
     for (const notification of queued) {
-      applySessionUpdate(agentName, conversation, notification);
+      applySessionUpdate(runtimeId, conversation, notification);
     }
   }
 
   function handleUnexpectedClose(
-    agentName: string,
+    runtimeId: string,
     client: AcpClientBridge,
     reason?: string,
   ): void {
-    const runtime = getRuntime(agentName);
+    const runtime = getRuntime(runtimeId);
     if (runtime.client !== client) return;
 
     runtime.stopPermissionWatch?.();
     runtime.stopPermissionWatch = null;
     runtime.client = null;
-    pendingPermissions.delete(agentName);
+    pendingPermissions.delete(runtimeId);
 
-    const state = getProfileState(agentName);
-    const expectedMaintenance = maintenanceProfiles.has(agentName);
+    const state = getRuntimeState(runtimeId);
+    const expectedMaintenance = maintenanceRuntimes.has(runtimeId);
     state.status = expectedMaintenance ? 'disconnected' : 'error';
     state.error = expectedMaintenance
       ? null
@@ -476,7 +476,7 @@ export const useSessionStore = defineStore('session', () => {
     state.supportsSessionList = false;
 
     for (const conversation of conversations.values()) {
-      if (conversation.session.agentName !== agentName) continue;
+      if (conversation.session.runtimeId !== runtimeId) continue;
       conversation.hydrated = false;
       conversation.isLoading = false;
       conversation.isHydrating = false;
@@ -485,15 +485,15 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   function bindClient(
-    agentName: string,
+    runtimeId: string,
     client: AcpClientBridge,
   ): void {
-    const runtime = getRuntime(agentName);
+    const runtime = getRuntime(runtimeId);
     client.onSessionUpdate = (notification) => {
-      handleSessionUpdate(agentName, notification);
+      handleSessionUpdate(runtimeId, notification);
     };
     client.onTransportClose = (reason) => {
-      handleUnexpectedClose(agentName, client, reason);
+      handleUnexpectedClose(runtimeId, client, reason);
     };
     runtime.stopPermissionWatch?.();
     runtime.stopPermissionWatch = watch(
@@ -501,9 +501,9 @@ export const useSessionStore = defineStore('session', () => {
       (request) => {
         if (runtime.client !== client) return;
         if (request) {
-          pendingPermissions.set(agentName, request);
+          pendingPermissions.set(runtimeId, request);
         } else {
-          pendingPermissions.delete(agentName);
+          pendingPermissions.delete(runtimeId);
         }
       },
       { immediate: true },
@@ -511,41 +511,41 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   function unbindClient(
-    agentName: string,
+    runtimeId: string,
     client: AcpClientBridge,
   ): void {
-    const runtime = getRuntime(agentName);
+    const runtime = getRuntime(runtimeId);
     if (runtime.client !== client) return;
     runtime.stopPermissionWatch?.();
     runtime.stopPermissionWatch = null;
-    pendingPermissions.delete(agentName);
+    pendingPermissions.delete(runtimeId);
     client.onSessionUpdate = null;
     client.onTransportClose = null;
   }
 
-  async function connectProfileTransport(
-    agentName: string,
-    agentConfig: AgentConfig,
+  async function connectRuntimeTransport(
+    runtimeId: string,
+    project: RuntimeProject,
   ): Promise<AcpClientBridge> {
-    return createAcpClient({ name: agentName, config: agentConfig });
+    return createAcpClient({ runtimeId, project });
   }
 
-  async function ensureProfileClient(
-    agentName: string,
+  async function ensureRuntimeClient(
+    runtimeId: string,
     options: { reconnecting?: boolean; skipDiscovery?: boolean } = {},
   ): Promise<AcpClientBridge> {
-    const state = getProfileState(agentName);
-    const runtime = getRuntime(agentName);
-    if (maintenanceProfiles.has(agentName)) {
+    const state = getRuntimeState(runtimeId);
+    const runtime = getRuntime(runtimeId);
+    if (maintenanceRuntimes.has(runtimeId)) {
       throw new Error(
-        'This Profile is undergoing maintenance. Try again in a moment.',
+        'This Runtime Project is undergoing maintenance. Try again in a moment.',
       );
     }
     if (!options.skipDiscovery && runtime.discoveryPromise) {
       await runtime.discoveryPromise;
-      if (maintenanceProfiles.has(agentName)) {
+      if (maintenanceRuntimes.has(runtimeId)) {
         throw new Error(
-          'This Profile is undergoing maintenance. Try again in a moment.',
+          'This Runtime Project is undergoing maintenance. Try again in a moment.',
         );
       }
     }
@@ -554,21 +554,13 @@ export const useSessionStore = defineStore('session', () => {
     }
     if (runtime.connectPromise) return runtime.connectPromise;
 
-    const configStore = useConfigStore();
-    const agentConfig = configStore.getAgent(agentName);
-    if (!agentConfig) {
-      throw new Error(`Agent '${agentName}' not found in catalog`);
-    }
-    if (agentConfig.status === 'unavailable') {
+    const runtimeStore = useRuntimeStore();
+    const project = runtimeStore.getProject(runtimeId);
+    if (!project) throw new Error(`Runtime Project '${runtimeId}' was not found`);
+    if (!runtimeStore.canReadSessions(runtimeId)) {
       throw new Error(
-        'This Agent Profile is unavailable until its required environment is configured',
+        'This Runtime Project is not ready to open ACP sessions',
       );
-    }
-    if (!agentConfig.cwd) {
-      throw new Error(`Agent '${agentName}' has no fixed working directory`);
-    }
-    if (!agentConfig.url) {
-      throw new Error(`Agent '${agentName}' has no Bridge WebSocket URL`);
     }
 
     state.status = options.reconnecting ? 'reconnecting' : 'connecting';
@@ -577,20 +569,20 @@ export const useSessionStore = defineStore('session', () => {
     const promise = (async (): Promise<AcpClientBridge> => {
       let client: AcpClientBridge | null = null;
       try {
-        client = await connectProfileTransport(agentName, agentConfig);
-        if (maintenanceProfiles.has(agentName)) {
+        client = await connectRuntimeTransport(runtimeId, project);
+        if (maintenanceRuntimes.has(runtimeId)) {
           await client.disconnect();
           client = null;
-          throw new Error('Profile entered maintenance while connecting');
+          throw new Error('Runtime Project entered maintenance while connecting');
         }
 
         runtime.client = client;
-        bindClient(agentName, client);
+        bindClient(runtimeId, client);
         const response = await initializeClient(client);
 
         if (
           runtime.client !== client ||
-          maintenanceProfiles.has(agentName)
+          maintenanceRuntimes.has(runtimeId)
         ) {
           throw new Error('Connection closed while initializing');
         }
@@ -607,22 +599,22 @@ export const useSessionStore = defineStore('session', () => {
         if (client) {
           try {
             if (runtime.client === client) {
-              unbindClient(agentName, client);
+              unbindClient(runtimeId, client);
               runtime.client = null;
             }
             await client.disconnect();
           } catch (cleanupError) {
             console.warn(
-              'disconnect during profile connection cleanup failed:',
+              'disconnect during Runtime Project connection cleanup failed:',
               cleanupError,
             );
           }
         }
 
-        state.status = maintenanceProfiles.has(agentName)
+        state.status = maintenanceRuntimes.has(runtimeId)
           ? 'disconnected'
           : 'error';
-        state.error = maintenanceProfiles.has(agentName)
+        state.error = maintenanceRuntimes.has(runtimeId)
           ? null
           : cause instanceof Error
             ? cause.message
@@ -653,14 +645,14 @@ export const useSessionStore = defineStore('session', () => {
 
   function promptForAuthMethod(
     methods: AuthMethod[],
-    agentName: string,
+    runtimeId: string,
   ): Promise<string | null> {
     return new Promise((resolve) => {
       authPrompts.value = [
         ...authPrompts.value,
         {
           id: crypto.randomUUID(),
-          agentName,
+          runtimeId,
           methods,
           resolve,
         },
@@ -683,49 +675,51 @@ export const useSessionStore = defineStore('session', () => {
     settleAuthPrompt(null);
   }
 
-  function cancelAuthForProfile(agentName: string): void {
+  function cancelAuthForRuntime(runtimeId: string): void {
     const cancelled = authPrompts.value.filter(
-      (prompt) => prompt.agentName === agentName,
+      (prompt) => prompt.runtimeId === runtimeId,
     );
     if (cancelled.length === 0) return;
     authPrompts.value = authPrompts.value.filter(
-      (prompt) => prompt.agentName !== agentName,
+      (prompt) => prompt.runtimeId !== runtimeId,
     );
     for (const prompt of cancelled) prompt.resolve(null);
   }
 
   async function withAuthentication<T>(
-    agentName: string,
+    runtimeId: string,
     operation: () => Promise<T>,
   ): Promise<T> {
     try {
       return await operation();
     } catch (cause) {
-      const runtime = getRuntime(agentName);
+      const runtime = getRuntime(runtimeId);
       if (!isAuthRequired(cause) || runtime.authMethods.length === 0) {
         throw cause;
       }
 
       const methodId = await promptForAuthMethod(
         runtime.authMethods,
-        agentName,
+        runtimeId,
       );
       if (!methodId) throw new Error('Authentication cancelled by user');
       const client = runtime.client;
-      if (!client) throw new Error('Agent connection closed during authentication');
+      if (!client) {
+        throw new Error('Runtime connection closed during authentication');
+      }
       await client.authenticate({ methodId });
       return operation();
     }
   }
 
-  function refreshSessions(agentName: string): Promise<void> {
-    const runtime = getRuntime(agentName);
+  function refreshSessions(runtimeId: string): Promise<void> {
+    const runtime = getRuntime(runtimeId);
     if (runtime.discoveryPromise) return runtime.discoveryPromise;
-    if (maintenanceProfiles.has(agentName)) {
+    if (maintenanceRuntimes.has(runtimeId)) {
       return Promise.resolve();
     }
 
-    const discovery = performSessionRefresh(agentName);
+    const discovery = performSessionRefresh(runtimeId);
     runtime.discoveryPromise = discovery;
     void discovery.finally(() => {
       if (runtime.discoveryPromise === discovery) {
@@ -735,8 +729,8 @@ export const useSessionStore = defineStore('session', () => {
     return discovery;
   }
 
-  async function performSessionRefresh(agentName: string): Promise<void> {
-    const state = getProfileState(agentName);
+  async function performSessionRefresh(runtimeId: string): Promise<void> {
+    const state = getRuntimeState(runtimeId);
     const generation = ++state.listGeneration;
     state.isRefreshingSessions = true;
     state.sessionListError = null;
@@ -744,27 +738,23 @@ export const useSessionStore = defineStore('session', () => {
     let client: AcpClientBridge | null = null;
     let ownsClient = false;
     try {
-      const configStore = useConfigStore();
-      const agentConfig = configStore.getAgent(agentName);
-      if (!agentConfig) {
-        throw new Error(`Agent '${agentName}' not found in catalog`);
+      const runtimeStore = useRuntimeStore();
+      const project = runtimeStore.getProject(runtimeId);
+      if (!project) {
+        throw new Error(`Runtime Project '${runtimeId}' was not found`);
       }
-      if (agentConfig.status === 'unavailable') {
-        throw new Error(
-          'This Agent Profile is unavailable until its required environment is configured',
-        );
-      }
-      if (!agentConfig.cwd) {
-        throw new Error(`Agent '${agentName}' has no fixed working directory`);
+      if (!runtimeStore.canReadSessions(runtimeId)) {
+        replaceSessionsForRuntime(runtimeId, []);
+        return;
       }
 
-      const runtime = getRuntime(agentName);
+      const runtime = getRuntime(runtimeId);
       if (runtime.client || runtime.connectPromise) {
-        client = await ensureProfileClient(agentName, {
+        client = await ensureRuntimeClient(runtimeId, {
           skipDiscovery: true,
         });
       } else {
-        client = await connectProfileTransport(agentName, agentConfig);
+        client = await connectRuntimeTransport(runtimeId, project);
         ownsClient = true;
       }
 
@@ -780,9 +770,9 @@ export const useSessionStore = defineStore('session', () => {
 
       if (!supportsList || !supportsLoad) {
         if (generation === state.listGeneration) {
-          replaceSessionsForAgent(agentName, []);
+          replaceSessionsForRuntime(runtimeId, []);
           state.sessionListError =
-            'This Agent does not advertise ACP session/list and session/load.';
+            'This Runtime does not advertise ACP session/list and session/load.';
         }
         return;
       }
@@ -792,23 +782,23 @@ export const useSessionStore = defineStore('session', () => {
       let cursor: string | undefined;
       for (let page = 0; page < 100; page += 1) {
         const response = await client.unstable_listSessions({
-          cwd: agentConfig.cwd,
+          cwd: project.cwd,
           cursor,
         });
         for (const session of response.sessions) {
-          if (session.cwd !== agentConfig.cwd) continue;
+          if (session.cwd !== project.cwd) continue;
           const parsedUpdatedAt = session.updatedAt
             ? Date.parse(session.updatedAt)
             : Number.NaN;
           listed.push({
-            id: keyOf(agentName, session.sessionId),
-            agentName,
+            id: keyOf(runtimeId, session.sessionId),
+            runtimeId,
             sessionId: session.sessionId,
             title: session.title?.trim() || 'Untitled session',
             lastUpdated: Number.isFinite(parsedUpdatedAt)
               ? parsedUpdatedAt
               : 0,
-            cwd: agentConfig.cwd,
+            cwd: project.cwd,
             supportsLoadSession: true,
           });
         }
@@ -816,17 +806,17 @@ export const useSessionStore = defineStore('session', () => {
         const nextCursor = response.nextCursor ?? undefined;
         if (!nextCursor) break;
         if (seenCursors.has(nextCursor)) {
-          throw new Error('Agent returned a repeated session/list cursor');
+          throw new Error('Runtime returned a repeated session/list cursor');
         }
         seenCursors.add(nextCursor);
         cursor = nextCursor;
         if (page === 99) {
-          throw new Error('Agent session/list exceeded 100 pages');
+          throw new Error('Runtime session/list exceeded 100 pages');
         }
       }
 
       if (generation === state.listGeneration) {
-        replaceSessionsForAgent(agentName, listed);
+        replaceSessionsForRuntime(runtimeId, listed);
       }
     } catch (cause) {
       if (generation === state.listGeneration) {
@@ -844,38 +834,45 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   async function createSession(
-    agentName: string,
+    runtimeId: string,
     cwd: string,
     options: { activate?: boolean } = {},
   ): Promise<string> {
-    if (maintenanceProfiles.has(agentName)) {
+    if (maintenanceRuntimes.has(runtimeId)) {
       throw new Error(
-        'This Profile is undergoing maintenance. Try again in a moment.',
+        'This Runtime Project is undergoing maintenance. Try again in a moment.',
       );
     }
-    const configStore = useConfigStore();
-    const agentConfig = configStore.getAgent(agentName);
-    if (!agentConfig) throw new Error(`Agent '${agentName}' not found in catalog`);
-    if (!agentConfig.cwd || cwd !== agentConfig.cwd) {
+    const runtimeStore = useRuntimeStore();
+    const project = runtimeStore.getProject(runtimeId);
+    if (!project) throw new Error(`Runtime Project '${runtimeId}' was not found`);
+    if (!runtimeStore.isRunnable(runtimeId)) {
       throw new Error(
-        'Session working directory does not match its Agent Profile',
+        project.stale
+          ? 'This Runtime Project is stale. Delete and recreate it before starting a new conversation.'
+          : 'This Runtime Project is not ready for a new conversation.',
+      );
+    }
+    if (cwd !== project.cwd) {
+      throw new Error(
+        'Session working directory does not match its Runtime Project',
       );
     }
 
-    const state = getProfileState(agentName);
-    const runtime = getRuntime(agentName);
-    const client = await ensureProfileClient(agentName);
+    const state = getRuntimeState(runtimeId);
+    const runtime = getRuntime(runtimeId);
+    const client = await ensureRuntimeClient(runtimeId);
     runtime.pendingSessionCreations += 1;
     try {
-      const response = await withAuthentication(agentName, () =>
+      const response = await withAuthentication(runtimeId, () =>
         client.newSession({
           cwd,
           mcpServers: [],
         }),
       );
       const session: SavedSession = {
-        id: keyOf(agentName, response.sessionId),
-        agentName,
+        id: keyOf(runtimeId, response.sessionId),
+        runtimeId,
         sessionId: response.sessionId,
         title: `Session ${new Date().toLocaleString()}`,
         lastUpdated: Date.now(),
@@ -885,7 +882,7 @@ export const useSessionStore = defineStore('session', () => {
       const conversation = createConversation(session);
       conversation.hydrated = true;
       conversation.error = null;
-      drainPendingUpdates(agentName, conversation);
+      drainPendingUpdates(runtimeId, conversation);
       saveSession(session);
       if (options.activate !== false) {
         activeConversationKey.value = conversation.key;
@@ -893,15 +890,15 @@ export const useSessionStore = defineStore('session', () => {
       return conversation.key;
     } catch (cause) {
       state.error = cause instanceof Error ? cause.message : String(cause);
-      const profileHasConversation = Array.from(conversations.values()).some(
-        (conversation) => conversation.session.agentName === agentName,
+      const runtimeHasConversation = Array.from(conversations.values()).some(
+        (conversation) => conversation.session.runtimeId === runtimeId,
       );
       if (
-        !profileHasConversation &&
+        !runtimeHasConversation &&
         runtime.pendingSessionCreations === 1 &&
         runtime.client === client
       ) {
-        unbindClient(agentName, client);
+        unbindClient(runtimeId, client);
         runtime.client = null;
         await client.disconnect().catch(() => undefined);
         state.status = 'error';
@@ -917,12 +914,12 @@ export const useSessionStore = defineStore('session', () => {
     savedSession: SavedSession,
     reconnecting = false,
   ): Promise<string> {
-    if (maintenanceProfiles.has(savedSession.agentName)) {
+    if (maintenanceRuntimes.has(savedSession.runtimeId)) {
       throw new Error(
-        'This Profile is undergoing maintenance. Try again in a moment.',
+        'This Runtime Project is undergoing maintenance. Try again in a moment.',
       );
     }
-    const key = keyOf(savedSession.agentName, savedSession.sessionId);
+    const key = keyOf(savedSession.runtimeId, savedSession.sessionId);
     let conversation = conversations.get(key);
     if (!conversation) {
       conversation = createConversation({
@@ -932,28 +929,31 @@ export const useSessionStore = defineStore('session', () => {
     }
     activeConversationKey.value = key;
 
-    const state = getProfileState(savedSession.agentName);
-    const runtime = getRuntime(savedSession.agentName);
+    const state = getRuntimeState(savedSession.runtimeId);
+    const runtime = getRuntime(savedSession.runtimeId);
     if (
       state.activePromptKey &&
       state.activePromptKey !== conversation.key
     ) {
       const message =
-        'This Profile is running another conversation. Wait for that turn to finish before loading this session.';
+        'This Runtime Project is running another conversation. Wait for that turn to finish before loading this session.';
       conversation.error = message;
       throw new Error(message);
     }
 
-    const configStore = useConfigStore();
-    const agentConfig = configStore.getAgent(savedSession.agentName);
-    if (!agentConfig) {
+    const runtimeStore = useRuntimeStore();
+    const project = runtimeStore.getProject(savedSession.runtimeId);
+    if (!project) {
       throw new Error(
-        `Agent '${savedSession.agentName}' not found in catalog`,
+        `Runtime Project '${savedSession.runtimeId}' was not found`,
       );
     }
-    if (!agentConfig.cwd || savedSession.cwd !== agentConfig.cwd) {
+    if (!runtimeStore.canReadSessions(savedSession.runtimeId)) {
+      throw new Error('This Runtime Project cannot open existing conversations');
+    }
+    if (savedSession.cwd !== project.cwd) {
       throw new Error(
-        'Session working directory does not match its Agent Profile',
+        'Session working directory does not match its Runtime Project',
       );
     }
 
@@ -962,22 +962,22 @@ export const useSessionStore = defineStore('session', () => {
     conversation.isHydrating = true;
     let client: AcpClientBridge | null = null;
     try {
-      const activeClient = await ensureProfileClient(savedSession.agentName, {
+      const activeClient = await ensureRuntimeClient(savedSession.runtimeId, {
         reconnecting,
       });
       client = activeClient;
       if (!state.supportsLoadSession) {
-        throw new Error('This Agent does not advertise ACP session/load');
+        throw new Error('This Runtime does not advertise ACP session/load');
       }
 
       conversation.messages.splice(0);
       conversation.replayingHistory = true;
       conversation.replayLastUpdateAt = Date.now();
 
-      await withAuthentication(savedSession.agentName, () =>
+      await withAuthentication(savedSession.runtimeId, () =>
         activeClient.loadSession({
           sessionId: savedSession.sessionId,
-          cwd: agentConfig.cwd as string,
+          cwd: project.cwd,
           mcpServers: [],
         }),
       );
@@ -996,7 +996,7 @@ export const useSessionStore = defineStore('session', () => {
       conversation.hydrated = false;
       // An explicit disconnect replaces the runtime client before closing
       // the transport. Keep that user action from surfacing as a failed
-      // history load; unexpected closes are reported at Profile level.
+      // history load; unexpected closes are reported at Runtime Project level.
       conversation.error =
         client && runtime.client !== client
           ? null
@@ -1007,7 +1007,7 @@ export const useSessionStore = defineStore('session', () => {
     } finally {
       conversation.replayingHistory = false;
       conversation.isHydrating = false;
-      // Keep the runtime alive; another Session on this Profile may already
+      // Keep the connection alive; another Session on this Runtime may already
       // be using the same ACP connection.
       void runtime;
     }
@@ -1017,8 +1017,8 @@ export const useSessionStore = defineStore('session', () => {
     savedSession: SavedSession,
     reconnecting = false,
   ): Promise<string> {
-    const key = keyOf(savedSession.agentName, savedSession.sessionId);
-    const runtime = getRuntime(savedSession.agentName);
+    const key = keyOf(savedSession.runtimeId, savedSession.sessionId);
+    const runtime = getRuntime(savedSession.runtimeId);
     const pending = runtime.pendingLoads.get(key);
     if (pending) {
       activeConversationKey.value = key;
@@ -1036,10 +1036,10 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   async function resumeSession(savedSession: SavedSession): Promise<string> {
-    const key = keyOf(savedSession.agentName, savedSession.sessionId);
+    const key = keyOf(savedSession.runtimeId, savedSession.sessionId);
     const existing = conversations.get(key);
-    const state = getProfileState(savedSession.agentName);
-    const runtime = getRuntime(savedSession.agentName);
+    const state = getRuntimeState(savedSession.runtimeId);
+    const runtime = getRuntime(savedSession.runtimeId);
     if (
       existing?.hydrated &&
       runtime.client &&
@@ -1061,15 +1061,15 @@ export const useSessionStore = defineStore('session', () => {
     const conversation = key ? conversations.get(key) : null;
     if (!key || !conversation) throw new Error('No active session');
 
-    const agentName = conversation.session.agentName;
-    const state = getProfileState(agentName);
-    const client = getRuntime(agentName).client;
+    const runtimeId = conversation.session.runtimeId;
+    const state = getRuntimeState(runtimeId);
+    const client = getRuntime(runtimeId).client;
     if (!client || state.status !== 'connected' || !conversation.hydrated) {
       throw new Error('The current conversation is not connected');
     }
     if (state.activePromptKey && state.activePromptKey !== key) {
       const message =
-        'This Profile is already running another conversation. Switch to it or wait for that turn to finish.';
+        'This Runtime Project is already running another conversation. Switch to it or wait for that turn to finish.';
       conversation.error = message;
       throw new Error(message);
     }
@@ -1126,10 +1126,10 @@ export const useSessionStore = defineStore('session', () => {
       conversation.session.lastUpdated = completedAt;
       saveSession(conversation.session);
     } catch (cause) {
-      // disconnectProfile() unbinds and clears the runtime client before
+      // disconnectRuntime() unbinds and clears the runtime client before
       // closing it. The rejected Prompt still reaches this catch, but an
       // intentional disconnect should not leave a red transport error.
-      if (getRuntime(agentName).client === client) {
+      if (getRuntime(runtimeId).client === client) {
         conversation.error =
           cause instanceof Error ? cause.message : String(cause);
       }
@@ -1143,59 +1143,59 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   async function deleteConversation(
-    agentName: string,
+    runtimeId: string,
     sessionId: string,
   ): Promise<void> {
-    const key = keyOf(agentName, sessionId);
-    const permission = pendingPermissions.get(agentName);
-    const runtime = getRuntime(agentName);
-    const profile = getProfileState(agentName);
-    const profileConversationBusy = Array.from(conversations.values()).some(
+    const key = keyOf(runtimeId, sessionId);
+    const permission = pendingPermissions.get(runtimeId);
+    const runtime = getRuntime(runtimeId);
+    const runtimeState = getRuntimeState(runtimeId);
+    const runtimeConversationBusy = Array.from(conversations.values()).some(
       (candidate) =>
-        candidate.session.agentName === agentName &&
+        candidate.session.runtimeId === runtimeId &&
         (candidate.isLoading || candidate.isHydrating),
     );
     if (
-      maintenanceProfiles.has(agentName) ||
-      profileConversationBusy ||
+      maintenanceRuntimes.has(runtimeId) ||
+      runtimeConversationBusy ||
       permission !== undefined ||
-      profile.activePromptKey !== null ||
+      runtimeState.activePromptKey !== null ||
       runtime.pendingSessionCreations > 0 ||
       runtime.pendingLoads.size > 0 ||
       runtime.connectPromise !== null ||
       runtime.discoveryPromise !== null ||
-      profile.isRefreshingSessions ||
-      profile.status === 'connecting' ||
-      profile.status === 'reconnecting'
+      runtimeState.isRefreshingSessions ||
+      runtimeState.status === 'connecting' ||
+      runtimeState.status === 'reconnecting'
     ) {
       throw new Error(
-        'This Profile is still running and cannot delete a conversation',
+        'This Runtime Project is still running and cannot delete a conversation',
       );
     }
 
     const wasConnected =
-      runtime.client !== null && profile.status === 'connected';
+      runtime.client !== null && runtimeState.status === 'connected';
     const activeBefore = activeConversationKey.value;
-    maintenanceProfiles.add(agentName);
+    maintenanceRuntimes.add(runtimeId);
     if (wasConnected) {
-      // Make the server-initiated Profile close expected from the browser's
+      // Make the server-initiated Runtime close expected from the browser's
       // perspective. The durable delete requires OpenCode's in-memory cache
       // to be gone before its CLI touches the isolated database.
-      await disconnectProfile(agentName);
+      await disconnectRuntime(runtimeId);
     }
 
     let durableDeleted = false;
     try {
-      await deleteProfileSession(agentName, sessionId);
+      await deleteRuntimeSession(runtimeId, sessionId);
       durableDeleted = true;
       // Invalidate only a session/list response that began before the durable
       // delete. A later authoritative list must be allowed to expose any
       // unexpected reappearance rather than being hidden by a tombstone.
-      profile.listGeneration += 1;
-      profile.isRefreshingSessions = false;
+      runtimeState.listGeneration += 1;
+      runtimeState.isRefreshingSessions = false;
       savedSessions.value = savedSessions.value.filter(
         (saved) =>
-          saved.agentName !== agentName || saved.sessionId !== sessionId,
+          saved.runtimeId !== runtimeId || saved.sessionId !== sessionId,
       );
       conversations.delete(key);
 
@@ -1205,11 +1205,11 @@ export const useSessionStore = defineStore('session', () => {
         )[0];
         activeConversationKey.value = fallback?.key ?? null;
       }
-      if (pendingPermissions.get(agentName)?.sessionId === sessionId) {
-        pendingPermissions.delete(agentName);
+      if (pendingPermissions.get(runtimeId)?.sessionId === sessionId) {
+        pendingPermissions.delete(runtimeId);
       }
     } finally {
-      maintenanceProfiles.delete(agentName);
+      maintenanceRuntimes.delete(runtimeId);
       if (wasConnected) {
         const preferredKey = durableDeleted
           ? activeConversationKey.value
@@ -1217,12 +1217,12 @@ export const useSessionStore = defineStore('session', () => {
         const reconnectConversation =
           (preferredKey
             ? conversations.get(preferredKey)
-            : undefined)?.session.agentName === agentName
+            : undefined)?.session.runtimeId === runtimeId
             ? conversations.get(preferredKey as string)
             : Array.from(conversations.values())
                 .filter(
                   (candidate) =>
-                    candidate.session.agentName === agentName &&
+                    candidate.session.runtimeId === runtimeId &&
                     candidate.key !== (durableDeleted ? key : ''),
                 )
                 .sort(
@@ -1243,7 +1243,7 @@ export const useSessionStore = defineStore('session', () => {
             }
           } catch (cause) {
             console.warn(
-              'Profile reconnect after Session maintenance failed:',
+              'Runtime reconnect after Session maintenance failed:',
               cause,
             );
           }
@@ -1255,7 +1255,7 @@ export const useSessionStore = defineStore('session', () => {
   async function cancelOperation(): Promise<void> {
     const conversation = activeConversation.value;
     if (!conversation?.isLoading) return;
-    const client = getRuntime(conversation.session.agentName).client;
+    const client = getRuntime(conversation.session.runtimeId).client;
     if (!client) return;
     await client.cancel({
       sessionId: conversation.session.sessionId,
@@ -1265,23 +1265,23 @@ export const useSessionStore = defineStore('session', () => {
   function resolvePermission(optionId: string): void {
     const entry = getPendingPermissionEntry();
     if (!entry) return;
-    getRuntime(entry.agentName).client?.resolvePermission(optionId);
+    getRuntime(entry.runtimeId).client?.resolvePermission(optionId);
   }
 
   function cancelPermission(): void {
     const entry = getPendingPermissionEntry();
     if (!entry) return;
-    getRuntime(entry.agentName).client?.cancelPermission();
+    getRuntime(entry.runtimeId).client?.cancelPermission();
   }
 
-  async function disconnectProfile(agentName: string): Promise<void> {
-    const runtime = getRuntime(agentName);
-    const state = getProfileState(agentName);
-    cancelAuthForProfile(agentName);
+  async function disconnectRuntime(runtimeId: string): Promise<void> {
+    const runtime = getRuntime(runtimeId);
+    const state = getRuntimeState(runtimeId);
+    cancelAuthForRuntime(runtimeId);
 
     const client = runtime.client;
     if (client) {
-      unbindClient(agentName, client);
+      unbindClient(runtimeId, client);
       runtime.client = null;
       await client.disconnect().catch((cause) => {
         console.error('Error disconnecting:', cause);
@@ -1291,11 +1291,11 @@ export const useSessionStore = defineStore('session', () => {
     state.error = null;
     state.activePromptKey = null;
     state.supportsSessionList = false;
-    pendingPermissions.delete(agentName);
+    pendingPermissions.delete(runtimeId);
     runtime.pendingUpdates.clear();
 
     for (const conversation of conversations.values()) {
-      if (conversation.session.agentName !== agentName) continue;
+      if (conversation.session.runtimeId !== runtimeId) continue;
       conversation.hydrated = false;
       conversation.isLoading = false;
       conversation.isHydrating = false;
@@ -1304,15 +1304,41 @@ export const useSessionStore = defineStore('session', () => {
     }
   }
 
-  function clearError(agentName?: string): void {
-    if (agentName) {
-      const state = getProfileState(agentName);
+  async function removeRuntime(runtimeId: string): Promise<void> {
+    await disconnectRuntime(runtimeId);
+    savedSessions.value = savedSessions.value.filter(
+      (session) => session.runtimeId !== runtimeId,
+    );
+    for (const [key, conversation] of conversations) {
+      if (conversation.session.runtimeId === runtimeId) {
+        conversations.delete(key);
+      }
+    }
+    runtimeStates.delete(runtimeId);
+    runtimes.delete(runtimeId);
+    maintenanceRuntimes.delete(runtimeId);
+    cancelAuthForRuntime(runtimeId);
+    pendingPermissions.delete(runtimeId);
+    if (
+      activeConversationKey.value &&
+      !conversations.has(activeConversationKey.value)
+    ) {
+      const fallback = Array.from(conversations.values()).sort(
+        (left, right) => right.openedAt - left.openedAt,
+      )[0];
+      activeConversationKey.value = fallback?.key ?? null;
+    }
+  }
+
+  function clearError(runtimeId?: string): void {
+    if (runtimeId) {
+      const state = getRuntimeState(runtimeId);
       state.error = null;
       state.sessionListError = null;
     }
     if (activeConversation.value) {
       activeConversation.value.error = null;
-      getProfileState(activeConversation.value.session.agentName).error = null;
+      getRuntimeState(activeConversation.value.session.runtimeId).error = null;
     }
   }
 
@@ -1324,7 +1350,7 @@ export const useSessionStore = defineStore('session', () => {
     if (!conversation.session.supportsLoadSession) return false;
     if (
       conversation.hydrated &&
-      getProfileState(conversation.session.agentName).status === 'connected'
+      getRuntimeState(conversation.session.runtimeId).status === 'connected'
     ) {
       return false;
     }
@@ -1337,41 +1363,41 @@ export const useSessionStore = defineStore('session', () => {
     return true;
   }
 
-  function isProfileConnected(agentName: string): boolean {
-    return getProfileState(agentName).status === 'connected';
+  function isRuntimeConnected(runtimeId: string): boolean {
+    return getRuntimeState(runtimeId).status === 'connected';
   }
 
-  function isProfileConnecting(agentName: string): boolean {
-    const status = getProfileState(agentName).status;
+  function isRuntimeConnecting(runtimeId: string): boolean {
+    const status = getRuntimeState(runtimeId).status;
     return status === 'connecting' || status === 'reconnecting';
   }
 
-  function isProfileBusy(agentName: string): boolean {
-    const state = getProfileState(agentName);
+  function isRuntimeBusy(runtimeId: string): boolean {
+    const state = getRuntimeState(runtimeId);
     // UI gating must depend on reactive mirrors. The runtime promise maps are
     // deliberately non-reactive and can otherwise leave buttons stale after
     // a Promise settles; mutation methods still enforce those exact gates.
     return (
-      maintenanceProfiles.has(agentName) ||
+      maintenanceRuntimes.has(runtimeId) ||
       state.status === 'connecting' ||
       state.status === 'reconnecting' ||
       state.isRefreshingSessions ||
       state.activePromptKey !== null ||
-      pendingPermissions.has(agentName) ||
+      pendingPermissions.has(runtimeId) ||
       Array.from(conversations.values()).some(
         (conversation) =>
-          conversation.session.agentName === agentName &&
+          conversation.session.runtimeId === runtimeId &&
           (conversation.isLoading || conversation.isHydrating),
       )
     );
   }
 
-  function isRefreshingAgent(agentName: string): boolean {
-    return getProfileState(agentName).isRefreshingSessions;
+  function isRefreshingRuntime(runtimeId: string): boolean {
+    return getRuntimeState(runtimeId).isRefreshingSessions;
   }
 
-  function profileErrorFor(agentName: string): string | null {
-    const state = getProfileState(agentName);
+  function runtimeErrorFor(runtimeId: string): string | null {
+    const state = getRuntimeState(runtimeId);
     return state.error ?? state.sessionListError;
   }
 
@@ -1385,13 +1411,13 @@ export const useSessionStore = defineStore('session', () => {
     isReconnecting,
     error,
     pendingPermission,
-    pendingPermissionAgentName,
+    pendingPermissionRuntimeId,
     pendingPermissionSessionTitle,
     pendingAuthMethods,
-    pendingAuthAgentName,
+    pendingAuthRuntimeId,
     activeConversationKey,
     openConversations,
-    isCurrentProfileBusyElsewhere,
+    isCurrentRuntimeBusyElsewhere,
 
     hasActiveSession,
     messageList,
@@ -1408,13 +1434,14 @@ export const useSessionStore = defineStore('session', () => {
     cancelPermission,
     selectAuthMethod,
     cancelAuthSelection,
-    disconnectProfile,
+    disconnectRuntime,
+    removeRuntime,
     clearError,
     tryReconnect,
-    isProfileConnected,
-    isProfileConnecting,
-    isProfileBusy,
-    isRefreshingAgent,
-    profileErrorFor,
+    isRuntimeConnected,
+    isRuntimeConnecting,
+    isRuntimeBusy,
+    isRefreshingRuntime,
+    runtimeErrorFor,
   };
 });

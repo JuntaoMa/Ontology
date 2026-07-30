@@ -6,14 +6,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatMessage } from '../lib/types';
 
 let mockSessionStore: ReturnType<typeof createSessionStore>;
-let mockConfigStore: ReturnType<typeof createConfigStore>;
+let mockCatalogStore: ReturnType<typeof createCatalogStore>;
+let mockRuntimeStore: ReturnType<typeof createRuntimeStore>;
 
 vi.mock('../stores/session', () => ({
   useSessionStore: () => mockSessionStore,
 }));
 
-vi.mock('../stores/config', () => ({
-  useConfigStore: () => mockConfigStore,
+vi.mock('../stores/catalog', () => ({
+  useCatalogStore: () => mockCatalogStore,
+}));
+
+vi.mock('../stores/runtime', () => ({
+  useRuntimeStore: () => mockRuntimeStore,
 }));
 
 import ChatView from './ChatView.vue';
@@ -25,31 +30,50 @@ function createSessionStore() {
     isPrompting: false,
     isConnected: true,
     isReconnecting: false,
-    isCurrentProfileBusyElsewhere: false,
+    isCurrentRuntimeBusyElsewhere: false,
     currentSession: {
       id: 'direct-context:session-1',
-      agentName: 'direct-context',
+      runtimeId: 'direct-context',
       sessionId: 'session-1',
       title: 'Example conversation',
       lastUpdated: 1,
-      cwd: '/workspace',
+      cwd: '.',
     },
     sendPrompt: vi.fn(async (_text: string) => {}),
     cancelOperation: vi.fn(async () => {}),
   });
 }
 
-function createConfigStore() {
+function createCatalogStore() {
   return {
-    getAgent: vi.fn(() => ({
+    getProfile: vi.fn(() => ({
       title: 'Direct context',
+    })),
+    getDataset: vi.fn(() => ({
+      title: 'Smart Building',
+    })),
+  };
+}
+
+function createRuntimeStore() {
+  return {
+    getProject: vi.fn(() => ({
+      id: 'direct-context',
+      displayName: 'Direct context · Smart Building',
+      status: 'ready',
+      profile: { id: 'direct-context', revision: 'v1' },
+      dataset: { id: 'smart-building', ontologySha256: 'a'.repeat(64) },
+      stale: false,
+      url: 'ws://127.0.0.1/runtime',
+      cwd: '.',
     })),
   };
 }
 
 beforeEach(() => {
   mockSessionStore = createSessionStore();
-  mockConfigStore = createConfigStore();
+  mockCatalogStore = createCatalogStore();
+  mockRuntimeStore = createRuntimeStore();
 });
 
 describe('ChatView', () => {

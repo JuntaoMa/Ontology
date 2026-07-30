@@ -8,6 +8,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 import type { LoadedProfile } from "./profile.js";
+import type { LoadedRuntime } from "./runtime-manifest.js";
 
 const SAFE_INHERITED_ENVIRONMENT = [
   "PATH",
@@ -29,9 +30,20 @@ const SAFE_INHERITED_ENVIRONMENT = [
   "XDG_STATE_HOME",
 ] as const;
 
+const SAFE_PROFILE_TUNING_ENVIRONMENT = [
+  "EMBEDDING_BACKEND",
+  "EMBEDDING_MODEL",
+  "EMBEDDING_DEVICE",
+  "EMBEDDING_BATCH_SIZE",
+  "EMBEDDING_MAX_LENGTH",
+  "EMBEDDING_NORMALIZE",
+  "HF_HUB_DISABLE_XET",
+  "TOKENIZERS_PARALLELISM",
+] as const;
+
 /**
  * OpenCode bootstraps dependencies inside OPENCODE_CONFIG_DIR. These entries
- * are runtime-owned and must survive Profile overlay refreshes.
+ * are Runtime-owned and must survive snapshot overlay refreshes.
  */
 const OPENCODE_BOOTSTRAP_ENTRIES = new Set([
   ".gitignore",
@@ -44,9 +56,32 @@ const OPENCODE_BOOTSTRAP_ENTRIES = new Set([
   "yarn.lock",
 ]);
 
+export function buildRuntimeVariables(
+  runtime: LoadedRuntime,
+): Readonly<Record<string, string>> {
+  return {
+    ONTOLOGY_DEMO_ROOT: runtime.profile.demoRoot,
+    ONTOLOGY_RUNTIME_ID: runtime.manifest.id,
+    ONTOLOGY_RUNTIME_ROOT: runtime.paths.root,
+    ONTOLOGY_WORKSPACE_DIR: runtime.paths.workspace,
+    ONTOLOGY_PROFILE_DIR: runtime.paths.profile,
+    ONTOLOGY_DATASET_DIR: runtime.paths.dataset,
+    ONTOLOGY_GENERATED_DIR: runtime.paths.generated,
+    ONTOLOGY_RUNTIME_STATE_DIR: runtime.paths.state,
+    ONTOLOGY_PATH: runtime.dataset.ontologyPath,
+    ONTOLOGY_ID: runtime.dataset.id,
+    ONTOLOGY_EXPECTED_SHA256: runtime.dataset.ontologySha256,
+    OPENCODE_DB: runtime.paths.opencodeDb,
+    OPENCODE_CONFIG_DIR: runtime.paths.opencodeConfig,
+  };
+}
+
+/**
+ * Build a small, deterministic subprocess environment. Profile-referenced
+ * secrets keep their original environment names; no browser value is merged.
+ */
 export function buildChildEnvironment(
-  profile: LoadedProfile,
-  runtimeConfigDir: string,
+  runtime: LoadedRuntime,
   source: NodeJS.ProcessEnv,
 ): NodeJS.ProcessEnv {
   const environment: NodeJS.ProcessEnv = {};
@@ -54,56 +89,35 @@ export function buildChildEnvironment(
     const value = source[name];
     if (value !== undefined) environment[name] = value;
   }
-  for (const name of profile.requiredEnv) {
+  for (const name of runtime.profile.requiredEnv) {
     const value = source[name];
     if (value !== undefined) environment[name] = value;
   }
-
-  environment.OPENCODE_DB = path.join(
-    profile.runtime.stateDir,
-    "opencode.db",
-  );
-  environment.OPENCODE_CONFIG_DIR = runtimeConfigDir;
-  if (profile.skillsRoot) {
-    environment.ONTOLOGY_SKILLS_ROOT = profile.skillsRoot;
+  for (const name of SAFE_PROFILE_TUNING_ENVIRONMENT) {
+    const value = source[name];
+    if (value !== undefined) environment[name] = value;
   }
-  environment.ONTOLOGY_MODEL_ID = profile.model.id;
-  if (profile.model.source === "profile") {
-    environment.ONTOLOGY_MODEL_BASE_URL =
-      source[profile.model.apiBaseEnv] ?? "";
+  Object.assign(environment, buildRuntimeVariables(runtime));
+  // Keep both source and Runtime-local Profile packages free of incidental
+  // Python bytecode so their declarative contents stay portable.
+  environment.PYTHONDONTWRITEBYTECODE = "1";
+  environment.ONTOLOGY_MODEL_ID = runtime.profile.model.id;
+  if (runtime.profile.skillsRoot) {
+    environment.ONTOLOGY_SKILLS_ROOT = runtime.profile.skillsRoot;
   }
-  if (profile.model.auth.source === "environment") {
-    environment.ONTOLOGY_MODEL_API_KEY =
-      source[profile.model.auth.apiKeyEnv] ?? "";
-  }
-  if (profile.retrieval) {
-    const retrievalEndpoint =
-      source[profile.retrieval.endpointEnv] ?? "";
-    environment.ONTOLOGY_RETRIEVAL_ENDPOINT = retrievalEndpoint;
+  if (runtime.profile.retrieval) {
     environment.ONTOLOGY_VECTOR_TOP_K = String(
-      profile.retrieval.vectorTopK,
+      runtime.profile.retrieval.vectorTopK,
     );
     environment.ONTOLOGY_GRAPH_ALGORITHM =
-      profile.retrieval.graphAlgorithm;
-    if (isLoopbackHttpUrl(retrievalEndpoint)) {
-      // urllib on macOS can consult system proxy settings even when proxy
-      // variables are absent. Keep the fixed local OAG path off that proxy
-      // without exposing the host's broader NO_PROXY configuration.
-      environment.NO_PROXY = "localhost,127.0.0.1,::1";
-      environment.no_proxy = "localhost,127.0.0.1,::1";
-    }
-  }
-  environment.ONTOLOGY_ID = profile.ontology.id;
-  if (profile.ontology.sha256) {
-    environment.ONTOLOGY_EXPECTED_SHA256 = profile.ontology.sha256;
+      runtime.profile.retrieval.graphAlgorithm;
   }
   return environment;
 }
 
 /**
  * Refresh the Profile-owned overlay exactly while preserving only OpenCode's
- * dependency bootstrap entries. This prevents a removed prompt or config
- * sidecar from silently remaining active on the next launch.
+ * dependency bootstrap entries. Removed Profile assets cannot remain active.
  */
 export function prepareRuntimeConfigOverlay(
   profile: Pick<LoadedProfile, "configPath" | "configAssets">,
@@ -116,7 +130,9 @@ export function prepareRuntimeConfigOverlay(
     const entryPath = path.join(root, entry.name);
     if (OPENCODE_BOOTSTRAP_ENTRIES.has(entry.name)) {
       if (entry.isSymbolicLink()) {
-        throw new Error(`OpenCode bootstrap entry must not be a symbolic link: ${entry.name}`);
+        throw new Error(
+          `OpenCode bootstrap entry must not be a symbolic link: ${entry.name}`,
+        );
       }
       continue;
     }
@@ -125,10 +141,7 @@ export function prepareRuntimeConfigOverlay(
 
   copyFileSync(profile.configPath, path.join(root, "opencode.jsonc"));
   for (const asset of profile.configAssets) {
-    const destination = resolveRuntimeAssetDestination(
-      root,
-      asset.relativePath,
-    );
+    const destination = resolveRuntimeAssetDestination(root, asset.relativePath);
     mkdirSync(path.dirname(destination), { recursive: true, mode: 0o700 });
     copyFileSync(asset.path, destination);
   }
@@ -138,14 +151,18 @@ function ensureRuntimeDirectory(directory: string): void {
   if (existsSync(directory)) {
     const directoryStats = lstatSync(directory);
     if (directoryStats.isSymbolicLink() || !directoryStats.isDirectory()) {
-      throw new Error("OpenCode runtime config path must be a non-symlink directory");
+      throw new Error(
+        "OpenCode Runtime config path must be a non-symlink directory",
+      );
     }
     return;
   }
   mkdirSync(directory, { recursive: true, mode: 0o700 });
   const directoryStats = lstatSync(directory);
   if (directoryStats.isSymbolicLink() || !directoryStats.isDirectory()) {
-    throw new Error("OpenCode runtime config path must be a non-symlink directory");
+    throw new Error(
+      "OpenCode Runtime config path must be a non-symlink directory",
+    );
   }
 }
 
@@ -166,24 +183,9 @@ function resolveRuntimeAssetDestination(
     (topLevelEntry !== undefined &&
       OPENCODE_BOOTSTRAP_ENTRIES.has(topLevelEntry))
   ) {
-    throw new Error("Invalid OpenCode runtime asset destination");
+    throw new Error("Invalid OpenCode Runtime asset destination");
   }
   return destination;
-}
-
-function isLoopbackHttpUrl(value: string): boolean {
-  try {
-    const parsed = new URL(value);
-    const hostname = parsed.hostname.replace(/^\[|\]$/g, "").toLowerCase();
-    return (
-      (parsed.protocol === "http:" || parsed.protocol === "https:") &&
-      (hostname === "localhost" ||
-        hostname === "127.0.0.1" ||
-        hostname === "::1")
-    );
-  } catch {
-    return false;
-  }
 }
 
 function normalizedPathKey(value: string): string {

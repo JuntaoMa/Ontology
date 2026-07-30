@@ -12,12 +12,9 @@ __pycache__/
 .coverage
 htmlcov/
 
-data/source/*
-!data/source/.gitkeep
-state/*
-!state/.gitkeep
-artifacts/*
-!artifacts/.gitkeep
 models/
 .runtime/
+/artifacts/
+/data/
+/state/
 *.log

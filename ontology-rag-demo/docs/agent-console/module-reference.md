@@ -1,92 +1,93 @@
-# Agent Console 模块、协议与接口速查
+# Agent Console 目标模块、协议与接口速查
 
-本文只描述当前代码，不定义未来框架。
+状态：已按 Runtime 架构实现
 
 ## 1. 模块 → 功能
 
-### 1.1 Bridge 服务端
+### 1.1 Agent Console 服务端
 
-| 模块 | 功能 |
+| 目标模块 | 功能 |
 | --- | --- |
-| `server/index.ts` | 启动 loopback HTTP 服务；加载 Catalog；提供 `/health`、`/agents`、Session 删除、静态文件和 WS upgrade |
-| `server/profile.ts` | 发现、解析并校验 Profile；解析受限路径；自动收集 env 引用；生成脱敏 `PublicAgent` |
-| `server/profile-schema.ts` / `server/schemas/profile-v1.schema.json` | Profile v1 的 JSON Schema |
-| `server/opencode-runtime.ts` | 派生最小子进程环境；同步可写 OpenCode config overlay |
-| `server/bridge.ts` | 一 Profile 一 WS/子进程；WebSocket ↔ stdio NDJSON 转发；请求门控；进程树回收；maintenance 互斥 |
-| `server/session-delete.ts` | 在 Profile 所属 OpenCode DB 中有界执行持久 Session 删除 |
-| `server/static-files.ts` | 构建模式下安全提供 `dist-web` 文件 |
-| `server/acp-probe.ts` | 运行 `initialize + session/list` 并输出脱敏 smoke 结果 |
-| `server/profile-probe.ts` | 用生产 Profile Loader、env 映射和临时 config overlay 组织 Probe |
-| `server/probe-cli.ts` | `probe:acp -- --profile <path>` 命令入口 |
+| `server/profile.ts` | 加载可分享 Profile Package，校验其完整性和相对路径 |
+| `server/dataset.ts` | 发现 `datasets/<id>/dataset.yaml`，校验根级本体文件和可选 `raw_data/` |
+| `server/runtime-catalog.ts` | 原子重载源 Catalog，串行维护 Runtime manifest/status，生成脱敏 Web Catalog |
+| `server/runtime-initializer.ts` | Profile/Dataset 快照复制、Initializer job、staging 原子提升 |
+| `server/runtime-supervisor.ts` | 管理 Initializer 及供 ACP/CLI 共用的有界进程组终止 |
+| `server/runtime-delete.ts` | 删除锁、停止顺序、canonical path gate、trash rename 与清理恢复 |
+| `server/mutation-drain.ts` | shutdown 前拒绝新 HTTP mutation 并排空已接受操作 |
+| `server/opencode-runtime.ts` | 构建 Runtime 最小环境、OpenCode DB/config 和固定 workspace cwd |
+| `server/bridge.ts` | `WS /runtimes/:id/acp` 与 OpenCode stdio NDJSON 转发 |
+| `server/session-delete.ts` | 只删除指定 Runtime OpenCode DB 中的 Session |
+| `server/index.ts` | Profile/Dataset/Runtime HTTP API、静态 UI 与 WebSocket upgrade |
+
+实现时可以合并小文件，但职责边界不能重新混入单个“万能 Runtime manager”。
 
 ### 1.2 Web 前端
 
-| 模块 | 功能 |
+| 目标模块 | 功能 |
 | --- | --- |
-| `src/App.vue` | 单页布局；组合 Profile 侧栏、唯一 ChatView 和全局对话框 |
-| `src/components/ProfileSidebar.vue` | 固定 Profile 分组、折叠、脱敏信息、新建/选择/删除 Session |
-| `src/components/ChatView.vue` | 当前 Conversation、Prompt、Cancel、状态和自动滚动 |
-| `src/components/MessageContent.vue` | 安全 Markdown 与“查询Plan”JSON 展示 |
-| `src/components/ToolCallCard.vue` | Tool 状态、Input/Output、耗时和 artifact 折叠卡 |
-| `src/components/OntologySubgraphCard.vue` | 小型本体子图的 D3/SVG 展示 |
-| `src/components/ModalDialog.vue` | 认证、Permission、删除确认共享的原生 dialog 基础 |
-| `src/stores/config.ts` | 从 `/agents` 读取只读 Profile Catalog |
-| `src/stores/session.ts` | `Profile → ACP client`、`(Profile, Session) → Conversation` 生命周期；并发门控、恢复、删除与 Permission 路由 |
-| `src/lib/bridge-api.ts` | `/agents` 与 Session 删除的同源 fetch 适配 |
-| `src/lib/acp-bridge.ts` | 浏览器端最小 ACP JSON-RPC client；超时、待处理请求和 Permission 生命周期 |
-| `src/lib/transport/websocket.ts` | same-origin WebSocket 文本/NDJSON 传输 |
-| `src/lib/session-projection.ts` | 将 `session/update` 归并为消息、Thinking、Plan、Tool 和 Session 元数据 |
-| `src/lib/tool-call.ts` | Tool Call/Update 归并与在线计时 |
-| `src/lib/markdown.ts` / `src/lib/json-presentation.ts` | DOMPurify 安全 Markdown、最终 JSON 展示投影 |
-| `src/lib/ontology-artifact.ts` | 从 Tool `rawOutput`/`content` 中限量解析子图 marker |
+| `stores/catalog.ts` | Profile/Dataset 创建 Catalog |
+| `stores/runtime.ts` | 已创建 Runtime、初始化/删除状态和刷新 |
+| `stores/session.ts` | `Runtime → ACP client` 与 `(Runtime, Session) → Conversation` |
+| `components/RuntimeSidebar.vue` | 只显示 Runtime 分组及其 Session |
+| `components/CreateRuntimeDialog.vue` | 选择尚未创建的 Profile × Dataset 组合并调用 Initializer |
+| `components/RuntimeInfoCard.vue` | 脱敏 Profile/Dataset/revision/摘要/状态 |
+| `components/DeleteRuntimeDialog.vue` | 与 Session 删除明确分离的危险确认 |
+| `lib/runtime-api.ts` | `/profiles`、`/datasets`、`/runtimes` 和删除请求 |
+| `lib/acp-bridge.ts` | 浏览器 ACP JSON-RPC lifecycle |
+| `lib/session-projection.ts` | ACP `session/update` → 当前 Conversation |
+| `lib/query-plan-projection.ts` | `data-query-plan.v1` → 纯展示 Graph |
+| `components/QueryPlanCard.vue` | JSON/Graph 切换，不修改 Agent 原文 |
+| `components/OntologySubgraphCard.vue` | Tool 实际返回的本体子图；不与 Query Plan Graph 混用 |
 
-### 1.3 8010 OAG 与共享 Skill
+### 1.3 Profile 与共享 Python 环境
 
 | 模块 | 功能 |
 | --- | --- |
-| `src/ontology_rag_demo/settings.py` | 只从环境变量读取 OAG 配置 |
-| `src/ontology_rag_demo/cli.py` | `prepare`、`build-index`、`smoke`、`serve` |
-| `src/ontology_rag_demo/embedding.py` | deterministic/BGE-M3 embedding 适配 |
-| `src/ontology_rag_demo/vector_store.py` | LanceDB rebuild 与 cosine Top-K |
-| `src/ontology_rag_demo/ontology.py` | RDF 本体解析、实体向量文本、锚点和 Steiner 近似最小连通子图 |
-| `src/ontology_rag_demo/services.py` | 组合 embedding、向量库、图检索和可选 Qwen answer |
-| `src/ontology_rag_demo/api.py` | 8010 FastAPI HTTP 接口 |
-| `profiles/_shared/skills/ontology-retrieval/SKILL.md` | 告诉 Agent 何时及如何自主调用检索 |
-| `profiles/_shared/skills/ontology-retrieval/scripts/retrieve.py` | Bash 可调用的 OAG wrapper；校验参数/摘要/算法并输出 artifact |
+| 根 `pyproject.toml` / `uv.lock` | 所有 Profile 共用的唯一 Python 环境和依赖版本 |
+| `profiles/<id>/profile.yaml` | 完整测试流清单 |
+| `profiles/<id>/tools/`、`skills/` | Agent 可调用实现 |
+| `profiles/<id>/retrieval/` | Profile 自带的 Retrieval 实现 |
+| `profiles/<id>/tests/` | Profile 自包含测试 |
+| `datasets/<id>/` | 独立本体和可选 `raw_data/` |
 
 ## 2. 数据协议
 
-| 协议 | 生产者 → 消费者 | 核心字段/语义 |
-| --- | --- | --- |
-| Profile v1 YAML | Git/Catalog → Bridge | `id`、`revision`、`runtime`、`opencode`、`model`、`skills`、可选 `retrieval`、`ontology` |
-| `PublicAgent` JSON | `GET /agents` → Config Store | 脱敏 Profile、状态、WS URL、cwd、Model、Retrieval、Ontology ID |
-| ACP JSON-RPC/NDJSON | Web client ↔ Bridge ↔ OpenCode | `initialize`、Session 生命周期、Prompt/Cancel、Update、Permission |
-| OAG JSON | Skill wrapper ↔ 8010 | question/keywords/top_k/graph_algorithm；hits 与 graph |
-| 本体子图 artifact | Skill stdout → Tool Call → UI | `ONTOLOGY_ARTIFACT:` + `schema_version: 1` + `kind: ontology.subgraph` |
-| `data-query-plan.v1` | Agent 最终消息 → UI/人工检查 | baseline、question、keywords、query_tasks、assumptions；UI 只格式化，不改写 |
+| 协议 | 权威内容 |
+| --- | --- |
+| Profile manifest v2 | Agent、OpenCode、Initializer、Skill、Retrieval 和 Dataset 输入契约 |
+| Dataset manifest v1 | Dataset ID、显示信息、根级本体文件、可选 `raw_data/` |
+| Runtime manifest v1 | `<profile>--<dataset>`、创建时标题、快照摘要、相对运行路径、状态和脱敏错误 |
+| ACP JSON-RPC/NDJSON | Session 创建/加载/Prompt/Cancel、消息、Tool、Permission |
+| `ontology.subgraph` | Profile Tool 实际返回的本体子图 artifact；算法与实现标识分开记录 |
+| `data-query-plan.v1` | Agent 最终查询计划原文 |
+| Query Plan Graph | 由查询计划字段生成的临时 UI 投影，不是持久协议 |
 
-运行时内部键：
+层级键：
 
 ```text
-Profile connection: profileId
-Conversation:       profileId + ":" + sessionId
-OpenCode state:     ontology-rag-demo/.runtime/opencode/<profileId>
+Runtime ID:   <profile-id>--<dataset-id>
+Conversation: <runtime-id>:<session-id>
+Runtime root: ontology-rag-demo/.runtime/projects/<runtime-id>
+OpenCode cwd: <runtime-root>/workspace
 ```
 
-## 3. 接口
+## 3. HTTP/WS/ACP 接口
 
 ### 3.1 Agent Console
 
-| 接口 | 返回/行为 |
+| 接口 | 作用 |
 | --- | --- |
-| `GET /health` | Bridge 状态及每个 Profile 的 `active`/可选 `startedAt` |
-| `GET /agents` | 脱敏 Profile Catalog；`status=stopped|active|unavailable` |
-| `WS /agents/:profileId/acp` | ACP JSON-RPC 文本/NDJSON；一 Profile 最多一条连接 |
-| `DELETE /agents/:profileId/sessions/:sessionId` | OpenCode 扩展持久删除；成功 `204` |
-| `GET /*` | 构建模式的静态 Web UI；未知前端路由回退到 `index.html` |
-| `HEAD /*` | 当前服务端返回空的 `200` 探测响应 |
+| `GET /health` | Console、Runtime supervisor 和 cleanup 安全摘要 |
+| `GET /profiles` | 原子重载并返回可创建 Runtime 的脱敏 Profile Catalog |
+| `GET /datasets` | 原子重载并返回可创建 Runtime 的脱敏 Dataset Catalog |
+| `GET /runtimes` | 已创建及有可见失败状态的 Runtime |
+| `POST /runtimes` | 选择 `profile_id + dataset_id`，异步调用 Initializer |
+| `DELETE /runtimes/:runtimeId` | 停止进程、校验路径、原子移入 trash |
+| `WS /runtimes/:runtimeId/acp` | Runtime 专属 ACP 通道 |
+| `DELETE /runtimes/:runtimeId/sessions/:sessionId` | Runtime 内 OpenCode Session 删除 |
 
-### 3.2 浏览器实际调用的 ACP
+### 3.2 ACP
 
 ```text
 initialize
@@ -96,23 +97,50 @@ session/load
 session/prompt
 session/cancel
 authenticate
-
-session/update                 # Agent notification
-session/request_permission     # Agent request
+session/update
+session/request_permission
 ```
 
-Bridge 还会校验 `session/resume`、`session/fork` 以及 Profile-owned 设置方法，但首版 UI
-没有暴露这些操作。
+Session 是 Runtime 的 OpenCode 子资源。浏览器不能用 ACP 改变 Runtime 的 Profile、
+Dataset、cwd 或 Model。
 
-### 3.3 8010 OAG
+## 4. Runtime 文件操作边界
 
-| 接口 | 作用 |
+初始化：
+
+```text
+Profile source + Dataset source
+    → validated file copy
+    → .runtime/staging/<id>--<nonce>
+    → Profile Initializer
+    → atomic rename
+    → .runtime/projects/<id>
+```
+
+删除：
+
+```text
+exclusive lock
+    → stop init/ACP process trees
+    → validate canonical target
+    → atomic rename
+    → .runtime/trash/<id>--<timestamp>--<nonce>
+    → validated background cleanup
+```
+
+允许递归删除的唯一目标是已经原子移入 canonical `trash/` 的直接子目录。Profile、
+Dataset、根 uv 环境和其他 Runtime 永远不是删除目标。
+
+## 5. Query Plan Graph 映射
+
+| JSON 字段 | 展示投影 |
 | --- | --- |
-| `GET /health` | 安全就绪摘要、索引状态、可选本体 SHA-256 |
-| `POST /v1/retrieval/vector` | 问题 embedding → LanceDB Top-K |
-| `POST /v1/retrieval/graph` | 问题文本锚点 → 最小连通子图 |
-| `POST /v1/retrieval/oag` | Agent 关键词 → Top-K 实体锚点 → 最小连通子图 |
-| `POST /v1/answer` | 当前 OAG 内置端到端回答与可选 trace |
+| `query_tasks[i]` | Task hub |
+| `targets[]` | Entity 节点；Task → Entity `target` |
+| `projections[]` | Entity 节点；Task → Entity `projection` |
+| `filters[]` | Filter note；Task → Filter `filter` |
+| `joins[]` | `from` → `to`，边标签 `relation` |
+| `ontology_evidence[]` | `subject` → `object`，边标签 `predicate`，evidence 样式 |
 
-Profile 中的 `retrieval.graph_algorithm` 会传到 wrapper 和 8010，并由两端验证；当前只
-支持 `minimum_connected_subgraph`。
+相同实体字符串合并并保留角色集合。Graph 不调用检索工具、不推断关系、不修改 JSON；超过
+120 节点或 240 边时禁用 Graph，继续显示完整 JSON。

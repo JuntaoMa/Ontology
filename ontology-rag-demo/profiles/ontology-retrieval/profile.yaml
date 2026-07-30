@@ -1,0 +1,48 @@
+schema_version: 2
+id: ontology-retrieval
+revision: dev
+title: 检索增强本体上下文
+description: 使用实体向量 Top 5 与近似 Steiner 连通子图上下文生成数据查询任务。
+
+agent:
+  command: opencode
+  args:
+    - acp
+    - --print-logs
+    - --pure
+  startup_timeout_ms: 15000
+
+opencode:
+  config: opencode/opencode.jsonc
+  assets:
+    - opencode/prompt.md
+
+initializer:
+  command: uv
+  args:
+    - run
+    - --project
+    - ${ONTOLOGY_DEMO_ROOT}
+    - --locked
+    - --no-sync
+    - python
+    - ${ONTOLOGY_PROFILE_DIR}/tools/initialize.py
+  timeout_ms: 900000
+
+model:
+  id: deepseek/deepseek-v4-flash
+  source: opencode
+  auth:
+    source: opencode
+
+skills:
+  - id: ontology-retrieval
+    path: skills/ontology-retrieval
+
+retrieval:
+  vector_top_k: 5
+  graph_algorithm: minimum_connected_subgraph
+
+dataset_contract:
+  ontology: required
+  raw_data: optional

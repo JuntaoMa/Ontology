@@ -3,7 +3,7 @@ import ModalDialog from './ModalDialog.vue';
 
 const props = defineProps<{
   title: string;
-  profileTitle: string;
+  runtimeTitle: string;
   deleting: boolean;
   error?: string;
 }>();
@@ -29,7 +29,7 @@ function close(): void {
     <h2 id="delete-dialog-title">Delete conversation?</h2>
     <p id="delete-dialog-description" class="dialog-description">
       “{{ title }}” will be permanently deleted from
-      {{ profileTitle }}.
+      {{ runtimeTitle }}.
     </p>
     <p class="irreversible-note">This action cannot be undone.</p>
     <p v-if="error" class="delete-error" role="alert">{{ error }}</p>

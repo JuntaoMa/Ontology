@@ -1,0 +1,6 @@
+schema_version: 1
+id: smart-building
+title: Smart Building Sample
+description: 用于打通本体上下文与检索流程的可提交虚构楼宇本体。
+ontology_file: building.ttl
+raw_data_dir: raw_data

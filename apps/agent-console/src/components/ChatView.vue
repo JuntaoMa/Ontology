@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
-import { useConfigStore } from '../stores/config';
+import { useRuntimeStore } from '../stores/runtime';
 import { useSessionStore } from '../stores/session';
 import type { ChatMessage } from '../lib/types';
 import MessageContent from './MessageContent.vue';
@@ -15,7 +15,7 @@ const emit = defineEmits<{
   'toggle-sidebar': [];
 }>();
 
-const configStore = useConfigStore();
+const runtimeStore = useRuntimeStore();
 const sessionStore = useSessionStore();
 const inputText = ref('');
 const textarea = ref<HTMLTextAreaElement | null>(null);
@@ -27,20 +27,27 @@ const isLoading = computed(() => sessionStore.isLoading);
 const isPrompting = computed(() => sessionStore.isPrompting);
 const isConnected = computed(() => sessionStore.isConnected);
 const isReconnecting = computed(() => sessionStore.isReconnecting);
-const isProfileBusyElsewhere = computed(
-  () => sessionStore.isCurrentProfileBusyElsewhere,
+const isRuntimeBusyElsewhere = computed(
+  () => sessionStore.isCurrentRuntimeBusyElsewhere,
 );
 const currentSession = computed(() => sessionStore.currentSession);
-const currentProfile = computed(() =>
+const currentRuntime = computed(() =>
   currentSession.value
-    ? configStore.getAgent(currentSession.value.agentName)
+    ? runtimeStore.getProject(currentSession.value.runtimeId)
     : undefined,
 );
-const profileDisplayName = computed(
+const runtimeDisplayName = computed(
   () =>
-    currentProfile.value?.title?.trim() ||
-    currentSession.value?.agentName ||
-    'Agent Profile',
+    currentRuntime.value?.profile.title ||
+    currentRuntime.value?.displayName ||
+    currentSession.value?.runtimeId ||
+    'Runtime Project',
+);
+const datasetLabel = computed(
+  () =>
+    currentRuntime.value?.dataset.title ||
+    currentRuntime.value?.dataset.id ||
+    '',
 );
 const connectionLabel = computed(() => {
   if (isReconnecting.value) return 'Reconnecting';
@@ -98,7 +105,7 @@ async function handleSend(): Promise<void> {
     !text ||
     isLoading.value ||
     !isConnected.value ||
-    isProfileBusyElsewhere.value
+    isRuntimeBusyElsewhere.value
   ) {
     return;
   }
@@ -170,7 +177,7 @@ function durationLabel(durationMs: number): string {
           type="button"
           data-sidebar-reveal
           aria-label="Expand sidebar"
-          aria-controls="profile-sidebar"
+          aria-controls="runtime-sidebar"
           :aria-expanded="!sidebarCollapsed"
           title="Expand sidebar"
           @click="emit('toggle-sidebar')"
@@ -181,7 +188,10 @@ function durationLabel(durationMs: number): string {
           <h1>{{ currentSession?.title || 'Conversation' }}</h1>
           <div class="conversation-profile">
             <UiIcon name="folder" />
-            <span>{{ profileDisplayName }}</span>
+            <span>{{ runtimeDisplayName }}</span>
+            <span v-if="datasetLabel" class="header-dataset">
+              {{ datasetLabel }}
+            </span>
           </div>
         </div>
       </div>
@@ -198,8 +208,8 @@ function durationLabel(durationMs: number): string {
       </div>
     </header>
 
-    <div v-if="isProfileBusyElsewhere" class="profile-busy-notice">
-      This Profile is running another conversation. You can read this Session
+    <div v-if="isRuntimeBusyElsewhere" class="profile-busy-notice">
+      This Runtime Project is running another conversation. You can read this Session
       now and send after that turn finishes.
     </div>
 
@@ -349,15 +359,15 @@ function durationLabel(durationMs: number): string {
                   ? 'Reconnecting…'
                   : !isConnected
                     ? 'Reconnect this conversation to continue'
-                    : isProfileBusyElsewhere
-                      ? 'This Profile is busy in another conversation'
-                      : 'Ask this Profile…'
+                    : isRuntimeBusyElsewhere
+                      ? 'This Runtime Project is busy in another conversation'
+                      : 'Ask this Runtime…'
               "
               :disabled="
                 isLoading ||
                 isReconnecting ||
                 !isConnected ||
-                isProfileBusyElsewhere
+                isRuntimeBusyElsewhere
               "
               aria-label="Message"
               @input="resizeTextarea"
@@ -373,7 +383,7 @@ function durationLabel(durationMs: number): string {
                 isLoading ||
                 isReconnecting ||
                 !isConnected ||
-                isProfileBusyElsewhere
+                isRuntimeBusyElsewhere
               "
               @click="handleSend"
             >
@@ -409,6 +419,17 @@ function durationLabel(durationMs: number): string {
   padding: 4px 8px;
   color: var(--success);
   font-size: 11px;
+}
+
+.header-dataset {
+  max-width: 220px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 6px;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .status-pill::before {

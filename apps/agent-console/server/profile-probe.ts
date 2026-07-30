@@ -1,92 +1,70 @@
-import {
-  mkdir,
-  mkdtemp,
-  realpath,
-  rm,
-} from "node:fs/promises";
 import path from "node:path";
+import { realpath } from "node:fs/promises";
 import {
-  smokeAcpProfile,
+  smokeAcpRuntime,
   type AcpSmokeResult,
 } from "./acp-probe.js";
 import {
   buildChildEnvironment,
   prepareRuntimeConfigOverlay,
 } from "./opencode-runtime.js";
+import { assertRequiredEnvironment } from "./profile.js";
 import {
-  assertRequiredEnvironment,
-  loadProfile,
-  ProfileValidationError,
-  type LoadedProfile,
-} from "./profile.js";
+  loadRuntime,
+  RuntimeManifestError,
+  type LoadedRuntime,
+} from "./runtime-manifest.js";
 
-export interface ProfileProbeDependencies {
+export interface RuntimeProbeDependencies {
   environment?: NodeJS.ProcessEnv;
   smoke?: (
-    profile: LoadedProfile,
+    runtime: LoadedRuntime,
     environment: NodeJS.ProcessEnv,
   ) => Promise<AcpSmokeResult>;
 }
 
 /**
- * Smoke-test the exact runtime declared by one Agent Profile. The command only
- * initializes ACP and lists Session metadata; it never creates, loads, resumes,
- * prompts, or mutates a Session.
+ * Read-only ACP smoke for an already-created Runtime. It initializes ACP and
+ * lists Session metadata, but never creates or loads a Session.
  */
-export async function probeAcpProfile(
-  profilePath: string,
-  dependencies: ProfileProbeDependencies = {},
+export async function probeAcpRuntime(
+  manifestPath: string,
+  dependencies: RuntimeProbeDependencies = {},
 ): Promise<AcpSmokeResult> {
   const sourceEnvironment = dependencies.environment ?? process.env;
-  const profile = await loadProbeProfile(profilePath);
-  assertRequiredEnvironment(profile, sourceEnvironment);
-
-  await mkdir(profile.runtime.stateDir, { recursive: true, mode: 0o700 });
-  const probeRuntimeDir = await mkdtemp(
-    path.join(profile.runtime.stateDir, "probe-"),
+  const runtime = await loadProbeRuntime(manifestPath);
+  assertRequiredEnvironment(runtime.profile, sourceEnvironment);
+  prepareRuntimeConfigOverlay(
+    runtime.profile,
+    runtime.paths.opencodeConfig,
   );
-
-  try {
-    const runtimeConfigDir = path.join(probeRuntimeDir, "config");
-    prepareRuntimeConfigOverlay(profile, runtimeConfigDir);
-    const runtimeEnvironment = buildChildEnvironment(
-      profile,
-      runtimeConfigDir,
-      sourceEnvironment,
-    );
-    return await (dependencies.smoke ?? smokeAcpProfile)(
-      profile,
-      runtimeEnvironment,
-    );
-  } finally {
-    await rm(probeRuntimeDir, { recursive: true, force: true });
-  }
+  const environment = buildChildEnvironment(runtime, sourceEnvironment);
+  return (dependencies.smoke ?? smokeAcpRuntime)(runtime, environment);
 }
 
-export async function loadProbeProfile(
-  profilePath: string,
-): Promise<LoadedProfile> {
-  const absoluteProfilePath = path.resolve(profilePath);
-  const profilesRoot = await inferProfilesRoot(absoluteProfilePath);
-  return loadProfile(absoluteProfilePath, profilesRoot);
-}
-
-/**
- * The Profile-only CLI intentionally has no catalog-root override. Profiles
- * must live below the repository's conventional `profiles/` catalog.
- */
-export async function inferProfilesRoot(profilePath: string): Promise<string> {
-  let current = path.dirname(path.resolve(profilePath));
-  while (true) {
-    if (path.basename(current) === "profiles") {
-      return realpath(current);
-    }
-    const parent = path.dirname(current);
-    if (parent === current) break;
-    current = parent;
+export async function loadProbeRuntime(
+  manifestPath: string,
+): Promise<LoadedRuntime> {
+  const absoluteManifest = path.resolve(manifestPath);
+  if (path.basename(absoluteManifest) !== "runtime.yaml") {
+    throw new RuntimeManifestError("Probe target must be runtime.yaml");
   }
-  throw new ProfileValidationError(
-    "Could not infer the Profile catalog root; profile.yaml must be below a profiles/ directory",
-    profilePath,
+  const runtimeRoot = path.dirname(absoluteManifest);
+  const projectsRoot = path.dirname(runtimeRoot);
+  if (
+    path.basename(projectsRoot) !== "projects" ||
+    path.basename(path.dirname(projectsRoot)) !== ".runtime"
+  ) {
+    throw new RuntimeManifestError(
+      "runtime.yaml must be below .runtime/projects/<runtime-id>",
+      absoluteManifest,
+    );
+  }
+  const demoRoot = path.dirname(path.dirname(projectsRoot));
+  return loadRuntime(
+    runtimeRoot,
+    await realpath(projectsRoot),
+    "projects",
+    await realpath(demoRoot),
   );
 }
